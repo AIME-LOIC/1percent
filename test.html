@@ -1,70 +1,575 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Transparent Navbar</title>
-  <style>
-    body {
-      margin: 0;
-      height: 200vh; /* Just to scroll */
-      background: url('https://images.unsplash.com/photo-1503264116251-35a269479413?auto=format&fit=crop&w=1950&q=80')
-                  no-repeat center center/cover;
-      font-family: Arial, sans-serif;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎁 1% Digital Solutions - Happy Holidays!</title>
+<link rel="shortcut icon" href="/assets/one.png" type="image/png">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght=400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="/styles/style.css">
+<style>
+/* --- CHRISTMAS THEME STYLES (DARK MODE DEFAULT) --- */
 
-    nav {
-      position: fixed;
-      top: 0;
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 15px 50px;
-      z-index: 10;
-      
-      /* Transparent + blur effect */
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+:root {
+    --primary-red: #e74c3c; /* Brighter Christmas Red */
+    --primary-green: #2ecc71; /* Brighter Christmas Green */
+    --background-dark: #1b2631; /* Deep Dark Blue/Night Sky */
+    --card-background-dark: #2c3e50; /* Slightly lighter dark for cards */
+    --text-color-dark: #ecf0f1; /* White/Snow color */
+    --accent-gold: #f1c40f; /* Gold accent for highlights */
+}
 
-      color: white;
-    }
+/* Base Body and Text Color Changes */
+body {
+    background: var(--background-dark);
+    color: var(--text-color-dark);
+}
+body.dark-mode {
+    background: var(--background-dark);
+    color: var(--text-color-dark);
+}
 
-    nav a {
-      color: white;
-      text-decoration: none;
-      margin: 0 15px;
-      font-weight: 600;
-    }
+/* Highlight Elements: Logo, Buttons, Links */
+.nav-logo, #loader span, h1, h2, h3 {
+    color: var(--primary-red) !important;
+}
+.hero-data {
+    color: var(--accent-gold) !important;
+}
 
-    nav a:hover {
-      color: #00ffcc;
-    }
+/* Card Styling in Dark Mode */
+.card {
+    background-color: var(--card-background-dark);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-color-dark);
+}
+.card p, .card h3 {
+    color: var(--text-color-dark);
+}
+.card:hover {
+    border-color: var(--primary-green);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+#team .cards .card.team-card:last-child {
+    grid-column: 1 / -1;      /* occupy full row */
+    justify-self: center;     /* center within that row */
+    max-width: 380px;         /* optional: limit width so it doesn't stretch */
+}
+/* Buttons and primary interactive elements */
+.btn {
+    background-color: var(--primary-red);
+    color: white !important;
+    border: 2px solid var(--primary-red);
+}
+.btn:hover {
+    background-color: var(--primary-green);
+    border-color: var(--primary-green);
+}
 
-    .logo {
-      font-size: 1.5em;
-      font-weight: bold;
+/* Section Headings */
+h2 {
+    border-bottom: 3px solid var(--primary-green);
+}
+
+/* Service Icons */
+.service-icon, .about-icon i {
+    color: var(--primary-green) !important;
+}
+
+/* Navbar Style (make background darker for contrast) */
+nav {
+    background: rgba(44, 62, 80, 0.9) !important; /* Darkened navbar background */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+    position: relative; /* Needed for positioning lights */
+}
+nav a {
+    color: var(--text-color-dark);
+}
+nav a:hover {
+    color: var(--primary-red) !important;
+}
+
+/* 2. CHRISTMAS LIGHTS ON NAV BAR */
+.christmas-lights {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Allows clicks on links underneath */
+    overflow: hidden;
+    white-space: nowrap;
+    z-index: 10;
+    font-size: 1.2rem;
+}
+.christmas-lights span {
+    display: inline-block;
+    padding: 0 5px;
+    animation: light-twinkle 1s ease-in-out infinite alternate;
+}
+.christmas-lights span:nth-child(even) {
+    color: var(--primary-red);
+    animation-delay: 0.1s;
+}
+.christmas-lights span:nth-child(odd) {
+    color: var(--primary-green);
+    animation-delay: 0.5s;
+}
+@keyframes light-twinkle {
+    0% { opacity: 0.7; transform: scale(0.9); }
+    100% { opacity: 1; transform: scale(1.1); }
+}
+
+/* Hero Section */
+header {
+    background: linear-gradient(rgba(27, 38, 49, 0.9), rgba(27, 38, 49, 0.8));
+    color: white;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+    padding: 150px 0;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.hero-content {
+    z-index: 5;
+    text-align: center;
+    position: relative;
+    max-width: 800px;
+}
+.christmas-tree {
+    position: absolute;
+    font-size: 8rem;
+    z-index: 1;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.7;
+    text-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+    display: none;
+}
+@media (min-width: 768px) {
+    .christmas-tree {
+        display: block;
     }
-  </style>
+}
+#tree-left { left: 20px; }
+#tree-right { right: 20px; }
+
+/* Footer */
+footer {
+    background-color: var(--primary-green);
+    color: white;
+    position: relative; /* Needed for Santa positioning relative to footer */
+    padding-bottom: 60px; /* Make space for Santa below */
+}
+footer a {
+    color: var(--accent-gold);
+}
+
+
+/* --- SNOWFALL ANIMATION CSS --- */
+
+.snowflake {
+    color: #fff;
+    font-size: 1.5em;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+    position: fixed;
+    top: -10%;
+    z-index: 1000;
+    animation-name: snowfall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+@keyframes snowfall {
+    0% { top: -10%; transform: translateX(0); }
+    100% { top: 100%; transform: translateX(50px); }
+}
+
+.snowflake:nth-child(2n) { font-size: 2em; animation-duration: 14s; animation-delay: 1s; }
+.snowflake:nth-child(3n) { font-size: 1.2em; animation-duration: 18s; animation-delay: 2s; opacity: 0.8; }
+.snowflake:nth-child(5n) { font-size: 1.8em; animation-duration: 10s; animation-delay: 0.5s; }
+.snowflake:nth-child(7n) { font-size: 1em; animation-duration: 22s; animation-delay: 3s; opacity: 0.6; }
+
+/* 1. SANTA'S SLEIGH ANIMATION MOVED TO BOTTOM */
+#santa-sleigh {
+    position: absolute;
+    bottom: -10px; /* Place slightly below the footer area */
+    left: -200px; /* Start off-screen to the left */
+    font-size: 3.5rem; /* Slightly larger and more impactful at the bottom */
+    color: var(--primary-red);
+    text-shadow: 1px 1px 5px rgba(0,0,0,0.8);
+    z-index: 999;
+    animation: santa-fly-bottom 40s linear infinite; /* Longer duration for a slower, grander flight */
+    display: none;
+}
+
+@media (min-width: 900px) {
+    #santa-sleigh {
+        display: block;
+    }
+}
+
+/* Santa's movement keyframes: left to right, near the bottom edge */
+@keyframes santa-fly-bottom {
+    0% { 
+        left: -200px; 
+        bottom: 5px; 
+        transform: rotateZ(-3deg);
+    }
+    50% { 
+        left: 50%; 
+        bottom: 10px; 
+        transform: rotateZ(0deg);
+    }
+    100% { 
+        left: 110%; 
+        bottom: 5px; 
+        transform: rotateZ(3deg);
+    }
+}
+</style>
+<meta name="google-site-verification" content="ZfOqpsVV7Mv1-PxcKiUDQBBONWc1SKmeTi2y2OnZ_RY" />
 </head>
-<body>
+<body class="dark-mode">
 
-  <nav>
-    <div class="logo">MyBrand</div>
-    <div class="menu">
-      <a href="#">Home</a>
-      <a href="#">About</a>
-      <a href="#">Projects</a>
-      <a href="#">Contact</a>
+<div id="snow-container" aria-hidden="true">
+    <div class="snowflake" style="left: 2%;">❅</div>
+    <div class="snowflake" style="left: 7%;">❆</div>
+    <div class="snowflake" style="left: 12%;">❅</div>
+    <div class="snowflake" style="left: 17%;">❆</div>
+    <div class="snowflake" style="left: 22%;">❅</div>
+    <div class="snowflake" style="left: 27%;">❆</div>
+    <div class="snowflake" style="left: 32%;">❅</div>
+    <div class="snowflake" style="left: 37%;">❆</div>
+    <div class="snowflake" style="left: 42%;">❅</div>
+    <div class="snowflake" style="left: 47%;">❆</div>
+    <div class="snowflake" style="left: 52%;">❅</div>
+    <div class="snowflake" style="left: 57%;">❆</div>
+    <div class="snowflake" style="left: 62%;">❅</div>
+    <div class="snowflake" style="left: 67%;">❆</div>
+    <div class="snowflake" style="left: 72%;">❅</div>
+    <div class="snowflake" style="left: 77%;">❆</div>
+    <div class="snowflake" style="left: 82%;">❅</div>
+    <div class="snowflake" style="left: 87%;">❆</div>
+    <div class="snowflake" style="left: 92%;">❅</div>
+    <div class="snowflake" style="left: 97%;">❆</div>
+    <div class="snowflake" style="left: 5%;">❆</div>
+    <div class="snowflake" style="left: 15%;">❅</div>
+    <div class="snowflake" style="left: 25%;">❆</div>
+    <div class="snowflake" style="left: 35%;">❅</div>
+    <div class="snowflake" style="left: 45%;">❆</div>
+    <div class="snowflake" style="left: 55%;">❅</div>
+    <div class="snowflake" style="left: 65%;">❆</div>
+    <div class="snowflake" style="left: 75%;">❅</div>
+    <div class="snowflake" style="left: 85%;">❆</div>
+    <div class="snowflake" style="left: 95%;">❅</div>
+</div>
+
+<a class="skip-link" href="#main" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">Skip to content</a>
+
+<div id="loader" role="status" aria-live="polite">
+    <span style="color: var(--primary-red);">1%</span>
+    <div class="loader-circle" aria-hidden="true"></div>
+</div>
+
+<button id="theme-toggle" aria-label="Toggle theme" aria-pressed="false" title="Toggle theme" type="button"><i class="fa-solid fa-star" style="color:var(--accent-gold);" aria-hidden="true"></i></button>
+
+<nav role="navigation" aria-label="Main navigation">
+   
+    
+    <div class="nav-left" style="border: none; ">
+        <div class="nav-logo">🎄 1%</div>
+        <ul class="nav-links" id="nav-links" aria-hidden="false">
+            <li><a href="#about">About</a></li>
+            <li><a href="#services">Services</a></li>
+            <li><a href="#projects">Projects</a></li>
+            <li><a href="#team">Team</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
     </div>
-  </nav>
 
-  <section style="margin-top:100px; color:white; padding:50px;">
-    <h1>Scroll Down</h1>
-    <p>This shows how the transparent navbar focuses the background.</p>
-  </section>
+    <div class="nav-theme-toggle" aria-hidden="false">
+        <span style="font-size:0.95rem;color:gray;">Holiday</span>
+        <button id="nav-theme-toggle" aria-label="Toggle theme (desktop)" aria-pressed="false" type="button"><i class="fa-solid fa-gift" style="color:var(--primary-red);" aria-hidden="true"></i></button>
+    </div>
 
+    <button class="hamburger-btn" id="hamburger" aria-label="Toggle navigation" aria-expanded="false" type="button"><i class="fa-solid fa-bars" aria-hidden="true"></i></button>
+</nav>
+
+<header>
+    <span class="christmas-tree" id="tree-left" aria-hidden="true">🎄</span>
+    <span class="christmas-tree" id="tree-right" aria-hidden="true">🎄</span>
+    
+    <div class="hero-content">
+        <h1>✨ Happy Holidays from 1% Digital Solutions! ✨</h1>
+        <p>We're crafting innovative digital solutions for the new year.</p>
+        <div class="hero-data">5 Gifts | 6 Elves | 100% Holiday Cheer</div>
+    </div>
+</header>
+
+<main class="main-content" id="main" tabindex="-1">
+    
+    <section id="about">
+        <h2>About Us </h2>
+        <div class="about-text">
+            <div class="about-img"><img src="https://source.unsplash.com/600x400/?technology" alt="Our Festive Team"></div>
+            <div class="about-cards cards" aria-hidden="false" style="margin-top:20px;">
+            <div class="card">
+                <div class="about-icon" aria-hidden="true"><i class="fa-solid fa-bullseye"></i></div>
+                <div>
+                    <h4>our story</h4>
+                    <p>1% was born from the vision of creating a platform that empowers individuals to achieve more, learn more, and connect more in the digital age. The project started with a simple but ambitious idea: what if just 1% of effort, focus, and innovation could spark a change in people’s lives and communities? From this, the name 1% emerged, symbolizing the small but powerful impact consistent action can create.<br><br><br>
+
+The journey began with a focus on education, technology, and human connection. The founders noticed that while there is abundant knowledge and opportunity online, many people struggle to access it in an organized, engaging, and practical way. They wanted a platform that not only provides information but also encourages learning by doing, collaboration, and real-world application.<br><br><br>
+
+Over time, 1% evolved into more than just an educational tool—it became a hub for creativity, problem-solving, and community growth. Its mission is to help individuals develop skills in areas like programming, cybersecurity, AI, and entrepreneurship while fostering connections with like-minded peers.<br><br><br>
+
+Every feature, project, and initiative under 1% is designed with a single principle in mind: small consistent steps lead to big transformations. Whether it’s learning a new programming language, understanding ethical hacking, or building a personal project, 1% is about empowering people to take that first crucial step and continue progressing.</p>
+                </div>
+            </div>
+            <div class="about-cards cards" aria-hidden="false" style="margin-top:20px;">
+            <div class="card">
+                <div class="about-icon" aria-hidden="true"><i class="fa-solid fa-eye"></i></div>
+                <div>
+                    <h4>vision</h4>
+                    <p>To empower individuals to grow, learn, and innovate by improving just 1% every day — creating a world driven by consistency, creativity, and progress</p>
+                </div>
+            </div>
+            <div class="about-cards cards" aria-hidden="false" style="margin-top:20px;">
+            <div class="card">
+                <div class="about-icon" aria-hidden="true"><i class="fa-solid fa-bullseye"></i></div>
+                <div>
+                    <h4>mission</h4>
+                    <p>To build a community and digital ecosystem that inspires continuous learning, supports innovation, and provides tools, knowledge, and opportunities for personal and professional growth.</p>
+                </div>
+            </div>
+            <div class="about-cards cards" aria-hidden="false" style="margin-top:20px;">
+            <div class="card">
+                <div class="about-icon" aria-hidden="true"><i class="fa-solid fa-hand-holding-heart"></i></div>
+                <div>
+                    <h4>Impact</h4>
+                    <p>Over 10,000 users reached across health, education and commerce projects. We design with measurable outcomes in mind.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="about-icon" aria-hidden="true"><i class="fa-solid fa-handshake-angle"></i></div>
+                <div>
+                    <h4>Partnerships</h4>
+                    <p>Working with local NGOs, microfinance cooperatives and education institutions to co-build practical solutions.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="about-icon" aria-hidden="true"><i class="fa-solid fa-users"></i></div>
+                <div>
+                    <h4>Community</h4>
+                    <p>Monthly meetups, workshops and hackathons to grow talent and make technology more accessible.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="services">
+        <h2>Our Holiday Offerings <i class="fa-solid fa-gift" style="color: #2ecc71;"></i>
+</h2>
+        <div class="services-grid">
+            <div class="service-card"><i class="fa-solid fa-code service-icon" aria-hidden="true"></i><h3>Web Development</h3><p>Building responsive, accessible websites and web apps using modern stacks (React, Next.js, Node).</p></div>
+            <div class="service-card"><i class="fa-solid fa-mobile-screen service-icon" aria-hidden="true"></i><h3>App Development</h3><p>Native and cross-platform mobile apps (Flutter, React Native) optimized for local connectivity.</p></div>
+            <div class="service-card"><i class="fa-solid fa-brain service-icon" aria-hidden="true"></i><h3>AI Solutions</h3><p>Practical ML solutions: automation, prediction models and NLP for local languages.</p></div>
+            <div class="service-card"><i class="fa-solid fa-shield-halved service-icon" aria-hidden="true"></i><h3>Cybersecurity</h3><p>Security assessments, secure-by-design development and training for teams and SMEs.</p></div>
+
+            <div class="service-card"><i class="fa-solid fa-robot service-icon" aria-hidden="true"></i><h3>Robotics & Embedded Systems</h3><p>Design and firmware for robotics, IoT devices and embedded controllers — from prototyping to production-ready hardware and firmware.</p></div>
+
+            <div class="service-card"><i class="fa-solid fa-bitcoin-sign service-icon" aria-hidden="true"></i><h3>Blockchain & Digital Currency</h3><p>Advisory and implementations for secure ledgers, tokenization and digital payment flows tailored for local marketplaces and remittances.</p></div>
+            <div class="service-card"><i class="fa-solid fa-gamepad service-icon" aria-hidden="true"></i><h3>Game Development</h3><p>We're building games for kids,Adults, and more Rwandans who want to relex playing cool games</p></div>
+        </div>
+    </section>
+
+    <section id="projects">
+        <h2>Our Holiday Projects <i class="fa-solid fa-tree" style="color: #2ecc71;"></i>
+</h2>
+        <div class="cards">
+
+            <div class="card">
+                <img src="/assets/download.png" alt="BookIt">
+                <h3>BookIt</h3>
+                <div class="project-meta">Booking platform — web & mobile</div>
+                <p>Online and offline bus ticket booking app made for Rwandans. <br> for desktop and mobile</p>
+                <p style="font-size:0.9rem;color:gray;">Tech: React, Node.js, PostgreSQL. Status: WEB</p>
+                <a href="https://bookit-web-lxpp.onrender.com" class="btn" role="button">Visit</a>
+            </div>
+
+            <div class="card">
+                <img src="/assets/logo.png" alt="Rwanda Chat">
+                <h3>Rwanda Chat</h3>
+                <div class="project-meta">Rwanda messaging app</div>
+                <p>Rwanda Chat is a lightweight messaging app designed for low-bandwidth areas with end-to-end encryption, groups and local language support.</p>
+                <p style="font-size:0.9rem;color:gray;">Tech: Flutter, Firebase. Status: WEB</p>
+                <a href="http://rwandachat.xyz" class="btn" role="button">visit</a>
+            </div>
+
+            <div class="card">
+                <img src="/assets/MRT-LOGO.png" alt="MRT">
+                <h3>MRT</h3>
+                <div class="project-meta">Tech Hub for all digital solutions</div>
+                <p>MRT centralizes essential digital tools for Rwandans: global accounts, wallet payments, hosting, and a discovery hub — all connected and easy to use.</p>
+                <p style="font-size:0.9rem;color:gray;">Tech: Node.js, MongoDB, Payment integrations. Status: WEB</p>
+                <a href="https://mrt-yz7k.onrender.com/" class="btn" role="button">visit</a>
+            </div>
+
+            <div class="card">
+                <img src="/assets/class.png" alt="ClassRoom">
+                <h3>ClassRoom</h3>
+                <div class="project-meta">Education platform</div>
+                <p>ClassRoom helps teachers create lessons, assignments and grade students. Optimized for offline usage and low-data environments.</p>
+                <p style="font-size:0.9rem;color:gray;">Tech: Vue.js, Local storage sync. Status: WEB</p>
+                <a href="https://classroom-tpj8.onrender.com" class="btn" role="button">visit</a>
+            </div>
+
+            <div class="card">
+                <img src="./assets/hack.png" alt="HackLab">
+                <h3>HackLab</h3>
+                <div class="project-meta">Community labs & resources</div>
+                <p>HackLab is a community for developers who are working together to achieve somethig making their work easy without using many tools</p>
+                <p style="font-size:0.9rem;color:gray;">Tech: JAMstack. Status: WEB</p>
+                <a href="https://hacklab-9a4f.onrender.com/" class="btn" role="button">visit</a>
+            </div>
+
+            <div class="card">
+                <img src="./assets/k&d.png" alt="K&D Shop">
+                <h3>K&D Shop</h3>
+                <div class="project-meta">E‑commerce MVP</div>
+                <p>K&D Shop is a marketplace MVP for local artisans with catalog management, orders and simple shipping workflows.</p>
+                <p style="font-size:0.9rem;color:gray;">Tech: Shopify + integrations. Status: WEB</p>
+                <a href="https://kandd-shop.onrender.com/" class="btn" role="button">visit</a>
+            </div>
+            <div class="card">
+                <img src="./assets/qnexus.png" alt="K&D Shop">
+                <h3>Q-nexus</h3>
+                <div class="project-meta">Health AI</div>
+                <p>Q-nexus is a health support powered by AI ,supporting Doctors in Rwanda</p>
+                <p style="font-size:0.9rem;color:gray;">Tech: Shopify + integrations. Status: WEB</p>
+                <a href="https://kandd-shop.onrender.com/" class="btn" role="button">visit</a>
+            </div>
+            <div class="card">
+                <img src="./assets/wed.png" alt="K&D Shop">
+                <h3>WedCent</h3>
+                <div class="project-meta">Event planning platform</div>
+                <p>Wedcents: An integrated digital platform that optimizes event coordination and financial management with efficiency and precision.</p>
+                <p style="font-size:0.9rem;color:gray;">Tech: Shopify + integrations. Status: WEB</p>
+                <a href="https://kandd-shop.onrender.com/" class="btn" role="button">visit</a>
+            </div>
+
+        </div>
+    </section>
+
+    <section id="team">
+        <h2>Our Holiday Crew 🧑‍🎄</h2>
+        <div class="cards">
+
+            <div class="card team-card" >
+                <img src="/assets/loic.png" alt="aime">
+                <h3>Aime</h3>
+                <div class="team-role">Cybersecurity Engineer & Backend Engineer & CEO</div>
+                <div class="team-links">
+                    <a href="https://x.com/aime_loic_132" aria-label="aime Twitter"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="https://rw.linkedin.com/in/aimeloic" aria-label="Nancy LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+                    <a href="https://github.com/AIME-LOIC" aria-label="Nora GitHub"><i class="fa-brands fa-github"></i></a>
+                </div>
+            </div>
+
+            <div class="card team-card">
+                <img src="/assets/nani.png" alt="Nani">
+                <h3>Nani</h3>
+                <div class="team-role">Co-founder & Frontend Engineer</div>
+                <div class="team-links">
+                    <a href="#" aria-label="Kessy Twitter"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#" aria-label="Nancy LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+                    <a href="#" aria-label="Nora GitHub"><i class="fa-brands fa-github"></i></a>
+                </div>
+            </div>
+
+            <div class="card team-card">
+                <img src="https://source.unsplash.com/150x150/?man" alt="Greyson">
+                <h3>Greyson</h3>
+                <div class="team-role"> Designer & Blockchain Engineer</div>
+                <div class="team-links">
+                    <a href="#" aria-label="Kessy Twitter"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#" aria-label="Nancy LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+                    <a href="#" aria-label="Nora GitHub"><i class="fa-brands fa-github"></i></a>
+                </div>
+            </div>
+
+           
+            
+            <div class="card team-card" >
+                <img src="/assets/" alt="dieu">
+                <h3>Dieu Merci</h3>
+                <div class="team-role">Cybersecurity Engineer &</div>
+                <div class="team-links">
+                    <a href="https://x.com/aime_loic_132" aria-label="aime Twitter"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="https://rw.linkedin.com/in/aimeloic" aria-label="Nancy LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+                    <a href="https://github.com/AIME-LOIC" aria-label="Nora GitHub"><i class="fa-brands fa-github"></i></a>
+                </div>
+            </div>
+            
+            
+            
+        </div>
+    </section>
+
+    <section id="contact">
+        <h2>Send a Holiday Greeting </h2>
+        <div class="contact-container">
+            <div class="contact-info">
+                <h3>Get In Touch</h3>
+                <p><i class="fa-solid fa-envelope" aria-hidden="true"></i> info@1percent.digital</p>
+                <p><i class="fa-solid fa-phone" aria-hidden="true"></i> +250 123 456 789</p>
+                <p><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Kigali, Rwanda</p>
+            </div>
+            <form id="contact-form" action="https://formspree.io/f/xjkpopzz" method="POST">
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="_replyto" required>
+                </div>
+                <div class="form-group">
+                    <label for="message">Message</label>
+                    <textarea id="message" rows="5" name="message" required></textarea>
+                </div>
+                <button type="submit" class="btn">Send Holiday Message</button>
+            </form>
+        </div>
+    </section>
+
+</main>
+
+<div id="santa-sleigh" aria-hidden="true">
+    <i class="fa-solid fa-sleigh"></i>
+</div>
+
+<footer>
+    <p>&copy; 2025 1% Digital Solutions | Wishing you a Merry Christmas and a Happy New Year! 🥳</p>
+    <p>
+        <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+        <a href="#" aria-label="Twitter"><i class="fa-brands fa-twitter"></i></a>
+        <a href="#" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+        <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+    </p>
+</footer>
+
+<div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+<script src="/scripts/index.js">
+
+</script>   
 </body>
 </html>
