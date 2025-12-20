@@ -16,7 +16,7 @@
     --primary-green: #2ecc71; /* Brighter Christmas Green */
     --background-dark: #1b2631; /* Deep Dark Blue/Night Sky */
     --card-background-dark: #2c3e50; /* Slightly lighter dark for cards */
-    --text-color-dark: #ecf0f1; /* White/Snow color */
+    --text-color-dark: black; /* White/Snow color */
     --accent-gold: #f1c40f; /* Gold accent for highlights */
 }
 
@@ -27,7 +27,7 @@ body {
 }
 body.dark-mode {
     background: var(--background-dark);
-    color: var(--text-color-dark);
+    color: white;
 }
 
 /* Highlight Elements: Logo, Buttons, Links */
@@ -183,6 +183,10 @@ footer a {
     animation-name: snowfall;
     animation-timing-function: linear;
     animation-iteration-count: infinite;
+}
+.snowflake.dark-mode {
+    color: #000;
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
 }
 @keyframes snowfall {
     0% { top: -10%; transform: translateX(0); }
@@ -529,7 +533,7 @@ Every feature, project, and initiative under 1% is designed with a single princi
             <div class="contact-info">
                 <h3>Get In Touch</h3>
                 <p><i class="fa-solid fa-envelope" aria-hidden="true"></i> info@1percent.digital</p>
-                <p><i class="fa-solid fa-phone" aria-hidden="true"></i> +250 123 456 789</p>
+                <p><i class="fa-solid fa-phone" aria-hidden="true"></i> +250 791749219</p>
                 <p><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Kigali, Rwanda</p>
             </div>
             <form id="contact-form" action="https://formspree.io/f/xjkpopzz" method="POST">
