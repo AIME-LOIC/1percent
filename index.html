@@ -11,236 +11,13 @@
 <style>
 /* --- CHRISTMAS THEME STYLES (DARK MODE DEFAULT) --- */
 
-:root {
-    --primary-red: #e74c3c; /* Brighter Christmas Red */
-    --primary-green: #2ecc71; /* Brighter Christmas Green */
-    --background-dark: #1b2631; /* Deep Dark Blue/Night Sky */
-    --card-background-dark: #2c3e50; /* Slightly lighter dark for cards */
-    --text-color-dark: black; /* White/Snow color */
-    --accent-gold: #f1c40f; /* Gold accent for highlights */
-}
 
-/* Base Body and Text Color Changes */
-body {
-    background: var(--background-dark);
-    color: var(--text-color-dark);
-}
-body.dark-mode {
-    background: var(--background-dark);
-    color: white;
-}
-
-/* Highlight Elements: Logo, Buttons, Links */
-.nav-logo, #loader span, h1, h2, h3 {
-    color: var(--primary-red) !important;
-}
-.hero-data {
-    color: var(--accent-gold) !important;
-}
-
-/* Card Styling in Dark Mode */
-.card {
-    background-color: var(--card-background-dark);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--text-color-dark);
-}
-.card p, .card h3 {
-    color: var(--text-color-dark);
-}
-.card:hover {
-    border-color: var(--primary-green);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-}
-#team .cards .card.team-card:last-child {
-    grid-column: 1 / -1;      /* occupy full row */
-    justify-self: center;     /* center within that row */
-    max-width: 380px;         /* optional: limit width so it doesn't stretch */
-}
-/* Buttons and primary interactive elements */
-.btn {
-    background-color: var(--primary-red);
-    color: white !important;
-    border: 2px solid var(--primary-red);
-}
-.btn:hover {
-    background-color: var(--primary-green);
-    border-color: var(--primary-green);
-}
-
-/* Section Headings */
-h2 {
-    border-bottom: 3px solid var(--primary-green);
-}
-
-/* Service Icons */
-.service-icon, .about-icon i {
-    color: var(--primary-green) !important;
-}
-
-/* Navbar Style (make background darker for contrast) */
-nav {
-    background: rgba(44, 62, 80, 0.9) !important; /* Darkened navbar background */
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
-    position: relative; /* Needed for positioning lights */
-}
-nav a {
-    color: var(--text-color-dark);
-}
-nav a:hover {
-    color: var(--primary-red) !important;
-}
-
-/* 2. CHRISTMAS LIGHTS ON NAV BAR */
-.christmas-lights {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none; /* Allows clicks on links underneath */
-    overflow: hidden;
-    white-space: nowrap;
-    z-index: 10;
-    font-size: 1.2rem;
-}
-.christmas-lights span {
-    display: inline-block;
-    padding: 0 5px;
-    animation: light-twinkle 1s ease-in-out infinite alternate;
-}
-.christmas-lights span:nth-child(even) {
-    color: var(--primary-red);
-    animation-delay: 0.1s;
-}
-.christmas-lights span:nth-child(odd) {
-    color: var(--primary-green);
-    animation-delay: 0.5s;
-}
-@keyframes light-twinkle {
-    0% { opacity: 0.7; transform: scale(0.9); }
-    100% { opacity: 1; transform: scale(1.1); }
-}
-
-/* Hero Section */
-header {
-    background: linear-gradient(rgba(27, 38, 49, 0.9), rgba(27, 38, 49, 0.8));
-    color: white;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
-    padding: 150px 0;
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.hero-content {
-    z-index: 5;
-    text-align: center;
-    position: relative;
-    max-width: 800px;
-}
-.christmas-tree {
-    position: absolute;
-    font-size: 8rem;
-    z-index: 1;
-    top: 50%;
-    transform: translateY(-50%);
-    opacity: 0.7;
-    text-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
-    display: none;
-}
-@media (min-width: 768px) {
-    .christmas-tree {
-        display: block;
-    }
-}
-#tree-left { left: 20px; }
-#tree-right { right: 20px; }
-
-/* Footer */
-footer {
-    background-color: var(--primary-green);
-    color: white;
-    position: relative; /* Needed for Santa positioning relative to footer */
-    padding-bottom: 60px; /* Make space for Santa below */
-}
-footer a {
-    color: var(--accent-gold);
-}
-
-
-/* --- SNOWFALL ANIMATION CSS --- */
-
-.snowflake {
-    color: #fff;
-    font-size: 1.5em;
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
-    position: fixed;
-    top: -10%;
-    z-index: 1000;
-    animation-name: snowfall;
-    animation-timing-function: linear;
-    animation-iteration-count: infinite;
-}
-.snowflake.dark-mode {
-    color: #000;
-    text-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
-}
-@keyframes snowfall {
-    0% { top: -10%; transform: translateX(0); }
-    100% { top: 100%; transform: translateX(50px); }
-}
-
-.snowflake:nth-child(2n) { font-size: 2em; animation-duration: 14s; animation-delay: 1s; }
-.snowflake:nth-child(3n) { font-size: 1.2em; animation-duration: 18s; animation-delay: 2s; opacity: 0.8; }
-.snowflake:nth-child(5n) { font-size: 1.8em; animation-duration: 10s; animation-delay: 0.5s; }
-.snowflake:nth-child(7n) { font-size: 1em; animation-duration: 22s; animation-delay: 3s; opacity: 0.6; }
-
-/* 1. SANTA'S SLEIGH ANIMATION MOVED TO BOTTOM */
-#santa-sleigh {
-    position: absolute;
-    bottom: -10px; /* Place slightly below the footer area */
-    left: -200px; /* Start off-screen to the left */
-    font-size: 3.5rem; /* Slightly larger and more impactful at the bottom */
-    color: var(--primary-red);
-    text-shadow: 1px 1px 5px rgba(0,0,0,0.8);
-    z-index: 999;
-    animation: santa-fly-bottom 40s linear infinite; /* Longer duration for a slower, grander flight */
-    display: none;
-}
-
-@media (min-width: 900px) {
-    #santa-sleigh {
-        display: block;
-    }
-}
-
-/* Santa's movement keyframes: left to right, near the bottom edge */
-@keyframes santa-fly-bottom {
-    0% { 
-        left: -200px; 
-        bottom: 5px; 
-        transform: rotateZ(-3deg);
-    }
-    50% { 
-        left: 50%; 
-        bottom: 10px; 
-        transform: rotateZ(0deg);
-    }
-    100% { 
-        left: 110%; 
-        bottom: 5px; 
-        transform: rotateZ(3deg);
-    }
-}
 </style>
 <meta name="google-site-verification" content="ZfOqpsVV7Mv1-PxcKiUDQBBONWc1SKmeTi2y2OnZ_RY" />
 </head>
 <body class="dark-mode">
 
-<div id="snow-container" aria-hidden="true">
+<!-- <div id="snow-container" aria-hidden="true">
     <div class="snowflake" style="left: 2%;">❅</div>
     <div class="snowflake" style="left: 7%;">❆</div>
     <div class="snowflake" style="left: 12%;">❅</div>
@@ -271,7 +48,7 @@ footer a {
     <div class="snowflake" style="left: 75%;">❅</div>
     <div class="snowflake" style="left: 85%;">❆</div>
     <div class="snowflake" style="left: 95%;">❅</div>
-</div>
+</div> -->
 
 <a class="skip-link" href="#main" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">Skip to content</a>
 
@@ -286,7 +63,7 @@ footer a {
    
     
     <div class="nav-left" style="border: none; ">
-        <div class="nav-logo">🎄 1%</div>
+        <div class="nav-logo">1%</div>
         <ul class="nav-links" id="nav-links" aria-hidden="false">
             <li><a href="#about">About</a></li>
             <li><a href="#services">Services</a></li>
@@ -305,13 +82,13 @@ footer a {
 </nav>
 
 <header>
-    <span class="christmas-tree" id="tree-left" aria-hidden="true">🎄</span>
-    <span class="christmas-tree" id="tree-right" aria-hidden="true">🎄</span>
+    <span class="christmas-tree" id="tree-left" aria-hidden="true"></span>
+    <span class="christmas-tree" id="tree-right" aria-hidden="true"></span>
     
     <div class="hero-content">
-        <h1>✨ Happy Holidays from 1% Digital Solutions! ✨</h1>
-        <p>We're crafting innovative digital solutions for the new year.</p>
-        <div class="hero-data">5 Gifts | 6 Elves | 100% Holiday Cheer</div>
+        <h1>1% Digital Solutions</h1>
+        <p>We're crafting innovative digital solutions for the everyone.</p>
+        <div class="hero-data">5+ project | 5 Members | 100% Unique</div>
     </div>
 </header>
 
@@ -326,7 +103,7 @@ footer a {
                 <div class="about-icon" aria-hidden="true"><i class="fa-solid fa-bullseye"></i></div>
                 <div>
                     <h4>our story</h4>
-                    <p>1% was born from the vision of creating a platform that empowers individuals to achieve more, learn more, and connect more in the digital age. The project started with a simple but ambitious idea: what if just 1% of effort, focus, and innovation could spark a change in people’s lives and communities? From this, the name 1% emerged, symbolizing the small but powerful impact consistent action can create.<br><br><br>
+                    <p > 1% was born from the vision of creating a platform that empowers individuals to achieve more, learn more, and connect more in the digital age. The project started with a simple but ambitious idea: what if just 1% of effort, focus, and innovation could spark a change in people’s lives and communities? From this, the name 1% emerged, symbolizing the small but powerful impact consistent action can create.<br><br><br>
 
 The journey began with a focus on education, technology, and human connection. The founders noticed that while there is abundant knowledge and opportunity online, many people struggle to access it in an organized, engaging, and practical way. They wanted a platform that not only provides information but also encourages learning by doing, collaboration, and real-world application.<br><br><br>
 
@@ -379,7 +156,7 @@ Every feature, project, and initiative under 1% is designed with a single princi
     </section>
 
     <section id="services">
-        <h2>Our Holiday Offerings <i class="fa-solid fa-gift" style="color: #2ecc71;"></i>
+        <h2>Our Services <i class="fa-solid fa-gift" style="color: #2ecc71;"></i>
 </h2>
         <div class="services-grid">
             <div class="service-card"><i class="fa-solid fa-code service-icon" aria-hidden="true"></i><h3>Web Development</h3><p>Building responsive, accessible websites and web apps using modern stacks (React, Next.js, Node).</p></div>
@@ -395,7 +172,7 @@ Every feature, project, and initiative under 1% is designed with a single princi
     </section>
 
     <section id="projects">
-        <h2>Our Holiday Projects <i class="fa-solid fa-tree" style="color: #2ecc71;"></i>
+        <h2>Our Projects <i class="fa-solid fa-tree" style="color: #2ecc71;"></i>
 </h2>
         <div class="cards">
 
@@ -461,11 +238,11 @@ Every feature, project, and initiative under 1% is designed with a single princi
                 <a href="https://kandd-shop.onrender.com/" class="btn" role="button">visit</a>
             </div>
             <div class="card">
-                <img src="./assets/wed.png" alt="K&D Shop">
-                <h3>WedCent</h3>
-                <div class="project-meta">Event planning platform</div>
-                <p>Wedcents: An integrated digital platform that optimizes event coordination and financial management with efficiency and precision.</p>
-                <p style="font-size:0.9rem;color:gray;">Tech: Shopify + integrations. Status: WEB</p>
+                <img src="./assets/vlab.png" alt="K&D Shop">
+                <h3>V-lab</h3>
+                <div class="project-meta">V science lab</div>
+                <p>V-Lab is a virtual science laboratory platform that simulates real laboratory experiments in chemistry and biology through software. It allows students to perform experiments safely, interactively, and repeatedly without physical risk, chemical waste, or high costs</p>
+                <p style="font-size:0.9rem;color:gray;">Status: WEB</p>
                 <a href="https://kandd-shop.onrender.com/" class="btn" role="button">visit</a>
             </div>
 
@@ -473,7 +250,7 @@ Every feature, project, and initiative under 1% is designed with a single princi
     </section>
 
     <section id="team">
-        <h2>Our Holiday Crew 🧑‍🎄</h2>
+        <h2>Our Team</h2>
         <div class="cards">
 
             <div class="card team-card" >
@@ -556,7 +333,7 @@ Every feature, project, and initiative under 1% is designed with a single princi
     </section>
 
     <section id="contact">
-        <h2>Send a Holiday Greeting </h2>
+        <h2>Contact Us</h2>
         <div class="contact-container">
             <div class="contact-info">
                 <h3>Get In Touch</h3>
@@ -584,12 +361,12 @@ Every feature, project, and initiative under 1% is designed with a single princi
 
 </main>
 
-<div id="santa-sleigh" aria-hidden="true">
+<!-- <div id="santa-sleigh" aria-hidden="true">
     <i class="fa-solid fa-sleigh"></i>
-</div>
+</div> -->
 
 <footer>
-    <p>&copy; 2025 1% Digital Solutions | Wishing you a Merry Christmas and a Happy New Year! 🥳</p>
+    <p>&copy; 2026 1% Digital Solutions </p>
     <p>
         <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
         <a href="#" aria-label="Twitter"><i class="fa-brands fa-twitter"></i></a>

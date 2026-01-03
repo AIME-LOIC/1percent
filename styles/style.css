@@ -39,7 +39,7 @@ nav{position:fixed;top:0;left:0;width:100%;height:var(--nav-height);display:flex
 .nav-logo{font-size:1.6rem;font-weight:700;color:var(--primary-color);font-family:'Montserrat',sans-serif;}
 .nav-links{list-style:none;display:flex;gap:8px;align-items:center;}
 .nav-links li a{text-decoration:none;color:inherit;font-size:1rem;padding:10px 12px;margin:0 4px;transition:color 0.3s;}
-.nav-links li a:hover{color:var(--primary-color);}
+.nav-links li a:hover{color:white;}
 /* hamburger changed to button for accessibility */
 .hamburger-btn{display:none;font-size:1.6rem;cursor:pointer;color:inherit;background:transparent;border:0;padding:8px;border-radius:6px;z-index:10003;}
 .hamburger-btn:focus{outline:2px solid var(--primary-color);}
