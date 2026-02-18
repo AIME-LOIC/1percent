@@ -1,0 +1,137 @@
+@import './components/layout.css';
+@import './components/navbar.css';
+@import './components/hero.css';
+@import './components/sections.css';
+@import './components/contact.css';
+@import './components/footer.css';
+@import './components/toast.css';
+@import './components/loader.css';
+
+:root {
+  --primary-color: #4caf50;
+  --secondary-color: #007bff;
+  --accent-color: #ff9800;
+  --background-light: #f5f5f5;
+  --text-light: #111;
+  --background-dark: #1a1a2e;
+  --text-dark: #f0f0f0;
+  --card-dark: #2c2c4b;
+  --shadow-light: rgba(0, 0, 0, 0.1);
+  --shadow-dark: rgba(0, 0, 0, 0.6);
+  --header-overlay: rgba(0, 0, 0, 0.6);
+  --nav-height: 80px;
+  --content-width: 1100px;
+  --primary-red: #2ecc71;
+  --primary-green: #2ecc71;
+  --accent-gold: #f1c40f;
+  --nav-bg: rgba(255, 255, 255, 0.9);
+  --nav-text: #1b2631;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  min-height: 100vh;
+  transition: background 0.5s, color 0.5s;
+  line-height: 1.6;
+}
+
+.light-mode {
+  background: var(--background-light);
+  color: var(--text-light);
+  --nav-bg: rgba(255, 255, 255, 0.9);
+  --nav-text: #1b2631;
+}
+
+.light-mode .card,
+.light-mode .service-card {
+  background: #fff;
+  box-shadow: 0 4px 15px var(--shadow-light);
+}
+
+.light-mode footer,
+.light-mode nav {
+  background: #e0e0e0;
+  color: var(--text-light);
+}
+
+.dark-mode {
+  background: var(--background-dark);
+  color: var(--text-dark);
+  --nav-bg: rgba(44, 62, 80, 0.9);
+  --nav-text: #ffffff;
+}
+
+.dark-mode .card,
+.dark-mode .service-card {
+  background: var(--card-dark);
+  box-shadow: 0 8px 30px var(--shadow-dark);
+}
+
+.dark-mode footer,
+.dark-mode nav {
+  background: #111122;
+  color: var(--text-dark);
+}
+
+.nav-logo,
+#loader span,
+h1,
+h2,
+h3 {
+  color: var(--primary-red) !important;
+}
+
+.hero-data {
+  color: var(--accent-gold) !important;
+}
+
+.card {
+  background-color: var(--card-dark);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: inherit;
+}
+
+.dark-mode .card {
+  color: white;
+}
+
+.card:hover {
+  border-color: var(--primary-green);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.btn {
+  background-color: var(--primary-red);
+  color: white !important;
+  border: 2px solid var(--primary-red);
+}
+
+.btn:hover {
+  background-color: var(--primary-green);
+  border-color: var(--primary-green);
+}
+
+h2 {
+  border-bottom: 3px solid var(--primary-green);
+}
+
+.service-icon,
+.about-icon i {
+  color: var(--primary-green) !important;
+}
+
+#team .cards .card.team-card:last-child {
+  grid-column: 1 / -1;
+  justify-self: center;
+  max-width: 380px;
+}

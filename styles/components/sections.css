@@ -1,0 +1,135 @@
+.cards,
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 28px;
+  margin-top: 20px;
+}
+
+.card,
+.service-card {
+  padding: 22px;
+  border-radius: 18px;
+  transition: transform 0.3s, box-shadow 0.3s;
+  text-align: left;
+}
+
+.card img,
+.service-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 14px;
+}
+
+.card h3,
+.service-card h3 {
+  margin-bottom: 8px;
+  font-size: 1.25rem;
+}
+
+.card p,
+.service-card p {
+  margin-bottom: 8px;
+  color: inherit;
+  line-height: 1.45;
+}
+
+.card:hover,
+.service-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+.service-card {
+  border-bottom: 5px solid var(--accent-color);
+  text-align: center;
+}
+
+.service-icon {
+  font-size: 3rem;
+  margin-bottom: 15px;
+  display: block;
+}
+
+.card {
+  border-bottom: 5px solid var(--accent-color);
+  padding-bottom: 18px;
+  background: transparent;
+}
+
+.card .btn {
+  margin-top: 10px;
+}
+
+.project-meta {
+  font-size: 0.9rem;
+  color: gray;
+  margin-bottom: 8px;
+}
+
+.team-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 22px;
+  border-radius: 18px;
+}
+
+.team-card img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  margin-bottom: 12px;
+}
+
+.team-role {
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 8px;
+}
+
+.team-links a {
+  margin: 0 6px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.about-text {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+.about-img img {
+  width: 100%;
+  border-radius: 12px;
+}
+
+.about-cards .card {
+  text-align: left;
+  padding: 18px;
+  border-radius: 14px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.about-cards .card .about-icon {
+  font-size: 2rem;
+  color: var(--primary-color);
+  margin-top: 4px;
+}
+
+.about-cards .card h4 {
+  margin-bottom: 6px;
+  font-size: 1.05rem;
+}
+
+@media (max-width: 768px) {
+  .about-cards .card {
+    flex-direction: row;
+  }
+}
