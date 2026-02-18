@@ -1,0 +1,164 @@
+nav {
+  background: var(--nav-bg) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+  position: fixed;
+  width: 100%;
+  top: 0;
+  left: 0;
+  z-index: 10002;
+  height: var(--nav-height);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+  transition: backdrop-filter 0.2s, background 0.5s, color 0.5s;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+nav a {
+  color: var(--nav-text) !important;
+}
+
+nav a:hover {
+  color: var(--primary-red) !important;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.nav-logo {
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.nav-links li a {
+  text-decoration: none;
+  font-size: 1rem;
+  padding: 10px 12px;
+  margin: 0 4px;
+  transition: color 0.3s;
+}
+
+.nav-theme-toggle {
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-theme-toggle button {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font-size: 1.1rem;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.nav-theme-toggle button:focus,
+.hamburger-btn:focus {
+  outline: 2px solid var(--primary-color);
+}
+
+.hamburger-btn {
+  display: none;
+  font-size: 1.6rem;
+  cursor: pointer;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  padding: 8px;
+  border-radius: 6px;
+  z-index: 10003;
+}
+
+#theme-toggle {
+  position: fixed;
+  top: calc(var(--nav-height) + 12px);
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: var(--secondary-color);
+  color: #fff;
+  font-size: 1rem;
+  z-index: 10000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+#theme-toggle:hover {
+  background: #0056b3;
+  transform: scale(1.05);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.7);
+}
+
+@media (max-width: 768px) {
+  .hamburger-btn {
+    display: block;
+  }
+
+  .nav-links {
+    display: none;
+    flex-direction: column;
+    background: var(--secondary-color);
+    position: absolute;
+    top: var(--nav-height);
+    right: 0;
+    width: 220px;
+    padding: 20px;
+    color: white;
+    border-radius: 10px;
+  }
+
+  .nav-links.active {
+    display: flex;
+  }
+
+  #theme-toggle {
+    top: calc(var(--nav-height) + 12px);
+    right: 16px;
+    width: 44px;
+    height: 44px;
+    font-size: 1rem;
+  }
+
+  .nav-theme-toggle {
+    display: none;
+  }
+}
+
+@media (min-width: 769px) {
+  .nav-theme-toggle {
+    display: flex;
+  }
+
+  #theme-toggle {
+    display: none;
+  }
+
+  .nav-links {
+    gap: 12px;
+  }
+
+  nav {
+    padding: 0 36px;
+  }
+}
