@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
+import { smoothScrollToHash } from '../utils/smoothScroll';
 
 const links = [
   { href: '#about', label: 'About' },
@@ -9,6 +10,11 @@ const links = [
 ];
 
 function Navbar({ isDarkMode, isMenuOpen, onThemeToggle, onMenuToggle, onLinkClick }) {
+  const handleLinkClick = (event, href) => {
+    event.preventDefault();
+    smoothScrollToHash(href, onLinkClick);
+  };
+
   return (
     <>
       <nav role="navigation" aria-label="Main navigation">
@@ -17,7 +23,9 @@ function Navbar({ isDarkMode, isMenuOpen, onThemeToggle, onMenuToggle, onLinkCli
           <ul className="nav-links-desktop" id="nav-links" aria-hidden="false">
             {links.map((link) => (
               <li key={link.href}>
-                <a href={link.href}>{link.label}</a>
+                <a href={link.href} onClick={(event) => handleLinkClick(event, link.href)}>
+                  {link.label}
+                </a>
               </li>
             ))}
           </ul>
@@ -79,7 +87,7 @@ function Navbar({ isDarkMode, isMenuOpen, onThemeToggle, onMenuToggle, onLinkCli
               <ul className="nav-links-mobile" aria-hidden="false">
                 {links.map((link) => (
                   <li key={link.href}>
-                    <a href={link.href} onClick={onLinkClick}>
+                    <a href={link.href} onClick={(event) => handleLinkClick(event, link.href)}>
                       {link.label}
                     </a>
                   </li>

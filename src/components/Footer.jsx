@@ -1,7 +1,11 @@
+import { motion } from 'framer-motion';
+
 function Footer() {
   return (
     <footer>
-      <p>&copy; 2026 1% Digital Solutions </p>
+      <motion.p initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
+        &copy; 2026 1% Digital Solutions
+      </motion.p>
       <p>
         <a href="#" aria-label="Facebook">
           <i className="fa-brands fa-facebook-f"></i>

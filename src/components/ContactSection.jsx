@@ -1,4 +1,6 @@
+import { motion } from 'framer-motion';
 import { useState } from 'react';
+import SectionReveal from './SectionReveal';
 
 function ContactSection({ onSubmit }) {
   const [formValues, setFormValues] = useState({
@@ -28,9 +30,9 @@ function ContactSection({ onSubmit }) {
   };
 
   return (
-    <section id="contact">
+    <SectionReveal as="section" id="contact">
       <h2>Contact Us</h2>
-      <div className="contact-container">
+      <motion.div className="contact-container" whileHover={{ y: -4 }}>
         <div className="contact-info">
           <h3>Get In Touch</h3>
           <p>
@@ -62,14 +64,21 @@ function ContactSection({ onSubmit }) {
           </div>
           <div className="form-group">
             <label htmlFor="message">Message</label>
-            <textarea id="message" rows="5" name="message" required value={formValues.message} onChange={handleChange}></textarea>
+            <textarea
+              id="message"
+              rows="5"
+              name="message"
+              required
+              value={formValues.message}
+              onChange={handleChange}
+            ></textarea>
           </div>
-          <button type="submit" className="btn" disabled={isSubmitting}>
+          <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
             {submitLabel}
           </button>
         </form>
-      </div>
-    </section>
+      </motion.div>
+    </SectionReveal>
   );
 }
 

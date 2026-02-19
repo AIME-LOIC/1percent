@@ -22,7 +22,7 @@ function ThreeHeroBackground({ isDarkMode }) {
     const geometry = new THREE.BufferGeometry();
     const vertices = [];
 
-    for (let i = 0; i < 2000; i += 1) {
+    for (let i = 0; i < 1400; i += 1) {
       vertices.push(
         THREE.MathUtils.randFloatSpread(2000),
         THREE.MathUtils.randFloatSpread(2000),
@@ -32,7 +32,7 @@ function ThreeHeroBackground({ isDarkMode }) {
 
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
 
-    const material = new THREE.PointsMaterial({ color: isDarkMode ? 0xffffff : 0x2ecc71, size: 2 });
+    const material = new THREE.PointsMaterial({ color: isDarkMode ? 0x9ec8ff : 0x2f7cff, size: 1.6 });
     const points = new THREE.Points(geometry, material);
     pointsRef.current = points;
     scene.add(points);
@@ -74,7 +74,7 @@ function ThreeHeroBackground({ isDarkMode }) {
 
   useEffect(() => {
     if (pointsRef.current) {
-      pointsRef.current.material.color.setHex(isDarkMode ? 0xffffff : 0x2ecc71);
+      pointsRef.current.material.color.setHex(isDarkMode ? 0x9ec8ff : 0x2f7cff);
     }
   }, [isDarkMode]);
 

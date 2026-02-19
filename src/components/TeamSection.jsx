@@ -1,3 +1,6 @@
+import Card from './Card';
+import SectionReveal from './SectionReveal';
+
 const teamMembers = [
   {
     image: '/assets/loic.png',
@@ -47,12 +50,20 @@ const teamMembers = [
 
 function TeamSection() {
   return (
-    <section id="team">
+    <SectionReveal as="section" id="team">
       <h2>Our Team</h2>
       <div className="cards">
-        {teamMembers.map((member) => (
-          <div className="card team-card" key={member.name}>
-            <img src={member.image} alt={member.alt} />
+        {teamMembers.map((member, idx) => (
+          <Card
+            className="team-card"
+            key={member.name}
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ delay: idx * 0.06 }}
+            whileHover={{ y: -6 }}
+          >
+            <img src={member.image} alt={member.alt} loading="lazy" decoding="async" />
             <h3>{member.name}</h3>
             <div className="team-role">{member.role}</div>
             <div className="team-links">
@@ -62,10 +73,10 @@ function TeamSection() {
                 </a>
               ))}
             </div>
-          </div>
+          </Card>
         ))}
       </div>
-    </section>
+    </SectionReveal>
   );
 }
 
