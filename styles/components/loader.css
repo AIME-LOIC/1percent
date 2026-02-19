@@ -1,59 +1,32 @@
 #loader {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100vh;
+  inset: 0;
+  z-index: 26000;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   flex-direction: column;
-  background: var(--background-light);
-  color: var(--text-light);
-  z-index: 9999;
-  transition: opacity 0.8s, background 0.3s, color 0.3s;
-}
-
-.dark-mode #loader {
-  background: var(--background-dark);
-  color: var(--text-dark);
+  background: radial-gradient(circle at 50% 20%, rgba(64, 137, 255, 0.22), transparent 55%), #0b0f19;
+  transition: opacity 0.5s ease;
 }
 
 #loader span {
-  font-size: 4rem;
-  margin-bottom: 25px;
-  font-weight: 700;
-  font-family: 'Montserrat', sans-serif;
-  animation: pulse 2s infinite alternate;
+  font-size: 3.2rem;
+  font-weight: 800;
+  margin-bottom: 18px;
 }
 
 .loader-circle {
-  width: 90px;
-  height: 90px;
-  border: 8px solid var(--card-dark);
-  border-top: 8px solid var(--primary-color);
+  width: 68px;
+  height: 68px;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes pulse {
-  0% {
-    opacity: 0.5;
-    transform: scale(0.95);
-  }
-
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
+  border: 3px solid rgba(122, 170, 255, 0.28);
+  border-top-color: #4aa7ff;
+  animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
+  to {
     transform: rotate(360deg);
   }
 }

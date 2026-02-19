@@ -1,64 +1,53 @@
-import { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useCallback, useEffect, useState } from 'react';
 import Navbar from './components/Navbar';
-import Hero from './components/Hero';
-import StatsStrip from './components/StatsStrip';
-import AboutSection from './components/AboutSection';
-import ServicesSection from './components/ServicesSection';
-import ProjectsSection from './components/ProjectsSection';
-import TeamSection from './components/TeamSection';
-import ContactSection from './components/ContactSection';
-import Footer from './components/Footer';
 import ToastContainer from './components/ToastContainer';
+import HomePage from './pages/HomePage';
 
 function App() {
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const storedTheme = localStorage.getItem('theme-mode');
+    return storedTheme ? storedTheme === 'dark' : true;
+  });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [loaderVisible, setLoaderVisible] = useState(true);
-  const [loaderFading, setLoaderFading] = useState(false);
   const [toasts, setToasts] = useState([]);
 
   useEffect(() => {
     document.body.classList.remove('dark-mode', 'light-mode');
     document.body.classList.add(isDarkMode ? 'dark-mode' : 'light-mode');
+    localStorage.setItem('theme-mode', isDarkMode ? 'dark' : 'light');
     document.body.style.overflow = isMenuOpen ? 'hidden' : '';
   }, [isDarkMode, isMenuOpen]);
 
   useEffect(() => {
-    const fadeTimer = setTimeout(() => setLoaderFading(true), 900);
-    const hideTimer = setTimeout(() => setLoaderVisible(false), 1450);
-    return () => {
-      clearTimeout(fadeTimer);
-      clearTimeout(hideTimer);
-    };
+    const hideTimer = setTimeout(() => setLoaderVisible(false), 1300);
+    return () => clearTimeout(hideTimer);
+  }, []);
+
+  const showToast = useCallback((type = 'info', message = '', duration = 3600) => {
+    const id = crypto.randomUUID();
+    setToasts((prev) => [...prev.slice(-3), { id, type, message, duration }]);
   }, []);
 
   useEffect(() => {
     const welcomeTimer = setTimeout(() => {
-      showToast('info', 'Welcome to 1% Digital Solutions!', 3000);
-    }, 1200);
+      showToast('info', 'Welcome to 1% Digital Solutions!', 2800);
+    }, 950);
     return () => clearTimeout(welcomeTimer);
-  }, []);
-
-  const showToast = (type = 'info', message = '', timeout = 4000) => {
-    const id = crypto.randomUUID();
-    setToasts((prev) => [...prev, { id, type, message }]);
-    const timeoutId = setTimeout(() => {
-      setToasts((prev) => prev.filter((toast) => toast.id !== id));
-    }, timeout);
-    return () => clearTimeout(timeoutId);
-  };
+  }, [showToast]);
 
   const handleThemeToggle = () => {
     setIsDarkMode((prev) => {
-      const nextModeIsDark = !prev;
-      showToast('info', nextModeIsDark ? 'Switched to dark mode' : 'Switched to light mode', 1800);
-      return nextModeIsDark;
+      const next = !prev;
+      showToast('info', next ? 'Switched to dark mode' : 'Switched to light mode', 1700);
+      return next;
     });
   };
 
+  const handleDismissToast = (id) => setToasts((prev) => prev.filter((toast) => toast.id !== id));
   const handleMenuToggle = () => setIsMenuOpen((prev) => !prev);
   const handleCloseMenu = () => setIsMenuOpen(false);
-  const handleDismissToast = (id) => setToasts((prev) => prev.filter((toast) => toast.id !== id));
 
   const handleContactSubmit = async (formValues, resetForm, setSubmittingLabel) => {
     try {
@@ -93,12 +82,22 @@ function App() {
         Skip to content
       </a>
 
-      {loaderVisible && (
-        <div id="loader" role="status" aria-live="polite" style={{ opacity: loaderFading ? 0 : 1 }}>
-          <span>1%</span>
-          <div className="loader-circle" aria-hidden="true"></div>
-        </div>
-      )}
+      <AnimatePresence>
+        {loaderVisible && (
+          <motion.div
+            id="loader"
+            role="status"
+            aria-live="polite"
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <span>1%</span>
+            <div className="loader-circle" aria-hidden="true"></div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <button
         id="theme-toggle"
@@ -119,18 +118,9 @@ function App() {
         onLinkClick={handleCloseMenu}
       />
 
-      <Hero isDarkMode={isDarkMode} />
-      <StatsStrip />
-
-      <main className="main-content" id="main" tabIndex="-1">
-        <AboutSection />
-        <ServicesSection />
-        <ProjectsSection />
-        <TeamSection />
-        <ContactSection onSubmit={handleContactSubmit} />
-      </main>
-
-      <Footer />
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.33 }}>
+        <HomePage isDarkMode={isDarkMode} onContactSubmit={handleContactSubmit} />
+      </motion.div>
 
       <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
     </>

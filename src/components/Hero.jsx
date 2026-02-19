@@ -1,7 +1,13 @@
 import { motion } from 'framer-motion';
+import { smoothScrollToHash } from '../utils/smoothScroll';
 import ThreeHeroBackground from './ThreeHeroBackground';
 
 function Hero({ isDarkMode }) {
+  const handleCtaClick = (event, hash) => {
+    event.preventDefault();
+    smoothScrollToHash(hash);
+  };
+
   return (
     <header>
       <ThreeHeroBackground isDarkMode={isDarkMode} />
@@ -19,10 +25,10 @@ function Hero({ isDarkMode }) {
         <div className="hero-data">5+ project | 5 Members | 100% Unique</div>
 
         <div className="hero-cta">
-          <a href="#contact" className="btn btn-primary" role="button">
+          <a href="#contact" className="btn btn-primary" role="button" onClick={(event) => handleCtaClick(event, '#contact')}>
             Get Started
           </a>
-          <a href="#projects" className="btn btn-secondary" role="button">
+          <a href="#projects" className="btn btn-secondary" role="button" onClick={(event) => handleCtaClick(event, '#projects')}>
             View Projects
           </a>
         </div>

@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import Card from './Card';
 import SectionReveal from './SectionReveal';
 
 const services = [
@@ -45,7 +46,7 @@ function ServicesSection() {
       <h2>Our Services</h2>
       <div className="services-grid">
         {services.map((service, index) => (
-          <motion.div
+          <Card
             className="service-card"
             key={service.title}
             initial={{ opacity: 0, y: 18 }}
@@ -54,10 +55,10 @@ function ServicesSection() {
             transition={{ delay: index * 0.04 }}
             whileHover={{ y: -6, scale: 1.01 }}
           >
-            <i className={service.icon} aria-hidden="true"></i>
+            <motion.i className={service.icon} aria-hidden="true" whileHover={{ rotate: 6, scale: 1.1 }}></motion.i>
             <h3>{service.title}</h3>
             <p>{service.text}</p>
-          </motion.div>
+          </Card>
         ))}
       </div>
     </SectionReveal>

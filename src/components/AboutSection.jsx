@@ -1,4 +1,5 @@
 import SectionReveal from './SectionReveal';
+import Card from './Card';
 
 function AboutSection() {
   return (
@@ -6,11 +7,11 @@ function AboutSection() {
       <h2>About Us </h2>
       <div className="about-text">
         <div className="about-img">
-          <img src="https://source.unsplash.com/600x400/?technology" alt="Our Festive Team" />
+          <img src="https://source.unsplash.com/600x400/?technology" alt="Our Festive Team" loading="lazy" decoding="async" />
         </div>
 
         <div className="about-cards cards" aria-hidden="false" style={{ marginTop: '20px' }}>
-          <div className="card">
+          <Card>
             <div className="about-icon" aria-hidden="true">
               <i className="fa-solid fa-bullseye"></i>
             </div>
@@ -44,9 +45,9 @@ function AboutSection() {
                 that first crucial step and continue progressing.
               </p>
             </div>
-          </div>
+          </Card>
 
-          <div className="card">
+          <Card>
             <div className="about-icon" aria-hidden="true">
               <i className="fa-solid fa-eye"></i>
             </div>
@@ -57,9 +58,9 @@ function AboutSection() {
                 driven by consistency, creativity, and progress
               </p>
             </div>
-          </div>
+          </Card>
 
-          <div className="card">
+          <Card>
             <div className="about-icon" aria-hidden="true">
               <i className="fa-solid fa-bullseye"></i>
             </div>
@@ -70,9 +71,9 @@ function AboutSection() {
                 provides tools, knowledge, and opportunities for personal and professional growth.
               </p>
             </div>
-          </div>
+          </Card>
 
-          <div className="card">
+          <Card>
             <div className="about-icon" aria-hidden="true">
               <i className="fa-solid fa-hand-holding-heart"></i>
             </div>
@@ -83,9 +84,9 @@ function AboutSection() {
                 outcomes in mind.
               </p>
             </div>
-          </div>
+          </Card>
 
-          <div className="card">
+          <Card>
             <div className="about-icon" aria-hidden="true">
               <i className="fa-solid fa-handshake-angle"></i>
             </div>
@@ -96,9 +97,9 @@ function AboutSection() {
                 solutions.
               </p>
             </div>
-          </div>
+          </Card>
 
-          <div className="card">
+          <Card>
             <div className="about-icon" aria-hidden="true">
               <i className="fa-solid fa-users"></i>
             </div>
@@ -106,7 +107,7 @@ function AboutSection() {
               <h4>Community</h4>
               <p>Monthly meetups, workshops and hackathons to grow talent and make technology more accessible.</p>
             </div>
-          </div>
+          </Card>
         </div>
       </div>
     </SectionReveal>
