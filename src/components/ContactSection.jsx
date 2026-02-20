@@ -9,7 +9,7 @@ function ContactSection({ onSubmit }) {
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitLabel, setSubmitLabel] = useState('Send Holiday Message');
+  const [submitLabel, setSubmitLabel] = useState('Send Message');
 
   const handleChange = (event) => {
     const { name, value } = event.target;

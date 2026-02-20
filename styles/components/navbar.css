@@ -10,7 +10,7 @@ nav {
   justify-content: space-between;
   padding: 0 22px;
   border-bottom: 1px solid var(--line);
-  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  background: color-mix(in srgb, var(--bg) 84%, transparent);
   backdrop-filter: blur(12px) saturate(130%);
   -webkit-backdrop-filter: blur(12px) saturate(130%);
 }
@@ -45,7 +45,7 @@ nav {
 
 .nav-links-desktop a:hover {
   color: var(--text);
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
 }
 
 .nav-links-desktop a:focus-visible {
@@ -53,15 +53,8 @@ nav {
   outline-offset: 2px;
 }
 
-.nav-theme-toggle {
-  display: flex;
-  align-items: center;
-}
-
-.nav-theme-toggle button,
 .hamburger-btn,
 .drawer-header button,
-.drawer-theme-btn,
 #theme-toggle {
   border: 1px solid var(--line);
   background: var(--surface);
@@ -69,7 +62,6 @@ nav {
   cursor: pointer;
 }
 
-.nav-theme-toggle button,
 .hamburger-btn,
 #theme-toggle,
 .drawer-header button {
@@ -84,12 +76,13 @@ nav {
 #theme-toggle {
   position: fixed;
   right: 18px;
-  bottom: 20px;
+  top: calc(var(--nav-height) + 14px);
   z-index: 22000;
   border-radius: 999px;
   width: 45px;
   height: 45px;
   box-shadow: var(--shadow);
+  background: color-mix(in srgb, var(--surface-strong) 90%, transparent);
 }
 
 .hamburger-btn {
@@ -100,7 +93,7 @@ nav {
   position: fixed;
   inset: 0;
   border: 0;
-  background: rgba(2, 6, 16, 0.52);
+  background: rgba(5, 15, 9, 0.58);
   z-index: 21000;
 }
 
@@ -141,23 +134,11 @@ nav {
   padding: 12px 10px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--line);
-  background: var(--surface);
-}
-
-.drawer-theme-btn {
-  margin-top: auto;
-  border-radius: var(--radius-sm);
-  padding: 12px 14px;
-  color: var(--text);
-  display: inline-flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: center;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
 }
 
 @media (max-width: 900px) {
-  .nav-links-desktop,
-  .nav-theme-toggle {
+  .nav-links-desktop {
     display: none;
   }
 

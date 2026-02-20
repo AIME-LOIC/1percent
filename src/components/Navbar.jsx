@@ -9,7 +9,7 @@ const links = [
   { href: '#contact', label: 'Contact' }
 ];
 
-function Navbar({ isDarkMode, isMenuOpen, onThemeToggle, onMenuToggle, onLinkClick }) {
+function Navbar({ isMenuOpen, onMenuToggle, onLinkClick }) {
   const handleLinkClick = (event, href) => {
     event.preventDefault();
     smoothScrollToHash(href, onLinkClick);
@@ -29,18 +29,6 @@ function Navbar({ isDarkMode, isMenuOpen, onThemeToggle, onMenuToggle, onLinkCli
               </li>
             ))}
           </ul>
-        </div>
-
-        <div className="nav-theme-toggle" aria-hidden="false">
-          <button
-            id="nav-theme-toggle"
-            aria-label="Toggle theme (desktop)"
-            aria-pressed={isDarkMode}
-            type="button"
-            onClick={onThemeToggle}
-          >
-            <i className={isDarkMode ? 'fa-solid fa-sun' : 'fa-solid fa-moon'} aria-hidden="true"></i>
-          </button>
         </div>
 
         <button
@@ -94,10 +82,6 @@ function Navbar({ isDarkMode, isMenuOpen, onThemeToggle, onMenuToggle, onLinkCli
                 ))}
               </ul>
 
-              <button className="drawer-theme-btn" type="button" onClick={onThemeToggle}>
-                <i className={isDarkMode ? 'fa-solid fa-sun' : 'fa-solid fa-moon'} aria-hidden="true"></i>
-                Toggle Theme
-              </button>
             </motion.aside>
           </>
         )}

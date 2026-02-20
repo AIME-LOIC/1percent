@@ -1,8 +1,8 @@
 .contact-container {
-  border: 1px solid var(--line);
+  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
   border-radius: var(--radius-lg);
-  background: var(--surface-strong);
-  box-shadow: var(--shadow);
+  background: linear-gradient(155deg, color-mix(in srgb, var(--surface-strong) 88%, transparent), color-mix(in srgb, var(--surface) 70%, transparent));
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   max-width: 790px;
@@ -38,7 +38,7 @@
   width: 100%;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.02);
+  background: color-mix(in srgb, var(--surface) 74%, transparent);
   color: var(--text);
   padding: 11px 12px;
   outline: none;
@@ -47,7 +47,7 @@
 .form-group input:focus,
 .form-group textarea:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(76, 143, 255, 0.2);
+  box-shadow: 0 0 0 3px rgba(155, 225, 93, 0.26);
 }
 
 button[type='submit'] {
