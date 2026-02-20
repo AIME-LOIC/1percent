@@ -72,7 +72,7 @@ function App() {
     } catch {
       showToast('error', 'An error occurred. Please try again.', 3000);
     } finally {
-      setSubmittingLabel('Send Holiday Message');
+      setSubmittingLabel('Send Message');
     }
   };
 
@@ -111,9 +111,7 @@ function App() {
       </button>
 
       <Navbar
-        isDarkMode={isDarkMode}
         isMenuOpen={isMenuOpen}
-        onThemeToggle={handleThemeToggle}
         onMenuToggle={handleMenuToggle}
         onLinkClick={handleCloseMenu}
       />

@@ -86,5 +86,16 @@
     "href": "https://kandd-shop.onrender.com/",
     "cta": "visit",
     "category": "Web"
+  },
+  {
+    "image": "https://source.unsplash.com/900x600/?startup,teamwork",
+    "alt": "StartNow startup platform",
+    "title": "StartNow",
+    "meta": "Startup discovery & idea collaboration",
+    "description": "StartNow is a platform where people can join and discover many startups, apply to collaborate, add startup ideas, and connect with builders and teams.",
+    "details": "Tech: React, Node.js, PostgreSQL. Status: WEB",
+    "href": "#",
+    "cta": "Visit",
+    "category": "Web"
   }
 ]

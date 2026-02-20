@@ -4,14 +4,12 @@ import Footer from '../components/Footer';
 import Hero from '../components/Hero';
 import ProjectsSection from '../components/ProjectsSection';
 import ServicesSection from '../components/ServicesSection';
-import StatsStrip from '../components/StatsStrip';
 import TeamSection from '../components/TeamSection';
 
 function HomePage({ isDarkMode, onContactSubmit }) {
   return (
     <>
       <Hero isDarkMode={isDarkMode} />
-      <StatsStrip />
 
       <main className="main-content" id="main" tabIndex="-1">
         <AboutSection />

@@ -27,8 +27,8 @@ section {
   z-index: 60000;
   padding: 8px 14px;
   border-radius: 10px;
-  background: #0f1728;
-  color: #fff;
+  background: #1c3517;
+  color: #f5fde8;
 }
 
 .stats-strip {
@@ -37,16 +37,16 @@ section {
   padding: 0 20px;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
   position: relative;
   z-index: 3;
 }
 
 .stat-item {
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--surface);
-  box-shadow: var(--shadow);
+  border: 1px solid color-mix(in srgb, var(--line) 85%, transparent);
+  border-radius: 14px;
+  background: linear-gradient(165deg, color-mix(in srgb, var(--surface-strong) 86%, transparent), color-mix(in srgb, var(--surface) 68%, transparent));
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   padding: 16px 14px;
@@ -57,6 +57,7 @@ section {
   font-size: clamp(1.45rem, 3vw, 2rem);
   line-height: 1.1;
   margin-bottom: 4px;
+  color: color-mix(in srgb, var(--gold) 76%, var(--text));
 }
 
 .stat-item p {

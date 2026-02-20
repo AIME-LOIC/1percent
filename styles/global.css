@@ -9,18 +9,20 @@
 
 :root {
   --bg: #0b0f19;
-  --bg-elev: #111827;
-  --surface: rgba(255, 255, 255, 0.04);
-  --surface-strong: rgba(255, 255, 255, 0.06);
-  --line: rgba(255, 255, 255, 0.12);
-  --line-strong: rgba(255, 255, 255, 0.2);
-  --text: #f7f9ff;
-  --text-muted: #a8b1c5;
-  --accent: #4c8fff;
-  --accent-strong: #2f6fe0;
-  --accent-grad: linear-gradient(135deg, #4c8fff 0%, #5ea4ff 55%, #7bc2ff 100%);
-  --brand-green: #22c55e;
-  --shadow: 0 20px 60px rgba(3, 8, 20, 0.45);
+  --bg-elev: #121a2f;
+  --surface: rgba(18, 30, 56, 0.64);
+  --surface-strong: rgba(23, 39, 72, 0.76);
+  --line: rgba(122, 170, 255, 0.24);
+  --line-strong: rgba(74, 167, 255, 0.46);
+  --text: #f3f8ff;
+  --text-muted: #a6b7d6;
+  --accent: #4aa7ff;
+  --accent-strong: #2f7fd9;
+  --accent-grad: linear-gradient(135deg, #4aa7ff 0%, #67b6ff 55%, #8ad0ff 100%);
+  --brand-green: #4aa7ff;
+  --gold: #7fc2ff;
+  --card-glow: 0 18px 40px rgba(11, 26, 54, 0.45);
+  --shadow: 0 22px 56px rgba(6, 12, 28, 0.56);
   --nav-height: 72px;
   --content-width: 1120px;
   --radius: 14px;
@@ -44,8 +46,9 @@ body {
   line-height: 1.58;
   color: var(--text);
   background:
-    radial-gradient(900px 500px at 95% -10%, rgba(76, 143, 255, 0.16), transparent 60%),
-    radial-gradient(700px 450px at -10% -10%, rgba(71, 130, 234, 0.14), transparent 60%),
+    radial-gradient(840px 500px at 92% -8%, rgba(74, 167, 255, 0.2), transparent 60%),
+    radial-gradient(760px 460px at -8% -12%, rgba(111, 184, 255, 0.16), transparent 60%),
+    radial-gradient(900px 520px at 52% 118%, rgba(64, 137, 255, 0.12), transparent 70%),
     var(--bg);
   transition: background 0.25s ease, color 0.25s ease;
   text-rendering: optimizeLegibility;
@@ -59,32 +62,33 @@ body::before {
   inset: 0;
   pointer-events: none;
   z-index: -1;
-  background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-  background-size: 44px 44px;
+  background-image: linear-gradient(rgba(138, 199, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(94, 169, 255, 0.1) 1px, transparent 1px);
+  background-size: 40px 40px;
   mask-image: radial-gradient(circle at 50% 25%, rgba(0, 0, 0, 0.75), transparent 80%);
 }
 
 .dark-mode {
   --bg: #0b0f19;
-  --surface: rgba(255, 255, 255, 0.04);
-  --surface-strong: rgba(255, 255, 255, 0.06);
-  --line: rgba(255, 255, 255, 0.12);
-  --line-strong: rgba(255, 255, 255, 0.2);
-  --text: #f7f9ff;
-  --text-muted: #a8b1c5;
+  --surface: rgba(18, 30, 56, 0.64);
+  --surface-strong: rgba(23, 39, 72, 0.76);
+  --line: rgba(122, 170, 255, 0.24);
+  --line-strong: rgba(74, 167, 255, 0.46);
+  --text: #f3f8ff;
+  --text-muted: #a6b7d6;
 }
 
 .light-mode {
-  --bg: #f3f6fc;
+  --bg: #f3f7ff;
   --bg-elev: #ffffff;
-  --surface: rgba(255, 255, 255, 0.72);
-  --surface-strong: rgba(255, 255, 255, 0.9);
-  --line: rgba(30, 41, 59, 0.12);
-  --line-strong: rgba(30, 41, 59, 0.2);
-  --text: #0f172a;
-  --text-muted: #475569;
-  --shadow: 0 18px 48px rgba(15, 23, 42, 0.12);
+  --surface: rgba(255, 255, 255, 0.84);
+  --surface-strong: rgba(255, 255, 255, 0.94);
+  --line: rgba(72, 111, 179, 0.2);
+  --line-strong: rgba(60, 126, 220, 0.36);
+  --text: #16233d;
+  --text-muted: #4d6188;
+  --shadow: 0 18px 50px rgba(33, 66, 124, 0.14);
+  --card-glow: 0 14px 34px rgba(40, 78, 145, 0.14);
 }
 
 h1,
@@ -107,8 +111,8 @@ h2 {
 }
 
 ::selection {
-  background: rgba(76, 143, 255, 0.35);
-  color: #fff;
+  background: rgba(74, 167, 255, 0.44);
+  color: #0b1224;
 }
 
 a {
@@ -124,7 +128,7 @@ a {
   padding: 10px 18px;
   border-radius: var(--radius-sm);
   border: 1px solid transparent;
-  color: #fff;
+  color: #14240f;
   text-decoration: none;
   font-weight: 600;
   font-size: 0.95rem;
@@ -146,16 +150,16 @@ textarea:focus-visible {
 
 .btn-primary {
   background: var(--accent-grad);
-  box-shadow: 0 8px 26px rgba(76, 143, 255, 0.35);
+  box-shadow: 0 10px 26px rgba(74, 167, 255, 0.3);
 }
 
 .btn-primary:hover {
-  box-shadow: 0 10px 30px rgba(76, 143, 255, 0.45);
+  box-shadow: 0 12px 34px rgba(74, 167, 255, 0.4);
 }
 
 .btn-secondary {
   color: var(--text);
-  background: transparent;
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
   border-color: var(--line-strong);
 }
 

@@ -37,6 +37,11 @@ const services = [
     icon: 'fa-solid fa-gamepad service-icon',
     title: 'Game Development',
     text: "We're building games for kids,Adults, and more Rwandans who want to relex playing cool games"
+  },
+  {
+    icon: 'fa-solid fa-headset service-icon',
+    title: 'IT Desk Support',
+    text: 'Reliable IT desk support for setup, troubleshooting, maintenance, and day-to-day technical assistance.'
   }
 ];
 

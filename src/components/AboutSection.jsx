@@ -10,8 +10,8 @@ function AboutSection() {
           <img src="https://source.unsplash.com/600x400/?technology" alt="Our Festive Team" loading="lazy" decoding="async" />
         </div>
 
-        <div className="about-cards cards" aria-hidden="false" style={{ marginTop: '20px' }}>
-          <Card>
+        <div className="about-layout" aria-hidden="false">
+          <Card className="about-story-card">
             <div className="about-icon" aria-hidden="true">
               <i className="fa-solid fa-bullseye"></i>
             </div>
@@ -33,7 +33,7 @@ function AboutSection() {
                 <br />
                 <br />
                 <br />
-                Over time, 1% evolved into more than just an educational tool—it became a hub for creativity,
+                Over time, 1% evolved into more than just an educational tool-it became a hub for creativity,
                 problem-solving, and community growth. Its mission is to help individuals develop skills in areas like
                 programming, cybersecurity, AI, and entrepreneurship while fostering connections with like-minded peers.
                 <br />
@@ -47,67 +47,62 @@ function AboutSection() {
             </div>
           </Card>
 
-          <Card>
-            <div className="about-icon" aria-hidden="true">
-              <i className="fa-solid fa-eye"></i>
-            </div>
-            <div>
-              <h4>vision</h4>
-              <p>
-                To empower individuals to grow, learn, and innovate by improving just 1% every day — creating a world
-                driven by consistency, creativity, and progress
-              </p>
-            </div>
-          </Card>
+          <div className="about-side-cards">
+            <Card className="about-compact-card">
+              <div className="about-icon" aria-hidden="true">
+                <i className="fa-solid fa-eye"></i>
+              </div>
+              <div>
+                <h4>vision</h4>
+                <p>
+                  To empower individuals to grow, learn, and innovate by improving just 1% every day creating a world
+                  driven by consistency, creativity, and progress.
+                </p>
+              </div>
+            </Card>
 
-          <Card>
-            <div className="about-icon" aria-hidden="true">
-              <i className="fa-solid fa-bullseye"></i>
-            </div>
-            <div>
-              <h4>mission</h4>
-              <p>
-                To build a community and digital ecosystem that inspires continuous learning, supports innovation, and
-                provides tools, knowledge, and opportunities for personal and professional growth.
-              </p>
-            </div>
-          </Card>
+            <Card className="about-compact-card">
+              <div className="about-icon" aria-hidden="true">
+                <i className="fa-solid fa-bullseye"></i>
+              </div>
+              <div>
+                <h4>mission</h4>
+                <p>
+                  To build a community and digital ecosystem that inspires continuous learning and supports innovation.
+                </p>
+              </div>
+            </Card>
 
-          <Card>
-            <div className="about-icon" aria-hidden="true">
-              <i className="fa-solid fa-hand-holding-heart"></i>
-            </div>
-            <div>
-              <h4>Impact</h4>
-              <p>
-                Over 10,000 users reached across health, education and commerce projects. We design with measurable
-                outcomes in mind.
-              </p>
-            </div>
-          </Card>
+            <Card className="about-compact-card">
+              <div className="about-icon" aria-hidden="true">
+                <i className="fa-solid fa-hand-holding-heart"></i>
+              </div>
+              <div>
+                <h4>Impact</h4>
+                <p>Over 10,000 users reached across health, education and commerce projects.</p>
+              </div>
+            </Card>
 
-          <Card>
-            <div className="about-icon" aria-hidden="true">
-              <i className="fa-solid fa-handshake-angle"></i>
-            </div>
-            <div>
-              <h4>Partnerships</h4>
-              <p>
-                Working with local NGOs, microfinance cooperatives and education institutions to co-build practical
-                solutions.
-              </p>
-            </div>
-          </Card>
+            <Card className="about-compact-card">
+              <div className="about-icon" aria-hidden="true">
+                <i className="fa-solid fa-handshake-angle"></i>
+              </div>
+              <div>
+                <h4>Partnerships</h4>
+                <p>We co-build practical solutions with NGOs, institutions and local communities.</p>
+              </div>
+            </Card>
 
-          <Card>
-            <div className="about-icon" aria-hidden="true">
-              <i className="fa-solid fa-users"></i>
-            </div>
-            <div>
-              <h4>Community</h4>
-              <p>Monthly meetups, workshops and hackathons to grow talent and make technology more accessible.</p>
-            </div>
-          </Card>
+            <Card className="about-compact-card">
+              <div className="about-icon" aria-hidden="true">
+                <i className="fa-solid fa-users"></i>
+              </div>
+              <div>
+                <h4>Community</h4>
+                <p>Monthly meetups, workshops and hackathons to grow talent and practical skills.</p>
+              </div>
+            </Card>
+          </div>
         </div>
       </div>
     </SectionReveal>

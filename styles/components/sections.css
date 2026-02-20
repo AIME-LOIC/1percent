@@ -1,23 +1,25 @@
 .cards,
 .services-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 16px;
-  margin-top: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+  margin-top: 18px;
   align-items: stretch;
 }
 
 .card,
 .service-card {
   position: relative;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  border-radius: 16px;
+  background:
+    linear-gradient(165deg, color-mix(in srgb, var(--surface-strong) 90%, transparent), color-mix(in srgb, var(--surface) 74%, transparent));
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  box-shadow: var(--shadow);
-  padding: 20px;
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  padding: 22px;
+  overflow: hidden;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.25s ease, background 0.25s ease;
 }
 
 .card::before,
@@ -27,48 +29,63 @@
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0));
+  background: linear-gradient(145deg, rgba(138, 199, 255, 0.34), rgba(74, 167, 255, 0.12), rgba(255, 255, 255, 0));
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
-  opacity: 0.55;
+  opacity: 0.8;
+}
+
+.card::after,
+.service-card::after {
+  content: '';
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  top: -92px;
+  right: -82px;
+  background: radial-gradient(circle, rgba(74, 167, 255, 0.24) 0%, rgba(74, 167, 255, 0) 72%);
+  pointer-events: none;
 }
 
 .card:hover,
 .service-card:hover {
   border-color: var(--line-strong);
-  box-shadow: 0 24px 52px rgba(3, 8, 20, 0.42);
+  background: linear-gradient(155deg, color-mix(in srgb, var(--surface-strong) 94%, transparent), color-mix(in srgb, var(--surface) 70%, transparent));
+  box-shadow: var(--card-glow), 0 26px 56px rgba(12, 25, 54, 0.35);
 }
 
 .card img,
 .service-card img {
   width: 100%;
-  height: 180px;
+  height: 192px;
   object-fit: cover;
-  border-radius: 10px;
-  margin-bottom: 12px;
+  border-radius: 12px;
+  margin-bottom: 14px;
+  border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
 }
 
 .card h3,
 .service-card h3 {
-  font-size: 1.15rem;
-  margin-bottom: 8px;
+  font-size: 1.16rem;
+  margin-bottom: 10px;
   line-height: 1.2;
 }
 
 .card p,
 .service-card p {
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   color: var(--text-muted);
 }
 
 .project-card {
   display: flex;
   flex-direction: column;
-  min-height: 420px;
+  min-height: 438px;
 }
 
 .project-card > .btn {
@@ -90,19 +107,27 @@
 }
 
 .service-card {
-  text-align: center;
+  text-align: left;
 }
 
 .service-icon {
-  display: inline-block;
-  font-size: 2rem;
-  margin-bottom: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  font-size: 1.5rem;
+  margin-bottom: 14px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  background: linear-gradient(140deg, rgba(111, 184, 255, 0.24), rgba(74, 167, 255, 0.16));
 }
 
 .project-meta {
-  color: var(--text-muted);
+  color: color-mix(in srgb, var(--accent) 72%, var(--text));
   font-size: 0.9rem;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  font-weight: 600;
 }
 
 .filter-tabs {
@@ -113,9 +138,9 @@
 }
 
 .filter-tab {
-  border: 1px solid var(--line);
+  border: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
   border-radius: 999px;
-  background: transparent;
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
   color: var(--text-muted);
   padding: 8px 13px;
   cursor: pointer;
@@ -126,7 +151,7 @@
 
 .filter-tab.active,
 .filter-tab:hover {
-  color: #fff;
+  color: #14240f;
   border-color: transparent;
   background: var(--accent-grad);
 }
@@ -144,11 +169,12 @@
 }
 
 .team-card img {
-  width: 112px;
-  height: 112px;
+  width: 118px;
+  height: 118px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid var(--line);
+  border: 2px solid color-mix(in srgb, var(--accent) 62%, var(--line));
+  box-shadow: 0 10px 18px rgba(11, 28, 56, 0.24);
 }
 
 .team-role {
@@ -160,11 +186,12 @@
 .team-links a {
   margin: 0 6px;
   color: var(--text-muted);
-  transition: color 0.2s ease;
+  transition: color 0.2s ease, transform 0.2s ease;
 }
 
 .team-links a:hover {
   color: var(--text);
+  transform: translateY(-2px);
 }
 
 .about-text {
@@ -178,24 +205,50 @@
   border-radius: var(--radius);
 }
 
-.about-cards {
-  margin-top: 0 !important;
+.about-layout {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.22fr) minmax(280px, 0.78fr);
+  gap: 18px;
+  align-items: start;
 }
 
-.about-cards .card {
+.about-layout .card {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  min-height: auto;
+  gap: 13px;
+  min-height: 0;
+  height: fit-content;
+  padding: 16px 18px;
 }
 
-.about-cards .about-icon {
+.about-side-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.about-layout .about-icon {
   font-size: 1.4rem;
   margin-top: 3px;
 }
 
-.about-cards h4 {
+.about-layout h4 {
   font-size: 1.02rem;
   margin-bottom: 6px;
   text-transform: capitalize;
+}
+
+.about-layout .card p {
+  margin-bottom: 0;
+}
+
+.about-story-card {
+  min-height: 100%;
+}
+
+@media (max-width: 920px) {
+  .about-layout {
+    grid-template-columns: 1fr;
+  }
 }
