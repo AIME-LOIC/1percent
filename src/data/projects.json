@@ -88,7 +88,7 @@
     "category": "Web"
   },
   {
-    "image": "https://source.unsplash.com/900x600/?startup,teamwork",
+    "image": "/assets/startnow.png",
     "alt": "StartNow startup platform",
     "title": "StartNow",
     "meta": "Startup discovery & idea collaboration",
