@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useState } from 'react';
+import BackToTopButton from './components/BackToTopButton';
 import Navbar from './components/Navbar';
 import ToastContainer from './components/ToastContainer';
 import HomePage from './pages/HomePage';
@@ -49,9 +50,8 @@ function App() {
   const handleMenuToggle = () => setIsMenuOpen((prev) => !prev);
   const handleCloseMenu = () => setIsMenuOpen(false);
 
-  const handleContactSubmit = async (formValues, resetForm, setSubmittingLabel) => {
+  const handleContactSubmit = async (formValues, resetForm) => {
     try {
-      setSubmittingLabel('Sending...');
       const formData = new FormData();
       formData.append('name', formValues.name);
       formData.append('_replyto', formValues._replyto);
@@ -66,13 +66,14 @@ function App() {
       if (response.ok) {
         showToast('success', 'Message sent successfully!', 3000);
         resetForm();
+        return { ok: true };
       } else {
         showToast('error', 'Failed to send message. Please try again.', 3000);
+        return { ok: false, message: 'Failed to send message. Please try again.' };
       }
     } catch {
       showToast('error', 'An error occurred. Please try again.', 3000);
-    } finally {
-      setSubmittingLabel('Send Message');
+      return { ok: false, message: 'An error occurred. Please try again.' };
     }
   };
 
@@ -99,20 +100,11 @@ function App() {
         )}
       </AnimatePresence>
 
-      <button
-        id="theme-toggle"
-        aria-label="Toggle theme"
-        aria-pressed={isDarkMode}
-        title="Toggle theme"
-        type="button"
-        onClick={handleThemeToggle}
-      >
-        <i className={isDarkMode ? 'fa-solid fa-sun' : 'fa-solid fa-moon'} aria-hidden="true"></i>
-      </button>
-
       <Navbar
+        isDarkMode={isDarkMode}
         isMenuOpen={isMenuOpen}
         onMenuToggle={handleMenuToggle}
+        onThemeToggle={handleThemeToggle}
         onLinkClick={handleCloseMenu}
       />
 
@@ -120,6 +112,7 @@ function App() {
         <HomePage isDarkMode={isDarkMode} onContactSubmit={handleContactSubmit} />
       </motion.div>
 
+      <BackToTopButton />
       <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
     </>
   );

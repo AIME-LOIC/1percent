@@ -50,6 +50,50 @@
   box-shadow: 0 0 0 3px rgba(155, 225, 93, 0.26);
 }
 
+.form-group input[aria-invalid='true'],
+.form-group textarea[aria-invalid='true'] {
+  border-color: #e56a6a;
+}
+
+.form-error {
+  margin-top: 6px;
+  font-size: 0.84rem;
+  color: #f08b8b;
+}
+
+.form-status {
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  font-size: 0.88rem;
+}
+
+.form-status.success {
+  border-color: rgba(46, 204, 113, 0.45);
+  color: #77deaa;
+}
+
+.form-status.error {
+  border-color: rgba(231, 76, 60, 0.5);
+  color: #f0a3a3;
+}
+
+.btn-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: rgba(255, 255, 255, 0.95);
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 button[type='submit'] {
   width: 100%;
 }

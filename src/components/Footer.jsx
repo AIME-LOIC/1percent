@@ -25,6 +25,17 @@ const resourceLinks = [
   { href: '#about', label: 'Community' }
 ];
 
+const socialLinks = [
+  { href: 'https://www.facebook.com/1percentdigital', icon: 'fa-facebook-f', label: 'Facebook' },
+  { href: 'https://x.com/1percentdigital', icon: 'fa-x-twitter', label: 'X (Twitter)' },
+  {
+    href: 'https://www.linkedin.com/company/1percent-digital-solutions',
+    icon: 'fa-linkedin-in',
+    label: 'LinkedIn'
+  },
+  { href: 'https://www.instagram.com/1percentdigital', icon: 'fa-instagram', label: 'Instagram' }
+];
+
 function Footer() {
   const handleLinkClick = (event, hash) => {
     event.preventDefault();
@@ -83,20 +94,15 @@ function Footer() {
         <div className="footer-contact">
           <h4>Connect</h4>
           <p>Kigali, Rwanda</p>
-          <p>hello@onepercent.rw</p>
+          <p>
+            <a href="mailto:hello@onepercent.rw">hello@onepercent.rw</a>
+          </p>
           <div className="footer-socials">
-            <a href="#" aria-label="Facebook">
-              <i className="fa-brands fa-facebook-f"></i>
-            </a>
-            <a href="#" aria-label="Twitter">
-              <i className="fa-brands fa-twitter"></i>
-            </a>
-            <a href="#" aria-label="LinkedIn">
-              <i className="fa-brands fa-linkedin-in"></i>
-            </a>
-            <a href="#" aria-label="Instagram">
-              <i className="fa-brands fa-instagram"></i>
-            </a>
+            {socialLinks.map((link) => (
+              <a key={link.label} href={link.href} aria-label={link.label} target="_blank" rel="noreferrer">
+                <i className={`fa-brands ${link.icon}`}></i>
+              </a>
+            ))}
           </div>
         </div>
       </motion.div>
