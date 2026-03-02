@@ -6,6 +6,7 @@
 @import './components/footer.css';
 @import './components/toast.css';
 @import './components/loader.css';
+@import './components/skeleton.css';
 
 :root {
   --bg: #0b0f19;

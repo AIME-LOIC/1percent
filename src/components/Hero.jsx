@@ -1,6 +1,8 @@
+import { lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { smoothScrollToHash } from '../utils/smoothScroll';
-import ThreeHeroBackground from './ThreeHeroBackground';
+
+const ThreeHeroBackground = lazy(() => import('./ThreeHeroBackground'));
 
 function Hero({ isDarkMode }) {
   const handleCtaClick = (event, hash) => {
@@ -10,7 +12,9 @@ function Hero({ isDarkMode }) {
 
   return (
     <header>
-      <ThreeHeroBackground isDarkMode={isDarkMode} />
+      <Suspense fallback={null}>
+        <ThreeHeroBackground isDarkMode={isDarkMode} />
+      </Suspense>
       <div className="hero-gradient" aria-hidden="true"></div>
 
       <motion.div
