@@ -200,37 +200,6 @@
   font-weight: 600;
 }
 
-.filter-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 0 0 14px;
-}
-
-.filter-tab {
-  border: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--surface) 78%, transparent);
-  color: var(--text-muted);
-  padding: 8px 13px;
-  cursor: pointer;
-  font-size: 0.88rem;
-  font-weight: 600;
-  transition: all 0.2s ease;
-}
-
-.filter-tab.active,
-.filter-tab:hover {
-  color: #14240f;
-  border-color: transparent;
-  background: var(--accent-grad);
-}
-
-.filter-tab:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
 .team-card {
   display: flex;
   flex-direction: column;

@@ -1,19 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import projects from '../data/projects.json';
 import Card from './Card';
 import SectionReveal from './SectionReveal';
 
-const tabs = ['All', 'Web', 'AI', 'Mobile', 'Blockchain'];
-
 function ProjectsSection() {
-  const [activeTab, setActiveTab] = useState('All');
   const [flippedCards, setFlippedCards] = useState({});
-
-  const filteredProjects = useMemo(() => {
-    if (activeTab === 'All') return projects;
-    return projects.filter((project) => project.category === activeTab);
-  }, [activeTab]);
 
   const toggleFlip = (cardKey) => {
     setFlippedCards((prev) => ({ ...prev, [cardKey]: !prev[cardKey] }));
@@ -23,26 +15,15 @@ function ProjectsSection() {
     <SectionReveal as="section" id="projects">
       <h2>Our Projects</h2>
 
-      <div className="filter-tabs" role="tablist" aria-label="Project filters">
-        {tabs.map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            role="tab"
-            aria-selected={activeTab === tab}
-            className={`filter-tab ${activeTab === tab ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab)}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
       <motion.div layout className="cards">
         <AnimatePresence mode="popLayout">
-          {filteredProjects.map((project) => {
+          {projects.map((project) => {
             const cardKey = project.title + project.meta;
             const isFlipped = Boolean(flippedCards[cardKey]);
+
+            const imageSrc = project.image?.startsWith('/')
+              ? `${import.meta.env.BASE_URL}${project.image.slice(1)}`
+              : project.image;
 
             return (
               <Card
@@ -57,9 +38,8 @@ function ProjectsSection() {
               >
                 <div className="project-card-inner">
                   <div className="project-face project-face-front">
-                    <img src={project.image} alt={project.alt} loading="lazy" decoding="async" />
+                    <img src={imageSrc} alt={project.alt} loading="lazy" decoding="async" />
                     <h3>{project.title}</h3>
-                    <div className="project-meta">{project.meta}</div>
                     <p>{project.description}</p>
                     <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>{project.details}</p>
                     <div className="project-actions">
@@ -86,7 +66,6 @@ function ProjectsSection() {
 
                   <div className="project-face project-face-back">
                     <h3>{project.title}</h3>
-                    <div className="project-meta">{project.meta}</div>
                     <p className="project-full-explanation">{project.description}</p>
                     <p className="project-full-explanation">{project.details}</p>
                     <p className="project-full-explanation">
