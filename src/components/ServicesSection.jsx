@@ -4,51 +4,31 @@ import SectionReveal from './SectionReveal';
 
 const services = [
   {
-    icon: 'fa-solid fa-code service-icon',
-    title: 'Web Development',
-    text: 'Building responsive, accessible websites and web apps using modern stacks (React, Next.js, Node).'
+    title: 'AI product design',
+    text: 'Business-first AI experiences with strong hierarchy, clear language, and practical workflows.'
   },
   {
-    icon: 'fa-solid fa-mobile-screen service-icon',
-    title: 'App Development',
-    text: 'Native and cross-platform mobile apps (Flutter, React Native) optimized for local connectivity.'
+    title: 'Web applications',
+    text: 'Modern React interfaces that are fast, responsive, and built to support real product delivery.'
   },
   {
-    icon: 'fa-solid fa-brain service-icon',
-    title: 'AI Solutions',
-    text: 'Practical ML solutions: automation, prediction models and NLP for local languages.'
+    title: 'Assistant workflows',
+    text: 'Chat, reminders, search, and automation flows packaged as user-facing product experiences.'
   },
   {
-    icon: 'fa-solid fa-shield-halved service-icon',
-    title: 'Cybersecurity',
-    text: 'Security assessments, secure-by-design development and training for teams and SMEs.'
-  },
-  {
-    icon: 'fa-solid fa-robot service-icon',
-    title: 'Robotics & Embedded Systems',
-    text: 'Design and firmware for robotics, IoT devices and embedded controllers — from prototyping to production-ready hardware and firmware.'
-  },
-  {
-    icon: 'fa-solid fa-bitcoin-sign service-icon',
-    title: 'Blockchain & Digital Currency',
-    text: 'Advisory and implementations for secure ledgers, tokenization and digital payment flows tailored for local marketplaces and remittances.'
-  },
-  {
-    icon: 'fa-solid fa-gamepad service-icon',
-    title: 'Game Development',
-    text: "We're building games for kids,Adults, and more Rwandans who want to relex playing cool games"
-  },
-  {
-    icon: 'fa-solid fa-headset service-icon',
-    title: 'IT Desk Support',
-    text: 'Reliable IT desk support for setup, troubleshooting, maintenance, and day-to-day technical assistance.'
+    title: 'Deployment support',
+    text: 'Production-ready delivery setup for frontend, API, and environment configuration.'
   }
 ];
 
 function ServicesSection() {
   return (
-    <SectionReveal as="section" id="services">
-      <h2>Our Services</h2>
+    <SectionReveal as="section" id="services" className="section">
+      <div className="section-heading">
+        <p className="section-kicker">Services</p>
+        <h2>What 1% Digital Solutions delivers.</h2>
+      </div>
+
       <div className="services-grid">
         {services.map((service, index) => (
           <Card
@@ -57,10 +37,12 @@ function ServicesSection() {
             initial={{ opacity: 0, y: 18 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
-            transition={{ delay: index * 0.04 }}
-            whileHover={{ y: -6, scale: 1.01 }}
+            transition={{ delay: index * 0.05 }}
+            whileHover={{ y: -4 }}
           >
-            <motion.i className={service.icon} aria-hidden="true" whileHover={{ rotate: 6, scale: 1.1 }}></motion.i>
+            <motion.div className="service-number" aria-hidden="true">
+              0{index + 1}
+            </motion.div>
             <h3>{service.title}</h3>
             <p>{service.text}</p>
           </Card>

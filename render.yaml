@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: onepercent-frontend
+    env: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_FRIDAY_API_URL
+        sync: false
+      - key: VITE_FRIDAY_API_KEY
+        sync: false
