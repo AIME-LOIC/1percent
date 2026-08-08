@@ -54,16 +54,28 @@
       const objPath = '/assets/models/company_model.obj';
 
       const loader = new GLTFLoader();
+      function createProceduralModel(){
+        const mat = new THREE.MeshStandardMaterial({color:0x7ad0ff, metalness:0.3, roughness:0.4});
+        const geo = new THREE.TorusKnotGeometry(0.9,0.28,128,32);
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        group.add(mesh);
+      }
+
       loader.load(gltfPath, (gltf)=>{
         const model = gltf.scene || gltf.scenes[0];
         model.scale.set(1.2,1.2,1.2);
         group.add(model);
-      }, undefined, ()=>{
-        // fallback to OBJ
+      }, undefined, (err)=>{
+        // fallback to OBJ, and if that fails create procedural model
         const objLoader = new OBJLoader();
         objLoader.load(objPath, (obj)=>{
           obj.scale.set(0.9,0.9,0.9);
           group.add(obj);
+        }, undefined, (err2)=>{
+          console.warn('GLB and OBJ load failed, using procedural model', err, err2);
+          createProceduralModel();
         });
       });
 
