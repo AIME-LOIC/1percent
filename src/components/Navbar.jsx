@@ -1,12 +1,12 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { smoothScrollToHash } from '../utils/smoothScroll';
 
 const links = [
-  { href: '#about', label: 'About' },
+  { href: '#friday', label: 'Friday' },
   { href: '#services', label: 'Services' },
   { href: '#projects', label: 'Projects' },
-  { href: '#team', label: 'Team' },
+  { href: '#team', label: 'Collaborators' },
   { href: '#contact', label: 'Contact' }
 ];
 
@@ -15,19 +15,8 @@ function Navbar({ isDarkMode, isMenuOpen, onMenuToggle, onThemeToggle, onLinkCli
   const closeButtonRef = useRef(null);
   const [activeHash, setActiveHash] = useState(() => {
     const hashes = links.map((link) => link.href);
-    return hashes.includes(window.location.hash) ? window.location.hash : '#about';
+    return hashes.includes(window.location.hash) ? window.location.hash : '#friday';
   });
-
-  const focusableSelector = useMemo(
-    () => 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
-    []
-  );
-
-  const handleLinkClick = (event, href) => {
-    event.preventDefault();
-    setActiveHash(href);
-    smoothScrollToHash(href, onLinkClick);
-  };
 
   useEffect(() => {
     const sections = links
@@ -47,7 +36,7 @@ function Navbar({ isDarkMode, isMenuOpen, onMenuToggle, onThemeToggle, onLinkCli
         }
       },
       {
-        rootMargin: '-32% 0px -52% 0px',
+        rootMargin: '-30% 0px -55% 0px',
         threshold: [0.15, 0.35, 0.6]
       }
     );
@@ -70,7 +59,7 @@ function Navbar({ isDarkMode, isMenuOpen, onMenuToggle, onThemeToggle, onLinkCli
 
       if (event.key !== 'Tab') return;
 
-      const focusableElements = drawerRef.current?.querySelectorAll(focusableSelector);
+      const focusableElements = drawerRef.current?.querySelectorAll('a[href], button:not([disabled])');
       if (!focusableElements?.length) return;
 
       const firstElement = focusableElements[0];
@@ -93,28 +82,35 @@ function Navbar({ isDarkMode, isMenuOpen, onMenuToggle, onThemeToggle, onLinkCli
         previousActiveElement.focus();
       }
     };
-  }, [focusableSelector, isMenuOpen, onLinkClick]);
+  }, [isMenuOpen, onLinkClick]);
+
+  const handleLinkClick = (event, href) => {
+    event.preventDefault();
+    setActiveHash(href);
+    smoothScrollToHash(href, onLinkClick);
+  };
 
   return (
     <>
-      <nav role="navigation" aria-label="Main navigation">
-        <div className="nav-left" style={{ border: 'none' }}>
-          <div className="nav-logo">1%</div>
-          <ul className="nav-links-desktop" id="nav-links" aria-hidden="false">
-            {links.map((link) => (
-              <li key={link.href}>
-                <a
-                  href={link.href}
-                  className={activeHash === link.href ? 'active' : ''}
-                  aria-current={activeHash === link.href ? 'page' : undefined}
-                  onClick={(event) => handleLinkClick(event, link.href)}
-                >
-                  {link.label}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
+      <nav className="nav-shell" role="navigation" aria-label="Main navigation">
+        <a className="nav-logo" href="#friday" onClick={(event) => handleLinkClick(event, '#friday')}>
+          1%
+        </a>
+
+        <ul className="nav-links-desktop" aria-hidden="false">
+          {links.map((link) => (
+            <li key={link.href}>
+              <a
+                href={link.href}
+                className={activeHash === link.href ? 'active' : ''}
+                aria-current={activeHash === link.href ? 'page' : undefined}
+                onClick={(event) => handleLinkClick(event, link.href)}
+              >
+                {link.label}
+              </a>
+            </li>
+          ))}
+        </ul>
 
         <div className="nav-right">
           <button

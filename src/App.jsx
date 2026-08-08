@@ -1,18 +1,16 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import BackToTopButton from './components/BackToTopButton';
 import Navbar from './components/Navbar';
-import ToastContainer from './components/ToastContainer';
 import HomePage from './pages/HomePage';
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const storedTheme = localStorage.getItem('theme-mode');
-    return storedTheme ? storedTheme === 'dark' : true;
+    return storedTheme ? storedTheme === 'dark' : false;
   });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [loaderVisible, setLoaderVisible] = useState(true);
-  const [toasts, setToasts] = useState([]);
 
   useEffect(() => {
     document.body.classList.remove('dark-mode', 'light-mode');
@@ -22,31 +20,14 @@ function App() {
   }, [isDarkMode, isMenuOpen]);
 
   useEffect(() => {
-    const hideTimer = setTimeout(() => setLoaderVisible(false), 1300);
+    const hideTimer = setTimeout(() => setLoaderVisible(false), 1100);
     return () => clearTimeout(hideTimer);
   }, []);
 
-  const showToast = useCallback((type = 'info', message = '', duration = 3600) => {
-    const id = crypto.randomUUID();
-    setToasts((prev) => [...prev.slice(-3), { id, type, message, duration }]);
-  }, []);
-
-  useEffect(() => {
-    const welcomeTimer = setTimeout(() => {
-      showToast('info', 'Welcome to 1% Digital Solutions!', 2800);
-    }, 950);
-    return () => clearTimeout(welcomeTimer);
-  }, [showToast]);
-
   const handleThemeToggle = () => {
-    setIsDarkMode((prev) => {
-      const next = !prev;
-      showToast('info', next ? 'Switched to dark mode' : 'Switched to light mode', 1700);
-      return next;
-    });
+    setIsDarkMode((prev) => !prev);
   };
 
-  const handleDismissToast = (id) => setToasts((prev) => prev.filter((toast) => toast.id !== id));
   const handleMenuToggle = () => setIsMenuOpen((prev) => !prev);
   const handleCloseMenu = () => setIsMenuOpen(false);
 
@@ -64,15 +45,12 @@ function App() {
       });
 
       if (response.ok) {
-        showToast('success', 'Message sent successfully!', 3000);
         resetForm();
         return { ok: true };
-      } else {
-        showToast('error', 'Failed to send message. Please try again.', 3000);
-        return { ok: false, message: 'Failed to send message. Please try again.' };
       }
+
+      return { ok: false, message: 'Failed to send message. Please try again.' };
     } catch {
-      showToast('error', 'An error occurred. Please try again.', 3000);
       return { ok: false, message: 'An error occurred. Please try again.' };
     }
   };
@@ -92,10 +70,13 @@ function App() {
             initial={{ opacity: 1 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.45 }}
           >
             <span>1%</span>
-            <div className="loader-circle" aria-hidden="true"></div>
+            <div className="loader-copy">
+              <p>1percent Digital Solutions</p>
+              <strong>Building Friday and the wider portfolio.</strong>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -108,12 +89,11 @@ function App() {
         onLinkClick={handleCloseMenu}
       />
 
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.33 }}>
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.32 }}>
         <HomePage isDarkMode={isDarkMode} onContactSubmit={handleContactSubmit} />
       </motion.div>
 
       <BackToTopButton />
-      <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
     </>
   );
 }

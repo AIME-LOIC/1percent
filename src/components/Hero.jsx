@@ -1,49 +1,57 @@
-import { lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { smoothScrollToHash } from '../utils/smoothScroll';
+import FridayDemo from './FridayDemo';
 
-const ThreeHeroBackground = lazy(() => import('./ThreeHeroBackground'));
-
-function Hero({ isDarkMode }) {
+function Hero() {
   const handleCtaClick = (event, hash) => {
     event.preventDefault();
     smoothScrollToHash(hash);
   };
 
   return (
-    <header>
-      <Suspense fallback={null}>
-        <ThreeHeroBackground isDarkMode={isDarkMode} />
-      </Suspense>
-      <div className="hero-gradient" aria-hidden="true"></div>
+    <header className="hero-shell">
+      <div className="hero-copy">
+        <p className="hero-kicker">1% Digital Solutions</p>
+        <h1>Premium AI products, led by Friday.</h1>
+        <p className="hero-summary">
+          Friday is our flagship personal AI assistant. It is presented here the way a serious product should be:
+          clear, useful, and focused on the user experience.
+        </p>
+
+        <div className="hero-feature-list" aria-label="Friday features">
+          <span>Chat</span>
+          <span>Reminders</span>
+          <span>Web search</span>
+          <span>Smart-home control</span>
+        </div>
+
+        <div className="hero-cta">
+          <a href="#friday" className="btn btn-primary" role="button" onClick={(event) => handleCtaClick(event, '#friday')}>
+            Meet Friday
+          </a>
+          <a href="#projects" className="btn btn-secondary" role="button" onClick={(event) => handleCtaClick(event, '#projects')}>
+            Other work
+          </a>
+        </div>
+      </div>
+
+      <FridayDemo />
 
       <motion.div
-        className="hero-content"
-        initial={{ opacity: 0, y: 20 }}
+        className="hero-notes"
+        initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, ease: 'easeOut' }}
+        transition={{ duration: 0.45, delay: 0.08 }}
       >
-        <div className="hero-copy">
-          <p className="hero-kicker">Digital Innovation Studio</p>
-          <h1>Build Modern Products With Real-World Impact</h1>
-          <p>
-            We design and deliver secure, high-performance digital products for startups, institutions and growing
-            teams.
-          </p>
-          <div className="hero-data">
-            <span>5+ project</span>
-            <span>5 members</span>
-            <span>100% unique</span>
-          </div>
-
-          <div className="hero-cta">
-            <a href="#contact" className="btn btn-primary" role="button" onClick={(event) => handleCtaClick(event, '#contact')}>
-              Start a Project
-            </a>
-            <a href="#projects" className="btn btn-secondary" role="button" onClick={(event) => handleCtaClick(event, '#projects')}>
-              Explore Work
-            </a>
-          </div>
+        <div>
+          <span className="note-label">Brand</span>
+          <strong>1percent universal AI</strong>
+          <p>Built by 1percent for business-ready product delivery.</p>
+        </div>
+        <div>
+          <span className="note-label">Approach</span>
+          <strong>Professional, not flashy</strong>
+          <p>Minimal layout, large type, and restrained motion.</p>
         </div>
       </motion.div>
     </header>
