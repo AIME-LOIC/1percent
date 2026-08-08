@@ -4,9 +4,8 @@ import { smoothScrollToHash } from '../utils/smoothScroll';
 
 const links = [
   { href: '#friday', label: 'Friday' },
-  { href: '#services', label: 'Services' },
-  { href: '#projects', label: 'Projects' },
-  { href: '#team', label: 'Collaborators' },
+  { href: '#story', label: 'Story' },
+  { href: '#features', label: 'Features' },
   { href: '#contact', label: 'Contact' }
 ];
 
