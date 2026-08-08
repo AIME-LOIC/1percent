@@ -1,25 +1,26 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@700;800;900&display=swap');
 
 :root {
-  color-scheme: light;
-  --bg: #f3efe7;
-  --bg-elevated: rgba(255, 252, 246, 0.9);
-  --panel: rgba(255, 252, 246, 0.82);
-  --panel-strong: rgba(255, 252, 246, 0.96);
-  --line: rgba(16, 24, 40, 0.12);
-  --line-strong: rgba(16, 24, 40, 0.2);
-  --text: #0f172a;
-  --text-muted: #5d6776;
-  --accent: #0f172a;
-  --accent-soft: #667084;
-  --shadow: 0 28px 80px rgba(16, 24, 40, 0.08);
-  --shadow-soft: 0 16px 38px rgba(16, 24, 40, 0.06);
+  color-scheme: dark;
+  --bg: #000000;
+  --bg-elevated: rgba(0, 0, 0, 0.92);
+  --panel: rgba(0, 0, 0, 0.72);
+  --panel-strong: rgba(0, 0, 0, 0.92);
+  --line: rgba(163, 204, 18, 0.12);
+  --line-strong: rgba(163, 204, 18, 0.22);
+  --text: #f6f7ee;
+  --text-muted: #b5c08f;
+  --accent: #A3CC12;
+  --accent-soft: rgba(163, 204, 18, 0.18);
+  --shadow: 0 32px 120px rgba(0, 0, 0, 0.55);
+  --shadow-soft: 0 18px 54px rgba(0, 0, 0, 0.35);
   --nav-height: 74px;
   --content-width: 1180px;
   --radius-xl: 30px;
   --radius-lg: 22px;
   --radius-md: 16px;
   --radius-sm: 12px;
+  --brand-heading: 'Barlow Condensed', sans-serif;
 }
 
 * {
@@ -91,13 +92,254 @@ body.dark-mode {
 
 body.dark-mode::before {
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+    linear-gradient(rgba(163, 204, 18, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(163, 204, 18, 0.04) 1px, transparent 1px);
+}
+
+body.light-mode {
+  color-scheme: dark;
+  --bg: #000000;
+  --bg-elevated: rgba(0, 0, 0, 0.92);
+  --panel: rgba(0, 0, 0, 0.72);
+  --panel-strong: rgba(0, 0, 0, 0.92);
+  --line: rgba(163, 204, 18, 0.12);
+  --line-strong: rgba(163, 204, 18, 0.22);
+  --text: #f6f7ee;
+  --text-muted: #b5c08f;
+  --accent: #A3CC12;
+  --accent-soft: rgba(163, 204, 18, 0.18);
+  --shadow: 0 32px 120px rgba(0, 0, 0, 0.55);
+  --shadow-soft: 0 18px 54px rgba(0, 0, 0, 0.35);
+}
+
+body.light-mode::before,
+body.dark-mode::before {
+  background-image:
+    linear-gradient(rgba(163, 204, 18, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(163, 204, 18, 0.04) 1px, transparent 1px);
 }
 
 a {
   color: inherit;
   text-decoration: none;
+}
+
+/* 3D landing and stage visuals */
+.hero-shell {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: radial-gradient(circle at top left, rgba(163, 204, 18, 0.08), transparent 20%), #000000;
+  color: var(--text);
+}
+
+.landing-scene-container {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.hero-overlay {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: calc(var(--nav-height) + 48px) 24px 0;
+}
+
+.hero-copy-block {
+  max-width: 680px;
+}
+
+.hero-eyebrow,
+.beat-eyebrow {
+  display: inline-flex;
+  text-transform: uppercase;
+  letter-spacing: 0.26em;
+  font-size: 0.8rem;
+  color: var(--accent);
+  margin-bottom: 18px;
+  font-family: var(--brand-heading);
+}
+
+.hero-copy-block h1,
+.hero-beat h2 {
+  font-family: var(--brand-heading);
+  font-size: clamp(3rem, 5vw, 5.2rem);
+  line-height: 0.98;
+  letter-spacing: -0.05em;
+  margin: 0 0 22px;
+}
+
+.hero-copy-block p,
+.hero-beat p {
+  max-width: 600px;
+  color: var(--text-muted);
+  font-size: clamp(1rem, 1.2vw, 1.1rem);
+  line-height: 1.8;
+}
+
+#rail {
+  position: fixed;
+  right: 24px;
+  top: 55%;
+  transform: translateY(-50%);
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  font-family: var(--brand-heading);
+}
+
+#rail .stage {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  gap: 10px;
+  opacity: 0.35;
+  transition: opacity 200ms ease;
+}
+
+#rail .stage.active {
+  opacity: 1;
+}
+
+#rail .stage .n {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  width: 22px;
+  text-align: right;
+}
+
+#rail .stage.active .n {
+  color: var(--accent);
+}
+
+#rail .stage .bar {
+  width: 26px;
+  height: 2px;
+  background: rgba(163, 204, 18, 0.18);
+  border-radius: 999px;
+}
+
+#rail .stage.active .bar {
+  background: var(--accent);
+  box-shadow: 0 0 12px rgba(163, 204, 18, 0.35);
+}
+
+#rail .stage .label {
+  display: none;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+@media (min-width: 900px) {
+  #rail .stage .label {
+    display: block;
+  }
+}
+
+#scrollhint {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--brand-heading);
+  font-size: 0.75rem;
+  letter-spacing: 0.22em;
+  color: var(--text-muted);
+}
+
+#scrollhint .chev {
+  display: block;
+  font-size: 1.15rem;
+  color: var(--accent);
+  animation: hero-scroll 1.6s infinite;
+}
+
+@keyframes hero-scroll {
+  0%, 100% { transform: translateY(0); opacity: 0.4; }
+  50% { transform: translateY(6px); opacity: 1; }
+}
+
+.hero-story {
+  position: relative;
+  z-index: 10;
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: 36vh 24px 120px;
+}
+
+.hero-beat {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 0 0 60px;
+  pointer-events: none;
+}
+
+.beat-copy {
+  max-width: 720px;
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+
+.hero-beat.show .beat-copy {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.beat-list {
+  margin-top: 24px;
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.beat-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  font-size: 0.98rem;
+}
+
+.beat-list li::before {
+  content: '•';
+  color: var(--accent);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+@media (max-width: 900px) {
+  .hero-overlay {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  #rail {
+    position: fixed;
+    right: 12px;
+    top: auto;
+    bottom: 96px;
+    transform: none;
+  }
+
+  .hero-story {
+    padding-top: 55vh;
+  }
 }
 
 button,
