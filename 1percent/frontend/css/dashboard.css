@@ -212,16 +212,35 @@
 .dash-cert-card:hover{border-color:#d9770b!important;}
 .dash-certs-count{font-size:13px;color:var(--text-muted);}
 
+/* ── Mobile Bottom Nav ─────────────────────────────── */
+.mobile-bottom-nav{
+  display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;
+  background:#fff;border-top:1px solid var(--border);
+  padding:6px 16px;padding-bottom:max(6px,env(safe-area-inset-bottom));
+  justify-content:space-around;align-items:center;
+}
+.mobile-bottom-nav a{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  text-decoration:none;font-size:10px;font-weight:600;color:var(--text-muted);
+  padding:4px 8px;border-radius:6px;transition:all .15s;
+}
+.mobile-bottom-nav a.active{color:var(--primary);}
+.mobile-bottom-nav a:hover{color:var(--primary);}
+.mobile-bottom-nav svg{width:20px;height:20px;}
+
 /* ── Responsive ──────────────────────────────────────── */
 @media(max-width:900px){
   .dash-stats{grid-template-columns:repeat(2,1fr);}
+  .dashboard-shell{padding-bottom:80px;}
 }
 @media(max-width:768px){
   .dash-stats{grid-template-columns:1fr;}
   .dash-enrolled{grid-template-columns:1fr;}
   .dash-courses{grid-template-columns:1fr 1fr;}
   .dash-challenge-grid{grid-template-columns:1fr;}
+  .dashboard-shell{padding-bottom:80px;}
 }
 @media(max-width:480px){
   .dash-courses{grid-template-columns:1fr;}
+  .dashboard-shell{padding-bottom:80px;}
 }
