@@ -1,2 +1,0 @@
-document.getElementById("h2").textContent="home";
-document.getElementById("home")
