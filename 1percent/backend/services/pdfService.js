@@ -423,6 +423,21 @@ class PdfService {
    * Build a certificate PDF with signature
    */
   async buildCertificatePdf(cert, course, signatureUrl) {
+    // Pre-fetch remote signature image buffer before creating the PDF
+    let sigBuffer = null;
+    if (signatureUrl) {
+      try {
+        if (signatureUrl.startsWith('data:image')) {
+          const base64Data = signatureUrl.replace(/^data:image\/\w+;base64,/, '');
+          sigBuffer = Buffer.from(base64Data, 'base64');
+        } else if (signatureUrl.startsWith('http')) {
+          sigBuffer = await this._fetchImageBuffer(signatureUrl);
+        }
+      } catch (e) {
+        console.warn('[PDF] Could not fetch signature:', e.message);
+      }
+    }
+
     return new Promise((resolve, reject) => {
       const chunks = [];
       const doc = new PDFDocument({
@@ -595,23 +610,11 @@ class PdfService {
         .text('AUTHORIZED SIGNATURE', sigX, bottomY, { width: colW, align: 'center', characterSpacing: 1.5 });
 
       // Signature image or placeholder line
-      if (signatureUrl) {
+      if (sigBuffer) {
         try {
-          let sigBuffer = null;
-          if (signatureUrl.startsWith('data:image')) {
-            const base64Data = signatureUrl.replace(/^data:image\/\w+;base64,/, '');
-            sigBuffer = Buffer.from(base64Data, 'base64');
-          } else if (signatureUrl.startsWith('http')) {
-            // Download remote signature image
-            sigBuffer = await this._fetchImageBuffer(signatureUrl);
-          }
-          if (sigBuffer) {
-            doc.image(sigBuffer, sigX + colW / 2 - 55, bottomY + 12, { width: 110, height: 30, fit: [110, 30] });
-          } else {
-            this._drawSigLine(doc, sigX, bottomY + 25, colW);
-          }
+          doc.image(sigBuffer, sigX + colW / 2 - 55, bottomY + 12, { width: 110, height: 30, fit: [110, 30] });
         } catch (e) {
-          console.warn('[PDF] Signature image failed, drawing line:', e.message);
+          console.warn('[PDF] Signature render failed, drawing line:', e.message);
           this._drawSigLine(doc, sigX, bottomY + 25, colW);
         }
       } else {
