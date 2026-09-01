@@ -50,7 +50,8 @@ router.post('/run', async (req, res) => {
         if (language === 'python') {
           runCode = code
             .replace(/print\(([^)]*)\)/g, 'console.log($1)')
-            .replace(/input\(([^)]*)\)/g, 'prompt($1 || "Enter: ")')
+            .replace(/input\(\)/g, 'prompt("Enter: ")')
+            .replace(/input\(([^)]+)\)/g, 'prompt($1)')
             .replace(/#.*$/gm, '// $&')  // convert Python comments
             .replace(/def (\w+)\(/g, 'function $1(')
             .replace(/elif /g, 'else if ')

@@ -378,8 +378,8 @@ function highlight(code, lang) {
     h = h.replace(/\b([a-zA-Z_$][\w$]*)\s*(?=\()/g, '<span class="syn-fn">$1</span>');
   } else if (lang === 'python') {
     h = h.replace(/(#.*$)/gm, '<span class="syn-cmt">$1</span>');
-    h = h.replace(/(&quot;[^&]*?&quot;|&#39;[^&]*?&#39;)/g, '<span class="syn-str">$1</span>');
-    h = h.replace(/\b(def|class|if|elif|else|for|while|return|import|from|as|try|except|finally|raise|with|yield|lambda|pass|break|continue|and|or|not|in|is|global|nonlocal|assert|del)\b/g, '<span class="syn-kw">$1</span>');
+    h = h.replace(/(&quot;(?:[^&]|&(?:amp|lt|gt|quot|#[0-9]+);)*?&quot;|&#39;(?:[^&]|&(?:amp|lt|gt|quot|#[0-9]+);)*?&#39;)/g, '<span class="syn-str">$1</span>');
+    h = h.replace(/\b(def|class|if|elif|else|for|while|return|import|from|as|try|except|finally|raise|with|yield|lambda|pass|break|continue|and|or|not|in|is|global|nonlocal|assert|del|print|input)\b/g, '<span class="syn-kw">$1</span>');
     h = h.replace(/\b(True|False|None)\b/g, '<span class="syn-bool">$1</span>');
     h = h.replace(/\b(\d+\.?\d*)\b/g, '<span class="syn-num">$1</span>');
     h = h.replace(/\b([a-zA-Z_][\w]*)\s*(?=\()/g, '<span class="syn-fn">$1</span>');
