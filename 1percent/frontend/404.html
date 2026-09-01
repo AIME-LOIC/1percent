@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Page Not Found — 1% Digital Solutions</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/main.css">
+<style>
+  .error-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+  }
+  .error-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-card);
+  }
+  .error-nav .brand {
+    font-weight: 800;
+    font-size: 15px;
+    color: var(--text);
+    text-decoration: none;
+  }
+  .error-nav .nav-links {
+    display: flex;
+    gap: 8px;
+  }
+  .error-nav .nav-links a {
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .error-nav .nav-links a:hover {
+    color: var(--primary);
+    background: var(--primary-light);
+  }
+  .error-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 60px 24px;
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .error-code {
+    font-family: var(--mono);
+    font-size: 80px;
+    font-weight: 900;
+    color: var(--border);
+    line-height: 1;
+    margin-bottom: 16px;
+    letter-spacing: -4px;
+  }
+  .error-title {
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 12px;
+    color: var(--text);
+  }
+  .error-desc {
+    font-size: 16px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 32px;
+    max-width: 460px;
+  }
+  .error-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .error-links {
+    margin-top: 48px;
+    padding-top: 32px;
+    border-top: 1px solid var(--border-light);
+    width: 100%;
+  }
+  .error-links h3 {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+  .error-links-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .error-link-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .error-link-card:hover {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-sm);
+  }
+  .error-link-card .icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    background: var(--primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    flex-shrink: 0;
+  }
+  .error-link-card .text b {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 1px;
+  }
+  .error-link-card .text span {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  @media (max-width: 640px) {
+    .error-links-grid { grid-template-columns: 1fr; }
+    .error-code { font-size: 56px; }
+  }
+</style>
+</head>
+<body>
+  <nav class="error-nav">
+    <a href="/" class="brand">1% Digital Solutions</a>
+    <div class="nav-links">
+      <a href="/">Business</a>
+      <a href="/learn">Learning</a>
+    </div>
+  </nav>
+  <div class="error-content">
+    <div class="error-code">404</div>
+    <h1 class="error-title">Page not found</h1>
+    <p class="error-desc">The page you're looking for doesn't exist or has been moved. Check the URL or use the links below.</p>
+    <div class="error-actions">
+      <a href="/" class="btn btn-primary">Go to Business Site</a>
+      <a href="/learn" class="btn btn-outline">Go to Learning Platform</a>
+    </div>
+    <div class="error-links">
+      <h3>Quick Links</h3>
+      <div class="error-links-grid">
+        <a href="/" class="error-link-card">
+          <div class="icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </div>
+          <div class="text">
+            <b>Homepage</b>
+            <span>1% Digital Solutions</span>
+          </div>
+        </a>
+        <a href="/learn" class="error-link-card">
+          <div class="icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          </div>
+          <div class="text">
+            <b>Learning Platform</b>
+            <span>Courses and training</span>
+          </div>
+        </a>
+        <a href="/learn/dashboard" class="error-link-card">
+          <div class="icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+          </div>
+          <div class="text">
+            <b>Dashboard</b>
+            <span>Your learning progress</span>
+          </div>
+        </a>
+        <a href="mailto:1percentrwanda@gmail.com" class="error-link-card">
+          <div class="icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          </div>
+          <div class="text">
+            <b>Contact Us</b>
+            <span>1percentrwanda@gmail.com</span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

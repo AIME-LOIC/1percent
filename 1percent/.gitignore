@@ -1,0 +1,34 @@
+# ============================================================
+# 1% Digital Solutions — .gitignore
+# ============================================================
+
+# Environment & secrets — NEVER commit
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Logs
+*.log
+npm-debug.log*
+
+# Supabase local
+supabase/.temp/

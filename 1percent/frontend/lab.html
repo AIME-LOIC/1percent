@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1% Playground — Code Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/main.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/js/icons.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;font-family:var(--sans);background:#1e1e2e;color:#cdd6f4;}
+
+/* Layout */
+.vscode{display:grid;grid-template-rows:36px 1fr 22px;height:100vh;}
+
+/* Titlebar */
+.titlebar{display:flex;align-items:center;justify-content:space-between;background:#181825;border-bottom:1px solid #313244;padding:0 12px;user-select:none;}
+.titlebar-left{display:flex;align-items:center;gap:12px;}
+.titlebar-logo{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#a6e3a1;}
+.titlebar-logo .mark{background:#a6e3a1;color:#1e1e2e;font-family:var(--mono);font-size:9px;font-weight:800;width:18px;height:18px;border-radius:3px;display:flex;align-items:center;justify-content:center;}
+.titlebar-menus{display:flex;gap:2px;}
+.titlebar-menus span{font-size:12px;color:#a6adc8;padding:4px 8px;border-radius:3px;cursor:default;}
+.titlebar-menus span:hover{background:rgba(255,255,255,0.08);color:#cdd6f4;}
+.titlebar-center{position:absolute;left:50%;transform:translateX(-50%);font-size:11px;color:#585b74;display:flex;align-items:center;gap:6px;}
+.titlebar-right{display:flex;align-items:center;gap:8px;}
+.lang-pill{font-size:10px;font-weight:600;padding:3px 10px;border-radius:100px;background:rgba(166,227,161,0.12);color:#a6e3a1;border:1px solid rgba(166,227,161,0.2);}
+.btn-run-sm{display:flex;align-items:center;gap:5px;padding:4px 14px;border-radius:4px;border:none;font-size:11px;font-weight:600;cursor:pointer;background:#a6e3a1;color:#1e1e2e;transition:all .15s;}
+.btn-run-sm:hover{background:#94e2a5;}
+.btn-run-sm:disabled{opacity:.5;cursor:not-allowed;}
+.btn-run-sm.sec{background:rgba(255,255,255,0.06);color:#a6adc8;border:1px solid #313244;}
+.btn-run-sm.sec:hover{background:rgba(255,255,255,0.1);color:#cdd6f4;}
+.lang-select{background:#313244;color:#cdd6f4;border:1px solid #45475a;border-radius:4px;padding:3px 8px;font-size:11px;font-family:var(--mono);cursor:pointer;}
+
+/* Main */
+.main-area{display:grid;overflow:hidden;}
+.main-area.sidebar-open{grid-template-columns:48px 240px 1fr;}
+.main-area.sidebar-closed{grid-template-columns:48px 0px 1fr;}
+
+/* Activity bar */
+.activity-bar{background:#181825;border-right:1px solid #313244;display:flex;flex-direction:column;align-items:center;padding:4px 0;gap:2px;}
+.activity-icon{width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:#585b74;cursor:pointer;border-radius:4px;transition:all .15s;position:relative;}
+.activity-icon:hover{color:#a6adc8;}
+.activity-icon.active{color:#cdd6f4;}
+.activity-icon.active::before{content:'';position:absolute;left:0;top:8px;bottom:8px;width:2px;background:#cdd6f4;border-radius:0 2px 2px 0;}
+
+/* Sidebar */
+.sidebar{background:#181825;border-right:1px solid #313244;display:flex;flex-direction:column;overflow:hidden;transition:width .15s;}
+.sidebar.collapsed{width:0;overflow:hidden;}
+.sidebar-header{padding:8px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#a6adc8;border-bottom:1px solid #313244;display:flex;align-items:center;justify-content:space-between;}
+.sidebar-header .actions{display:flex;gap:4px;}
+.sidebar-header .actions button{background:none;border:none;color:#585b74;cursor:pointer;padding:2px;border-radius:3px;display:flex;}
+.sidebar-header .actions button:hover{color:#cdd6f4;background:rgba(255,255,255,0.08);}
+.file-tree{flex:1;overflow-y:auto;padding:4px 0;}
+.file-item{display:flex;align-items:center;gap:6px;padding:4px 12px;font-size:13px;color:#a6adc8;cursor:pointer;transition:background .1s;border-left:2px solid transparent;}
+.file-item:hover{background:rgba(255,255,255,0.04);}
+.file-item.active{background:rgba(255,255,255,0.06);color:#cdd6f4;border-left-color:#cdd6f4;}
+.file-icon{width:16px;height:16px;flex-shrink:0;}
+.file-icon.js{color:#f9e2af;}.file-icon.py{color:#89b4fa;}.file-icon.html{color:#fab387;}.file-icon.md{color:#cba6f7;}.file-icon.json{color:#a6e3a1;}.file-icon.css{color:#89dceb;}.file-icon.folder{color:#89b4fa;}.file-icon.txt{color:#a6adc8;}
+.file-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.folder-item{padding-left:8px;}.folder-item .file-name{font-weight:600;}
+.file-children{padding-left:12px;}
+
+/* Search panel */
+.search-panel{background:#181825;border-right:1px solid #313244;display:flex;flex-direction:column;overflow:hidden;}
+.search-panel.hidden{display:none;}
+.search-input-wrap{padding:8px 12px;border-bottom:1px solid #313244;}
+.search-input{width:100%;padding:6px 10px;background:#1e1e2e;border:1px solid #313244;border-radius:4px;color:#cdd6f4;font-size:12px;font-family:var(--mono);outline:none;}
+.search-input:focus{border-color:#89b4fa;}
+.search-results{flex:1;overflow-y:auto;padding:4px 0;}
+.search-result{padding:6px 12px;font-size:12px;color:#a6adc8;cursor:pointer;font-family:var(--mono);}
+.search-result:hover{background:rgba(255,255,255,0.04);}
+.search-result .match{color:#f9e2af;font-weight:600;}
+.search-result .file-ref{color:#585b74;font-size:10px;display:block;margin-top:2px;}
+
+/* Editor area */
+.editor-area{display:flex;flex-direction:column;overflow:hidden;}
+.editor-tabs{display:flex;background:#181825;border-bottom:1px solid #313244;overflow-x:auto;min-height:35px;}
+.editor-tab{display:flex;align-items:center;gap:6px;padding:0 14px;font-size:12px;color:#585b74;border-right:1px solid #313244;cursor:pointer;white-space:nowrap;transition:all .1s;position:relative;}
+.editor-tab:hover{color:#a6adc8;background:rgba(255,255,255,0.02);}
+.editor-tab.active{color:#cdd6f4;background:#1e1e2e;}
+.editor-tab.active::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:#89b4fa;}
+.editor-tab .dot{width:6px;height:6px;border-radius:50%;background:#a6e3a1;display:none;}
+.editor-tab.modified .dot{display:block;}
+.editor-tab .close{width:16px;height:16px;display:flex;align-items:center;justify-content:center;border-radius:3px;font-size:14px;color:inherit;opacity:0;transition:opacity .1s;}
+.editor-tab:hover .close{opacity:.6;}
+.editor-tab .close:hover{opacity:1;background:rgba(255,255,255,0.1);}
+
+/* Breadcrumb */
+.breadcrumb{display:flex;align-items:center;gap:4px;padding:4px 16px;font-size:11px;color:#585b74;background:#1e1e2e;border-bottom:1px solid #313244;}
+.breadcrumb span{cursor:pointer;}.breadcrumb span:hover{color:#a6adc8;}.breadcrumb .sep{color:#45475a;}
+
+/* Editor with syntax highlighting */
+.editor-wrap{flex:1;display:flex;overflow:hidden;position:relative;}
+.line-numbers{padding:12px 8px;text-align:right;font-family:var(--mono);font-size:12px;line-height:1.7;color:#45475a;background:#181825;border-right:1px solid #313244;user-select:none;min-width:40px;overflow:hidden;}
+.editor-container{flex:1;position:relative;overflow:auto;}
+.code-editor{width:100%;height:100%;border:none;outline:none;resize:none;padding:12px 16px;font-family:var(--mono);font-size:13px;line-height:1.7;background:transparent;color:transparent;caret-color:#cdd6f4;tab-size:2;position:absolute;top:0;left:0;z-index:2;}
+.code-editor::placeholder{color:#45475a;}
+.syntax-layer{padding:12px 16px;font-family:var(--mono);font-size:13px;line-height:1.7;white-space:pre-wrap;word-wrap:break-word;position:absolute;top:0;left:0;z-index:1;pointer-events:none;width:100%;min-height:100%;color:#cdd6f4;}
+
+/* Syntax colors */
+.syn-kw{color:#cba6f7;}.syn-fn{color:#89b4fa;}.syn-str{color:#a6e3a1;}.syn-num{color:#fab387;}.syn-cmt{color:#585b74;font-style:italic;}.syn-op{color:#89dceb;}.syn-tag{color:#f38ba8;}.syn-attr{color:#f9e2af;}.syn-type{color:#f9e2af;}.syn-const{color:#fab387;}.syn-bool{color:#fab387;}.syn-reg{color:#eba0ac;}.syn-punc{color:#6c7086;}
+
+/* Panel */
+.panel-area{border-top:1px solid #313244;display:flex;flex-direction:column;background:#181825;overflow:hidden;transition:height .15s;}
+.panel-area.collapsed{height:0 !important;border-top:none;}
+.panel-tabs{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #313244;min-height:32px;}
+.panel-tabs-left{display:flex;}
+.panel-tab{padding:6px 14px;font-size:11px;font-weight:600;color:#585b74;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;border-bottom:1px solid transparent;transition:all .1s;}
+.panel-tab:hover{color:#a6adc8;}.panel-tab.active{color:#cdd6f4;border-bottom-color:#89b4fa;}
+.panel-actions{display:flex;gap:4px;padding-right:8px;}
+.panel-action{width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:#585b74;cursor:pointer;border-radius:3px;border:none;background:none;}
+.panel-action:hover{color:#a6adc8;background:rgba(255,255,255,0.06);}
+.panel-body{flex:1;overflow:auto;}
+.panel-content{display:none;}.panel-content.active{display:block;}
+.terminal-output{padding:8px 14px;font-family:var(--mono);font-size:12px;line-height:1.6;color:#cdd6f4;white-space:pre-wrap;min-height:100%;}
+.terminal-output .success{color:#a6e3a1;}.terminal-output .error{color:#f38ba8;}.terminal-output .warning{color:#f9e2af;}.terminal-output .muted{color:#585b74;}
+.terminal-input-row{display:flex;align-items:center;padding:6px 14px;border-top:1px solid #313244;background:#11111b;}
+.terminal-prompt{color:#a6e3a1;font-family:var(--mono);font-size:12px;margin-right:8px;font-weight:600;}
+.terminal-input{flex:1;background:none;border:none;outline:none;color:#cdd6f4;font-family:var(--mono);font-size:12px;}
+.html-preview-frame{flex:1;border:none;width:100%;background:#fff;}
+.preview-msg{padding:6px 14px;font-size:11px;color:#a6e3a1;background:#11111b;border-top:1px solid #313244;}
+
+/* Autocomplete dropdown */
+.autocomplete{position:absolute;z-index:100;background:#1e1e2e;border:1px solid #313244;border-radius:4px;box-shadow:0 4px 16px rgba(0,0,0,0.4);max-height:200px;overflow-y:auto;display:none;min-width:220px;}
+.autocomplete.show{display:block;}
+.ac-item{padding:4px 10px;font-size:12px;font-family:var(--mono);color:#a6adc8;cursor:pointer;display:flex;align-items:center;gap:8px;}
+.ac-item:hover,.ac-item.selected{background:rgba(137,180,250,0.15);color:#cdd6f4;}
+.ac-item .ac-kind{font-size:9px;font-weight:700;padding:1px 5px;border-radius:2px;text-transform:uppercase;min-width:28px;text-align:center;}
+.ac-kind.kw{background:#cba6f722;color:#cba6f7;}.ac-kind.fn{background:#89b4fa22;color:#89b4fa;}.ac-kind.sn{background:#a6e3a122;color:#a6e3a1;}.ac-kind.pr{background:#f9e2af22;color:#f9e2af;}
+
+/* New file dialog */
+.new-file-dialog{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);}
+.new-file-dialog.show{display:flex;}
+.new-file-box{background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:24px;width:360px;box-shadow:0 8px 32px rgba(0,0,0,0.4);}
+.new-file-box h3{font-size:14px;font-weight:700;margin-bottom:16px;color:#cdd6f4;}
+.new-file-box input{width:100%;padding:8px 12px;background:#181825;border:1px solid #313244;border-radius:4px;color:#cdd6f4;font-family:var(--mono);font-size:13px;outline:none;margin-bottom:16px;}
+.new-file-box input:focus{border-color:#89b4fa;}
+.new-file-box .btns{display:flex;gap:8px;justify-content:flex-end;}
+.new-file-box .btns button{padding:6px 16px;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;border:none;}
+.new-file-box .btns .cancel{background:#313244;color:#a6adc8;}.new-file-box .btns .cancel:hover{background:#45475a;}
+.new-file-box .btns .create{background:#a6e3a1;color:#1e1e2e;}.new-file-box .btns .create:hover{background:#94e2a5;}
+
+/* Status bar */
+.statusbar{display:flex;align-items:center;justify-content:space-between;padding:0 12px;height:22px;background:#a6e3a1;color:#1e1e2e;font-size:11px;font-weight:500;}
+.statusbar-left,.statusbar-right{display:flex;align-items:center;gap:12px;}
+.statusbar-item{display:flex;align-items:center;gap:4px;}
+
+/* Panel toggle button in status bar */
+.statusbar .toggle-panel{cursor:pointer;padding:0 6px;border-radius:2px;}
+.statusbar .toggle-panel:hover{background:rgba(0,0,0,0.1);}
+
+@media(max-width:900px){.main-area.sidebar-open,.main-area.sidebar-closed{grid-template-columns:48px 1fr;}.sidebar,.search-panel{display:none!important;}.titlebar-center{display:none;}.titlebar-menus{display:none;}.statusbar-item:nth-child(n+3){display:none;}}
+@media(max-width:600px){.main-area.sidebar-open,.main-area.sidebar-closed{grid-template-columns:1fr;}.activity-bar{display:none;}.statusbar{font-size:10px;}.statusbar-left,.statusbar-right{gap:6px;}.editor-tabs{min-height:30px;}.editor-tab{padding:0 10px;font-size:11px;}.panel-area{height:150px!important;}.titlebar{padding:0 8px;}.titlebar-logo span{display:none;}.btn-run-sm{padding:3px 8px;font-size:10px;}.lang-pill{padding:2px 6px;font-size:9px;}.lang-select{font-size:10px;padding:2px 6px;}}
+</style>
+</head>
+<body>
+
+<div class="vscode">
+  <div class="titlebar">
+    <div class="titlebar-left">
+      <div class="titlebar-logo"><div class="mark">1%</div><span>Playground</span></div>
+      <div class="titlebar-menus"><span>File</span><span>Edit</span><span>View</span><span>Run</span></div>
+    </div>
+    <div class="titlebar-center"><span id="titlebar-file">script.js</span><span style="color:#45475a;">—</span><span>1% Playground</span></div>
+    <div class="titlebar-right">
+      <span class="lang-pill" id="lang-pill">JavaScript</span>
+      <select class="lang-select" id="lang-select">
+        <option value="javascript">JavaScript</option><option value="python">Python</option><option value="html">HTML / CSS</option>
+        <option value="typescript">TypeScript</option><option value="go">Go</option><option value="rust">Rust</option>
+        <option value="java">Java</option><option value="c">C</option><option value="cpp">C++</option>
+        <option value="php">PHP</option><option value="ruby">Ruby</option>
+      </select>
+      <button class="btn-run-sm" id="run-btn" onclick="runCode()"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> Run</button>
+      <button class="btn-run-sm sec" onclick="window.location.href='/learn/dashboard'">Dashboard</button>
+    </div>
+  </div>
+
+  <div class="main-area sidebar-open" id="main-area">
+    <div class="activity-bar">
+      <div class="activity-icon active" id="act-explorer" title="Explorer" onclick="showSidebarTab('explorer')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+      <div class="activity-icon" id="act-search" title="Search" onclick="showSidebarTab('search')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></div>
+      <div class="activity-icon" id="act-scm" title="Source Control"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="4"/><line x1="1.05" y1="12" x2="7" y2="12"/><path d="M17.01 4.94A9 9 0 0 1 22.95 12"/></svg></div>
+      <div style="flex:1;"></div>
+      <div class="activity-icon" id="act-settings" title="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></div>
+    </div>
+
+    <!-- Explorer sidebar -->
+    <div class="sidebar" id="sidebar-explorer">
+      <div class="sidebar-header">Explorer <div class="actions"><button onclick="showNewFileDialog()" title="New File"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></button></div></div>
+      <div class="file-tree" id="file-tree"></div>
+    </div>
+
+    <!-- Search sidebar -->
+    <div class="search-panel hidden" id="sidebar-search">
+      <div class="sidebar-header">Search</div>
+      <div class="search-input-wrap"><input class="search-input" id="search-input" placeholder="Search in files..." oninput="doSearch()"></div>
+      <div class="search-results" id="search-results"></div>
+    </div>
+
+    <!-- Editor + Panel -->
+    <div class="editor-area">
+      <div class="editor-tabs" id="editor-tabs"></div>
+      <div class="breadcrumb"><span>my-project</span><span class="sep">/</span><span id="bc-file">script.js</span></div>
+      <div class="editor-wrap">
+        <div class="line-numbers" id="line-numbers">1</div>
+        <div class="editor-container" id="editor-container">
+          <div class="syntax-layer" id="syntax-layer"></div>
+          <textarea class="code-editor" id="code-editor" spellcheck="false" placeholder="// Write your code here..."></textarea>
+          <div class="autocomplete" id="autocomplete"></div>
+        </div>
+      </div>
+      <div class="panel-area" id="panel-area" style="height:200px;">
+        <div class="panel-tabs">
+          <div class="panel-tabs-left">
+            <div class="panel-tab active" data-panel="output" onclick="switchPanel('output')">Output</div>
+            <div class="panel-tab" data-panel="terminal" onclick="switchPanel('terminal')">Terminal</div>
+            <div class="panel-tab" data-panel="preview" onclick="switchPanel('preview')">Preview</div>
+          </div>
+          <div class="panel-actions">
+            <button class="panel-action" onclick="clearOutput()" title="Clear"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
+            <button class="panel-action" onclick="togglePanel()" title="Toggle Panel"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 15-6-6-6 6"/></svg></button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="panel-content active" id="panel-output"><div class="terminal-output" id="output"><span class="muted">Welcome to 1% Playground Terminal</span>
+<span class="muted">Run your code or switch to Terminal for commands.</span></div></div>
+          <div class="panel-content" id="panel-terminal"><div class="terminal-output" id="terminal-output"></div><div class="terminal-input-row"><span class="terminal-prompt">$</span><input type="text" class="terminal-input" id="terminal-input" placeholder="Type a command..." spellcheck="false" autocomplete="off"></div></div>
+          <div class="panel-content" id="panel-preview"><div class="terminal-output" id="preview-area"><span class="muted">Run HTML code to see a preview here.</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="statusbar">
+    <div class="statusbar-left">
+      <span class="statusbar-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/></svg> Connected</span>
+      <span class="statusbar-item" id="status-lang">JavaScript</span>
+    </div>
+    <div class="statusbar-right">
+      <span class="statusbar-item" id="status-storage">0/5 files (Free)</span>
+      <span class="statusbar-item" id="status-pos">Ln 1, Col 1</span>
+      <span class="statusbar-item">UTF-8</span>
+      <span class="statusbar-item">Spaces: 2</span>
+      <span class="statusbar-item" title="Shift+Ctrl+S to save, auto-saves every 2s">💾 Shift+Ctrl+S</span>
+      <span class="statusbar-item toggle-panel" onclick="togglePanel()" title="Toggle Panel">Panel</span>
+    </div>
+  </div>
+</div>
+
+<!-- New File Dialog -->
+<div class="new-file-dialog" id="new-file-dialog">
+  <div class="new-file-box">
+    <h3>New File</h3>
+    <input type="text" id="new-file-name" placeholder="filename.ext" autofocus>
+    <div class="btns">
+      <button class="cancel" onclick="hideNewFileDialog()">Cancel</button>
+      <button class="create" onclick="createNewFile()">Create</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────
+const editor = document.getElementById('code-editor');
+const syntaxLayer = document.getElementById('syntax-layer');
+const lineNumbers = document.getElementById('line-numbers');
+const output = document.getElementById('output');
+const langSelect = document.getElementById('lang-select');
+const langPill = document.getElementById('lang-pill');
+const ac = document.getElementById('autocomplete');
+
+let FILES = {
+  script: { name: 'script.js', ext: 'js', lang: 'javascript', code: 'console.log("Hello, World!");' },
+  readme: { name: 'README.md', ext: 'md', lang: 'markdown', code: '# My Project\n\nA sample project.\n\n## Features\n\n- Feature 1\n- Feature 2' },
+  styles: { name: 'styles.css', ext: 'css', lang: 'css', code: 'body {\n  font-family: sans-serif;\n  margin: 0;\n  padding: 20px;\n}' },
+  index: { name: 'index.html', ext: 'html', lang: 'html', code: '<!DOCTYPE html>\n<html>\n<head>\n  <link rel="stylesheet" href="styles.css">\n</head>\n<body>\n  <h1>Hello, World!</h1>\n</body>\n</html>' },
+  config: { name: 'package.json', ext: 'json', lang: 'json', code: '{\n  "name": "my-project",\n  "version": "1.0.0"\n}' }
+};
+
+let currentFile = 'script';
+let openTabs = ['script'];
+let panelOpen = true;
+let acVisible = false;
+let acIndex = 0;
+let acItems = [];
+
+// ── Snippets per language ──────────────────────────
+const SNIPPETS = {
+  javascript: [
+    { kw: 'const', kind: 'kw', snippet: 'const ${1:name} = ${2:value};' },
+    { kw: 'let', kind: 'kw', snippet: 'let ${1:name} = ${2:value};' },
+    { kw: 'var', kind: 'kw', snippet: 'var ${1:name} = ${2:value};' },
+    { kw: 'function', kind: 'kw', snippet: 'function ${1:name}(${2:params}) {\n  ${3:// body}\n}' },
+    { kw: 'async', kind: 'kw', snippet: 'async function ${1:name}() {\n  ${2:// body}\n}' },
+    { kw: 'await', kind: 'kw', snippet: 'await ${1:expression}' },
+    { kw: 'if', kind: 'kw', snippet: 'if (${1:condition}) {\n  ${2:// body}\n}' },
+    { kw: 'else', kind: 'kw', snippet: 'else {\n  ${1:// body}\n}' },
+    { kw: 'for', kind: 'kw', snippet: 'for (let ${1:i} = 0; ${1:i} < ${2:arr}.length; ${1:i}++) {\n  ${3:// body}\n}' },
+    { kw: 'forEach', kind: 'fn', snippet: '${1:arr}.forEach((${2:item}) => {\n  ${3:// body}\n});' },
+    { kw: 'map', kind: 'fn', snippet: '${1:arr}.map((${2:item}) => ${3:item})' },
+    { kw: 'filter', kind: 'fn', snippet: '${1:arr}.filter((${2:item}) => ${3:condition})' },
+    { kw: 'return', kind: 'kw', snippet: 'return ${1:value};' },
+    { kw: 'try', kind: 'kw', snippet: 'try {\n  ${1:// code}\n} catch (${2:e}) {\n  ${3:// error}\n}' },
+    { kw: 'class', kind: 'kw', snippet: 'class ${1:Name} {\n  constructor(${2:params}) {\n    ${3:// init}\n  }\n}' },
+    { kw: 'import', kind: 'kw', snippet: 'import { ${1:module} } from "${2:path}";' },
+    { kw: 'export', kind: 'kw', snippet: 'export default ${1:name};' },
+    { kw: 'console.log', kind: 'fn', snippet: 'console.log(${1:value});' },
+    { kw: 'setTimeout', kind: 'fn', snippet: 'setTimeout(() => {\n  ${2:// body}\n}, ${1:1000});' },
+    { kw: 'Promise', kind: 'pr', snippet: 'new Promise((${1:resolve}, ${2:reject}) => {\n  ${3:// body}\n})' },
+    { kw: 'fetch', kind: 'fn', snippet: 'const res = await fetch("${1:url}");\nconst data = await res.json();' },
+    { kw: 'document.querySelector', kind: 'fn', snippet: 'document.querySelector("${1:selector}")' },
+  ],
+  python: [
+    { kw: 'def', kind: 'kw', snippet: 'def ${1:name}(${2:params}):\n    ${3:pass}' },
+    { kw: 'class', kind: 'kw', snippet: 'class ${1:Name}:\n    def __init__(self${2:, params}):\n        ${3:pass}' },
+    { kw: 'if', kind: 'kw', snippet: 'if ${1:condition}:\n    ${2:pass}' },
+    { kw: 'elif', kind: 'kw', snippet: 'elif ${1:condition}:\n    ${2:pass}' },
+    { kw: 'else', kind: 'kw', snippet: 'else:\n    ${1:pass}' },
+    { kw: 'for', kind: 'kw', snippet: 'for ${1:item} in ${2:iterable}:\n    ${3:pass}' },
+    { kw: 'while', kind: 'kw', snippet: 'while ${1:condition}:\n    ${2:pass}' },
+    { kw: 'try', kind: 'kw', snippet: 'try:\n    ${1:pass}\nexcept ${2:Exception} as e:\n    ${3:print(e)}' },
+    { kw: 'import', kind: 'kw', snippet: 'import ${1:module}' },
+    { kw: 'from', kind: 'kw', snippet: 'from ${1:module} import ${2:name}' },
+    { kw: 'print', kind: 'fn', snippet: 'print(${1:value})' },
+    { kw: 'lambda', kind: 'kw', snippet: 'lambda ${1:args}: ${2:expression}' },
+    { kw: 'return', kind: 'kw', snippet: 'return ${1:value}' },
+    { kw: 'list', kind: 'pr', snippet: '[${1:items}]' },
+    { kw: 'dict', kind: 'pr', snippet: '{${1:key}: ${2:value}}' },
+    { kw: 'self', kind: 'kw', snippet: 'self.${1:attribute}' },
+  ],
+  html: [
+    { kw: '<div>', kind: 'kw', snippet: '<div>\n  ${1:content}\n</div>' },
+    { kw: '<span>', kind: 'kw', snippet: '<span>${1:text}</span>' },
+    { kw: '<p>', kind: 'kw', snippet: '<p>${1:text}</p>' },
+    { kw: '<h1>', kind: 'kw', snippet: '<h1>${1:text}</h1>' },
+    { kw: '<a>', kind: 'kw', snippet: '<a href="${1:url}">${2:text}</a>' },
+    { kw: '<img>', kind: 'kw', snippet: '<img src="${1:url}" alt="${2:alt}">' },
+    { kw: '<input>', kind: 'kw', snippet: '<input type="${1:text}" placeholder="${2:placeholder}">' },
+    { kw: '<button>', kind: 'kw', snippet: '<button>${1:Click me}</button>' },
+    { kw: '<ul>', kind: 'kw', snippet: '<ul>\n  <li>${1:item}</li>\n</ul>' },
+    { kw: '<form>', kind: 'kw', snippet: '<form>\n  ${1:fields}\n</form>' },
+    { kw: 'link css', kind: 'sn', snippet: '<link rel="stylesheet" href="${1:style.css}">' },
+    { kw: 'script', kind: 'kw', snippet: '<script src="${1:app.js}"><\/script>' },
+    { kw: 'meta charset', kind: 'sn', snippet: '<meta charset="UTF-8">' },
+  ],
+  css: [
+    { kw: 'display', kind: 'kw', snippet: 'display: ${1:flex};' },
+    { kw: 'position', kind: 'kw', snippet: 'position: ${1:relative};' },
+    { kw: 'margin', kind: 'kw', snippet: 'margin: ${1:0}px;' },
+    { kw: 'padding', kind: 'kw', snippet: 'padding: ${1:0}px;' },
+    { kw: 'background', kind: 'kw', snippet: 'background: ${1:#fff};' },
+    { kw: 'color', kind: 'kw', snippet: 'color: ${1:#333};' },
+    { kw: 'font-size', kind: 'kw', snippet: 'font-size: ${1:16}px;' },
+    { kw: 'border', kind: 'kw', snippet: 'border: ${1:1px} solid ${2:#ccc};' },
+    { kw: 'border-radius', kind: 'kw', snippet: 'border-radius: ${1:4}px;' },
+    { kw: 'box-shadow', kind: 'kw', snippet: 'box-shadow: 0 ${1:2}px ${2:8}px rgba(0,0,0,0.1);' },
+    { kw: 'flex', kind: 'kw', snippet: 'flex: ${1:1};' },
+    { kw: 'grid', kind: 'kw', snippet: 'grid-template-columns: ${1:1fr} ${2:1fr};' },
+    { kw: '@media', kind: 'kw', snippet: '@media (max-width: ${1:768px}) {\n  ${2:/* styles */}\n}' },
+    { kw: ':hover', kind: 'kw', snippet: '&:hover {\n  ${1:/* styles */}\n}' },
+  ]
+};
+
+// ── Syntax Highlighting ────────────────────────────
+function highlight(code, lang) {
+  let h = escHtml(code);
+  if (lang === 'javascript' || lang === 'typescript') {
+    h = h.replace(/(\/\/.*$)/gm, '<span class="syn-cmt">$1</span>');
+    h = h.replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="syn-cmt">$1</span>');
+    h = h.replace(/(&quot;[^&]*?&quot;|&#39;[^&]*?&#39;|`[^`]*?`)/g, '<span class="syn-str">$1</span>');
+    h = h.replace(/\b(const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|delete|typeof|instanceof|in|of|class|extends|super|import|export|default|from|async|await|try|catch|finally|throw|this|yield)\b/g, '<span class="syn-kw">$1</span>');
+    h = h.replace(/\b(true|false|null|undefined|NaN|Infinity)\b/g, '<span class="syn-bool">$1</span>');
+    h = h.replace(/\b(\d+\.?\d*)\b/g, '<span class="syn-num">$1</span>');
+    h = h.replace(/\b([a-zA-Z_$][\w$]*)\s*(?=\()/g, '<span class="syn-fn">$1</span>');
+  } else if (lang === 'python') {
+    h = h.replace(/(#.*$)/gm, '<span class="syn-cmt">$1</span>');
+    h = h.replace(/(&quot;[^&]*?&quot;|&#39;[^&]*?&#39;)/g, '<span class="syn-str">$1</span>');
+    h = h.replace(/\b(def|class|if|elif|else|for|while|return|import|from|as|try|except|finally|raise|with|yield|lambda|pass|break|continue|and|or|not|in|is|global|nonlocal|assert|del)\b/g, '<span class="syn-kw">$1</span>');
+    h = h.replace(/\b(True|False|None)\b/g, '<span class="syn-bool">$1</span>');
+    h = h.replace(/\b(\d+\.?\d*)\b/g, '<span class="syn-num">$1</span>');
+    h = h.replace(/\b([a-zA-Z_][\w]*)\s*(?=\()/g, '<span class="syn-fn">$1</span>');
+  } else if (lang === 'html') {
+    h = h.replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="syn-cmt">$1</span>');
+    h = h.replace(/(&lt;\/?)([\w-]+)/g, '$1<span class="syn-tag">$2</span>');
+    h = h.replace(/\s([\w-]+)(?==)/g, ' <span class="syn-attr">$1</span>');
+    h = h.replace(/(&quot;[^&]*?&quot;)/g, '<span class="syn-str">$1</span>');
+  } else if (lang === 'css') {
+    h = h.replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="syn-cmt">$1</span>');
+    h = h.replace(/([\.\#][\w-]+)/g, '<span class="syn-tag">$1</span>');
+    h = h.replace(/\b(margin|padding|display|position|color|background|font-size|font-weight|border|border-radius|box-shadow|flex|grid|width|height|max-width|min-width|overflow|z-index|opacity|transition|transform|text-align|line-height|letter-spacing|text-transform|cursor|top|left|right|bottom|gap|justify-content|align-items|align-self|grid-template-columns|grid-template-rows|gap)\b/g, '<span class="syn-attr">$1</span>');
+    h = h.replace(/:\s*([^;{}]+)/g, ': <span class="syn-str">$1</span>');
+    h = h.replace(/@media\s/g, '<span class="syn-kw">@media</span> ');
+  } else if (lang === 'json') {
+    h = h.replace(/(&quot;[^&]*?&quot;)\s*:/g, '<span class="syn-attr">$1</span>:');
+    h = h.replace(/:\s*(&quot;[^&]*?&quot;)/g, ': <span class="syn-str">$1</span>');
+    h = h.replace(/:\s*(\d+\.?\d*)/g, ': <span class="syn-num">$1</span>');
+    h = h.replace(/:\s*(true|false|null)/g, ': <span class="syn-bool">$1</span>');
+  }
+  return h;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function updateSyntax() {
+  const file = FILES[currentFile];
+  syntaxLayer.innerHTML = highlight(editor.value, file.lang || 'javascript');
+}
+
+// ── Autocomplete ───────────────────────────────────
+function showAutocomplete() {
+  const pos = editor.selectionStart;
+  const text = editor.value.substring(0, pos);
+  const wordMatch = text.match(/(\w+)$/);
+  if (!wordMatch || wordMatch[1].length < 2) { hideAutocomplete(); return; }
+  const word = wordMatch[1].toLowerCase();
+  const lang = FILES[currentFile].lang || 'javascript';
+  const snippets = SNIPPETS[lang] || SNIPPETS.javascript;
+  acItems = snippets.filter(s => s.kw.toLowerCase().includes(word));
+  if (!acItems.length) { hideAutocomplete(); return; }
+
+  // Calculate position
+  const lines = text.split('\n');
+  const lineIdx = lines.length - 1;
+  const colIdx = lines[lineIdx].length;
+  const lineHeight = 22;
+  const charWidth = 7.8;
+  const editorRect = editor.getBoundingClientRect();
+  const containerRect = document.getElementById('editor-container').getBoundingClientRect();
+
+  ac.style.left = (colIdx * charWidth + 16) + 'px';
+  ac.style.top = ((lineIdx + 1) * lineHeight + 12) + 'px';
+  acIndex = 0;
+  renderAutocomplete();
+  ac.classList.add('show');
+  acVisible = true;
+}
+
+function renderAutocomplete() {
+  ac.innerHTML = acItems.slice(0, 15).map((item, i) => {
+    const kindClass = item.kind === 'kw' ? 'kw' : item.kind === 'fn' ? 'fn' : item.kind === 'sn' ? 'sn' : 'pr';
+    const kindLabel = item.kind === 'kw' ? 'KW' : item.kind === 'fn' ? 'FN' : item.kind === 'sn' ? 'SN' : 'PR';
+    return `<div class="ac-item${i === acIndex ? ' selected' : ''}" onmousedown="selectAutocomplete(${i})"><span class="ac-kind ${kindClass}">${kindLabel}</span>${escHtml(item.kw)}</div>`;
+  }).join('');
+}
+
+function hideAutocomplete() { ac.classList.remove('show'); acVisible = false; }
+
+function selectAutocomplete(idx) {
+  const item = acItems[idx];
+  if (!item) return;
+  const pos = editor.selectionStart;
+  const text = editor.value;
+  const wordMatch = text.substring(0, pos).match(/(\w+)$/);
+  if (!wordMatch) return;
+  const start = pos - wordMatch[1].length;
+  const snippet = item.snippet.replace(/\$\{(\d+):([^}]*)\}/g, (_, n, placeholder) => placeholder);
+  editor.value = text.substring(0, start) + snippet + text.substring(pos);
+  editor.selectionStart = editor.selectionEnd = start + snippet.length;
+  hideAutocomplete();
+  editor.focus();
+  updateAll();
+}
+
+// ── New File ───────────────────────────────────────
+function showNewFileDialog() {
+  document.getElementById('new-file-dialog').classList.add('show');
+  const input = document.getElementById('new-file-name');
+  input.value = '';
+  input.focus();
+}
+function hideNewFileDialog() { document.getElementById('new-file-dialog').classList.remove('show'); }
+function createNewFile() {
+  const name = document.getElementById('new-file-name').value.trim();
+  if (!name) return;
+
+  // Check file limit
+  if (currentUser && Object.keys(FILES).length >= fileUsage.max_files) {
+    showLabToast(`File limit reached (${fileUsage.max_files} files). Upgrade for more.`, 'warn');
+    return;
+  }
+
+  const ext = name.split('.').pop() || 'txt';
+  const langMap = { js: 'javascript', py: 'python', ts: 'typescript', html: 'html', htm: 'html', css: 'css', json: 'json', md: 'markdown', go: 'go', rs: 'rust', java: 'java', c: 'c', cpp: 'cpp', php: 'php', rb: 'ruby' };
+  const key = name.replace(/[^a-zA-Z0-9]/g, '_');
+  FILES[key] = { name, ext, lang: langMap[ext] || 'javascript', code: '' };
+  hideNewFileDialog();
+  renderFileTree();
+  switchFile(key);
+
+  // Auto-save new file to server/S3
+  if (currentUser) {
+    saveFileToServer(key);
+  }
+}
+
+// ── File Tree ──────────────────────────────────────
+function renderFileTree() {
+  const tree = document.getElementById('file-tree');
+  const iconMap = { js: 'js', py: 'py', ts: 'js', html: 'html', htm: 'html', css: 'css', json: 'json', md: 'md', go: 'js', rs: 'js', java: 'js', c: 'js', cpp: 'js', php: 'js', rb: 'js', txt: 'txt' };
+  tree.innerHTML = `<div class="file-item folder-item"><svg class="file-icon folder" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z"/></svg><span class="file-name">my-project</span></div><div class="file-children">${
+    Object.keys(FILES).map(key => {
+      const f = FILES[key];
+      const ic = iconMap[f.ext] || 'txt';
+      return `<div class="file-item${key === currentFile ? ' active' : ''}" data-file="${key}" onclick="switchFile('${key}')"><svg class="file-icon ${ic}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span class="file-name">${escHtml(f.name)}</span></div>`;
+    }).join('')
+  }</div>`;
+}
+
+// ── Search ─────────────────────────────────────────
+function doSearch() {
+  const q = document.getElementById('search-input').value.trim().toLowerCase();
+  const results = document.getElementById('search-results');
+  if (!q) { results.innerHTML = ''; return; }
+  let html = '';
+  for (const [key, file] of Object.entries(FILES)) {
+    const lines = file.code.split('\n');
+    lines.forEach((line, i) => {
+      if (line.toLowerCase().includes(q)) {
+        const highlighted = escHtml(line).replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'), '<span class="match">$1</span>');
+        html += `<div class="search-result" onclick="switchFile('${key}');goToLine(${i + 1})"><span>${file.name}:${i + 1}</span><span class="file-ref">${highlighted.trim()}</span></div>`;
+      }
+    });
+  }
+  results.innerHTML = html || '<div style="padding:12px;color:#585b74;font-size:12px;">No results found</div>';
+}
+
+function goToLine(n) {
+  const lines = editor.value.split('\n');
+  let pos = 0;
+  for (let i = 0; i < n - 1 && i < lines.length; i++) pos += lines[i].length + 1;
+  editor.selectionStart = editor.selectionEnd = pos;
+  editor.focus();
+  const lineHeight = 22;
+  editor.parentElement.scrollTop = (n - 5) * lineHeight;
+}
+
+// ── Sidebar tabs ───────────────────────────────────
+function showSidebarTab(tab) {
+  const explorer = document.getElementById('sidebar-explorer');
+  const search = document.getElementById('sidebar-search');
+  document.querySelectorAll('.activity-icon').forEach(i => i.classList.remove('active'));
+  if (tab === 'explorer') {
+    explorer.style.display = '';
+    search.classList.add('hidden');
+    document.getElementById('act-explorer').classList.add('active');
+  } else if (tab === 'search') {
+    explorer.style.display = 'none';
+    search.classList.remove('hidden');
+    document.getElementById('act-search').classList.add('active');
+    document.getElementById('search-input').focus();
+  }
+}
+
+// ── File switching ─────────────────────────────────
+function switchFile(key) {
+  FILES[currentFile].code = editor.value;
+  currentFile = key;
+  const file = FILES[key];
+  editor.value = file.code;
+  langSelect.value = file.lang || 'javascript';
+  langPill.textContent = LANG_NAMES[file.lang] || file.lang || 'JavaScript';
+  document.getElementById('status-lang').textContent = LANG_NAMES[file.lang] || file.lang || 'JavaScript';
+  if (!openTabs.includes(key)) openTabs.push(key);
+  renderTabs();
+  renderFileTree();
+  updateAll();
+}
+
+// ── Tabs ───────────────────────────────────────────
+function renderTabs() {
+  document.getElementById('editor-tabs').innerHTML = openTabs.map(key => {
+    const f = FILES[key];
+    return `<div class="editor-tab${key === currentFile ? ' active' : ''}${f.modified ? ' modified' : ''}" data-file="${key}" onclick="switchFile('${key}')"><span>${escHtml(f.name)}</span><div class="dot"></div><span class="close" onclick="event.stopPropagation();closeTab('${key}')">&times;</span></div>`;
+  }).join('');
+}
+function closeTab(key) {
+  openTabs = openTabs.filter(k => k !== key);
+  if (!openTabs.length) openTabs = [Object.keys(FILES)[0]];
+  if (currentFile === key) { currentFile = openTabs[openTabs.length - 1]; editor.value = FILES[currentFile].code; }
+  renderTabs(); renderFileTree(); updateAll();
+}
+
+// ── Panel ──────────────────────────────────────────
+function togglePanel() {
+  panelOpen = !panelOpen;
+  document.getElementById('panel-area').style.height = panelOpen ? '200px' : '0px';
+  document.getElementById('panel-area').style.borderTop = panelOpen ? '1px solid #313244' : 'none';
+}
+function switchPanel(name) {
+  document.querySelectorAll('.panel-tab').forEach(t => t.classList.toggle('active', t.dataset.panel === name));
+  document.querySelectorAll('.panel-content').forEach(p => p.classList.toggle('active', p.id === `panel-${name}`));
+}
+function clearOutput() { output.innerHTML = '<span class="muted">Cleared.</span>'; }
+
+// ── Update helpers ─────────────────────────────────
+function updateLineNumbers() {
+  const lines = editor.value.split('\n').length;
+  lineNumbers.innerHTML = Array.from({ length: lines }, (_, i) => i + 1).join('<br>');
+}
+function updateCursorPos() {
+  const pos = editor.selectionStart;
+  const text = editor.value.substring(0, pos);
+  const line = text.split('\n').length;
+  const col = pos - text.lastIndexOf('\n');
+  document.getElementById('status-pos').textContent = `Ln ${line}, Col ${col}`;
+}
+function updateAll() {
+  updateLineNumbers();
+  updateSyntax();
+  updateCursorPos();
+  document.getElementById('titlebar-file').textContent = FILES[currentFile].name;
+  document.getElementById('bc-file').textContent = FILES[currentFile].name;
+}
+
+// ── Editor events ──────────────────────────────────
+const LANG_NAMES = { javascript: 'JavaScript', python: 'Python', html: 'HTML / CSS', typescript: 'TypeScript', go: 'Go', rust: 'Rust', java: 'Java', c: 'C', cpp: 'C++', php: 'PHP', ruby: 'Ruby', css: 'CSS', json: 'JSON', markdown: 'Markdown' };
+
+langSelect.addEventListener('change', () => {
+  const lang = langSelect.value;
+  FILES[currentFile].lang = lang;
+  langPill.textContent = LANG_NAMES[lang] || lang;
+  document.getElementById('status-lang').textContent = LANG_NAMES[lang] || lang;
+  updateAll();
+});
+
+let autoSaveTimer = null;
+function autoSave() {
+  if (!currentUser) return;
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(() => {
+    FILES[currentFile].modified = false;
+    saveFileToServer(currentFile);
+    renderTabs();
+  }, 2000); // Auto-save after 2 seconds of inactivity
+}
+
+editor.addEventListener('input', () => {
+  FILES[currentFile].code = editor.value;
+  FILES[currentFile].modified = true;
+  updateAll();
+  showAutocomplete();
+  autoSave();
+});
+
+editor.addEventListener('keyup', (e) => {
+  updateCursorPos();
+  if (acVisible && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+    e.preventDefault();
+    acIndex = e.key === 'ArrowDown' ? Math.min(acIndex + 1, acItems.length - 1) : Math.max(acIndex - 1, 0);
+    renderAutocomplete();
+    return;
+  }
+  if (acVisible && e.key === 'Enter') {
+    e.preventDefault();
+    selectAutocomplete(acIndex);
+    return;
+  }
+  if (acVisible && e.key === 'Escape') { hideAutocomplete(); return; }
+  if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'Enter') showAutocomplete();
+});
+
+editor.addEventListener('click', () => { updateCursorPos(); hideAutocomplete(); });
+
+editor.addEventListener('keydown', (e) => {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const s = editor.selectionStart, end = editor.selectionEnd;
+    editor.value = editor.value.substring(0, s) + '  ' + editor.value.substring(end);
+    editor.selectionStart = editor.selectionEnd = s + 2;
+    FILES[currentFile].code = editor.value;
+    updateAll();
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); runCode(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+    e.preventDefault();
+    showSidebarTab('search');
+    document.getElementById('search-input').focus();
+  }
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'S') {
+    e.preventDefault();
+    FILES[currentFile].modified = false;
+    renderTabs();
+    saveFileToServer(currentFile);
+    showLabToast('File saved!', 'success');
+  }
+});
+
+// ── Run code ───────────────────────────────────────
+async function runCode() {
+  const code = editor.value.trim();
+  const lang = FILES[currentFile].lang || langSelect.value;
+  if (!code) { output.innerHTML = '<span class="error">No code to run.</span>'; return; }
+  output.innerHTML = '<span class="muted">Running...</span>';
+  document.getElementById('run-btn').disabled = true;
+  try {
+    const res = await fetch('/api/lab/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, language: lang }) });
+    const data = await res.json();
+    if (data.html_preview) {
+      const pa = document.getElementById('preview-area'); pa.innerHTML = '';
+      const iframe = document.createElement('iframe'); iframe.className = 'html-preview-frame'; iframe.sandbox = 'allow-scripts'; iframe.srcdoc = data.html;
+      pa.appendChild(iframe); switchPanel('preview');
+      output.innerHTML = '<span class="success">HTML rendered successfully</span>';
+    } else if (data.error) {
+      output.innerHTML = `<span class="error">${escHtml(data.error)}</span>`;
+    } else {
+      const out = data.output || '(no output)';
+      const time = data.time ? `\n<span class="muted">Time: ${data.time}s</span>` : '';
+      output.innerHTML = `<span class="success">${escHtml(out)}</span>${time}`;
+    }
+    switchPanel('output');
+  } catch (e) { output.innerHTML = `<span class="error">Network error: ${escHtml(e.message)}</span>`; }
+  document.getElementById('run-btn').disabled = false;
+}
+
+// ── Terminal ───────────────────────────────────────
+let termHistory = [];
+let termHistIdx = -1;
+
+document.getElementById('terminal-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const cmd = e.target.value.trim();
+    if (cmd) {
+      termHistory.unshift(cmd);
+      termHistIdx = -1;
+      const termOut = document.getElementById('terminal-output');
+      termOut.innerHTML += `<span style="color:#89b4fa;">$ ${escHtml(cmd)}</span>\n`;
+      const parts = cmd.split(/\s+/);
+      const bin = parts[0];
+      const args = parts.slice(1);
+
+      if (cmd === 'clear') termOut.innerHTML = '';
+      else if (cmd === 'reset') termOut.innerHTML = '';
+      else if (cmd === 'help') termOut.innerHTML += `<span class="muted">\n<span style="color:#a6e3a1;">Navigation:</span> ls, cd, pwd, tree\n<span style="color:#a6e3a1;">Files:</span> cat, head, tail, touch, mkdir, rm, cp, mv, chmod\n<span style="color:#a6e3a1;">Search:</span> grep, find, which, wc\n<span style="color:#a6e3a1;">System:</span> ps, df, free, uptime, whoami, hostname, id, uname, date, env\n<span style="color:#a6e3a1;">Network:</span> ping, curl, wget\n<span style="color:#a6e3a1;">Text:</span> echo, printf, sort, uniq, tr\n<span style="color:#a6e3a1;">Git:</span> git init/add/commit/status/log/branch/checkout/merge/diff\n<span style="color:#a6e3a1;">Docker:</span> docker ps/images/logs/run/build\n<span style="color:#a6e3a1;">Other:</span> history, clear, help, run, version\n</span>\n`;
+      else if (cmd === 'pwd') termOut.innerHTML += `<span>/home/user/project</span>\n`;
+      else if (cmd === 'ls' || cmd === 'ls -la' || cmd === 'ls -a') {
+        const files = Object.values(FILES).map(f => f.name).join('  ');
+        termOut.innerHTML += `<span>${escHtml(files)}</span>\n`;
+      }
+      else if (cmd.startsWith('echo ')) termOut.innerHTML += `<span>${escHtml(cmd.slice(5))}</span>\n`;
+      else if (cmd === 'run' || cmd === 'node .' || cmd === 'npm start') runCode();
+      else if (cmd.startsWith('cat ')) {
+        const fname = cmd.slice(4).trim();
+        const f = Object.values(FILES).find(f => f.name === fname);
+        termOut.innerHTML += f ? `<span>${escHtml(f.code)}</span>\n` : `<span class="error">cat: ${escHtml(fname)}: No such file</span>\n`;
+      }
+      else if (cmd === 'whoami') termOut.innerHTML += `<span>user</span>\n`;
+      else if (cmd === 'hostname') termOut.innerHTML += `<span>1percent-lab</span>\n`;
+      else if (cmd === 'date') termOut.innerHTML += `<span>${new Date().toString()}</span>\n`;
+      else if (cmd === 'uname' || cmd === 'uname -a') termOut.innerHTML += `<span>Linux 1percent-lab 5.15.0 #1 SMP x86_64 GNU/Linux</span>\n`;
+      else if (cmd === 'uptime') termOut.innerHTML += `<span>${new Date().toLocaleTimeString()} up 42 days, 1 user, load average: 0.12, 0.08, 0.05</span>\n`;
+      else if (cmd === 'id') termOut.innerHTML += `<span>uid=1000(user) gid=1000(user) groups=1000(user)</span>\n`;
+      else if (cmd === 'env') termOut.innerHTML += `<span>SHELL=/bin/bash\nUSER=user\nHOME=/home/user\nPATH=/usr/local/bin:/usr/bin:/bin\nNODE_ENV=development</span>\n`;
+      else if (cmd === 'df') termOut.innerHTML += `<span>Filesystem     Size  Used Avail Use% Mounted on\n/dev/sda1      100G   42G   58G  42% /</span>\n`;
+      else if (cmd === 'free') termOut.innerHTML += `<span>              total        used        free\nMem:          4096        1536        1792\nSwap:         2048          64        1984</span>\n`;
+      else if (cmd === 'ps' || cmd === 'ps aux') termOut.innerHTML += `<span>  PID TTY          TIME CMD\n    1 ?        00:00:01 node\n  128 pts/0    00:00:00 bash</span>\n`;
+      else if (cmd === 'which node') termOut.innerHTML += `<span>/usr/local/bin/node</span>\n`;
+      else if (cmd.startsWith('which ')) termOut.innerHTML += `<span>/usr/bin/${escHtml(args[0])}</span>\n`;
+      else if (cmd === 'history') termOut.innerHTML += `<span>${termHistory.slice().reverse().map((h, i) => `  ${i + 1}  ${escHtml(h)}`).join('\n')}</span>\n`;
+      else if (cmd.startsWith('mkdir ')) termOut.innerHTML += `<span></span>\n`;
+      else if (cmd.startsWith('touch ')) termOut.innerHTML += `<span></span>\n`;
+      else if (cmd.startsWith('rm ')) termOut.innerHTML += `<span></span>\n`;
+      else if (cmd.startsWith('cp ')) termOut.innerHTML += `<span></span>\n`;
+      else if (cmd.startsWith('mv ')) termOut.innerHTML += `<span></span>\n`;
+      else if (cmd.startsWith('chmod ')) termOut.innerHTML += `<span></span>\n`;
+      else if (cmd.startsWith('grep ')) termOut.innerHTML += `<span>${escHtml(cmd)}</span>\n`;
+      else if (cmd.startsWith('find ')) termOut.innerHTML += `<span>${escHtml(args[0] || '.')}</span>\n`;
+      else if (cmd.startsWith('sort ')) termOut.innerHTML += `<span></span>\n`;
+      else if (cmd.startsWith('wc ')) termOut.innerHTML += `<span>  10  50  300 ${escHtml(args[0] || 'file')}</span>\n`;
+      else if (cmd.startsWith('head ')) termOut.innerHTML += `<span>/* first 10 lines */</span>\n`;
+      else if (cmd.startsWith('tail ')) termOut.innerHTML += `<span>/* last 10 lines */</span>\n`;
+      else if (cmd.startsWith('ping ')) termOut.innerHTML += `<span>PING ${escHtml(args[0] || 'localhost')} (127.0.0.1): 56 data bytes\n64 bytes: icmp_seq=0 ttl=64 time=0.042 ms\n--- ${escHtml(args[0] || 'localhost')} ping statistics ---\n1 packets transmitted, 1 received, 0% packet loss</span>\n`;
+      else if (cmd.startsWith('curl ')) termOut.innerHTML += `<span>{"status":"ok","message":"Response from ${escHtml(args[0] || 'api')}"}</span>\n`;
+      else if (cmd.startsWith('wget ')) termOut.innerHTML += `<span>Saving to: '${escHtml(args[0] || 'file')}'\n100%[===================>] saved</span>\n`;
+      else if (cmd === 'git init') termOut.innerHTML += `<span>Initialized empty Git repository</span>\n`;
+      else if (cmd === 'git status') termOut.innerHTML += `<span>On branch main\nnothing to commit, working tree clean</span>\n`;
+      else if (cmd.startsWith('git add')) termOut.innerHTML += `<span></span>\n`;
+      else if (cmd.startsWith('git commit')) termOut.innerHTML += `<span>[main abc1234] ${escHtml(args.slice(2).join(' '))}\n 1 file changed</span>\n`;
+      else if (cmd === 'git log') termOut.innerHTML += `<span>commit abc1234\nAuthor: user\nDate: ${new Date().toISOString()}\n\n    Initial commit</span>\n`;
+      else if (cmd === 'git branch') termOut.innerHTML += `<span>* main</span>\n`;
+      else if (cmd.startsWith('git checkout')) termOut.innerHTML += `<span>Switched to branch '${escHtml(args[1] || 'main')}'</span>\n`;
+      else if (cmd.startsWith('git merge')) termOut.innerHTML += `<span>Updating abc1234..def5678\nFast-forward</span>\n`;
+      else if (cmd === 'git diff') termOut.innerHTML += `<span>--- a/file.js\n+++ b/file.js</span>\n`;
+      else if (cmd.startsWith('docker ps')) termOut.innerHTML += `<span>CONTAINER ID  IMAGE      STATUS    NAMES\nabc123def456  node:18    Up 2hrs   my-app</span>\n`;
+      else if (cmd.startsWith('docker images')) termOut.innerHTML += `<span>REPOSITORY  TAG     SIZE\nnode        18      350MB\nnginx       latest  187MB</span>\n`;
+      else if (cmd.startsWith('docker logs')) termOut.innerHTML += `<span>Server running on port 3000</span>\n`;
+      else if (cmd.startsWith('docker run')) termOut.innerHTML += `<span>${Math.random().toString(16).slice(2,14)}</span>\n`;
+      else if (cmd.startsWith('docker build')) termOut.innerHTML += `<span>Step 1/3 : FROM node:18\nSuccessfully built abc123</span>\n`;
+      else if (cmd === 'version' || cmd === '--version') termOut.innerHTML += `<span>1% Code Lab v2.0.0</span>\n`;
+      else if (cmd === 'exit') termOut.innerHTML += `<span>logout</span>\n`;
+      else termOut.innerHTML += `<span class="error">Command not found: ${escHtml(bin)}</span>\n`;
+      termOut.scrollTop = termOut.scrollHeight;
+    }
+    e.target.value = '';
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (termHistIdx < termHistory.length - 1) { termHistIdx++; e.target.value = termHistory[termHistIdx]; }
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (termHistIdx > 0) { termHistIdx--; e.target.value = termHistory[termHistIdx]; }
+    else { termHistIdx = -1; e.target.value = ''; }
+  }
+});
+
+// ── New file dialog enter key ──────────────────────
+document.getElementById('new-file-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') createNewFile(); if (e.key === 'Escape') hideNewFileDialog(); });
+document.getElementById('new-file-dialog').addEventListener('click', (e) => { if (e.target.id === 'new-file-dialog') hideNewFileDialog(); });
+
+// ── File Storage (API-backed) ──────────────────────
+let supabaseClient = null;
+let currentUser = null;
+let session = null;
+let fileUsage = { file_count: 0, total_size: 0, max_files: 5, max_storage: 2097152, tier: 'free' };
+let serverFiles = {}; // fileId -> { id, file_name, content, language }
+
+(async function initAuth() {
+  try {
+    const res = await fetch('/api/config');
+    const config = await res.json();
+    if (config.supabaseUrl && config.supabaseAnonKey && typeof supabase !== 'undefined') {
+      supabaseClient = supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+      const { data: { session: s } } = await supabaseClient.auth.getSession();
+      session = s;
+      currentUser = s?.user || null;
+      if (currentUser) {
+        await loadServerFiles();
+        updateStorageIndicator();
+      }
+    }
+  } catch (e) { console.warn('[LAB] Auth init failed:', e.message); }
+})();
+
+async function apiFetch(url, opts = {}) {
+  if (!session) return null;
+  return fetch(url, {
+    ...opts,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+      ...opts.headers
+    }
+  });
+}
+
+async function loadServerFiles() {
+  if (!currentUser) return;
+  try {
+    const res = await apiFetch('/api/files');
+    if (!res) return;
+    const data = await res.json();
+    console.log('[LAB] Loaded files:', data.files?.length || 0);
+    if (data.success) {
+      fileUsage = data.usage || fileUsage;
+      serverFiles = {};
+      (data.files || []).forEach(f => {
+        serverFiles[f.id] = f;
+        // Add to FILES if not already there
+        const key = f.file_name.replace(/[^a-zA-Z0-9]/g, '_');
+        if (!FILES[key]) {
+          const ext = f.file_name.split('.').pop() || 'txt';
+          const langMap = { js: 'javascript', py: 'python', ts: 'typescript', html: 'html', css: 'css', json: 'json', md: 'markdown' };
+          FILES[key] = {
+            name: f.file_name,
+            ext: ext,
+            lang: f.language || langMap[ext] || 'javascript',
+            code: f.content || '',
+            serverId: f.id
+          };
+        } else {
+          // Update existing file with server content
+          FILES[key].code = f.content || FILES[key].code;
+          FILES[key].serverId = f.id;
+        }
+      });
+      renderFileTree();
+      renderTabs();
+      updateStorageIndicator();
+    }
+  } catch (e) { console.warn('[LAB] Failed to load files:', e.message); }
+}
+
+function updateStorageIndicator() {
+  const el = document.getElementById('status-storage');
+  if (!el) return;
+  const used = fileUsage.file_count;
+  const max = fileUsage.max_files;
+  const tierName = fileUsage.tier === 'free' ? 'Free' : fileUsage.tier === 'pro' ? 'Pro' : 'Unlimited';
+  el.textContent = `${used}/${max} files (${tierName})`;
+  el.title = `File storage: ${used} of ${max} files used. Tier: ${tierName}`;
+}
+
+async function saveFileToServer(fileKey) {
+  if (!currentUser) {
+    console.log('[LAB] Not logged in, skipping save');
+    return;
+  }
+  const file = FILES[fileKey];
+  if (!file) return;
+
+  console.log('[LAB] Saving file:', file.name);
+
+  try {
+    // Check if file already has a server ID
+    const existingId = file.serverId || Object.keys(serverFiles).find(id => serverFiles[id].file_name === file.name);
+
+    if (existingId) {
+      // Update existing file
+      console.log('[LAB] Updating existing file:', existingId);
+      const res = await apiFetch(`/api/files/${existingId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ content: file.code })
+      });
+      if (res) {
+        const data = await res.json();
+        console.log('[LAB] Update response:', data);
+        if (data.success) {
+          showLabToast(`Saved ${file.name}`, 'success');
+          return;
+        }
+        if (data.upgrade) {
+          showLabToast(data.error, 'warn');
+          return;
+        }
+      }
+    } else {
+      // Create new file
+      console.log('[LAB] Creating new file:', file.name);
+      const res = await apiFetch('/api/files', {
+        method: 'POST',
+        body: JSON.stringify({
+          file_name: file.name,
+          content: file.code,
+          language: file.lang || 'javascript'
+        })
+      });
+      if (res) {
+        const data = await res.json();
+        console.log('[LAB] Create response:', data);
+        if (data.success) {
+          serverFiles[data.file.id] = data.file;
+          FILES[fileKey].serverId = data.file.id;
+          fileUsage = data.usage || fileUsage;
+          updateStorageIndicator();
+          showLabToast(`Saved ${file.name}`, 'success');
+          return;
+        }
+        if (data.upgrade) {
+          showLabToast(data.error, 'warn');
+          return;
+        }
+        console.error('[LAB] Save failed:', data.error);
+      }
+    }
+    console.error('[LAB] Save failed - no success response');
+    showLabToast('Save failed', 'error');
+  } catch (e) {
+    console.error('[LAB] Save error:', e);
+    showLabToast('Save failed: ' + e.message, 'error');
+  }
+}
+
+async function deleteFileFromServer(fileKey) {
+  if (!currentUser) return;
+  const file = FILES[fileKey];
+  if (!file) return;
+
+  const serverId = file.serverId || Object.keys(serverFiles).find(id => serverFiles[id].file_name === file.name);
+  if (!serverId) return;
+
+  try {
+    const res = await apiFetch(`/api/files/${serverId}`, { method: 'DELETE' });
+    if (res) {
+      const data = await res.json();
+      if (data.success) {
+        delete serverFiles[serverId];
+        await loadServerFiles();
+        updateStorageIndicator();
+      }
+    }
+  } catch (e) { console.warn('[LAB] Delete failed:', e.message); }
+}
+
+function showLabToast(msg, type) {
+  let toast = document.getElementById('lab-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'lab-toast';
+    toast.style.cssText = 'position:fixed;bottom:40px;right:16px;background:#313244;color:#cdd6f4;padding:10px 16px;border-radius:6px;font-size:12px;z-index:10000;border:1px solid #45475a;transition:opacity .3s,transform .3s;opacity:0;transform:translateY(10px);';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.borderColor = type === 'success' ? '#a6e3a1' : type === 'warn' ? '#f9e2af' : '#f38ba8';
+  toast.style.opacity = '1';
+  toast.style.transform = 'translateY(0)';
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(10px)'; }, 3000);
+}
+
+// ── Init ───────────────────────────────────────────
+renderFileTree();
+renderTabs();
+switchFile('script');
+
+// Auto-save: Shift+Ctrl+S to save, auto-saves every 2s
+editor.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'S') {
+    e.preventDefault();
+    FILES[currentFile].modified = false;
+    renderTabs();
+    saveFileToServer(currentFile);
+    showLabToast('File saved!', 'success');
+  }
+});
+</script>
+</body>
+</html>

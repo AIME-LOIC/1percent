@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel — 1% Digital Solutions</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root{--admin-bg:#f8f9fa;--admin-surface:#ffffff;--admin-card:#ffffff;--admin-border:#e5e7eb;--admin-text:#111827;--admin-muted:#6b7280;--admin-green:#059669;--admin-blue:#2563eb;--admin-yellow:#d97706;--admin-red:#dc2626;--admin-purple:#7c3aed;--admin-accent:#0d6e3f;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:var(--admin-bg);color:var(--admin-text);}
+
+.admin{display:grid;grid-template-columns:240px 1fr;grid-template-rows:56px 1fr;height:100vh;}
+
+/* Top bar */
+.topbar{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:#fff;border-bottom:1px solid var(--admin-border);z-index:10;}
+.topbar-left{display:flex;align-items:center;gap:16px;}
+.topbar-logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px;color:var(--admin-text);text-decoration:none;}
+.topbar-logo .mark{background:var(--admin-accent);color:#fff;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;width:24px;height:24px;border-radius:4px;display:flex;align-items:center;justify-content:center;}
+.topbar-title{font-size:14px;font-weight:600;color:var(--admin-muted);padding-left:16px;border-left:1px solid var(--admin-border);}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.topbar-user{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--admin-muted);}
+.topbar-avatar{width:32px;height:32px;border-radius:50%;background:var(--admin-accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;}
+.topbar-btn{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--admin-border);background:#fff;color:var(--admin-muted);transition:all .15s;}
+.topbar-btn:hover{border-color:var(--admin-muted);color:var(--admin-text);}
+
+/* Sidebar */
+.sidebar{background:#fff;border-right:1px solid var(--admin-border);padding:16px 0;overflow-y:auto;display:flex;flex-direction:column;}
+.sidebar-section{padding:0 16px;margin-bottom:24px;}
+.sidebar-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--admin-muted);margin-bottom:8px;}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:6px;font-size:13px;font-weight:500;color:var(--admin-muted);cursor:pointer;transition:all .15s;text-decoration:none;margin-bottom:2px;}
+.sidebar-item:hover{background:#f3f4f6;color:var(--admin-text);}
+.sidebar-item.active{background:#ecfdf5;color:var(--admin-green);font-weight:600;}
+.sidebar-item .icon{width:18px;height:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sidebar-spacer{flex:1;}
+.sidebar-item.danger{color:var(--admin-red);}.sidebar-item.danger:hover{background:#fef2f2;}
+
+/* Main */
+.main{overflow-y:auto;padding:32px;background:#f8f9fa;}
+.main h1{font-size:24px;font-weight:800;margin-bottom:4px;}
+.main .subtitle{color:var(--admin-muted);font-size:14px;margin-bottom:24px;}
+
+/* Stats row */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;}
+.stat-card{background:var(--admin-card);border:1px solid var(--admin-border);border-radius:10px;padding:20px;}
+.stat-card .stat-label{font-size:12px;font-weight:600;color:var(--admin-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.stat-card .stat-value{font-size:28px;font-weight:800;color:var(--admin-text);}
+.stat-card .stat-sub{font-size:12px;color:var(--admin-muted);margin-top:4px;}
+
+/* Card */
+.card{background:#fff;border:1px solid var(--admin-border);border-radius:10px;overflow:hidden;margin-bottom:24px;}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--admin-border);}
+.card-header h2{font-size:15px;font-weight:700;}
+.card-body{padding:20px;}
+
+/* Table */
+.data-table{width:100%;border-collapse:collapse;}
+.data-table th{text-align:left;padding:10px 16px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--admin-muted);background:#f9fafb;border-bottom:1px solid var(--admin-border);}
+.data-table td{padding:12px 16px;font-size:13px;border-bottom:1px solid #f3f4f6;}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table tr:hover td{background:#f9fafb;}
+
+/* Badges */
+.badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;text-transform:uppercase;letter-spacing:.5px;}
+.badge-green{background:#ecfdf5;color:var(--admin-green);}
+.badge-yellow{background:#fffbeb;color:var(--admin-yellow);}
+.badge-red{background:#fef2f2;color:var(--admin-red);}
+.badge-blue{background:#eff6ff;color:var(--admin-blue);}
+.badge-purple{background:#f5f3ff;color:var(--admin-purple);}
+
+/* Buttons */
+.btn-admin{padding:7px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .15s;}
+.btn-admin.primary{background:var(--admin-accent);color:#fff;}.btn-admin.primary:hover{background:#0a5c34;}
+.btn-admin.outline{background:#fff;border:1px solid var(--admin-border);color:var(--admin-muted);}.btn-admin.outline:hover{border-color:var(--admin-muted);color:var(--admin-text);}
+.btn-admin.danger{background:#fef2f2;color:var(--admin-red);border:1px solid #fecaca;}.btn-admin.danger:hover{background:#fee2e2;}
+
+/* Form */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.form-group{margin-bottom:16px;}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--admin-muted);margin-bottom:6px;}
+.form-group input,.form-group textarea,.form-group select{width:100%;padding:9px 12px;border:1px solid var(--admin-border);border-radius:6px;font-size:13px;color:var(--admin-text);background:#fff;outline:none;font-family:'Inter',sans-serif;}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--admin-accent);box-shadow:0 0 0 3px rgba(13,110,63,0.1);}
+.form-group textarea{min-height:80px;resize:vertical;}
+.form-group select{cursor:pointer;}
+.form-group .checkbox-row{display:flex;align-items:center;gap:8px;}
+.form-group .checkbox-row input{accent-color:var(--admin-accent);}
+
+/* Panels */
+.panel{display:none;}.panel.active{display:block;}
+
+/* Empty state */
+.empty{text-align:center;padding:40px;color:var(--admin-muted);font-size:14px;}
+
+/* Toast */
+.toast{position:fixed;top:20px;right:20px;z-index:1000;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.12);animation:slideIn .3s ease;}
+.toast.success{background:#ecfdf5;color:var(--admin-green);border:1px solid #a7f3d0;}
+.toast.error{background:#fef2f2;color:var(--admin-red);border:1px solid #fecaca;}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0;}to{transform:translateX(0);opacity:1;}}
+
+/* Loading overlay */
+.auth-loading{position:fixed;inset:0;background:#f8f9fa;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;}
+.auth-loading.hidden{display:none;}
+.auth-loading .spinner{width:36px;height:36px;border:3px solid #e5e7eb;border-top-color:#0d6e3f;border-radius:50%;animation:spin .8s linear infinite;margin-bottom:16px;}
+.auth-loading p{color:#6b7280;font-size:14px;}
+.auth-loading p{color:#6c7086;font-size:14px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:768px){.admin{grid-template-columns:1fr;}.sidebar{display:none;}.stats-row{grid-template-columns:1fr 1fr;}.form-row{grid-template-columns:1fr;}}
+.lesson-md-content table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px;}
+.lesson-md-content th{text-align:left;padding:8px 12px;border-bottom:2px solid var(--admin-border);font-weight:700;color:var(--admin-muted);font-size:11px;text-transform:uppercase;}
+.lesson-md-content td{padding:8px 12px;border-bottom:1px solid #f3f4f6;}
+
+/* Lessons grid */
+#lessons-file-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;padding:16px;}
+#lessons-file-list:empty + #lessons-empty{display:block !important;}
+</style>
+</head>
+<body>
+<div class="auth-loading" id="auth-loading"><div class="spinner"></div><p>Verifying access...</p></div>
+<div class="admin" style="display:none;">
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <a href="/learn/dashboard" class="topbar-logo"><div class="mark">1%</div> Admin Panel</a>
+      <span class="topbar-title" id="topbar-section-title">Dashboard</span>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-user"><span class="topbar-avatar" id="admin-avatar">A</span> <span id="admin-name">Admin</span></span>
+      <button class="topbar-btn" onclick="window.location.href='/learn/dashboard'">Dashboard</button>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Overview</div>
+      <a class="sidebar-item active" data-panel="dashboard" onclick="showPanel('dashboard')">
+        <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg></span>
+        Dashboard
+      </a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Content</div>
+      <a class="sidebar-item" data-panel="courses" onclick="showPanel('courses')">
+        <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+        Courses
+      </a>
+      <a class="sidebar-item" data-panel="lessons" onclick="showPanel('lessons')">
+        <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+        Lessons
+      </a>
+      <a class="sidebar-item" data-panel="quizzes" onclick="showPanel('quizzes')">
+        <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></span>
+        Quizzes
+      </a>
+      <a class="sidebar-item" data-panel="challenges" onclick="showPanel('challenges')">
+        <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg></span>
+        Challenges
+      </a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Users</div>
+      <a class="sidebar-item" data-panel="enrollments" onclick="showPanel('enrollments')">
+        <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        Enrollments
+      </a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Tools</div>
+      <a class="sidebar-item" onclick="openSignModal()">
+        <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg></span>
+        Sign Certificate
+      </a>
+    </div>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-section">
+      <a class="sidebar-item danger" id="logout-link" onclick="doLogout()">
+        <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
+        Logout
+      </a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main" id="main-content">
+    <!-- Dashboard Panel -->
+    <div class="panel active" id="panel-dashboard">
+      <h1>Dashboard</h1>
+      <p class="subtitle">Overview of your platform.</p>
+      <div class="stats-row" id="stats-row">
+        <div class="stat-card"><div class="stat-label">Courses</div><div class="stat-value" id="stat-courses">—</div></div>
+        <div class="stat-card"><div class="stat-label">Lessons</div><div class="stat-value" id="stat-lessons">—</div></div>
+        <div class="stat-card"><div class="stat-label">Students</div><div class="stat-value" id="stat-students">—</div></div>
+        <div class="stat-card"><div class="stat-label">Challenges</div><div class="stat-value" id="stat-challenges">—</div></div>
+      </div>
+    </div>
+
+    <!-- Courses Panel -->
+    <div class="panel" id="panel-courses">
+      <h1>Courses</h1>
+      <p class="subtitle">Create, edit, and manage courses.</p>
+      <div class="card">
+        <div class="card-header"><h2>All Courses</h2><button class="btn-admin primary" onclick="showCourseForm()">+ New Course</button></div>
+        <div id="course-form-wrap"></div>
+        <table class="data-table"><thead><tr><th>Title</th><th>Slug</th><th>Level</th><th>Weeks</th><th>Published</th><th style="text-align:right;">Actions</th></tr></thead><tbody id="courses-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- Lessons Panel -->
+    <div class="panel" id="panel-lessons">
+      <h1>Lessons</h1>
+      <p class="subtitle">Manage lessons for each course.</p>
+      <div class="card">
+        <div class="card-header">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <h2>All Lessons</h2>
+            <select id="lesson-course-select" onchange="loadLessons()" style="padding:6px 10px;border:1px solid var(--admin-border);border-radius:6px;background:var(--admin-surface);color:var(--admin-text);font-size:13px;min-width:200px;"><option value="">Select course...</option></select>
+          </div>
+          <button class="btn-admin primary" id="add-lesson-btn" style="display:none;" onclick="showLessonForm()">+ New Lesson</button>
+        </div>
+        <div id="lesson-form-wrap"></div>
+        <div id="lessons-file-list"></div>
+        <div id="lessons-empty" style="display:none;text-align:center;padding:40px;color:var(--admin-muted);">Select a course to view its lessons.</div>
+      </div>
+    </div>
+
+    <!-- Quizzes Panel -->
+    <div class="panel" id="panel-quizzes">
+      <h1>Quizzes</h1>
+      <p class="subtitle">Manage end-of-course quizzes.</p>
+      <div class="card">
+        <div class="card-header"><h2>Quizzes</h2><button class="btn-admin primary" onclick="showQuizForm()">+ New Quiz</button></div>
+        <div id="quiz-form-wrap"></div>
+        <table class="data-table"><thead><tr><th>Title</th><th>Course</th><th>Pass %</th><th style="text-align:right;">Actions</th></tr></thead><tbody id="quizzes-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- Challenges Panel -->
+    <div class="panel" id="panel-challenges">
+      <h1>Challenges</h1>
+      <p class="subtitle">Manage coding challenges.</p>
+      <div class="card">
+        <div class="card-header"><h2>Challenges</h2><button class="btn-admin primary" onclick="showChallengeForm()">+ New Challenge</button></div>
+        <div id="challenge-form-wrap"></div>
+        <table class="data-table"><thead><tr><th>Title</th><th>Type</th><th>Difficulty</th><th>Coins</th><th>Course</th><th style="text-align:right;">Actions</th></tr></thead><tbody id="challenges-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- Enrollments Panel -->
+    <div class="panel" id="panel-enrollments">
+      <h1>Enrollments</h1>
+      <p class="subtitle">View all student enrollments.</p>
+      <div class="card">
+        <div class="card-header"><h2>All Enrollments</h2></div>
+        <table class="data-table"><thead><tr><th>Student</th><th>Email</th><th>Course</th><th>Enrolled</th><th>Completed</th></tr></thead><tbody id="enrollments-tbody"></tbody></table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+let supabaseClient=null, token='', allCourses=[], allChallenges=[];
+
+async function init(){
+  try{
+    // 1. Get token from sessionStorage (most reliable cross-page)
+    const backupToken=sessionStorage.getItem('sb-access-token');
+    if(backupToken){
+      token=backupToken;
+      console.log('[ADMIN] Token found from sessionStorage');
+    }
+
+    // 2. Also try Supabase client session
+    if(!token){
+      try{
+        const res=await fetch('/api/config');const config=await res.json();
+        if(config.supabaseUrl&&config.supabaseAnonKey){
+          supabaseClient=supabase.createClient(config.supabaseUrl,config.supabaseAnonKey);
+          const{data:{session}}=await supabaseClient.auth.getSession();
+          if(session?.access_token){
+            token=session.access_token;
+            sessionStorage.setItem('sb-access-token',token);
+            sessionStorage.setItem('sb-refresh-token',session.refresh_token||'');
+            console.log('[ADMIN] Token found from Supabase client');
+          }
+        }
+      }catch(e){console.warn('[ADMIN] Supabase init error:',e.message);}
+    }
+
+    if(!token){console.log('[ADMIN] No token found');showUnauthorized('Please log in to access the admin panel.');return;}
+
+    // 3. Init Supabase client for later use (refresh etc)
+    if(!supabaseClient){
+      try{
+        const res=await fetch('/api/config');const config=await res.json();
+        if(config.supabaseUrl&&config.supabaseAnonKey){
+          supabaseClient=supabase.createClient(config.supabaseUrl,config.supabaseAnonKey);
+          const refresh=sessionStorage.getItem('sb-refresh-token');
+          if(refresh){
+            await supabaseClient.auth.setSession({access_token:token,refresh_token:refresh});
+          }
+        }
+      }catch{}
+    }
+
+    // 4. Check role via /api/auth/me
+    console.log('[ADMIN] Checking role...');
+    let meRes=await apiFetch('/api/auth/me');
+    console.log('[ADMIN] /api/auth/me status:',meRes.status);
+
+    // If 401, try refreshing token
+    if(meRes.status===401&&supabaseClient){
+      console.log('[ADMIN] Got 401, trying refresh...');
+      try{
+        const{data:{session:refreshed}}=await supabaseClient.auth.getSession();
+        if(refreshed?.access_token&&refreshed.access_token!==token){
+          token=refreshed.access_token;
+          sessionStorage.setItem('sb-access-token',token);
+          meRes=await apiFetch('/api/auth/me');
+          console.log('[ADMIN] After refresh, status:',meRes.status);
+        }
+      }catch(e){console.warn('[ADMIN] Refresh failed:',e.message);}
+    }
+
+    if(!meRes.ok){console.log('[ADMIN] Auth check failed');showUnauthorized('Session expired. Please log in again.');return;}
+    const me=await meRes.json();
+    console.log('[ADMIN] User role:',me.user?.role);
+    if(!me.success||me.user?.role!=='admin'){showUnauthorized('Admin access required. You do not have permission to view this page.');return;}
+
+    // 5. Show admin panel
+    document.getElementById('auth-loading').classList.add('hidden');
+    document.querySelector('.admin').style.display='';
+    const name=me.user.full_name||me.user.email||'Admin';
+    document.getElementById('admin-name').textContent=name;
+    document.getElementById('admin-avatar').textContent=name[0].toUpperCase();
+    await loadAll();
+  }catch(e){
+    console.error('[ADMIN] Init error:',e);
+    showUnauthorized('Failed to load admin panel: '+e.message);
+  }
+}
+
+function showUnauthorized(msg){
+  document.getElementById('auth-loading').classList.add('hidden');
+  document.querySelector('.admin').innerHTML=`
+    <div style="grid-column:1/-1;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f8f9fa;">
+      <div style="text-align:center;max-width:480px;padding:24px;">
+        <div style="font-size:80px;font-weight:900;color:#e5e7eb;letter-spacing:-4px;margin-bottom:8px;">4<span style="color:#dc2626;">0</span>1</div>
+        <div style="width:64px;height:64px;border-radius:50%;background:#fef2f2;border:2px solid #fecaca;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;color:#dc2626;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <h1 style="font-size:24px;font-weight:800;margin-bottom:8px;color:#111827;">Unauthorized</h1>
+        <p style="font-size:14px;color:#6b7280;margin-bottom:24px;line-height:1.6;">${msg}</p>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+          <a href="/learn" style="padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;background:#0d6e3f;color:#fff;text-decoration:none;">Go to Homepage</a>
+          <a href="/learn/dashboard" style="padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;background:#fff;color:#374151;border:1px solid #d1d5db;text-decoration:none;">Dashboard</a>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function apiFetch(url,opts={}){
+  const res=await fetch(url,{...opts,headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`,...opts.headers}});
+  // If 401, try refreshing session
+  if(res.status===401&&supabaseClient){
+    try{
+      const{data:{session:refreshed}}=await supabaseClient.auth.getSession();
+      if(refreshed?.access_token&&refreshed.access_token!==token){
+        token=refreshed.access_token;
+        sessionStorage.setItem('sb-access-token',token);
+        return fetch(url,{...opts,headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`,...opts.headers}});
+      }
+    }catch{}
+  }
+  return res;
+}
+
+async function loadAll(){
+  const results=await Promise.allSettled([
+    apiFetch('/api/admin/courses').then(r=>r.ok?r.json():{}).catch(()=>({})),
+    apiFetch('/api/admin/enrollments').then(r=>r.ok?r.json():{}).catch(()=>({})),
+    apiFetch('/api/coins/challenges/all').then(r=>r.ok?r.json():{}).catch(()=>({})),
+  ]);
+  const cRes=results[0].status==='fulfilled'?results[0].value:{};
+  const eRes=results[1].status==='fulfilled'?results[1].value:{};
+  const chRes=results[2].status==='fulfilled'?results[2].value:{};
+  allCourses=cRes.courses||[];
+  allChallenges=chRes.challenges||[];
+  document.getElementById('stat-courses').textContent=allCourses.length;
+  document.getElementById('stat-students').textContent=(eRes.enrollments||[]).length;
+  document.getElementById('stat-challenges').textContent=allChallenges.length;
+  // Count total lessons
+  let totalLessons=0;
+  for(const c of allCourses){
+    try{const r=await apiFetch(`/api/admin/courses/${c.id}/lessons`);const j=await r.json();totalLessons+=(j.lessons||[]).length;}catch{}
+  }
+  document.getElementById('stat-lessons').textContent=totalLessons;
+  renderCoursesTable();
+  renderEnrollments(eRes.enrollments||[]);
+  renderChallengesTable();
+  // Populate selects
+  const sel=document.getElementById('lesson-course-select');
+  sel.innerHTML='<option value="">Select course...</option>'+allCourses.map(c=>`<option value="${c.id}">${c.title}</option>`).join('');
+}
+
+function toast(msg,type='success'){const t=document.createElement('div');t.className=`toast ${type}`;t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);}
+
+// ── Navigation ─────────────────────────────────────
+function showPanel(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(`panel-${name}`).classList.add('active');
+  document.querySelectorAll('.sidebar-item').forEach(a=>{a.classList.toggle('active',a.dataset.panel===name);});
+  const titles={dashboard:'Dashboard',courses:'Courses',lessons:'Lessons',quizzes:'Quizzes',challenges:'Challenges',enrollments:'Enrollments'};
+  document.getElementById('topbar-section-title').textContent=titles[name]||name;
+  if(name==='quizzes')loadQuizzes();
+  if(name==='lessons'){const sel=document.getElementById('lesson-course-select');if(sel.options.length>1&&!sel.value){sel.value=sel.options[1].value;}if(sel.value)loadLessons();}
+}
+
+// ── Courses ────────────────────────────────────────
+function renderCoursesTable(){
+  document.getElementById('courses-tbody').innerHTML=allCourses.length?allCourses.map(c=>`<tr>
+    <td><strong>${esc(c.title)}</strong></td>
+    <td style="font-family:var(--mono);font-size:12px;color:var(--admin-muted);">${esc(c.slug)}</td>
+    <td><span class="badge badge-blue">${c.level}</span></td>
+    <td>${c.duration_weeks}</td>
+    <td>${c.is_published?'<span class="badge badge-green">Yes</span>':'<span class="badge badge-yellow">Draft</span>'}</td>
+    <td style="text-align:right;"><button class="btn-admin outline" onclick="editCourse('${c.id}')">Edit</button> <button class="btn-admin danger" onclick="deleteCourse('${c.id}')">Delete</button></td>
+  </tr>`).join(''):'<tr><td colspan="6" class="empty">No courses yet.</td></tr>';
+}
+
+function showCourseForm(course=null){
+  document.getElementById('course-form-wrap').innerHTML=`<div class="card-body" style="border-bottom:1px solid var(--admin-border);">
+    <h3 style="font-size:14px;margin-bottom:16px;">${course?'Edit':'New'} Course</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Title</label><input id="cf-title" value="${esc(course?.title||'')}"></div>
+      <div class="form-group"><label>Slug</label><input id="cf-slug" value="${esc(course?.slug||'')}" ${course?'disabled':''}></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Level</label><select id="cf-level"><option value="beginner" ${course?.level==='beginner'?'selected':''}>Beginner</option><option value="intermediate" ${course?.level==='intermediate'?'selected':''}>Intermediate</option><option value="advanced" ${course?.level==='advanced'?'selected':''}>Advanced</option></select></div>
+      <div class="form-group"><label>Duration (weeks)</label><input type="number" id="cf-weeks" value="${course?.duration_weeks||8}"></div>
+    </div>
+    <div class="form-group"><label>Description</label><textarea id="cf-desc">${esc(course?.description||'')}</textarea></div>
+    <div class="form-group"><div class="checkbox-row"><input type="checkbox" id="cf-pub" ${course?.is_published?'checked':''}><label for="cf-pub">Published</label></div></div>
+    <div style="display:flex;gap:8px;"><button class="btn-admin primary" onclick="saveCourse('${course?.id||''}')">Save</button><button class="btn-admin outline" onclick="document.getElementById('course-form-wrap').innerHTML=''">Cancel</button></div>
+  </div>`;
+  document.getElementById('cf-title').focus();
+}
+
+async function saveCourse(id){
+  const data={title:document.getElementById('cf-title').value,slug:document.getElementById('cf-slug').value,description:document.getElementById('cf-desc').value,level:document.getElementById('cf-level').value,duration_weeks:parseInt(document.getElementById('cf-weeks').value),is_published:document.getElementById('cf-pub').checked};
+  const url=id?`/api/admin/courses/${id}`:'/api/admin/courses';
+  const method=id?'PUT':'POST';
+  const res=await apiFetch(url,{method,body:JSON.stringify(data)});
+  const json=await res.json();
+  document.getElementById('course-form-wrap').innerHTML='';
+  toast(json.success?'Course saved!':'Error: '+(json.error||'Failed'));
+  await loadAll();
+}
+
+function editCourse(id){const c=allCourses.find(x=>x.id===id);if(c)showCourseForm(c);}
+async function deleteCourse(id){if(!confirm('Delete this course?'))return;await apiFetch(`/api/admin/courses/${id}`,{method:'DELETE'});toast('Course deleted');await loadAll();}
+
+// ── Lessons ────────────────────────────────────────
+const LESSON_ICONS={video:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>',lab:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16.5h10"/></svg>',project:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',reading:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',quiz:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>'};
+const TYPE_COLORS={video:'#89b4fa',lab:'#f9e2af',project:'#cba6f7',reading:'#a6e3a1',quiz:'#f38ba8'};
+let allLessons=[];
+
+async function loadLessons(){
+  const courseId=document.getElementById('lesson-course-select').value;
+  const list=document.getElementById('lessons-file-list');
+  const empty=document.getElementById('lessons-empty');
+  if(!courseId){list.innerHTML='';allLessons=[];empty.style.display='block';empty.textContent='Select a course to view its lessons.';document.getElementById('add-lesson-btn').style.display='none';return;}
+  document.getElementById('add-lesson-btn').style.display='inline-flex';
+  empty.style.display='none';
+  try{
+    const res=await apiFetch(`/api/admin/courses/${courseId}/lessons`);const json=await res.json();
+    allLessons=json.lessons||[];
+    if(!allLessons.length){list.innerHTML='';empty.style.display='block';empty.textContent="No lessons yet. Click 'New Lesson' to add one.";return;}
+    list.innerHTML=allLessons.map((l,i)=>{
+      const icon=LESSON_ICONS[l.lesson_type]||LESSON_ICONS.reading;
+      const color=TYPE_COLORS[l.lesson_type]||'#a6adc8';
+      const ext={video:'mp4',lab:'lab',project:'prj',reading:'md',quiz:'quiz'}[l.lesson_type]||'md';
+      const orderNum=i+1;
+      return `<div onclick="openLessonViewer(${i})" style="background:var(--admin-card);border:1px solid var(--admin-border);border-radius:8px;padding:14px 16px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:12px;min-height:60px;" onmouseover="this.style.borderColor='${color}'" onmouseout="this.style.borderColor='var(--admin-border)'">
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--admin-bg);border:1px solid var(--admin-border);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--admin-muted);flex-shrink:0;">${orderNum}</div>
+        <div style="width:36px;height:36px;border-radius:8px;background:${color}20;display:flex;align-items:center;justify-content:center;color:${color};flex-shrink:0;">${icon}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:700;color:var(--admin-text);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(l.title)}</div>
+          <div style="font-size:11px;color:var(--admin-muted);display:flex;gap:8px;align-items:center;">
+            <span class="badge ${l.lesson_type==='video'?'badge-blue':l.lesson_type==='lab'?'badge-yellow':l.lesson_type==='project'?'badge-purple':l.lesson_type==='quiz'?'badge-red':'badge-green'}">${l.lesson_type}</span>
+            <span>${l.duration_min} min</span>
+            ${l.is_published?'':'<span class="badge badge-yellow">Draft</span>'}
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;" onclick="event.stopPropagation();">
+          <button class="btn-admin outline" onclick="editLesson(${i})" style="font-size:11px;padding:4px 10px;">Edit</button>
+          <button class="btn-admin danger" onclick="deleteLesson('${l.id}')" style="font-size:11px;padding:4px 10px;">Del</button>
+        </div>
+      </div>`;
+    }).join('');
+  }catch{list.innerHTML='';allLessons=[];empty.style.display='block';empty.textContent='Failed to load lessons.';}
+}
+
+function openLessonViewer(idx){
+  const lesson=allLessons[idx];if(!lesson)return;
+  const ext={video:'mp4',lab:'lab',project:'prj',reading:'md',quiz:'quiz'}[lesson.lesson_type]||'md';
+  const color=TYPE_COLORS[lesson.lesson_type]||'#a6adc8';
+  const content=lesson.content_md||lesson.description||'No content yet.';
+  const rendered=renderMd(content);
+  const modal=document.createElement('div');
+  modal.id='lesson-viewer-modal';
+  modal.style.cssText='position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;';
+  modal.onclick=e=>{if(e.target===modal)modal.remove();};
+  modal.innerHTML=`<div style="background:var(--admin-card);border:1px solid var(--admin-border);border-radius:12px;width:90%;max-width:720px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--admin-border);background:var(--admin-surface);">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:32px;height:32px;border-radius:6px;background:${color}20;display:flex;align-items:center;justify-content:center;color:${color};">${LESSON_ICONS[lesson.lesson_type]||LESSON_ICONS.reading}</div>
+        <div>
+          <div style="font-size:14px;font-weight:700;">${esc(lesson.title)}</div>
+          <div style="font-size:11px;color:var(--admin-muted);">${lesson.lesson_type} &middot; ${lesson.duration_min} min &middot; .${ext}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button onclick="closeViewerAndEdit(${allLessons.indexOf(lesson)})" class="btn-admin outline" style="font-size:11px;">Edit</button>
+        <button onclick="document.getElementById('lesson-viewer-modal').remove()" style="background:none;border:none;color:var(--admin-muted);cursor:pointer;font-size:18px;padding:4px 8px;">&times;</button>
+      </div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:24px;">
+      ${lesson.description?`<p style="font-size:13px;color:var(--admin-muted);margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--admin-border);">${esc(lesson.description)}</p>`:''}
+      <div class="lesson-md-content">${rendered}</div>
+    </div>
+    <div id="viewer-drop-zone" style="border-top:1px solid var(--admin-border);padding:12px 20px;display:flex;align-items:center;gap:12px;background:var(--admin-surface);">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--admin-muted)" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <span style="font-size:12px;color:var(--admin-muted);">Drop a .md file here or</span>
+      <label style="font-size:12px;color:var(--admin-blue);cursor:pointer;text-decoration:underline;">browse<input type="file" accept=".md,.txt,.markdown" onchange="handleViewerFileUpload(event,'${lesson.id}')" style="display:none;"></label>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+}
+
+function renderMd(md){
+  if(!md)return'<p style="color:var(--admin-muted);">No content.</p>';
+  let h=esc(md);
+  h=h.replace(/```(\w*)\n([\s\S]*?)```/g,(_,lang,code)=>`<pre style="background:var(--admin-bg);border:1px solid var(--admin-border);border-radius:6px;padding:14px;font-family:var(--mono);font-size:12px;overflow-x:auto;margin:12px 0;line-height:1.6;color:var(--admin-text);"><code>${code}</code></pre>`);
+  h=h.replace(/`([^`]+)`/g,'<code style="background:var(--admin-bg);padding:2px 6px;border-radius:4px;font-family:var(--mono);font-size:12px;">$1</code>');
+  h=h.replace(/^### (.+)$/gm,'<h4 style="font-size:15px;font-weight:700;margin:20px 0 8px;color:var(--admin-text);">$1</h4>');
+  h=h.replace(/^## (.+)$/gm,'<h3 style="font-size:17px;font-weight:700;margin:24px 0 10px;color:var(--admin-text);">$1</h3>');
+  h=h.replace(/^# (.+)$/gm,'<h2 style="font-size:20px;font-weight:800;margin:28px 0 12px;color:var(--admin-text);">$1</h2>');
+  h=h.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+  h=h.replace(/\*(.+?)\*/g,'<em>$1</em>');
+  h=h.replace(/^- (.+)$/gm,'<li style="margin:4px 0;margin-left:20px;">$1</li>');
+  h=h.replace(/^(\d+)\. (.+)$/gm,'<li style="margin:4px 0;margin-left:20px;list-style-type:decimal;">$2</li>');
+  h=h.replace(/^> (.+)$/gm,'<blockquote style="border-left:3px solid var(--admin-green);padding:8px 14px;margin:12px 0;background:rgba(166,227,161,0.06);border-radius:0 6px 6px 0;font-size:13px;color:var(--admin-muted);">$1</blockquote>');
+  h=h.replace(/^---$/gm,'<hr style="border:none;border-top:1px solid var(--admin-border);margin:20px 0;">');
+  h=h.split('\n\n').map(b=>{b=b.trim();if(!b)return'';if(b.startsWith('<'))return b;return'<p style="margin:8px 0;line-height:1.7;color:var(--admin-text);">'+b.replace(/\n/g,'<br>')+'</p>';}).join('\n');
+  return h;
+}
+
+function closeViewerAndEdit(idx){document.getElementById('lesson-viewer-modal')?.remove();editLesson(idx);}
+
+async function handleViewerFileUpload(e,lessonId){
+  const file=e.target.files[0];if(!file)return;
+  const content=await file.text();
+  try{
+    const res=await apiFetch(`/api/admin/lessons/${lessonId}`,{method:'PUT',body:JSON.stringify({content_md:content})});
+    const json=await res.json();
+    if(json.success){toast('Content uploaded!');document.getElementById('lesson-viewer-modal')?.remove();await loadLessons();}else{toast('Upload failed: '+(json.error||'Unknown'),1);}
+  }catch{toast('Upload failed',1);}
+}
+
+// Drag & drop on viewer
+let dragCounter=0;
+document.addEventListener('dragenter',e=>{if(e.dataTransfer.types.includes('Files')){const dz=document.getElementById('viewer-drop-zone');if(dz){e.preventDefault();dz.style.background='rgba(137,180,250,0.1)';dz.style.borderStyle='solid';}}});
+document.addEventListener('dragleave',e=>{const dz=document.getElementById('viewer-drop-zone');if(dz){dz.style.background='';dz.style.borderStyle='dashed';}});
+document.addEventListener('dragover',e=>{if(e.dataTransfer.types.includes('Files'))e.preventDefault();});
+document.addEventListener('drop',e=>{const dz=document.getElementById('viewer-drop-zone');if(dz){e.preventDefault();dz.style.background='';dz.style.borderStyle='dashed';const file=e.dataTransfer.files[0];if(file&&(file.name.endsWith('.md')||file.name.endsWith('.txt'))){const reader=new FileReader();reader.onload=async ev=>{const lessonId=dz.dataset?.lessonId;if(lessonId){await handleViewerFileUpload({target:{files:[file]}},lessonId);}else{document.getElementById('lesson-viewer-modal')?.remove();toast('File loaded — open a lesson to upload.');}};reader.readAsText(file);}}});
+
+function showLessonForm(lesson=null){
+  document.getElementById('lesson-form-wrap').innerHTML=`<div class="card" style="margin-bottom:20px;">
+    <div class="card-header"><h2>${lesson?'Edit':'New'} Lesson</h2><button class="btn-admin outline" onclick="document.getElementById('lesson-form-wrap').innerHTML=''">Cancel</button></div>
+    <div class="card-body">
+      <div class="form-group"><label>Title</label><input id="lf-title" value="${esc(lesson?.title||'')}"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Type</label><select id="lf-type"><option value="video" ${lesson?.lesson_type==='video'?'selected':''}>Video</option><option value="lab" ${lesson?.lesson_type==='lab'?'selected':''}>Lab</option><option value="project" ${lesson?.lesson_type==='project'?'selected':''}>Project</option><option value="reading" ${lesson?.lesson_type==='reading'?'selected':''}>Reading</option></select></div>
+        <div class="form-group"><label>Minutes</label><input type="number" id="lf-min" value="${lesson?.duration_min||30}"></div>
+      </div>
+      <div class="form-group"><label>Description</label><textarea id="lf-desc">${esc(lesson?.description||'')}</textarea></div>
+      <div class="form-group"><label>Content (Markdown)</label><textarea id="lf-content" style="min-height:160px;font-family:var(--mono);font-size:12px;line-height:1.6;">${esc(lesson?.content_md||'')}</textarea></div>
+      <div class="form-group"><div class="checkbox-row"><input type="checkbox" id="lf-pub" ${lesson?.is_published!==false?'checked':''}><label for="lf-pub">Published</label></div></div>
+      <div style="display:flex;gap:8px;"><button class="btn-admin primary" onclick="saveLesson('${lesson?.id||''}')">Save</button><button class="btn-admin outline" onclick="document.getElementById('lesson-form-wrap').innerHTML=''">Cancel</button></div>
+    </div>
+  </div>`;
+  document.getElementById('lf-title').focus();
+}
+
+async function saveLesson(id){
+  const courseId=document.getElementById('lesson-course-select').value;
+  const data={title:document.getElementById('lf-title').value,lesson_type:document.getElementById('lf-type').value,duration_min:parseInt(document.getElementById('lf-min').value),description:document.getElementById('lf-desc').value,content_md:document.getElementById('lf-content')?.value||'',is_published:document.getElementById('lf-pub').checked};
+  const url=id?`/api/admin/lessons/${id}`:`/api/admin/courses/${courseId}/lessons`;
+  const method=id?'PUT':'POST';
+  const res=await apiFetch(url,{method,body:JSON.stringify(data)});
+  const json=await res.json();
+  document.getElementById('lesson-form-wrap').innerHTML='';
+  toast(json.success?'Lesson saved!':'Error: '+(json.error||'Failed'));
+  await loadLessons();
+}
+
+function editLesson(idx){const lesson=allLessons[idx];if(lesson)showLessonForm(lesson);}
+async function deleteLesson(id){if(!confirm('Delete this lesson?'))return;await apiFetch(`/api/admin/lessons/${id}`,{method:'DELETE'});toast('Lesson deleted');await loadLessons();}
+
+// ── Quizzes ────────────────────────────────────────
+async function loadQuizzes(){
+  const tbody=document.getElementById('quizzes-tbody');tbody.innerHTML='';
+  for(const c of allCourses){
+    try{
+      const res=await fetch(`/api/quizzes/course/${c.id}`);const json=await res.json();
+      if(json.quiz)tbody.innerHTML+=`<tr><td><strong>${esc(json.quiz.title)}</strong></td><td>${esc(c.title)}</td><td>${json.quiz.passing_score}%</td><td style="text-align:right;"><button class="btn-admin danger" onclick="deleteQuiz('${json.quiz.id}')">Delete</button></td></tr>`;
+    }catch{}
+  }
+  if(!tbody.innerHTML)tbody.innerHTML='<tr><td colspan="4" class="empty">No quizzes yet.</td></tr>';
+}
+
+function showQuizForm(){
+  document.getElementById('quiz-form-wrap').innerHTML=`<div class="card-body" style="border-bottom:1px solid var(--admin-border);">
+    <h3 style="font-size:14px;margin-bottom:16px;">New Quiz</h3>
+    <div class="form-group"><label>Course</label><select id="qf-course">${allCourses.map(c=>`<option value="${c.id}">${c.title}</option>`).join('')}</select></div>
+    <div class="form-group"><label>Title</label><input id="qf-title"></div>
+    <div class="form-group"><label>Passing Score %</label><input type="number" id="qf-pass" value="70"></div>
+    <div style="display:flex;gap:8px;"><button class="btn-admin primary" onclick="saveQuiz()">Create</button><button class="btn-admin outline" onclick="document.getElementById('quiz-form-wrap').innerHTML=''">Cancel</button></div>
+  </div>`;
+}
+
+async function saveQuiz(){
+  const res=await apiFetch('/api/admin/quizzes',{method:'POST',body:JSON.stringify({course_id:document.getElementById('qf-course').value,title:document.getElementById('qf-title').value,passing_score:parseInt(document.getElementById('qf-pass').value)})});
+  document.getElementById('quiz-form-wrap').innerHTML='';toast('Quiz created!');await loadQuizzes();
+}
+async function deleteQuiz(id){if(!confirm('Delete this quiz?'))return;await apiFetch(`/api/admin/quizzes/${id}`,{method:'DELETE'});toast('Quiz deleted');await loadQuizzes();}
+
+// ── Challenges ─────────────────────────────────────
+function renderChallengesTable(){
+  document.getElementById('challenges-tbody').innerHTML=allChallenges.length?allChallenges.map(c=>`<tr>
+    <td><strong>${esc(c.title)}</strong></td>
+    <td><span class="badge badge-purple">${c.challenge_type||'javascript'}</span></td>
+    <td><span class="badge ${c.difficulty==='easy'?'badge-green':c.difficulty==='medium'?'badge-yellow':c.difficulty==='hard'?'badge-red':'badge-purple'}">${c.difficulty}</span></td>
+    <td>${c.coins_reward}</td>
+    <td>${esc(c.course_title||'—')}</td>
+    <td style="text-align:right;"><button class="btn-admin danger" onclick="deleteChallenge('${c.id}')">Delete</button></td>
+  </tr>`).join(''):'<tr><td colspan="6" class="empty">No challenges yet.</td></tr>';
+}
+
+function showChallengeForm(){
+  document.getElementById('challenge-form-wrap').innerHTML=`<div class="card-body" style="border-bottom:1px solid var(--admin-border);">
+    <h3 style="font-size:14px;margin-bottom:16px;">New Challenge</h3>
+    <div class="form-group"><label>Title</label><input id="chf-title"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Type</label><select id="chf-type"><option value="javascript">JavaScript</option><option value="python">Python</option><option value="html">HTML</option><option value="git">Git</option><option value="linux">Linux</option><option value="sql">SQL</option><option value="markdown">Markdown</option><option value="yaml">YAML</option><option value="docker">Docker</option></select></div>
+      <div class="form-group"><label>Difficulty</label><select id="chf-diff"><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option><option value="expert">Expert</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Coins Reward</label><input type="number" id="chf-coins" value="10"></div>
+      <div class="form-group"><label>Course</label><select id="chf-course"><option value="">None</option>${allCourses.map(c=>`<option value="${c.id}">${c.title}</option>`).join('')}</select></div>
+    </div>
+    <div class="form-group"><label>Description</label><textarea id="chf-desc"></textarea></div>
+    <div class="form-group"><label>Starter Code</label><textarea id="chf-starter" style="font-family:var(--mono);font-size:12px;min-height:80px;"></textarea></div>
+    <div class="form-group"><label>Expected Output</label><input id="chf-expected"></div>
+    <div style="display:flex;gap:8px;"><button class="btn-admin primary" onclick="saveChallenge()">Create</button><button class="btn-admin outline" onclick="document.getElementById('challenge-form-wrap').innerHTML=''">Cancel</button></div>
+  </div>`;
+}
+
+async function saveChallenge(){
+  // Challenges are created via direct DB insert or admin API
+  toast('Challenge creation requires admin API endpoint. Use Supabase dashboard for now.','error');
+  document.getElementById('challenge-form-wrap').innerHTML='';
+}
+async function deleteChallenge(id){if(!confirm('Delete this challenge?'))return;toast('Delete requires admin API endpoint.','error');}
+
+// ── Enrollments ────────────────────────────────────
+function renderEnrollments(enrollments){
+  document.getElementById('enrollments-tbody').innerHTML=enrollments.length?enrollments.map(e=>`<tr>
+    <td>${esc(e.profiles?.full_name||'—')}</td>
+    <td>${esc(e.profiles?.email||'—')}</td>
+    <td>${esc(e.courses?.title||'—')}</td>
+    <td>${new Date(e.enrolled_at).toLocaleDateString()}</td>
+    <td>${e.completed_at?'<span class="badge badge-green">Completed</span>':'<span class="badge badge-yellow">In Progress</span>'}</td>
+  </tr>`).join(''):'<tr><td colspan="5" class="empty">No enrollments yet.</td></tr>';
+}
+
+// ── Logout ─────────────────────────────────────────
+async function doLogout(){if(supabaseClient)await supabaseClient.auth.signOut();window.location.href='/learn';}
+
+function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+document.addEventListener('DOMContentLoaded', init);
+if(document.readyState!=='loading') init();
+</script>
+
+<!-- Signature Modal -->
+<div id="sign-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.4);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div style="background:#fff;border:1px solid var(--admin-border);border-radius:12px;width:90%;max-width:560px;max-height:90vh;overflow-y:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.15);">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--admin-border);">
+      <h2 style="font-size:16px;font-weight:700;margin:0;">Sign Certificate</h2>
+      <button onclick="closeSignModal()" style="background:none;border:none;color:var(--admin-muted);cursor:pointer;font-size:18px;padding:4px;">&times;</button>
+    </div>
+    <div style="padding:20px;">
+      <p style="font-size:13px;color:var(--admin-muted);margin-bottom:16px;">Your signature will be saved once and applied to all certificates.</p>
+
+      <div style="margin-bottom:16px;">
+        <label style="display:block;font-size:12px;font-weight:600;color:var(--admin-muted);margin-bottom:6px;">Full Name</label>
+        <input type="text" id="modal-sign-name" placeholder="Enter your full name" style="width:100%;padding:9px 12px;border:1px solid var(--admin-border);border-radius:6px;font-size:13px;color:var(--admin-text);background:#fff;outline:none;">
+      </div>
+
+      <div style="display:flex;gap:4px;margin-bottom:16px;background:#f3f4f6;border-radius:6px;padding:3px;">
+        <button class="sign-tab-btn active" data-stab="draw" onclick="switchSignTab('draw')" style="flex:1;padding:8px;text-align:center;font-size:13px;font-weight:600;color:var(--admin-muted);border:none;background:transparent;border-radius:4px;cursor:pointer;">Draw</button>
+        <button class="sign-tab-btn" data-stab="type" onclick="switchSignTab('type')" style="flex:1;padding:8px;text-align:center;font-size:13px;font-weight:600;color:var(--admin-muted);border:none;background:transparent;border-radius:4px;cursor:pointer;">Type</button>
+        <button class="sign-tab-btn" data-stab="upload" onclick="switchSignTab('upload')" style="flex:1;padding:8px;text-align:center;font-size:13px;font-weight:600;color:var(--admin-muted);border:none;background:transparent;border-radius:4px;cursor:pointer;">Upload</button>
+      </div>
+
+      <div id="sign-tab-draw">
+        <div style="background:#fff;border:2px dashed var(--admin-border);border-radius:8px;overflow:hidden;margin-bottom:12px;">
+          <canvas id="modal-sign-canvas" width="520" height="160" style="display:block;width:100%;cursor:crosshair;"></canvas>
+        </div>
+        <div style="text-align:center;">
+          <button onclick="clearModalCanvas()" style="background:none;border:1px solid var(--admin-border);color:var(--admin-muted);padding:6px 16px;border-radius:6px;font-size:12px;cursor:pointer;">Clear</button>
+        </div>
+      </div>
+
+      <div id="sign-tab-type" style="display:none;">
+        <input type="text" id="modal-type-input" placeholder="Type your name" oninput="previewModalTyped()" style="width:100%;padding:16px;border:1px solid var(--admin-border);border-radius:6px;font-size:28px;font-family:'Caveat',cursive;color:var(--admin-text);background:#fff;outline:none;">
+        <div style="text-align:center;margin-top:12px;min-height:50px;"><img id="modal-type-preview" src="" alt="Preview" style="max-width:300px;max-height:60px;"></div>
+      </div>
+
+      <div id="sign-tab-upload" style="display:none;">
+        <label style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:24px;border:2px dashed var(--admin-border);border-radius:8px;background:#f9fafb;color:var(--admin-muted);font-size:13px;cursor:pointer;transition:all .2s;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Click to upload PNG, JPG, or SVG
+          <input type="file" id="modal-upload-input" accept="image/*" onchange="handleModalUpload(event)" style="display:none;">
+        </label>
+        <div style="text-align:center;margin-top:12px;min-height:50px;"><img id="modal-upload-preview" src="" alt="Preview" style="max-width:300px;max-height:60px;"></div>
+      </div>
+
+      <div style="text-align:center;margin-top:16px;">
+        <button onclick="saveModalSignature()" id="modal-save-sig-btn" style="padding:10px 28px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;border:none;background:var(--admin-accent);color:#fff;">Save Signature</button>
+      </div>
+      <div id="modal-sign-status" style="text-align:center;margin-top:12px;font-size:13px;display:none;"></div>
+      <div id="modal-existing-sig" style="display:none;margin-top:16px;padding:12px;background:#f9fafb;border:1px solid var(--admin-border);border-radius:8px;text-align:center;">
+        <p style="font-size:11px;color:var(--admin-muted);margin-bottom:8px;">Current Signature</p>
+        <img id="modal-existing-img" src="" alt="Signature" style="max-width:250px;max-height:60px;">
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let signActiveTab='draw',signUploadedUrl=null;
+const signCanvas=document.getElementById('modal-sign-canvas');const signCtx=signCanvas?.getContext('2d');let signDrawing=false,signLastX=0,signLastY=0;
+
+function openSignModal(){
+  document.getElementById('sign-modal').style.display='flex';
+  document.getElementById('modal-sign-name').value=document.getElementById('admin-name').textContent||'';
+  setupModalCanvas();
+  loadExistingSignature();
+}
+function closeSignModal(){document.getElementById('sign-modal').style.display='none';}
+
+document.getElementById('sign-modal').addEventListener('click',e=>{if(e.target.id==='sign-modal')closeSignModal();});
+
+function setupModalCanvas(){
+  if(!signCanvas)return;
+  const dpr=window.devicePixelRatio||1;
+  const rect=signCanvas.parentElement.getBoundingClientRect();
+  signCanvas.width=rect.width*dpr;signCanvas.height=160*dpr;
+  signCanvas.style.height='160px';
+  signCtx.scale(dpr,dpr);
+  signCtx.strokeStyle='#1a1a2e';signCtx.lineWidth=2.5;signCtx.lineCap='round';signCtx.lineJoin='round';
+}
+
+signCanvas?.addEventListener('mousedown',e=>{signDrawing=true;[signLastX,signLastY]=[e.offsetX,e.offsetY];});
+signCanvas?.addEventListener('mousemove',e=>{if(!signDrawing)return;signCtx.beginPath();signCtx.moveTo(signLastX,signLastY);signCtx.lineTo(e.offsetX,e.offsetY);signCtx.stroke();[signLastX,signLastY]=[e.offsetX,e.offsetY];});
+signCanvas?.addEventListener('mouseup',()=>signDrawing=false);
+signCanvas?.addEventListener('mouseleave',()=>signDrawing=false);
+signCanvas?.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0];const r=signCanvas.getBoundingClientRect();signDrawing=true;[signLastX,signLastY]=[t.clientX-r.left,t.clientY-r.top];},{passive:false});
+signCanvas?.addEventListener('touchmove',e=>{e.preventDefault();if(!signDrawing)return;const t=e.touches[0];const r=signCanvas.getBoundingClientRect();const x=t.clientX-r.left,y=t.clientY-r.top;signCtx.beginPath();signCtx.moveTo(signLastX,signLastY);signCtx.lineTo(x,y);signCtx.stroke();[signLastX,signLastY]=[x,y];},{passive:false});
+signCanvas?.addEventListener('touchend',()=>signDrawing=false);
+
+function clearModalCanvas(){if(!signCtx)return;const dpr=window.devicePixelRatio||1;signCtx.clearRect(0,0,signCanvas.width/dpr,signCanvas.height/dpr);}
+
+function switchSignTab(tab){
+  signActiveTab=tab;
+  document.querySelectorAll('.sign-tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.stab===tab));
+  document.getElementById('sign-tab-draw').style.display=tab==='draw'?'':'none';
+  document.getElementById('sign-tab-type').style.display=tab==='type'?'':'none';
+  document.getElementById('sign-tab-upload').style.display=tab==='upload'?'':'none';
+  if(tab==='type'){const n=document.getElementById('modal-sign-name').value;if(n&&!document.getElementById('modal-type-input').value){document.getElementById('modal-type-input').value=n;previewModalTyped();}}
+}
+
+function previewModalTyped(){
+  const n=document.getElementById('modal-type-input').value.trim();const img=document.getElementById('modal-type-preview');
+  if(!n){img.src='';return;}
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="400" height="100"><text x="20" y="70" font-family="Caveat,cursive" font-size="48" fill="#1a1a2e">${n.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</text></svg>`;
+  img.src='data:image/svg+xml;base64,'+btoa(svg);
+}
+
+function handleModalUpload(e){
+  const f=e.target.files[0];if(!f)return;
+  const reader=new FileReader();reader.onload=ev=>{signUploadedUrl=ev.target.result;document.getElementById('modal-upload-preview').src=signUploadedUrl;};reader.readAsDataURL(f);
+}
+
+function getModalSigData(){
+  if(signActiveTab==='draw'){
+    if(!signCanvas)return null;
+    const dpr=window.devicePixelRatio||1;const tc=document.createElement('canvas');tc.width=signCanvas.width;tc.height=signCanvas.height;const tx=tc.getContext('2d');tx.fillStyle='#fff';tx.fillRect(0,0,tc.width,tc.height);tx.drawImage(signCanvas,0,0);
+    const id=tx.getImageData(0,0,tc.width,tc.height).data;let has=false;for(let i=0;i<id.length;i+=4){if(id[i]<250||id[i+1]<250||id[i+2]<250){has=true;break;}}
+    return has?tc.toDataURL('image/png'):null;
+  }
+  if(signActiveTab==='type'){const n=document.getElementById('modal-type-input').value.trim();if(!n)return null;const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="400" height="100"><text x="20" y="70" font-family="Caveat,cursive" font-size="48" fill="#1a1a2e">${n.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</text></svg>`;return 'data:image/svg+xml;base64,'+btoa(svg);}
+  if(signActiveTab==='upload')return signUploadedUrl;
+  return null;
+}
+
+async function saveModalSignature(){
+  const name=document.getElementById('modal-sign-name').value.trim();
+  if(!name){showSignStatus('Enter your full name.','error');return;}
+  const data=getModalSigData();
+  if(!data){showSignStatus('Draw, type, or upload a signature.','error');return;}
+  const btn=document.getElementById('modal-save-sig-btn');btn.disabled=true;btn.textContent='Saving...';
+  try{
+    const res=await apiFetch('/api/sign/signature',{method:'POST',body:JSON.stringify({signature_url:data,full_name:name})});
+    const json=await res.json();
+    if(json.success){showSignStatus('Signature saved!','success');loadExistingSignature();}else{showSignStatus(json.error||'Failed to save.','error');}
+  }catch{showSignStatus('Network error.','error');}
+  btn.disabled=false;btn.textContent='Save Signature';
+}
+
+function showSignStatus(msg,type){const el=document.getElementById('modal-sign-status');el.textContent=msg;el.style.display='block';el.style.color=type==='success'?'var(--admin-green)':'var(--admin-red)';setTimeout(()=>el.style.display='none',4000);}
+
+async function loadExistingSignature(){
+  try{
+    const res=await apiFetch('/api/sign/signature');const json=await res.json();
+    if(json.success&&json.signature?.signature_url){
+      document.getElementById('modal-existing-sig').style.display='block';
+      document.getElementById('modal-existing-img').src=json.signature.signature_url;
+    }
+  }catch{}
+}
+</script>
+</body>
+</html>

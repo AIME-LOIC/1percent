@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<title>Certificate — 1% Expert Programme</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:#f0f2f5;min-height:100vh;display:flex;flex-direction:column;}
+
+/* Top bar */
+.topbar{background:#fff;border-bottom:1px solid #e5e7eb;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;}
+.topbar-logo{font-size:16px;font-weight:800;color:#1a1a2e;text-decoration:none;display:flex;align-items:center;gap:8px;}
+.topbar-logo .mark{background:#0d6e3f;color:#fff;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;width:24px;height:24px;border-radius:4px;display:flex;align-items:center;justify-content:center;}
+.topbar-actions{display:flex;gap:10px;align-items:center;}
+.topbar-btn{padding:6px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid #e5e7eb;background:#fff;color:#374151;transition:all .2s;}
+.topbar-btn:hover{background:#f9fafb;}
+.topbar-btn.primary{background:#0d6e3f;color:#fff;border-color:#0d6e3f;}
+.topbar-btn.primary:hover{background:#0a5c34;}
+
+/* Main */
+.cert-view{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 24px;}
+
+/* Certificate */
+.cert-paper{width:100%;max-width:860px;aspect-ratio:1.414/1;background:linear-gradient(135deg,#fffef9 0%,#fff 50%,#fffef9 100%);border-radius:4px;box-shadow:0 8px 40px rgba(0,0,0,0.12),0 2px 8px rgba(0,0,0,0.06);position:relative;overflow:hidden;}
+
+/* Decorative background pattern */
+.cert-paper::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 20% 20%,rgba(13,110,63,0.03) 0%,transparent 50%),radial-gradient(circle at 80% 80%,rgba(245,158,11,0.03) 0%,transparent 50%);pointer-events:none;}
+
+/* Watermark */
+.cert-watermark{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:120px;font-weight:900;color:rgba(13,110,63,0.03);pointer-events:none;white-space:nowrap;letter-spacing:20px;user-select:none;}
+
+/* Borders */
+.cert-border{position:absolute;inset:14px;border:3px solid #0d6e3f;pointer-events:none;border-radius:2px;}
+.cert-border-inner{position:absolute;inset:20px;border:1px solid rgba(13,110,63,0.3);pointer-events:none;border-radius:1px;}
+
+/* Decorative corner ornaments */
+.cert-ornament{position:absolute;width:60px;height:60px;pointer-events:none;}
+.cert-ornament::before,.cert-ornament::after{content:'';position:absolute;background:#0d6e3f;}
+.cert-ornament.tl{top:18px;left:18px;}.cert-ornament.tl::before{top:0;left:0;width:40px;height:3px;}.cert-ornament.tl::after{top:0;left:0;width:3px;height:40px;}
+.cert-ornament.tr{top:18px;right:18px;}.cert-ornament.tr::before{top:0;right:0;width:40px;height:3px;}.cert-ornament.tr::after{top:0;right:0;width:3px;height:40px;}
+.cert-ornament.bl{bottom:18px;left:18px;}.cert-ornament.bl::before{bottom:0;left:0;width:40px;height:3px;}.cert-ornament.bl::after{bottom:0;left:0;width:3px;height:40px;}
+.cert-ornament.br{bottom:18px;right:18px;}.cert-ornament.br::before{bottom:0;right:0;width:40px;height:3px;}.cert-ornament.br::after{bottom:0;right:0;width:3px;height:40px;}
+
+/* Gold accent line */
+.cert-gold-line{position:absolute;top:26px;left:26px;right:26px;height:2px;background:linear-gradient(90deg,transparent,#d4a843,transparent);pointer-events:none;}
+.cert-gold-line-bottom{position:absolute;bottom:26px;left:26px;right:26px;height:2px;background:linear-gradient(90deg,transparent,#d4a843,transparent);pointer-events:none;}
+
+/* Content */
+.cert-content{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 70px;text-align:center;}
+
+.cert-company{font-size:12px;font-weight:700;letter-spacing:5px;text-transform:uppercase;color:#0d6e3f;margin-bottom:2px;}
+.cert-location{font-size:10px;color:#9ca3af;margin-bottom:20px;letter-spacing:1px;}
+
+.cert-icon{width:48px;height:48px;margin-bottom:12px;}
+
+.cert-title{font-family:'Playfair Display',serif;font-size:38px;font-weight:700;color:#1a1a2e;margin-bottom:6px;line-height:1.15;letter-spacing:-0.5px;}
+
+.cert-divider{display:flex;align-items:center;gap:12px;margin:10px auto;width:200px;}
+.cert-divider::before,.cert-divider::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,#0d6e3f);}
+.cert-divider::after{background:linear-gradient(90deg,#0d6e3f,transparent);}
+.cert-divider .diamond{width:8px;height:8px;background:#d4a843;transform:rotate(45deg);flex-shrink:0;}
+
+.cert-awarded{font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:3px;margin-bottom:8px;}
+
+.cert-name{font-family:'Playfair Display',serif;font-size:34px;font-weight:600;color:#1a1a2e;margin-bottom:4px;line-height:1.2;}
+.cert-name-line{width:280px;height:1px;background:linear-gradient(90deg,transparent,#d1d5db,transparent);margin:0 auto 14px;}
+
+.cert-desc{font-size:11px;color:#9ca3af;margin-bottom:6px;letter-spacing:0.5px;}
+
+.cert-course{font-size:22px;font-weight:700;color:#0d6e3f;margin-bottom:4px;}
+
+.cert-details{font-size:10px;color:#9ca3af;margin-bottom:24px;letter-spacing:0.5px;}
+
+/* Seal */
+.cert-seal{position:absolute;bottom:80px;right:70px;width:80px;height:80px;border-radius:50%;border:3px solid #d4a843;display:flex;align-items:center;justify-content:center;flex-direction:column;background:rgba(255,254,249,0.9);}
+.cert-seal-ring{position:absolute;inset:4px;border-radius:50%;border:1px solid rgba(212,168,67,0.4);}
+.cert-seal-text{font-size:7px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#d4a843;}
+.cert-seal-icon{margin:2px 0;}
+
+/* Bottom section */
+.cert-bottom{position:absolute;bottom:44px;left:70px;right:70px;display:flex;justify-content:space-between;align-items:flex-end;}
+.cert-bottom-section{text-align:center;}
+.cert-bottom-label{font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px;}
+.cert-bottom-value{font-size:11px;font-weight:600;color:#374151;}
+.cert-bottom-date{font-size:11px;font-weight:600;color:#374151;}
+.cert-bottom-number{font-family:'Courier New',monospace;font-size:10px;color:#6b7280;letter-spacing:1.5px;}
+
+/* Signature */
+.cert-signature-section{text-align:center;}
+.cert-signature-img{max-width:120px;max-height:40px;}
+.cert-signature-line{width:120px;height:1px;background:linear-gradient(90deg,transparent,#374151,transparent);margin:2px auto 0;}
+.cert-signature-label{font-size:9px;color:#9ca3af;margin-top:3px;letter-spacing:0.5px;}
+
+/* Footer text */
+.cert-footer{position:absolute;bottom:16px;left:0;right:0;text-align:center;font-size:7.5px;color:#c4c8cf;letter-spacing:1.5px;}
+
+/* Overlay states */
+.cert-overlay{position:absolute;inset:0;background:rgba(255,255,255,0.92);display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:4px;z-index:10;backdrop-filter:blur(4px);}
+.cert-overlay.hidden{display:none;}
+.cert-overlay h2{font-size:22px;font-weight:800;color:#1a1a2e;margin-bottom:8px;}
+.cert-overlay p{font-size:14px;color:#6b7280;margin-bottom:20px;text-align:center;max-width:400px;line-height:1.6;}
+.cert-overlay .btn{padding:12px 32px;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;border:none;transition:all .2s;}
+.cert-overlay .btn-primary{background:#0d6e3f;color:#fff;}
+.cert-overlay .btn-primary:hover{background:#0a5c34;}
+.cert-overlay .btn-outline{background:transparent;color:#374151;border:2px solid #e5e7eb;margin-left:12px;}
+.cert-overlay .btn-outline:hover{border-color:#9ca3af;}
+
+/* Restricted */
+.restricted-overlay .lock-icon{width:48px;height:48px;background:#fef3c7;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:16px;color:#f59e0b;}
+
+/* Loading */
+.cert-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#fff;z-index:20;border-radius:4px;}
+.cert-loading.hidden{display:none;}
+.spinner{width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:#0d6e3f;border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Blurred state */
+.cert-blurred .cert-content{filter:blur(0);pointer-events:none;opacity:0.3;}
+
+/* Screenshot protection */
+.cert-paper{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+.cert-paper img{-webkit-user-drag:none;user-drag:none;pointer-events:none;}
+body{-webkit-user-select:none;user-select:none;}
+
+/* Download bar */
+.download-bar{background:#fff;border-top:1px solid #e5e7eb;padding:12px 24px;display:flex;align-items:center;justify-content:center;gap:12px;}
+.download-bar.hidden{display:none;}
+.download-btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:8px;transition:all .2s;}
+.download-btn.primary{background:#059669;color:#fff;}
+.download-btn.primary:hover{background:#047857;}
+.download-btn.outline{background:#fff;color:#374151;border:1px solid #d1d5db;}
+.download-btn.outline:hover{background:#f9fafb;}
+.download-btn:disabled{opacity:.5;cursor:not-allowed;}
+.verified-badge{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#059669;}
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <a href="/learn" class="topbar-logo"><div class="mark">1%</div> Expert Programme</a>
+  <div class="topbar-actions">
+    <span id="view-count" style="font-size:12px;color:#6b7280;display:none;"></span>
+    <a href="/learn/dashboard" class="topbar-btn">Dashboard</a>
+  </div>
+</div>
+
+<!-- Certificate view -->
+<div class="cert-view">
+  <div class="cert-paper" id="cert-paper">
+    <!-- Loading -->
+    <div class="cert-loading" id="cert-loading">
+      <div class="spinner"></div>
+    </div>
+
+    <!-- No cert overlay -->
+    <div class="cert-overlay" id="no-cert-overlay" style="display:none;">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+      <h2>No Certificate Found</h2>
+      <p>Complete all lessons and pass the end-of-course quiz to earn your certificate.</p>
+      <a href="/learn/dashboard" class="btn btn-primary">Go to Dashboard</a>
+    </div>
+
+    <!-- Free view overlay (first time) -->
+    <div class="cert-overlay" id="free-view-overlay" style="display:none;">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.5"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+      <h2>Your Certificate is Ready</h2>
+      <p>You have <b>1 free view</b> of this certificate. After viewing, you'll need a subscription to see it again.</p>
+      <div>
+        <button class="btn btn-primary" onclick="useFreeView()">View Certificate</button>
+      </div>
+    </div>
+
+    <!-- Restricted overlay (no free views left) -->
+    <div class="cert-overlay restricted-overlay" id="restricted-overlay" style="display:none;">
+      <div class="lock-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      </div>
+      <h2>Free View Used</h2>
+      <p>You've used your one free certificate view. Subscribe to Pro or Unlimited to download and view certificates anytime.</p>
+      <div>
+        <a href="/learn/payment" class="btn btn-primary">Upgrade Plan</a>
+        <a href="/learn/dashboard" class="btn btn-outline">Back to Dashboard</a>
+      </div>
+    </div>
+
+    <!-- Decorative elements -->
+    <div class="cert-border"></div>
+    <div class="cert-border-inner"></div>
+    <div class="cert-ornament tl"></div>
+    <div class="cert-ornament tr"></div>
+    <div class="cert-ornament bl"></div>
+    <div class="cert-ornament br"></div>
+    <div class="cert-gold-line"></div>
+    <div class="cert-gold-line-bottom"></div>
+    <div class="cert-watermark">1%</div>
+
+    <!-- Seal -->
+    <div class="cert-seal">
+      <div class="cert-seal-ring"></div>
+      <div class="cert-seal-text">Verified</div>
+      <div class="cert-seal-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d4a843" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <div class="cert-seal-text">1% Expert</div>
+    </div>
+
+    <!-- Certificate content -->
+    <div class="cert-content" id="cert-content">
+      <div class="cert-company">1% Digital Solutions</div>
+      <div class="cert-location">Kigali, Rwanda</div>
+      <svg class="cert-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#0d6e3f" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <div class="cert-title">Certificate of Completion</div>
+      <div class="cert-divider"><div class="diamond"></div></div>
+      <div class="cert-awarded">This is to certify that</div>
+      <div class="cert-name" id="cert-student">Student Name</div>
+      <div class="cert-name-line"></div>
+      <div class="cert-desc">has successfully completed the course</div>
+      <div class="cert-course" id="cert-course">Course Title</div>
+      <div class="cert-details" id="cert-details">Level: Beginner | Duration: 4 weeks</div>
+      <div class="cert-bottom">
+        <div class="cert-bottom-section">
+          <div class="cert-bottom-label">Date Issued</div>
+          <div class="cert-bottom-date" id="cert-date">January 1, 2026</div>
+        </div>
+        <div class="cert-signature-section">
+          <img class="cert-signature-img" id="cert-signature" src="" alt="Signature" style="display:none;">
+          <div class="cert-signature-line"></div>
+          <div class="cert-signature-label">Authorized Signature</div>
+        </div>
+        <div class="cert-bottom-section">
+          <div class="cert-bottom-label">Certificate Number</div>
+          <div class="cert-bottom-number" id="cert-number">1PCT-2026-XXXXXXXX</div>
+        </div>
+      </div>
+      <div class="cert-footer">Verify at: 1percentrwanda.com/learn | 1% Digital Solutions | Kigali, Rwanda</div>
+    </div>
+  </div>
+</div>
+
+<!-- Download bar -->
+<div class="download-bar hidden" id="download-bar">
+  <span class="verified-badge">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    Verified Certificate
+  </span>
+  <button class="download-btn primary" id="download-btn" onclick="downloadPdf()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Download PDF
+  </button>
+</div>
+
+<script>
+let certData = null;
+let signatureUrl = null;
+let supabaseClient = null;
+let session = null;
+let user = null;
+let hasUsedFreeView = false;
+let isPremium = false;
+
+// Parse cert number from URL
+const urlParams = new URLSearchParams(window.location.search);
+const certNumber = urlParams.get('number');
+
+(async function init() {
+  if (!certNumber) {
+    document.getElementById('cert-loading').classList.add('hidden');
+    document.getElementById('no-cert-overlay').style.display = 'flex';
+    return;
+  }
+
+  // Init auth
+  try {
+    const res = await fetch('/api/config');
+    const config = await res.json();
+    if (config.supabaseUrl && config.supabaseAnonKey && typeof supabase !== 'undefined') {
+      supabaseClient = supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+      const { data: { session: s } } = await supabaseClient.auth.getSession();
+      session = s;
+      user = s?.user || null;
+
+      if (user) {
+        // Check if user has used free view
+        const usageRes = await fetch('/api/certificates/usage', {
+          headers: { 'Authorization': `Bearer ${session.access_token}` }
+        });
+        const usageJson = await usageRes.json();
+        hasUsedFreeView = usageJson.used_free_view || false;
+        isPremium = usageJson.is_premium || false;
+
+        document.getElementById('view-count').style.display = 'inline';
+        document.getElementById('view-count').textContent = isPremium ? 'Unlimited views' : (hasUsedFreeView ? '0 free views left' : '1 free view');
+      }
+    }
+  } catch {}
+
+  // Load certificate
+  try {
+    const res = await fetch(`/api/certificates/public/${certNumber}`);
+    const json = await res.json();
+
+    document.getElementById('cert-loading').classList.add('hidden');
+
+    if (!json.success || !json.certificate) {
+      document.getElementById('no-cert-overlay').style.display = 'flex';
+      return;
+    }
+
+    certData = json.certificate;
+    signatureUrl = json.signature_url;
+
+    // Fill certificate
+    document.getElementById('cert-student').textContent = certData.learner_name || 'Student';
+    document.getElementById('cert-course').textContent = certData.course_title || certData.course_name || 'Course';
+    document.getElementById('cert-number').textContent = certData.certificate_number;
+    document.getElementById('cert-date').textContent = certData.issued_at ? new Date(certData.issued_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+    document.getElementById('cert-details').textContent = `Level: ${certData.course_level || 'Beginner'} | Duration: ${certData.duration_weeks || 0} weeks`;
+
+    if (signatureUrl) {
+      document.getElementById('cert-signature').src = signatureUrl;
+      document.getElementById('cert-signature').style.display = 'block';
+    }
+
+    // Access control
+    if (user) {
+      if (isPremium) {
+        showCertificate();
+      } else if (hasUsedFreeView) {
+        document.getElementById('cert-paper').classList.add('cert-blurred');
+        document.getElementById('restricted-overlay').style.display = 'flex';
+      } else {
+        document.getElementById('cert-paper').classList.add('cert-blurred');
+        document.getElementById('free-view-overlay').style.display = 'flex';
+      }
+    } else {
+      // Not logged in — show blurred with login prompt
+      document.getElementById('cert-paper').classList.add('cert-blurred');
+      const overlay = document.getElementById('free-view-overlay');
+      overlay.querySelector('h2').textContent = 'Log in to View';
+      overlay.querySelector('p').textContent = 'Log in to view this certificate. You get 1 free view.';
+      overlay.querySelector('button').textContent = 'Log In';
+      overlay.querySelector('button').onclick = () => window.location.href = '/learn';
+    }
+  } catch (e) {
+    document.getElementById('cert-loading').classList.add('hidden');
+    document.getElementById('no-cert-overlay').style.display = 'flex';
+  }
+})();
+
+function showCertificate() {
+  document.getElementById('cert-paper').classList.remove('cert-blurred');
+  document.getElementById('free-view-overlay').style.display = 'none';
+  document.getElementById('restricted-overlay').style.display = 'none';
+  document.getElementById('download-bar').classList.remove('hidden');
+}
+
+async function useFreeView() {
+  if (!user || !session) {
+    window.location.href = '/learn';
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/certificates/free-view', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`
+      }
+    });
+    const json = await res.json();
+
+    if (json.success) {
+      hasUsedFreeView = true;
+      isPremium = json.is_premium || false;
+      document.getElementById('view-count').textContent = isPremium ? 'Unlimited views' : '0 free views left';
+      showCertificate();
+    } else {
+      document.getElementById('free-view-overlay').querySelector('p').textContent = json.error || 'Could not activate free view.';
+    }
+  } catch {
+    document.getElementById('free-view-overlay').querySelector('p').textContent = 'Network error. Please try again.';
+  }
+}
+
+async function downloadPdf() {
+  if (!certData || !user || !session) return;
+
+  const btn = document.getElementById('download-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Generating...';
+
+  try {
+    const res = await fetch(`/api/pdf/certificate/${certData.course_id}`, {
+      headers: { 'Authorization': `Bearer ${session.access_token}` }
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Download failed');
+    }
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `certificate-${certData.certificate_number}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    alert('Download failed: ' + e.message);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download PDF';
+}
+// Block screenshot shortcuts
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'PrintScreen') { e.preventDefault(); return false; }
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'S' || e.key === 's')) { e.preventDefault(); return false; }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'u') { e.preventDefault(); return false; }
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'I') { e.preventDefault(); return false; }
+});
+
+// Block right-click
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// Block drag
+document.addEventListener('dragstart', (e) => e.preventDefault());
+</script>
+</body>
+</html>

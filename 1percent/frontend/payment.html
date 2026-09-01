@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pricing — 1% Expert Programme</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: #ffffff;
+      color: #111827;
+      line-height: 1.6;
+    }
+
+    /* ---- NAV ---- */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; height: 56px;
+      background: rgba(255,255,255,0.95); backdrop-filter: blur(12px);
+      border-bottom: 1px solid #e5e7eb; display: flex; align-items: center;
+      justify-content: space-between; padding: 0 24px; z-index: 100;
+    }
+    .nav-logo { font-size: 18px; font-weight: 700; color: #0d6e3f; text-decoration: none; }
+    .nav-links { display: flex; gap: 16px; align-items: center; }
+    .nav-links a { color: #6b7280; text-decoration: none; font-size: 14px; transition: color 0.2s; }
+    .nav-links a:hover { color: #111827; }
+    .nav-links .btn-sm {
+      background: #0d6e3f; color: #fff; padding: 6px 14px; border-radius: 6px;
+      font-weight: 600; font-size: 13px; border: none; cursor: pointer; text-decoration: none;
+    }
+
+    /* ---- HERO ---- */
+    .hero { padding: 100px 24px 60px; text-align: center; max-width: 800px; margin: 0 auto; }
+    .hero-badge {
+      display: inline-block; background: #ecfdf5; color: #059669;
+      padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 600;
+      margin-bottom: 20px; border: 1px solid #a7f3d0;
+    }
+    .hero h1 { font-size: 42px; font-weight: 800; line-height: 1.15; margin-bottom: 16px; }
+    .hero h1 span { color: #0d6e3f; }
+    .hero p { font-size: 17px; color: #6b7280; max-width: 600px; margin: 0 auto 30px; }
+
+    /* ---- PLANS ---- */
+    .plans {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px; max-width: 1080px; margin: 0 auto 80px; padding: 0 24px;
+    }
+    .plan {
+      background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+      padding: 32px 28px; position: relative; transition: transform 0.2s, border-color 0.2s;
+    }
+    .plan:hover { transform: translateY(-2px); border-color: #0d6e3f; }
+    .plan.popular { border-color: #0d6e3f; box-shadow: 0 0 40px rgba(13,110,63,0.08); }
+    .plan-badge {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: #0d6e3f; color: #fff; font-size: 11px; font-weight: 700;
+      padding: 4px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .plan-name { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+    .plan-desc { font-size: 14px; color: #6b7280; margin-bottom: 20px; }
+    .plan-price { font-size: 36px; font-weight: 800; margin-bottom: 4px; }
+    .plan-price .currency { font-size: 18px; color: #6b7280; vertical-align: top; }
+    .plan-price .period { font-size: 14px; color: #6b7280; font-weight: 400; }
+    .plan-billing { font-size: 13px; color: #6b7280; margin-bottom: 24px; }
+    .plan-features { list-style: none; margin-bottom: 28px; }
+    .plan-features li {
+      font-size: 14px; color: #111827; padding: 8px 0; display: flex;
+      align-items: center; gap: 10px; border-bottom: 1px solid #f3f4f6;
+    }
+    .plan-features li:last-child { border-bottom: none; }
+    .plan-features .icon-check {
+      width: 18px; height: 18px; border-radius: 50%; background: #ecfdf5;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .plan-features .icon-check svg { width: 12px; height: 12px; color: #059669; }
+    .plan-features .disabled { color: #9ca3af; opacity: 0.5; }
+    .plan-features .disabled .icon-check { background: #f3f4f6; }
+    .plan-features .disabled .icon-check svg { color: #9ca3af; }
+    .plan-btn {
+      display: block; width: 100%; padding: 12px; border: none; border-radius: 8px;
+      font-size: 15px; font-weight: 600; cursor: pointer; text-align: center;
+      text-decoration: none; transition: opacity 0.2s;
+    }
+    .plan-btn:hover { opacity: 0.85; }
+    .plan-btn.primary { background: #0d6e3f; color: #fff; }
+    .plan-btn.secondary { background: #f3f4f6; color: #111827; border: 1px solid #e5e7eb; }
+
+    /* ---- COMPARISON ---- */
+    .comparison-section { max-width: 900px; margin: 0 auto 80px; padding: 0 24px; }
+    .comparison-section h2 { font-size: 24px; font-weight: 700; text-align: center; margin-bottom: 32px; }
+    .comparison-table {
+      width: 100%; border-collapse: collapse; background: #fff;
+      border-radius: 12px; overflow: hidden; border: 1px solid #e5e7eb;
+    }
+    .comparison-table th, .comparison-table td {
+      padding: 14px 20px; text-align: center; font-size: 14px; border-bottom: 1px solid #f3f4f6;
+    }
+    .comparison-table th {
+      background: #f9fafb; font-weight: 600; font-size: 13px;
+      text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280;
+    }
+    .comparison-table td:first-child { text-align: left; font-weight: 500; }
+    .comparison-table tr:last-child td { border-bottom: none; }
+    .comparison-table .check { color: #059669; }
+    .comparison-table .cross { color: #9ca3af; opacity: 0.4; }
+    .comparison-table .highlight-col { background: #f0fdf4; }
+
+    /* ---- FAQ ---- */
+    .faq-section { max-width: 700px; margin: 0 auto 80px; padding: 0 24px; }
+    .faq-section h2 { font-size: 24px; font-weight: 700; text-align: center; margin-bottom: 32px; }
+    .faq-item {
+      background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+      margin-bottom: 12px; overflow: hidden;
+    }
+    .faq-q {
+      padding: 16px 20px; font-weight: 600; font-size: 15px; cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center; transition: background 0.2s;
+    }
+    .faq-q:hover { background: #f9fafb; }
+    .faq-q .arrow { transition: transform 0.2s; color: #9ca3af; }
+    .faq-item.open .arrow { transform: rotate(180deg); }
+    .faq-a {
+      padding: 0 20px; max-height: 0; overflow: hidden; transition: max-height 0.3s, padding 0.3s;
+      font-size: 14px; color: #6b7280; line-height: 1.7;
+    }
+    .faq-item.open .faq-a { max-height: 200px; padding: 0 20px 16px; }
+
+    /* ---- FOOTER ---- */
+    .footer {
+      border-top: 1px solid #e5e7eb; padding: 32px 24px; text-align: center;
+      color: #6b7280; font-size: 13px;
+    }
+    .footer a { color: #0d6e3f; text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+
+    /* ---- TOAST ---- */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; background: #fff;
+      border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 20px;
+      font-size: 14px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transform: translateY(100px); opacity: 0; transition: all 0.3s;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-color: #059669; color: #065f46; }
+    .toast.error { border-color: #dc2626; color: #991b1b; }
+
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 28px; }
+      .plans { grid-template-columns: 1fr; }
+      .comparison-table { font-size: 12px; }
+      .comparison-table th, .comparison-table td { padding: 10px 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <a href="/learn" class="nav-logo">1% Expert</a>
+    <div class="nav-links">
+      <a href="/learn/dashboard">Dashboard</a>
+      <a href="/learn">Courses</a>
+      <span id="nav-user-name" style="color:#0d6e3f;font-size:13px;font-weight:600;display:none;"></span>
+      <a href="/learn" class="btn-sm" id="nav-auth-btn">Login</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-badge">Pricing</div>
+    <h1>Choose Your Path to <span>Mastery</span></h1>
+    <p>Start free with the Starter tier, or go Pro for unlimited access to all courses, downloadable materials, and certificates.</p>
+  </section>
+
+  <!-- PLANS -->
+  <section class="plans">
+    <div class="plan">
+      <div class="plan-name">Free Starter</div>
+      <div class="plan-desc">Try the programme with limited access</div>
+      <div class="plan-price"><span class="currency">RWF</span> 0</div>
+      <div class="plan-billing">Free forever</div>
+      <ul class="plan-features">
+        <li><span class="icon-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></span> Access to course overviews</li>
+        <li><span class="icon-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></span> 1 lesson download per day</li>
+        <li><span class="icon-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></span> 10 coins to start</li>
+        <li class="disabled"><span class="icon-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></span> Course material downloads</li>
+        <li class="disabled"><span class="icon-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></span> Certificates</li>
+      </ul>
+      <button class="plan-btn secondary" onclick="activateTrial()">Start Free Trial</button>
+    </div>
+
+    <div class="plan popular">
+      <div class="plan-badge">Most Popular</div>
+      <div class="plan-name">Pro</div>
+      <div class="plan-desc">Full access to all courses and materials</div>
+      <div class="plan-price"><span class="currency">RWF</span> 15,000 <span class="period">/mo</span></div>
+      <div class="plan-billing">Billed monthly · Cancel anytime</div>
+      <ul class="plan-features">
+        <li><span class="icon-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></span> All 15 courses unlocked</li>
+        <li><span class="icon-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></span> Unlimited downloads</li>
+        <li><span class="icon-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></span> Course material PDFs</li>
+        <li><span class="icon-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></span> Completion certificates</li>
+        <li><span class="icon-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></span> 50 bonus coins</li>
+      </ul>
+      <button class="plan-btn primary" onclick="subscribePlan('pro')">Subscribe to Pro</button>
+    </div>
+
+    <div class="plan">
+      <div class="plan-name">Unlimited</div>
+      <div class="plan-desc">Everything in Pro plus mentorship</div>
+      <div class="plan-price"><span class="currency">RWF</span> 35,000 <span class="period">/mo</span></div>
+      <div class="plan-billing">Billed monthly · Cancel anytime</div>
+      <ul class="plan-features">
+        <li><span class="icon-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></span> Everything in Pro</li>
+        <li><span class="icon-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></span> 1-on-1 mentor sessions</li>
+        <li><span class="icon-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></span> Code review sessions</li>
+        <li><span class="icon-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></span> Priority support</li>
+        <li><span class="icon-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></span> 100 bonus coins</li>
+        <li><span class="icon-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></span> Job placement support</li>
+      </ul>
+      <button class="plan-btn primary" onclick="subscribePlan('unlimited')">Subscribe to Unlimited</button>
+    </div>
+  </section>
+
+  <!-- COMPARISON -->
+  <section class="comparison-section">
+    <h2>Compare Plans</h2>
+    <table class="comparison-table">
+      <thead>
+        <tr><th style="text-align:left;">Feature</th><th>Free</th><th class="highlight-col">Pro</th><th>Unlimited</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Course access</td><td>Overviews only</td><td class="highlight-col">Full content</td><td>Full content</td></tr>
+        <tr><td>Downloads per day</td><td>1</td><td class="highlight-col">Unlimited</td><td>Unlimited</td></tr>
+        <tr><td>PDF materials</td><td class="cross">No</td><td class="highlight-col check">Yes</td><td class="check">Yes</td></tr>
+        <tr><td>Certificates</td><td class="cross">No</td><td class="highlight-col check">Yes</td><td class="check">Yes</td></tr>
+        <tr><td>Bonus coins</td><td>10</td><td class="highlight-col">50</td><td>100</td></tr>
+        <tr><td>1-on-1 Mentor</td><td class="cross">No</td><td class="highlight-col cross">No</td><td class="check">Yes</td></tr>
+        <tr><td>Price</td><td>Free</td><td class="highlight-col">RWF 15,000/mo</td><td>RWF 35,000/mo</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq-section">
+    <h2>Frequently Asked Questions</h2>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Can I cancel my subscription anytime? <span class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span></div>
+      <div class="faq-a">Yes, you can cancel your subscription at any time. Your access will continue until the end of your current billing period.</div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">What happens after the free trial? <span class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span></div>
+      <div class="faq-a">The free trial gives you 7 days of Starter tier access. After that, you can subscribe to Pro or Unlimited.</div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Do I get a certificate after completing a course? <span class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span></div>
+      <div class="faq-a">Certificates are available for Pro and Unlimited subscribers. Complete all lessons and pass the quiz to receive your certificate.</div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">What payment methods do you accept? <span class="arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span></div>
+      <div class="faq-a">We currently support mobile money (MTN MoMo, Airtel Money) and bank transfer.</div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>1% Digital Solutions — Kigali, Rwanda</p>
+    <p><a href="/">Business</a> · <a href="/learn">Learning</a> · <a href="mailto:1percentrwanda@gmail.com">Contact</a></p>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    let user = null;
+    let session = null;
+    let supabaseClient = null;
+
+    (async function init() {
+      await checkAuth();
+      renderNav();
+    })();
+
+    async function checkAuth() {
+      try {
+        const res = await fetch('/api/config');
+        const config = await res.json();
+        if (!config.supabaseUrl || !config.supabaseAnonKey) return;
+        if (typeof supabase === 'undefined') return;
+        supabaseClient = supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+        const { data: { session: s } } = await supabaseClient.auth.getSession();
+        session = s;
+        user = s?.user || null;
+      } catch (e) {
+        console.warn('[PAY] Auth init failed:', e.message);
+      }
+    }
+
+    function renderNav() {
+      const authBtn = document.getElementById('nav-auth-btn');
+      const userName = document.getElementById('nav-user-name');
+      if (user) {
+        authBtn.textContent = 'Dashboard';
+        authBtn.href = '/learn/dashboard';
+        userName.textContent = user.user_metadata?.full_name || user.email;
+        userName.style.display = 'inline';
+      } else {
+        authBtn.textContent = 'Login';
+        authBtn.href = '/learn';
+      }
+    }
+
+    function requireAuth() {
+      if (!user) {
+        showToast('Please log in first', 'error');
+        setTimeout(() => window.location.href = '/learn', 1000);
+        return false;
+      }
+      return true;
+    }
+
+    async function activateTrial() {
+      if (!requireAuth()) return;
+      try {
+        const res = await fetch('/api/premium/free-trial', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.message || 'Free trial activated!', 'success');
+          setTimeout(() => window.location.href = '/learn/dashboard', 1500);
+        } else {
+          showToast(data.error || 'Failed to activate trial', 'error');
+        }
+      } catch (e) { showToast('Network error', 'error'); }
+    }
+
+    async function subscribePlan(tier) {
+      if (!requireAuth()) return;
+      try {
+        const res = await fetch('/api/premium/subscribe', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tier_slug: tier, months: 1 })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.message || `Subscribed to ${tier}!`, 'success');
+          setTimeout(() => window.location.href = '/learn/dashboard', 1500);
+        } else {
+          showToast(data.error || 'Subscription failed', 'error');
+        }
+      } catch (e) { showToast('Network error', 'error'); }
+    }
+
+    function toggleFaq(el) { el.classList.toggle('open'); }
+    function showToast(msg, type) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast ' + type + ' show';
+      setTimeout(() => t.classList.remove('show'), 3500);
+    }
+  </script>
+</body>
+</html>
