@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard.html
+Disallow: /reset-password.html
+
+Sitemap: https://onepercent-rwanda.onrender.com/sitemap.xml

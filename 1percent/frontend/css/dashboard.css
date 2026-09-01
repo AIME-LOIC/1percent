@@ -1,0 +1,227 @@
+/* ============================================================
+   Dashboard Styles — matches course page design language
+   ============================================================ */
+
+/* ── Loading / Guest ─────────────────────────────────── */
+.dashboard-loading-state{
+  display:flex;align-items:center;justify-content:center;
+  min-height:60vh;color:var(--text-muted);font-family:var(--mono);font-size:14px;
+}
+.dashboard-guest{
+  max-width:480px;margin:0 auto;padding:120px 24px;text-align:center;
+}
+.dashboard-guest h1{font-size:26px;margin-bottom:12px;}
+.dashboard-guest p{margin-bottom:24px;color:var(--text-secondary);}
+
+/* ── Shell ───────────────────────────────────────────── */
+.dashboard-shell{padding:80px 24px 96px;}
+
+/* ── Header ──────────────────────────────────────────── */
+.dash-header{
+  display:flex;align-items:flex-end;justify-content:space-between;
+  flex-wrap:wrap;gap:16px;margin-bottom:28px;
+}
+.dash-greeting{font-size:clamp(24px,3vw,32px);font-weight:800;letter-spacing:-.5px;margin:0;}
+.dash-subtitle{font-size:13px;color:var(--text-muted);margin:4px 0 0;}
+.dash-streak{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--accent-light);color:#92620a;
+  font-family:var(--mono);font-weight:600;font-size:12px;
+  padding:6px 14px;border-radius:999px;
+}
+
+/* ── Stats Grid ──────────────────────────────────────── */
+.dash-stats{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:36px;
+}
+.dash-stat{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:18px 16px;
+  display:flex;align-items:center;gap:14px;
+}
+.dash-stat-icon{
+  width:40px;height:40px;border-radius:var(--radius-md);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.dash-stat-icon.courses{background:#dbeafe;color:#2563eb;}
+.dash-stat-icon.progress{background:#d1fae5;color:#059669;}
+.dash-stat-icon.completed{background:#ede9fe;color:#7c3aed;}
+.dash-stat-icon.coins{background:#fef3c7;color:#d97706;}
+.dash-stat b{display:block;font-size:22px;font-weight:800;color:var(--text);margin-bottom:1px;}
+.dash-stat span{font-size:12px;color:var(--text-muted);}
+
+/* ── Section Titles ──────────────────────────────────── */
+.dash-section{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:16px;
+}
+.dash-section h2{font-size:17px;font-weight:700;margin:0;}
+.dash-section .count{
+  font-size:12px;color:var(--text-muted);font-weight:500;
+  background:var(--surface);padding:3px 10px;border-radius:100px;
+}
+
+/* ── Enrolled Course Cards ───────────────────────────── */
+.dash-enrolled{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-bottom:40px;}
+.dash-enrolled-card{
+  display:flex;align-items:center;gap:14px;
+  padding:16px;background:var(--bg-card);border:1px solid var(--border);
+  border-radius:var(--radius-md);cursor:pointer;text-decoration:none;color:inherit;
+  transition:border-color .15s,box-shadow .15s;
+}
+.dash-enrolled-card:hover{border-color:var(--primary);box-shadow:0 2px 12px rgba(0,0,0,.06);}
+.dash-enrolled-icon{
+  width:44px;height:44px;border-radius:var(--radius-md);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.dash-enrolled-info{flex:1;min-width:0;}
+.dash-enrolled-info h4{font-size:14px;font-weight:600;margin:0 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dash-enrolled-meta{display:flex;align-items:center;gap:10px;}
+.dash-enrolled-meta .pct{font-size:12px;font-weight:600;color:var(--primary);white-space:nowrap;}
+.dash-enrolled-meta .bar{flex:1;height:5px;background:var(--border);border-radius:100px;overflow:hidden;}
+.dash-enrolled-meta .bar-fill{height:100%;background:var(--primary);border-radius:100px;transition:width .3s;}
+.dash-empty{grid-column:1/-1;padding:32px;text-align:center;color:var(--text-muted);font-size:14px;}
+
+/* ── All Courses Grid ────────────────────────────────── */
+.dash-courses{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:40px;}
+.dash-course-card{
+  display:block;padding:0;background:var(--bg-card);
+  border:1px solid var(--border);border-radius:var(--radius-md);
+  overflow:hidden;text-decoration:none;color:inherit;
+  transition:border-color .15s,box-shadow .15s;
+}
+.dash-course-card:hover{border-color:var(--primary);box-shadow:0 2px 12px rgba(0,0,0,.06);}
+.dash-course-thumb{
+  height:100px;display:flex;align-items:center;justify-content:center;
+  position:relative;
+}
+.dash-course-thumb .level-tag{
+  position:absolute;top:10px;right:10px;font-size:10px;font-weight:600;
+  padding:2px 8px;border-radius:100px;background:rgba(255,255,255,.9);color:var(--text);
+}
+.dash-course-body{padding:14px 16px;}
+.dash-course-body h4{font-size:14px;font-weight:600;margin:0 0 4px;}
+.dash-course-body p{font-size:12px;color:var(--text-muted);margin:0 0 8px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.dash-course-footer{display:flex;align-items:center;justify-content:space-between;}
+.dash-course-footer span{font-size:11px;color:var(--text-muted);}
+
+/* ── Challenges Section ──────────────────────────────── */
+.dash-challenges{margin-bottom:40px;}
+.dash-challenge-filters{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+.dash-challenge-chip{
+  font-size:11px;font-weight:600;padding:4px 12px;border-radius:100px;
+  border:1px solid var(--border);background:var(--bg);color:var(--text-muted);
+  cursor:pointer;transition:all .15s;
+}
+.dash-challenge-chip:hover,.dash-challenge-chip.active{
+  background:#fef3c7;color:#92400e;border-color:#f59e0b;
+}
+.dash-challenge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
+.dash-challenge-card{
+  padding:16px;background:var(--bg-card);border:1px solid var(--border);
+  border-radius:var(--radius-md);cursor:pointer;text-decoration:none;color:inherit;
+  transition:all .15s;position:relative;overflow:hidden;
+}
+.dash-challenge-card:hover{border-color:#f59e0b;box-shadow:0 2px 12px rgba(245,158,11,.1);}
+.dash-challenge-card.passed{border-color:#059669;}
+.dash-challenge-card .ch-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.dash-challenge-card .ch-diff{font-size:9px;font-weight:700;padding:2px 8px;border-radius:100px;text-transform:uppercase;letter-spacing:.5px;}
+.dash-challenge-card .ch-diff.easy{background:#d1fae5;color:#065f46;}
+.dash-challenge-card .ch-diff.medium{background:#fef3c7;color:#92400e;}
+.dash-challenge-card .ch-diff.hard{background:#fee2e2;color:#991b1b;}
+.dash-challenge-card .ch-diff.expert{background:#ede9fe;color:#5b21b6;}
+.dash-challenge-card .ch-type{font-size:9px;font-weight:600;padding:2px 6px;border-radius:100px;background:var(--surface);color:var(--text-muted);}
+.dash-challenge-card h4{font-size:13px;font-weight:700;margin:0 0 4px;}
+.dash-challenge-card p{font-size:11px;color:var(--text-muted);margin:0 0 10px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.dash-challenge-card .ch-bottom{display:flex;align-items:center;justify-content:space-between;}
+.dash-challenge-card .ch-coins{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;color:#92400e;}
+.dash-challenge-card .ch-course{font-size:10px;color:var(--text-muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.dash-challenge-card .ch-status{font-size:10px;font-weight:700;color:#059669;display:flex;align-items:center;gap:3px;}
+.dash-challenge-card .ch-start{font-size:10px;font-weight:600;color:var(--primary);}
+
+/* ── Roadmap ─────────────────────────────────────────── */
+.dash-roadmap{margin-bottom:40px;}
+.roadmap-phase{
+  border:1px solid var(--border);border-radius:var(--radius-md);
+  margin-bottom:10px;overflow:hidden;background:var(--bg-card);
+}
+.roadmap-phase-header{
+  display:flex;align-items:center;gap:14px;padding:16px 20px;cursor:pointer;
+  transition:background .15s;
+}
+.roadmap-phase-header:hover{background:var(--bg-alt);}
+.roadmap-phase-num{
+  width:36px;height:36px;border-radius:50%;color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:14px;flex-shrink:0;
+}
+.roadmap-phase-info{flex:1;}
+.roadmap-phase-info h3{font-size:15px;font-weight:700;margin:0;display:flex;align-items:center;gap:6px;}
+.roadmap-phase-info p{font-size:12px;color:var(--text-muted);margin:2px 0 0;}
+.roadmap-phase-toggle{
+  font-size:12px;color:var(--text-muted);transition:transform .2s;
+}
+.roadmap-phase.open .roadmap-phase-toggle{transform:rotate(180deg);}
+.roadmap-phase-body{
+  display:none;padding:0 20px 16px;
+}
+.roadmap-phase.open .roadmap-phase-body{display:block;}
+.roadmap-module{
+  margin:6px 0;padding:10px 14px;background:var(--surface);
+  border-radius:var(--radius-sm);cursor:pointer;
+}
+.roadmap-module-header{
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:13px;font-weight:600;
+}
+.roadmap-module-header span{font-size:11px;color:var(--text-muted);font-weight:400;}
+.roadmap-module-lessons{display:none;padding-top:8px;}
+.roadmap-module.open .roadmap-module-lessons{display:block;}
+.roadmap-lesson{
+  display:flex;align-items:center;gap:8px;padding:5px 0;
+  font-size:12px;border-bottom:1px solid var(--border-light);
+}
+.roadmap-lesson:last-child{border:none;}
+.roadmap-lesson .type{
+  font-family:var(--mono);font-size:9px;font-weight:600;text-transform:uppercase;
+  padding:2px 6px;border-radius:100px;flex-shrink:0;
+}
+.roadmap-lesson .dur{font-size:11px;color:var(--text-muted);white-space:nowrap;}
+
+/* ── Skeleton Loading ───────────────────────────────── */
+@keyframes shimmer{
+  0%{background-position:-400px 0;}
+  100%{background-position:400px 0;}
+}
+.skeleton{
+  background:linear-gradient(90deg,var(--border-light) 25%,var(--border) 50%,var(--border-light) 75%);
+  background-size:800px 100%;
+  animation:shimmer 1.5s infinite linear;
+  border-radius:var(--radius-sm);
+}
+.skel-stat{height:76px;border-radius:var(--radius-lg);}
+.skel-enrolled{height:72px;border-radius:var(--radius-md);}
+.skel-course{height:190px;border-radius:var(--radius-md);}
+.skel-roadmap{height:56px;border-radius:var(--radius-md);margin-bottom:10px;}
+.skel-greeting{height:32px;width:280px;margin-bottom:8px;}
+.skel-subtitle{height:16px;width:340px;}
+
+/* ── Certificates ────────────────────────────────────── */
+.dash-certificates{display:flex;flex-direction:column;gap:12px;margin-bottom:36px;}
+.dash-cert-card{transition:border-color .15s;}
+.dash-cert-card:hover{border-color:#d9770b!important;}
+.dash-certs-count{font-size:13px;color:var(--text-muted);}
+
+/* ── Responsive ──────────────────────────────────────── */
+@media(max-width:900px){
+  .dash-stats{grid-template-columns:repeat(2,1fr);}
+}
+@media(max-width:768px){
+  .dash-stats{grid-template-columns:1fr;}
+  .dash-enrolled{grid-template-columns:1fr;}
+  .dash-courses{grid-template-columns:1fr 1fr;}
+  .dash-challenge-grid{grid-template-columns:1fr;}
+}
+@media(max-width:480px){
+  .dash-courses{grid-template-columns:1fr;}
+}

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signature — 1% Expert Programme</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:#f8f9fa;min-height:100vh;display:flex;flex-direction:column;}
+.topbar{background:#fff;border-bottom:1px solid #e5e7eb;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;}
+.topbar-logo{font-size:16px;font-weight:800;color:#1a1a2e;text-decoration:none;display:flex;align-items:center;gap:8px;}
+.topbar-logo .mark{background:#0d6e3f;color:#fff;font-family:monospace;font-size:10px;font-weight:800;width:24px;height:24px;border-radius:4px;display:flex;align-items:center;justify-content:center;}
+.topbar-actions{display:flex;gap:10px;}
+.topbar-btn{padding:6px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid #e5e7eb;background:#fff;color:#374151;text-decoration:none;}
+.topbar-btn:hover{background:#f9fafb;}
+.main{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 24px;}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:32px;width:100%;max-width:600px;box-shadow:0 4px 12px rgba(0,0,0,0.05);}
+.card h1{font-size:22px;font-weight:800;margin-bottom:4px;}
+.card .subtitle{font-size:14px;color:#6b7280;margin-bottom:24px;}
+.sig-tabs{display:flex;gap:4px;margin-bottom:20px;background:#f3f4f6;padding:4px;border-radius:8px;}
+.sig-tab{flex:1;padding:8px;text-align:center;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:transparent;color:#6b7280;transition:all .15s;}
+.sig-tab.active{background:#fff;color:#111827;box-shadow:0 1px 3px rgba(0,0,0,0.1);}
+.sig-panel{display:none;}.sig-panel.active{display:block;}
+canvas#draw-canvas{width:100%;height:150px;border:2px dashed #d1d5db;border-radius:8px;cursor:crosshair;background:#fff;}
+.text-input{width:100%;padding:12px;border:2px solid #e5e7eb;border-radius:8px;font-size:18px;font-family:'Playfair Display',serif;text-align:center;margin-bottom:12px;}
+.upload-zone{border:2px dashed #d1d5db;border-radius:8px;padding:40px;text-align:center;cursor:pointer;transition:all .15s;}
+.upload-zone:hover{border-color:#0d6e3f;background:#f0fdf4;}
+.upload-zone p{color:#6b7280;font-size:14px;}
+.preview{margin:16px 0;text-align:center;}
+.preview img{max-width:300px;max-height:80px;border:1px solid #e5e7eb;border-radius:4px;}
+.actions{display:flex;gap:10px;margin-top:20px;}
+.btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s;}
+.btn-primary{background:#0d6e3f;color:#fff;}.btn-primary:hover{background:#0a5c34;}
+.btn-outline{background:#fff;color:#374151;border:1px solid #d1d5db;}.btn-outline:hover{background:#f9fafb;}
+.msg{padding:10px 14px;border-radius:6px;font-size:13px;margin-top:12px;display:none;}
+.msg.success{display:block;background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;}
+.msg.error{display:block;background:#fef2f2;color:#991b1b;border:1px solid #fecaca;}
+.existing{margin:16px 0;padding:16px;background:#f9fafb;border-radius:8px;text-align:center;}
+.existing img{max-width:300px;max-height:80px;}
+.existing p{font-size:12px;color:#6b7280;margin-top:8px;}
+.info{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;font-size:13px;color:#1e40af;margin-bottom:20px;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a href="/learn" class="topbar-logo"><div class="mark">1%</div> Expert Programme</a>
+  <div class="topbar-actions"><a href="/learn/dashboard" class="topbar-btn">Dashboard</a></div>
+</div>
+<div class="main">
+  <div class="card">
+    <h1>Authorized Signature</h1>
+    <div class="subtitle">Your signature will be saved once and applied to all certificates.</div>
+    <div class="info">Draw, type, or upload your signature below. It will appear on all certificates you earn.</div>
+    
+    <div id="existing-section" class="existing" style="display:none;">
+      <p style="font-weight:600;margin-bottom:8px;">Current Signature:</p>
+      <img id="existing-img" src="" alt="Current signature">
+      <p>This signature will appear on all your certificates.</p>
+    </div>
+
+    <div class="sig-tabs">
+      <button class="sig-tab active" onclick="switchTab('draw')">✏️ Draw</button>
+      <button class="sig-tab" onclick="switchTab('type')">⌨️ Type</button>
+      <button class="sig-tab" onclick="switchTab('upload')">📁 Upload</button>
+    </div>
+
+    <div id="panel-draw" class="sig-panel active">
+      <canvas id="draw-canvas" width="500" height="150"></canvas>
+      <p style="font-size:12px;color:#6b7280;margin-top:8px;text-align:center;">Draw your signature above</p>
+    </div>
+
+    <div id="panel-type" class="sig-panel">
+      <input type="text" class="text-input" id="typed-name" placeholder="Type your name" oninput="updateTypedPreview()">
+      <div class="preview"><img id="typed-preview" src="" alt="Preview" style="display:none;"></div>
+    </div>
+
+    <div id="panel-upload" class="sig-panel">
+      <div class="upload-zone" onclick="document.getElementById('file-input').click()">
+        <p>📁 Click to upload signature image</p>
+        <p style="font-size:12px;color:#9ca3af;">PNG, JPG up to 2MB</p>
+      </div>
+      <input type="file" id="file-input" accept="image/*" style="display:none;" onchange="handleUpload(event)">
+      <div class="preview"><img id="upload-preview" src="" alt="Preview" style="display:none;"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" onclick="saveSignature()">Save Signature</button>
+      <button class="btn btn-outline" onclick="clearCanvas()">Clear</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+</div>
+
+<script>
+let supabaseClient = null;
+let session = null;
+let user = null;
+let signatureData = null;
+let currentTab = 'draw';
+let isDrawing = false;
+
+const canvas = document.getElementById('draw-canvas');
+const ctx = canvas.getContext('2d');
+
+// Init
+(async function init() {
+  try {
+    const res = await fetch('/api/config');
+    const config = await res.json();
+    if (config.supabaseUrl && config.supabaseAnonKey && typeof supabase !== 'undefined') {
+      supabaseClient = supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+      const { data: { session: s } } = await supabaseClient.auth.getSession();
+      session = s;
+      user = s?.user || null;
+      if (!user) { window.location.href = '/learn'; return; }
+      await loadExisting();
+    }
+  } catch (e) { console.warn('[SIGN] Auth failed:', e.message); }
+  setupCanvas();
+})();
+
+function setupCanvas() {
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+  ctx.strokeStyle = '#1a1a2e';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  
+  canvas.addEventListener('mousedown', (e) => { isDrawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); });
+  canvas.addEventListener('mousemove', (e) => { if (!isDrawing) return; ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); });
+  canvas.addEventListener('mouseup', () => { isDrawing = false; signatureData = canvas.toDataURL('image/png'); });
+  canvas.addEventListener('mouseleave', () => { isDrawing = false; });
+  
+  // Touch support
+  canvas.addEventListener('touchstart', (e) => { e.preventDefault(); isDrawing = true; const t = e.touches[0]; const r = canvas.getBoundingClientRect(); ctx.beginPath(); ctx.moveTo(t.clientX - r.left, t.clientY - r.top); });
+  canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if (!isDrawing) return; const t = e.touches[0]; const r = canvas.getBoundingClientRect(); ctx.lineTo(t.clientX - r.left, t.clientY - r.top); ctx.stroke(); });
+  canvas.addEventListener('touchend', () => { isDrawing = false; signatureData = canvas.toDataURL('image/png'); });
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.sig-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.sig-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.sig-tab:nth-child(${tab === 'draw' ? 1 : tab === 'type' ? 2 : 3})`).classList.add('active');
+  document.getElementById(`panel-${tab}`).classList.add('active');
+}
+
+function updateTypedPreview() {
+  const name = document.getElementById('typed-name').value;
+  if (!name) { document.getElementById('typed-preview').style.display = 'none'; return; }
+  const c = document.createElement('canvas');
+  c.width = 400; c.height = 80;
+  const tctx = c.getContext('2d');
+  tctx.fillStyle = '#fff';
+  tctx.fillRect(0, 0, 400, 80);
+  tctx.font = 'italic 36px Playfair Display, serif';
+  tctx.fillStyle = '#1a1a2e';
+  tctx.textAlign = 'center';
+  tctx.textBaseline = 'middle';
+  tctx.fillText(name, 200, 40);
+  signatureData = c.toDataURL('image/png');
+  document.getElementById('typed-preview').src = signatureData;
+  document.getElementById('typed-preview').style.display = 'block';
+}
+
+function handleUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) { showMsg('File too large. Max 2MB.', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    signatureData = ev.target.result;
+    document.getElementById('upload-preview').src = signatureData;
+    document.getElementById('upload-preview').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  signatureData = null;
+}
+
+async function saveSignature() {
+  if (!user || !session) { window.location.href = '/learn'; return; }
+  
+  // Get signature from current tab
+  if (currentTab === 'type') {
+    updateTypedPreview();
+  } else if (currentTab === 'draw') {
+    signatureData = canvas.toDataURL('image/png');
+  }
+  
+  if (!signatureData) { showMsg('Please create a signature first.', 'error'); return; }
+  
+  try {
+    const res = await fetch('/api/sign/signature', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`
+      },
+      body: JSON.stringify({
+        signature_url: signatureData,
+        full_name: user.user_metadata?.full_name || document.getElementById('typed-name').value || ''
+      })
+    });
+    const json = await res.json();
+    if (json.success) {
+      showMsg('Signature saved! It will appear on all your certificates.', 'success');
+      loadExisting();
+    } else {
+      showMsg(json.error || 'Failed to save signature.', 'error');
+    }
+  } catch (e) {
+    showMsg('Network error: ' + e.message, 'error');
+  }
+}
+
+async function loadExisting() {
+  if (!session) return;
+  try {
+    const res = await fetch('/api/sign/signature', {
+      headers: { 'Authorization': `Bearer ${session.access_token}` }
+    });
+    const json = await res.json();
+    if (json.success && json.signature?.signature_url) {
+      document.getElementById('existing-img').src = json.signature.signature_url;
+      document.getElementById('existing-section').style.display = 'block';
+      signatureData = json.signature.signature_url;
+    }
+  } catch {}
+}
+
+function showMsg(msg, type) {
+  const el = document.getElementById('msg');
+  el.textContent = msg;
+  el.className = 'msg ' + type;
+  setTimeout(() => el.className = 'msg', 5000);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1% Playground — Challenges</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/main.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/js/icons.js"></script>
+<script src="/js/toast.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;font-family:var(--sans);background:#1e1e2e;color:#cdd6f4;}
+
+/* Layout */
+.vscode{display:grid;grid-template-rows:36px 1fr 22px;height:100vh;}
+
+/* Titlebar */
+.titlebar{display:flex;align-items:center;justify-content:space-between;background:#181825;border-bottom:1px solid #313244;padding:0 12px;user-select:none;}
+.titlebar-left{display:flex;align-items:center;gap:12px;}
+.titlebar-logo{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#a6e3a1;text-decoration:none;}
+.titlebar-logo .mark{background:#a6e3a1;color:#1e1e2e;font-family:var(--mono);font-size:9px;font-weight:800;width:18px;height:18px;border-radius:3px;display:flex;align-items:center;justify-content:center;}
+.titlebar-menus{display:flex;gap:2px;}
+.titlebar-menus span{font-size:12px;color:#a6adc8;padding:4px 8px;border-radius:3px;cursor:default;}
+.titlebar-center{position:absolute;left:50%;transform:translateX(-50%);font-size:11px;color:#585b74;display:flex;align-items:center;gap:6px;}
+.titlebar-right{display:flex;align-items:center;gap:8px;}
+.coins-pill{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:3px 10px;border-radius:100px;background:rgba(249,226,175,0.12);color:#f9e2af;border:1px solid rgba(249,226,175,0.2);font-family:var(--mono);}
+.btn-run-sm{display:flex;align-items:center;gap:5px;padding:4px 14px;border-radius:4px;border:none;font-size:11px;font-weight:600;cursor:pointer;background:#a6e3a1;color:#1e1e2e;transition:all .15s;}
+.btn-run-sm:hover{background:#94e2a5;}
+.btn-run-sm:disabled{opacity:.5;cursor:not-allowed;}
+.btn-run-sm.sec{background:rgba(255,255,255,0.06);color:#a6adc8;border:1px solid #313244;}
+.btn-run-sm.sec:hover{background:rgba(255,255,255,0.1);color:#cdd6f4;}
+.btn-run-sm.warn{background:#f9e2af;color:#1e1e2e;}
+.btn-run-sm.warn:hover{background:#f5e0b0;}
+
+/* Main */
+.main-area{display:grid;overflow:hidden;}
+.main-area.sidebar-open{grid-template-columns:48px 240px 1fr;}
+.main-area.sidebar-closed{grid-template-columns:48px 0px 1fr;}
+
+/* Activity bar */
+.activity-bar{background:#181825;border-right:1px solid #313244;display:flex;flex-direction:column;align-items:center;padding:4px 0;gap:2px;}
+.activity-icon{width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:#585b74;cursor:pointer;border-radius:4px;transition:all .15s;position:relative;}
+.activity-icon:hover{color:#a6adc8;}
+.activity-icon.active{color:#cdd6f4;}
+.activity-icon.active::before{content:'';position:absolute;left:0;top:8px;bottom:8px;width:2px;background:#cdd6f4;border-radius:0 2px 2px 0;}
+
+/* Sidebar */
+.sidebar{background:#181825;border-right:1px solid #313244;display:flex;flex-direction:column;overflow:hidden;transition:width .15s;}
+.sidebar.collapsed{width:0;overflow:hidden;}
+.sidebar-header{padding:8px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#a6adc8;border-bottom:1px solid #313244;display:flex;align-items:center;justify-content:space-between;}
+.sidebar-header .actions{display:flex;gap:4px;}
+.sidebar-header .actions button{background:none;border:none;color:#585b74;cursor:pointer;padding:2px;border-radius:3px;display:flex;}
+.sidebar-header .actions button:hover{color:#cdd6f4;background:rgba(255,255,255,0.08);}
+
+/* Challenge sidebar */
+.challenge-sidebar{background:#181825;border-right:1px solid #313244;display:flex;flex-direction:column;overflow:hidden;}
+.challenge-filter{padding:8px 12px;border-bottom:1px solid #313244;display:flex;gap:4px;flex-wrap:wrap;}
+.ch-filter{font-size:9px;font-weight:600;padding:2px 8px;border-radius:100px;border:1px solid #313244;background:transparent;color:#585b74;cursor:pointer;transition:all .15s;}
+.ch-filter:hover,.ch-filter.active{background:rgba(166,227,161,0.15);color:#a6e3a1;border-color:rgba(166,227,161,0.3);}
+.challenge-list{flex:1;overflow-y:auto;padding:4px 0;}
+.ch-list-item{display:flex;align-items:center;gap:8px;padding:6px 12px;cursor:pointer;transition:background .1s;border-left:2px solid transparent;font-size:12px;color:#a6adc8;}
+.ch-list-item:hover{background:rgba(255,255,255,0.04);}
+.ch-list-item.active{background:rgba(255,255,255,0.06);color:#cdd6f4;border-left-color:#cdd6f4;}
+.ch-list-item .ch-icon{width:16px;height:16px;color:#cba6f7;flex-shrink:0;}
+.ch-list-item .ch-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--mono);font-size:12px;}
+.ch-list-item .ch-badge{font-size:8px;padding:1px 5px;border-radius:3px;font-weight:600;text-transform:uppercase;}
+.ch-badge.easy{background:rgba(166,227,161,0.15);color:#a6e3a1;}
+.ch-badge.medium{background:rgba(249,226,175,0.15);color:#f9e2af;}
+.ch-badge.hard{background:rgba(243,139,168,0.15);color:#f38ba8;}
+.ch-badge.expert{background:rgba(180,190,254,0.15);color:#b4befe;}
+.ch-list-item .ch-coins{font-size:9px;font-weight:700;color:#f9e2af;font-family:var(--mono);}
+.ch-list-item .ch-check{color:#a6e3a1;font-size:10px;}
+
+/* File tree */
+.file-tree{flex:1;overflow-y:auto;padding:4px 0;}
+.file-item{display:flex;align-items:center;gap:6px;padding:4px 12px;font-size:13px;color:#a6adc8;cursor:pointer;transition:background .1s;border-left:2px solid transparent;}
+.file-item:hover{background:rgba(255,255,255,0.04);}
+.file-item.active{background:rgba(255,255,255,0.06);color:#cdd6f4;border-left-color:#cdd6f4;}
+.file-icon{width:16px;height:16px;flex-shrink:0;}
+.file-icon.md{color:#cba6f7;}.file-icon.js{color:#f9e2af;}.file-icon.folder{color:#89b4fa;}
+.file-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.folder-item{padding-left:8px;}.folder-item .file-name{font-weight:600;}
+.file-children{padding-left:12px;}
+
+/* Editor area */
+.editor-area{display:flex;flex-direction:column;overflow:hidden;flex:1;}
+#challenge-info{flex:0 0 auto;max-height:180px;overflow-y:auto;}
+.editor-wrap{flex:1;overflow:hidden;min-height:0;}
+.editor-tabs{display:flex;background:#181825;border-bottom:1px solid #313244;overflow-x:auto;min-height:35px;}
+.editor-tab{display:flex;align-items:center;gap:6px;padding:0 14px;font-size:12px;color:#585b74;border-right:1px solid #313244;cursor:pointer;white-space:nowrap;transition:all .1s;position:relative;}
+.editor-tab:hover{color:#a6adc8;background:rgba(255,255,255,0.02);}
+.editor-tab.active{color:#cdd6f4;background:#1e1e2e;}
+.editor-tab.active::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:#cba6f7;}
+.editor-tab .dot{width:6px;height:6px;border-radius:50%;background:#a6e3a1;display:none;}
+.editor-tab.modified .dot{display:block;}
+.editor-tab .close{width:16px;height:16px;display:flex;align-items:center;justify-content:center;border-radius:3px;font-size:14px;color:inherit;opacity:0;transition:opacity .1s;}
+.editor-tab:hover .close{opacity:.6;}
+.editor-tab .close:hover{opacity:1;background:rgba(255,255,255,0.1);}
+
+/* Breadcrumb */
+.breadcrumb{display:flex;align-items:center;gap:4px;padding:4px 16px;font-size:11px;color:#585b74;background:#1e1e2e;border-bottom:1px solid #313244;}
+.breadcrumb span{cursor:pointer;}.breadcrumb span:hover{color:#a6adc8;}.breadcrumb .sep{color:#45475a;}
+
+/* Editor */
+.editor-wrap{flex:1;display:flex;overflow:hidden;position:relative;}
+.line-numbers{padding:12px 8px;text-align:right;font-family:var(--mono);font-size:12px;line-height:1.7;color:#45475a;background:#181825;border-right:1px solid #313244;user-select:none;min-width:40px;overflow:hidden;}
+.editor-container{flex:1;position:relative;overflow:auto;}
+.code-editor{width:100%;height:100%;border:none;outline:none;resize:none;padding:12px 16px;font-family:var(--mono);font-size:13px;line-height:1.7;background:transparent;color:#cdd6f4;caret-color:#cdd6f4;tab-size:2;position:absolute;top:0;left:0;z-index:2;}
+.code-editor::placeholder{color:#45475a;}
+.code-editor:read-only{color:#585b74;}
+.syntax-layer{padding:12px 16px;font-family:var(--mono);font-size:13px;line-height:1.7;white-space:pre-wrap;word-wrap:break-word;position:absolute;top:0;left:0;z-index:1;pointer-events:none;width:100%;min-height:100%;}
+
+/* Syntax colors */
+.syn-kw{color:#cba6f7;}.syn-fn{color:#89b4fa;}.syn-str{color:#a6e3a1;}.syn-num{color:#fab387;}.syn-cmt{color:#585b74;font-style:italic;}.syn-op{color:#89dceb;}.syn-tag{color:#f38ba8;}.syn-attr{color:#f9e2af;}.syn-type{color:#f9e2af;}.syn-const{color:#fab387;}.syn-bool{color:#fab387;}.syn-reg{color:#eba0ac;}.syn-punc{color:#6c7086;}
+
+/* Panel */
+.panel-area{border-top:1px solid #313244;display:flex;flex-direction:column;background:#181825;overflow:hidden;transition:height .15s;}
+.panel-area.collapsed{height:0 !important;border-top:none;}
+.panel-tabs{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #313244;min-height:32px;}
+.panel-tabs-left{display:flex;}
+.panel-tab{padding:6px 14px;font-size:11px;font-weight:600;color:#585b74;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;border-bottom:1px solid transparent;transition:all .1s;}
+.panel-tab:hover{color:#a6adc8;}.panel-tab.active{color:#cdd6f4;border-bottom-color:#89b4fa;}
+.panel-actions{display:flex;gap:4px;padding-right:8px;}
+.panel-action{width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:#585b74;cursor:pointer;border-radius:3px;border:none;background:none;}
+.panel-action:hover{color:#a6adc8;background:rgba(255,255,255,0.06);}
+.panel-body{flex:1;overflow:auto;}
+.panel-content{display:none;}.panel-content.active{display:flex;flex-direction:column;height:100%;}
+.terminal-output{padding:8px 14px;font-family:var(--mono);font-size:12px;line-height:1.6;color:#cdd6f4;white-space:pre-wrap;min-height:100%;}
+.terminal-output .success{color:#a6e3a1;}.terminal-output .error{color:#f38ba8;}.terminal-output .warning{color:#f9e2af;}.terminal-output .muted{color:#585b74;}.terminal-output .cmd{color:#89b4fa;}.terminal-output .output{color:#a6adc8;}
+.terminal-input-row{display:flex;align-items:center;padding:6px 14px;border-top:1px solid #313244;background:#11111b;}
+.terminal-prompt{color:#a6e3a1;font-family:var(--mono);font-size:12px;margin-right:8px;font-weight:600;}
+.terminal-input{flex:1;background:none;border:none;outline:none;color:#cdd6f4;font-family:var(--mono);font-size:12px;}
+
+/* Status bar */
+.statusbar{display:flex;align-items:center;justify-content:space-between;padding:0 12px;height:22px;background:#a6e3a1;color:#1e1e2e;font-size:11px;font-weight:500;}
+.statusbar-left,.statusbar-right{display:flex;align-items:center;gap:12px;}
+.statusbar-item{display:flex;align-items:center;gap:4px;}
+.statusbar .toggle-panel{cursor:pointer;padding:0 6px;border-radius:2px;}
+.statusbar .toggle-panel:hover{background:rgba(0,0,0,0.1);}
+
+/* Challenge detail (shown in editor when challenge.md is selected) */
+.ch-detail{padding:24px 32px;max-width:800px;}
+.ch-detail .ch-diff{display:inline-block;font-size:9px;font-weight:700;padding:3px 10px;border-radius:100px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.ch-detail .ch-diff.easy{background:rgba(166,227,161,0.15);color:#a6e3a1;}
+.ch-detail .ch-diff.medium{background:rgba(249,226,175,0.15);color:#f9e2af;}
+.ch-detail .ch-diff.hard{background:rgba(243,139,168,0.15);color:#f38ba8;}
+.ch-detail .ch-diff.expert{background:rgba(180,190,254,0.15);color:#b4befe;}
+.ch-detail h1{font-size:22px;font-weight:800;margin-bottom:8px;}
+.ch-detail .ch-meta{font-size:12px;color:#a6adc8;display:flex;gap:12px;margin-bottom:16px;}
+.ch-detail .ch-coins-inline{color:#f9e2af;font-weight:700;}
+.ch-detail h3{font-size:14px;font-weight:700;color:#cdd6f4;margin:20px 0 8px;padding-bottom:6px;border-bottom:1px solid #313244;}
+.ch-detail p{font-size:13px;color:#a6adc8;line-height:1.7;margin:8px 0;}
+.ch-detail pre{background:#181825;border:1px solid #313244;padding:12px;border-radius:6px;font-family:var(--mono);font-size:12px;overflow-x:auto;margin:10px 0;line-height:1.6;color:#cdd6f4;}
+.ch-detail code{font-family:var(--mono);font-size:12px;background:#181825;padding:2px 6px;border-radius:3px;color:#f9e2af;}
+.ch-detail pre code{background:none;padding:0;color:#cdd6f4;}
+.ch-detail ol{margin:8px 0;padding-left:20px;}
+.ch-detail li{font-size:13px;color:#a6adc8;line-height:1.7;margin:4px 0;}
+.ch-detail .ch-steps{counter-reset:step;list-style:none;padding:0;margin:8px 0;}
+.ch-detail .ch-steps li{counter-increment:step;display:flex;gap:10px;padding:6px 0;}
+.ch-detail .ch-steps li::before{content:counter(step);min-width:20px;height:20px;border-radius:50%;background:rgba(137,180,250,0.15);color:#89b4fa;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ch-detail .ch-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:16px;padding-top:12px;border-top:1px solid #313244;}
+.ch-detail .ch-tag{font-size:9px;font-weight:600;padding:3px 8px;border-radius:100px;background:rgba(255,255,255,0.06);color:#585b74;}
+.ch-detail .ch-status{margin-top:16px;padding:10px 14px;border-radius:6px;font-size:12px;font-weight:600;}
+.ch-detail .ch-status.passed{background:rgba(166,227,161,0.12);color:#a6e3a1;border:1px solid rgba(166,227,161,0.2);}
+.ch-detail .ch-status.pending{background:rgba(249,226,175,0.12);color:#f9e2af;border:1px solid rgba(249,226,175,0.2);}
+
+/* Welcome screen */
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#585b74;text-align:center;padding:40px;}
+.welcome h2{font-size:18px;font-weight:700;color:#a6adc8;margin-bottom:8px;}
+.welcome p{font-size:13px;max-width:400px;line-height:1.6;}
+.welcome svg{margin-bottom:16px;opacity:.3;}
+
+@media(max-width:900px){
+  .main-area.sidebar-open,.main-area.sidebar-closed{grid-template-columns:48px 1fr;}
+  #sidebar-explorer,#sidebar-challenges{display:none!important;}
+  .titlebar-center{display:none;}
+  .titlebar-menus{display:none;}
+  .statusbar-item:nth-child(n+3){display:none;}
+}
+@media(max-width:600px){
+  .main-area.sidebar-open,.main-area.sidebar-closed{grid-template-columns:1fr;}
+  .activity-bar{display:none;}
+  .statusbar{font-size:10px;}
+  .statusbar-left,.statusbar-right{gap:6px;}
+  .editor-tabs{min-height:30px;}
+  .editor-tab{padding:0 10px;font-size:11px;}
+  .panel-area{height:150px!important;}
+  .titlebar{padding:0 8px;}
+  .titlebar-logo span{display:none;}
+  .btn-run-sm{padding:3px 8px;font-size:10px;}
+  .coins-pill{padding:2px 8px;font-size:9px;}
+}
+</style>
+</head>
+<body>
+
+<div class="vscode">
+  <!-- Titlebar -->
+  <div class="titlebar">
+    <div class="titlebar-left">
+      <a href="/learn/dashboard" class="titlebar-logo"><div class="mark">1%</div><span>Playground</span></a>
+      <div class="titlebar-menus"><span>File</span><span>Edit</span><span>View</span><span>Run</span></div>
+    </div>
+    <div class="titlebar-center"><span id="titlebar-file">welcome.md</span><span style="color:#45475a;">—</span><span>1% Playground</span></div>
+    <div class="titlebar-right">
+      <div class="coins-pill">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M8 10l4-4 4 4M8 14l4 4 4-4"/></svg>
+        <span id="coins-count">0</span>
+      </div>
+      <button class="btn-run-sm warn" onclick="submitChallenge()" id="submit-btn">▶ Run &amp; Submit</button>
+      <button class="btn-run-sm sec" onclick="window.location.href='/learn/dashboard'">Dashboard</button>
+    </div>
+  </div>
+
+  <!-- Main area -->
+  <div class="main-area sidebar-open" id="main-area">
+    <!-- Activity bar -->
+    <div class="activity-bar">
+      <div class="activity-icon active" id="act-explorer" title="Explorer" onclick="showSidebarTab('explorer')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+      <div class="activity-icon" id="act-challenges" title="Challenges" onclick="showSidebarTab('challenges')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg></div>
+      <div class="activity-icon" id="act-scm" title="Source Control"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="4"/><line x1="1.05" y1="12" x2="7" y2="12"/><path d="M17.01 4.94A9 9 0 0 1 22.95 12"/></svg></div>
+      <div style="flex:1;"></div>
+      <div class="activity-icon" id="act-settings" title="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></div>
+    </div>
+
+    <!-- Explorer sidebar (file tree) -->
+    <div class="sidebar" id="sidebar-explorer">
+      <div class="sidebar-header">Explorer <div class="actions"></div></div>
+      <div class="file-tree" id="file-tree"></div>
+    </div>
+
+    <!-- Challenges sidebar -->
+    <div class="challenge-sidebar" id="sidebar-challenges" style="display:none;">
+      <div class="sidebar-header">Challenges</div>
+      <div class="challenge-search" style="padding:8px 12px;border-bottom:1px solid #313244;">
+        <input type="text" id="challenge-search-input" placeholder="Search challenges..." oninput="onSearchInput(this.value)" style="width:100%;padding:6px 10px;background:#1e1e2e;border:1px solid #313244;border-radius:4px;color:#cdd6f4;font-size:12px;font-family:var(--mono);outline:none;">
+      </div>
+      <div id="daily-challenge-banner"></div>
+      <div class="challenge-filter" id="ch-filter-bar"></div>
+      <div class="challenge-list" id="challenge-list"></div>
+      <div id="load-more-container" style="padding:8px 12px;text-align:center;display:none;">
+        <button onclick="loadMoreChallenges()" style="width:100%;padding:6px;background:rgba(166,227,161,0.1);border:1px solid rgba(166,227,161,0.2);border-radius:4px;color:#a6e3a1;font-size:11px;font-weight:600;cursor:pointer;">Load More</button>
+      </div>
+      <div id="search-info" style="padding:4px 12px;font-size:10px;color:#585b74;"></div>
+    </div>
+
+    <!-- Editor + Panel -->
+    <div class="editor-area">
+      <div class="editor-tabs" id="editor-tabs"></div>
+      <div class="breadcrumb"><span>playground</span><span class="sep">/</span><span id="bc-file">welcome.md</span></div>
+      <div id="challenge-info" style="display:none;background:#181825;border-bottom:1px solid #313244;padding:12px 16px;flex-shrink:0;max-height:180px;overflow-y:auto;"></div>
+      <div class="editor-wrap">
+        <div class="line-numbers" id="line-numbers">1</div>
+        <div class="editor-container" id="editor-container">
+          <div class="syntax-layer" id="syntax-layer"></div>
+          <textarea class="code-editor" id="code-editor" spellcheck="false" placeholder="// Select a challenge from the sidebar..."></textarea>
+        </div>
+      </div>
+      <div class="panel-area" id="panel-area" style="height:200px;">
+        <div class="panel-tabs">
+          <div class="panel-tabs-left">
+            <div class="panel-tab active" data-panel="output" onclick="switchPanel('output')">Output</div>
+            <div class="panel-tab" data-panel="terminal" onclick="switchPanel('terminal')">Terminal</div>
+          </div>
+          <div class="panel-actions">
+            <button class="panel-action" onclick="clearOutput()" title="Clear"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
+            <button class="panel-action" onclick="togglePanel()" title="Toggle Panel"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 15-6-6-6 6"/></svg></button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="panel-content active" id="panel-output"><div class="terminal-output" id="output"><span class="muted">Welcome to 1% Playground</span>
+<span class="muted">Select a challenge from the sidebar to begin.</span>
+<span class="muted">Ctrl+Enter to run your code.</span></div></div>
+          <div class="panel-content" id="panel-terminal"><div class="terminal-output" id="terminal-output"></div><div class="terminal-input-row"><span class="terminal-prompt">$</span><input type="text" class="terminal-input" id="terminal-input" placeholder="Type a command..." spellcheck="false" autocomplete="off"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status bar -->
+  <div class="statusbar">
+    <div class="statusbar-left">
+      <span class="statusbar-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/></svg> Connected</span>
+      <span class="statusbar-item" id="status-lang">Markdown</span>
+    </div>
+    <div class="statusbar-right">
+      <span class="statusbar-item" id="status-progress">0/0 completed</span>
+      <span class="statusbar-item" id="status-pos">Ln 1, Col 1</span>
+      <span class="statusbar-item">UTF-8</span>
+      <span class="statusbar-item">Spaces: 2</span>
+      <span class="statusbar-item toggle-panel" onclick="togglePanel()">Panel</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   State
+   ============================================================ */
+const editor = document.getElementById('code-editor');
+const syntaxLayer = document.getElementById('syntax-layer');
+const lineNumbers = document.getElementById('line-numbers');
+const output = document.getElementById('output');
+
+let currentChallenge = null;
+let passedChallenges = new Set();
+let allChallenges = [];
+let coinsBalance = 0;
+let supabaseClient = null;
+let currentUser = null;
+
+let panelOpen = true;
+let activeSidebarTab = 'challenges';
+let activeFileKey = null;
+
+// Search state
+let searchQuery = '';
+let searchPage = 1;
+let searchTotal = 0;
+let searchPages = 0;
+let isLoadingMore = false;
+let dailyChallenge = null;
+let dailyCompleted = false;
+
+// Virtual FILES for lab-like file tree
+let FILES = {};
+let currentFileKey = 'welcome';
+let openTabs = ['welcome'];
+
+// Linux filesystem simulation for terminal
+const FS = {
+  '/': { type: 'dir', children: ['home','var','etc','usr','tmp','bin'] },
+  '/home': { type: 'dir', children: ['user'] },
+  '/home/user': { type: 'dir', children: ['documents','downloads','projects'] },
+  '/home/user/documents': { type: 'dir', children: ['readme.txt','notes.md'] },
+  '/home/user/documents/readme.txt': { type: 'file', content: 'This is a sample readme file.\nLine 2 of the readme.\nLine 3 - important info here.' },
+  '/home/user/documents/notes.md': { type: 'file', content: '# Notes\n\nThese are my study notes.\n\n## Chapter 1\nLearn about Linux commands.' },
+  '/home/user/downloads': { type: 'dir', children: ['image.png','archive.zip','setup.sh'] },
+  '/home/user/downloads/image.png': { type: 'file', content: '[binary data - PNG]' },
+  '/home/user/downloads/archive.zip': { type: 'file', content: '[binary data - ZIP]' },
+  '/home/user/downloads/setup.sh': { type: 'file', content: '#!/bin/bash\necho "Setup complete!"' },
+  '/home/user/projects': { type: 'dir', children: ['app','website'] },
+  '/home/user/projects/app': { type: 'dir', children: ['index.js','package.json'] },
+  '/home/user/projects/app/index.js': { type: 'file', content: 'const express = require("express");\nconst app = express();\napp.get("/", (req, res) => res.send("Hello!"));\napp.listen(3000);' },
+  '/home/user/projects/app/package.json': { type: 'file', content: '{\n  "name": "my-app",\n  "version": "1.0.0",\n  "main": "index.js"\n}' },
+  '/home/user/projects/website': { type: 'dir', children: ['index.html','style.css'] },
+  '/home/user/projects/website/index.html': { type: 'file', content: '<!DOCTYPE html>\n<html>\n<head><title>My Site</title></head>\n<body><h1>Hello World</h1></body>\n</html>' },
+  '/home/user/projects/website/style.css': { type: 'file', content: 'body { font-family: sans-serif; margin: 20px; }\nh1 { color: #333; }' },
+  '/var': { type: 'dir', children: ['log','tmp'] },
+  '/var/log': { type: 'dir', children: ['syslog','auth.log','nginx'] },
+  '/var/log/syslog': { type: 'file', content: 'Aug 29 10:00:01 server CRON[1234]: (root) CMD ...\nAug 29 10:05:22 server sshd[5678]: Accepted publickey' },
+  '/var/log/auth.log': { type: 'file', content: 'Aug 29 09:00:01 server sshd[1234]: Accepted password for user\nAug 29 09:01:15 server sudo: user : TTY=pts/0' },
+  '/var/log/nginx': { type: 'dir', children: ['access.log','error.log'] },
+  '/var/log/nginx/access.log': { type: 'file', content: '127.0.0.1 - - [29/Aug/2026:10:00:00 +0000] "GET / HTTP/1.1" 200 612' },
+  '/var/log/nginx/error.log': { type: 'file', content: '2026/08/29 10:00:00 [notice] 1234#0: signal process started' },
+  '/etc': { type: 'dir', children: ['hosts','passwd','nginx'] },
+  '/etc/hosts': { type: 'file', content: '127.0.0.1 localhost\n127.0.1.1 myserver\n::1 localhost' },
+  '/etc/passwd': { type: 'file', content: 'root:x:0:0:root:/root:/bin/bash\nuser:x:1000:1000:user:/home/user:/bin/bash' },
+  '/etc/nginx': { type: 'dir', children: ['nginx.conf'] },
+  '/etc/nginx/nginx.conf': { type: 'file', content: 'worker_processes auto;\nevents { worker_connections 1024; }\nhttp {\n  server {\n    listen 80;\n    location / { proxy_pass http://127.0.0.1:3000; }\n  }\n}' },
+  '/usr': { type: 'dir', children: ['bin','lib'] },
+  '/usr/bin': { type: 'dir', children: ['node','python3','git','vim'] },
+  '/usr/lib': { type: 'dir', children: [] },
+  '/tmp': { type: 'dir', children: ['scratch.txt'] },
+  '/tmp/scratch.txt': { type: 'file', content: 'Temporary file for testing.' },
+  '/bin': { type: 'dir', children: ['bash','ls','cat','grep','find'] },
+};
+let cwd = '/home/user';
+let terminalHistory = [];
+let historyIndex = -1;
+
+let gitState = { initialized: false, branch: 'main', commits: [], staged: [], modified: [], remotes: {} };
+
+/* ============================================================
+   Init
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', init);
+
+async function init() {
+  // Auth
+  try {
+    const res = await fetch('/api/config');
+    const config = await res.json();
+    if (config.supabaseUrl && config.supabaseAnonKey && typeof supabase !== 'undefined') {
+      supabaseClient = supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session?.user) {
+        currentUser = session.user;
+        await loadCoins();
+      }
+    }
+  } catch {}
+
+  // Terminal input
+  document.getElementById('terminal-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const cmd = e.target.value.trim();
+      if (cmd) { terminalHistory.unshift(cmd); historyIndex = -1; executeCommand(cmd); }
+      e.target.value = '';
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (historyIndex < terminalHistory.length - 1) { historyIndex++; e.target.value = terminalHistory[historyIndex]; }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (historyIndex > 0) { historyIndex--; e.target.value = terminalHistory[historyIndex]; }
+      else { historyIndex = -1; e.target.value = ''; }
+    }
+  });
+
+  // Editor events
+  editor.addEventListener('input', () => { updateAll(); });
+  editor.addEventListener('keyup', () => { updateCursorPos(); });
+  editor.addEventListener('click', () => { updateCursorPos(); });
+  editor.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const s = editor.selectionStart, end = editor.selectionEnd;
+      editor.value = editor.value.substring(0, s) + '  ' + editor.value.substring(end);
+      editor.selectionStart = editor.selectionEnd = s + 2;
+      updateAll();
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); submitChallenge(); }
+  });
+
+  // Load daily challenge
+  await loadDailyChallenge();
+
+  // Load challenges via search
+  const params = new URLSearchParams(window.location.search);
+  const challengeId = params.get('id');
+  const courseSlug = params.get('course');
+
+  if (challengeId) {
+    await loadChallengeById(challengeId);
+  } else if (courseSlug) {
+    await loadChallengesForCourse(courseSlug);
+  } else {
+    await searchChallenges(true);
+  }
+
+  renderFileTree();
+  renderTabs();
+}
+
+/* ============================================================
+   Load Challenges (Search-based)
+   ============================================================ */
+async function loadDailyChallenge() {
+  try {
+    const res = await fetch('/api/coins/challenges/daily');
+    const json = await res.json();
+    if (json.success && json.daily) {
+      dailyChallenge = json.daily;
+      dailyCompleted = json.completed;
+      renderDailyBanner();
+    }
+  } catch {}
+}
+
+async function searchChallenges(reset = false) {
+  if (reset) {
+    searchPage = 1;
+    allChallenges = [];
+  }
+  
+  if (isLoadingMore) return;
+  isLoadingMore = true;
+
+  try {
+    const params = new URLSearchParams({ page: searchPage, limit: 20 });
+    if (searchQuery) params.set('q', searchQuery);
+    
+    const res = await fetch(`/api/coins/challenges/search?${params}`);
+    const json = await res.json();
+    
+    if (json.success) {
+      if (reset) {
+        allChallenges = json.challenges || [];
+      } else {
+        // Append new challenges, avoiding duplicates
+        const existingIds = new Set(allChallenges.map(c => c.id));
+        (json.challenges || []).forEach(c => {
+          if (!existingIds.has(c.id)) allChallenges.push(c);
+        });
+      }
+      searchTotal = json.total || 0;
+      searchPages = json.pages || 0;
+      
+      // Load passed challenges for display
+      if (currentUser && reset) {
+        try {
+          const passedRes = await fetch('/api/coins/challenges/all');
+          const passedJson = await passedRes.json();
+          if (passedJson.success) {
+            passedChallenges = new Set(passedJson.passed || []);
+          }
+        } catch {}
+      }
+      
+      buildFilesFromChallenges();
+      renderChallengeList();
+      renderFileTree();
+    }
+  } catch (e) {
+    console.warn('[PLAYGROUND] Search failed:', e.message);
+  }
+  
+  isLoadingMore = false;
+}
+
+let searchTimeout = null;
+function onSearchInput(query) {
+  searchQuery = query;
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => searchChallenges(true), 300);
+}
+
+function loadMoreChallenges() {
+  if (searchPage < searchPages) {
+    searchPage++;
+    searchChallenges(false);
+  }
+}
+
+async function loadChallengesForCourse(slug) {
+  try {
+    const cRes = await fetch(`/api/courses/${slug}`);
+    const cJson = await cRes.json();
+    if (!cJson.success || !cJson.course) return;
+    const course = cJson.course;
+    const res = await fetch(`/api/coins/challenges/search?course_id=${course.id}`);
+    const json = await res.json();
+    if (json.success) {
+      allChallenges = (json.challenges || []).map(c => ({ ...c, course_title: course.title, course_slug: course.slug }));
+      buildFilesFromChallenges();
+      renderChallengeList();
+      renderFileTree();
+      if (allChallenges.length) selectChallenge(allChallenges[0]);
+    }
+  } catch {}
+}
+
+async function loadChallengeById(id) {
+  // Try search for this specific challenge
+  try {
+    const res = await fetch(`/api/coins/challenges/search?q=&limit=100`);
+    const json = await res.json();
+    if (json.success) {
+      allChallenges = json.challenges || [];
+    }
+  } catch {}
+  
+  // Also try loading passed challenges
+  if (currentUser) {
+    try {
+      const passedRes = await fetch('/api/coins/challenges/all');
+      const passedJson = await passedRes.json();
+      if (passedJson.success) passedChallenges = new Set(passedJson.passed || []);
+    } catch {}
+  }
+  
+  const ch = allChallenges.find(c => c.id === id);
+  if (ch) {
+    buildFilesFromChallenges();
+    renderChallengeList();
+    renderFileTree();
+    selectChallenge(ch);
+  }
+}
+
+/* ============================================================
+   Build FILES from challenges (each = {name}.md)
+   ============================================================ */
+function challengeToFileName(ch) {
+  // Clean up the title to make it readable
+  let name = (ch.title || 'challenge')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '') // Remove special chars
+    .replace(/\s+/g, '-') // spaces to hyphens
+    .replace(/-+/g, '-') // multiple hyphens to one
+    .replace(/^-|-$/g, ''); // trim leading/trailing
+  
+  // Add extension based on challenge type
+  const type = ch.challenge_type || 'javascript';
+  const ext = { javascript: 'js', python: 'py', html: 'html', css: 'css', sql: 'sql', git: 'sh', linux: 'sh', docker: 'Dockerfile', nginx: 'conf', yaml: 'yml', markdown: 'md' };
+  return name + '.' + (ext[type] || 'js');
+}
+
+function buildFilesFromChallenges() {
+  FILES = {
+    welcome: { name: 'welcome.md', ext: 'md', lang: 'markdown', code: '# Welcome to 1% Playground\n\nSelect a challenge from the **Challenges** sidebar (checkmark icon) to get started.\n\n## How it works\n\n1. Pick a challenge from the sidebar\n2. Read the challenge description\n3. Write your solution in the editor\n4. Press **Ctrl+Enter** or click **Run & Submit**\n\nHappy coding! 🚀', type: 'welcome' }
+  };
+  allChallenges.forEach(ch => {
+    const fname = challengeToFileName(ch);
+    const key = fname.replace(/[^a-zA-Z0-9]/g, '_');
+    const type = ch.challenge_type || 'javascript';
+    const solExt = { javascript: 'js', python: 'py', html: 'html', css: 'css', sql: 'sql', git: 'sh', linux: 'sh', docker: 'Dockerfile', nginx: 'conf', yaml: 'yml', markdown: 'md' };
+    const solLang = { javascript: 'javascript', python: 'python', html: 'html', css: 'css', sql: 'sql', git: 'bash', linux: 'bash', docker: 'docker', nginx: 'nginx', yaml: 'yaml', markdown: 'markdown' };
+    // Keep this in sync with selectChallenge()'s file shape — the challenge
+    // description already lives in the #challenge-info panel, so the file
+    // content itself should only ever be the editable starter/solution code.
+    // Storing the full description markdown here caused it to render a
+    // second time (with its own scrollbar) underneath the info panel.
+    FILES[key] = {
+      name: fname,
+      ext: solExt[type] || 'js',
+      lang: solLang[type] || 'javascript',
+      code: ch.starter_code || getDefaultStarter(type),
+      type: 'challenge',
+      challengeId: ch.id,
+      challenge: ch
+    };
+  });
+}
+
+function buildChallengeMarkdown(ch) {
+  const isPassed = passedChallenges.has(ch.id);
+  const steps = getChallengeSteps(ch);
+  const type = ch.challenge_type || 'javascript';
+  const langMap = { linux: 'Shell', git: 'Git', sql: 'SQL', yaml: 'YAML', docker: 'Dockerfile', nginx: 'Nginx', markdown: 'Markdown', python: 'Python', html: 'HTML/CSS', javascript: 'JavaScript' };
+
+  let md = `# ${ch.title}\n\n`;
+  md += `**Difficulty:** ${ch.difficulty}  \n`;
+  md += `**Language:** ${langMap[type] || type}  \n`;
+  md += `**Reward:** ${ch.coins_reward} coins  \n`;
+  if (ch.course_title) md += `**Course:** ${ch.course_title}  \n`;
+  md += `\n---\n\n`;
+  md += `## Description\n\n${ch.description || 'No description provided.'}\n\n`;
+
+  if (type === 'linux' || type === 'git') {
+    md += `## Instructions\n\nUse the **Terminal** tab in the bottom panel to run ${type === 'git' ? 'Git' : 'Linux'} commands.\nType your commands in the terminal prompt ($). Press Enter to execute.\n\n`;
+  }
+
+  md += `## Steps\n\n`;
+  steps.forEach((s, i) => { md += `${i + 1}. ${s}\n`; });
+  md += `\n`;
+
+  if (ch.expected_output) {
+    md += `## Expected Output\n\n\`\`\`\n${ch.expected_output}\n\`\`\`\n\n`;
+  }
+
+  if (isPassed) {
+    md += `---\n\n> ✅ **Challenge Completed**\n`;
+  }
+
+  return md;
+}
+
+function getChallengeSteps(ch) {
+  const type = ch.challenge_type || 'javascript';
+  if (type === 'linux' || type === 'git') {
+    return [
+      'Open the Terminal tab (bottom panel)',
+      `Type the ${type === 'git' ? 'Git' : 'Linux'} command(s) needed`,
+      'Press Enter to execute',
+      'Verify the output matches the expected result',
+      'Click "Run & Submit" to check your answer'
+    ];
+  }
+  return [
+    'Read the challenge description carefully',
+    'Write your code solution in the editor',
+    'Test your code using Run & Submit',
+    'Submit when ready to earn coins'
+  ];
+}
+
+/* ============================================================
+   File Tree (Explorer sidebar)
+   ============================================================ */
+function renderFileTree() {
+  const tree = document.getElementById('file-tree');
+  if (!tree) return;
+
+  // Group challenges by course
+  const groups = {};
+  allChallenges.forEach(ch => {
+    const course = ch.course_title || 'Uncategorized';
+    if (!groups[course]) groups[course] = [];
+    groups[course].push(ch);
+  });
+
+  let html = `<div class="file-item folder-item"><svg class="file-icon folder" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z"/></svg><span class="file-name">playground</span></div><div class="file-children">`;
+
+  // Welcome file
+  html += `<div class="file-item${currentFileKey === 'welcome' ? ' active' : ''}" data-file="welcome" onclick="switchFile('welcome')"><svg class="file-icon md" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span class="file-name">welcome.md</span></div>`;
+
+  for (const [course, chs] of Object.entries(groups)) {
+    html += `<div class="file-item folder-item"><svg class="file-icon folder" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z"/></svg><span class="file-name">${esc(course)}</span></div><div class="file-children">`;
+    chs.forEach(ch => {
+      const fname = challengeToFileName(ch);
+      const key = fname.replace(/[^a-zA-Z0-9]/g, '_');
+      const isActive = currentFileKey === key;
+      const isPassed = passedChallenges.has(ch.id);
+      const type = ch.challenge_type || 'javascript';
+      const iconClass = { javascript: 'js', python: 'py', html: 'html', css: 'css', sql: 'md', git: 'md', linux: 'md', docker: 'md', nginx: 'md', yaml: 'md', markdown: 'md' };
+      html += `<div class="file-item${isActive ? ' active' : ''}" data-file="${key}" onclick="switchFile('${key}')"><svg class="file-icon ${iconClass[type] || 'js'}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span class="file-name">${esc(fname)}</span>${isPassed ? ' <span style="color:#a6e3a1;font-size:10px;">✓</span>' : ''}</div>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `</div>`;
+  tree.innerHTML = html;
+}
+
+/* ============================================================
+   Challenge List (Challenges sidebar)
+   ============================================================ */
+function renderDailyBanner() {
+  const banner = document.getElementById('daily-challenge-banner');
+  if (!banner || !dailyChallenge) return;
+  
+  const ch = dailyChallenge;
+  const fname = challengeToFileName(ch);
+  const key = fname.replace(/[^a-zA-Z0-9]/g, '_');
+  
+  banner.innerHTML = `
+    <div style="padding:10px 12px;background:linear-gradient(135deg,rgba(249,226,175,0.1),rgba(250,183,135,0.08));border-bottom:1px solid rgba(249,226,175,0.15);cursor:pointer;" onclick="selectChallenge(allChallenges.find(c=>c.id==='${ch.id}')||{id:'${ch.id}',title:'${esc(ch.title)}',description:'${esc(ch.description)}',difficulty:'${ch.difficulty}',coins_reward:${ch.coins_reward},challenge_type:'${ch.challenge_type||'javascript'}',expected_output:'${esc(ch.expected_output||'')}',course_title:'${esc(ch.course_title||'')}'})">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+        <span style="font-size:14px;">🔥</span>
+        <span style="font-size:11px;font-weight:700;color:#f9e2af;text-transform:uppercase;letter-spacing:.5px;">Daily Challenge</span>
+        ${dailyCompleted ? '<span style="font-size:10px;color:#a6e3a1;margin-left:auto;">✓ Done</span>' : ''}
+      </div>
+      <div style="font-size:12px;font-weight:600;color:#cdd6f4;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(ch.title)}</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:9px;padding:2px 6px;border-radius:100px;background:rgba(249,226,175,0.15);color:#f9e2af;">${ch.difficulty}</span>
+        <span style="font-size:10px;font-weight:700;color:#f9e2af;font-family:var(--mono);">+${ch.total_reward || ch.coins_reward} coins</span>
+        <span style="font-size:9px;color:#585b74;margin-left:auto;">${ch.bonus_coins ? '+'+ch.bonus_coins+' bonus' : ''}</span>
+      </div>
+    </div>`;
+}
+
+function renderChallengeList() {
+  const list = document.getElementById('challenge-list');
+  const filterBar = document.getElementById('ch-filter-bar');
+  const loadMore = document.getElementById('load-more-container');
+  const searchInfo = document.getElementById('search-info');
+  if (!list) return;
+
+  const difficulties = [...new Set(allChallenges.map(c => c.difficulty))];
+  filterBar.innerHTML = `<span class="ch-filter active" data-val="all">All</span>` + difficulties.map(d => `<span class="ch-filter" data-val="${d}">${d}</span>`).join('');
+
+  filterBar.querySelectorAll('.ch-filter').forEach(chip => {
+    chip.addEventListener('click', () => {
+      filterBar.querySelectorAll('.ch-filter').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      const val = chip.dataset.val;
+      list.querySelectorAll('.ch-list-item').forEach(item => {
+        item.style.display = (val === 'all' || item.dataset.diff === val) ? '' : 'none';
+      });
+    });
+  });
+
+  list.innerHTML = allChallenges.map((ch, i) => {
+    const isPassed = passedChallenges.has(ch.id);
+    const isActive = currentChallenge && currentChallenge.id === ch.id;
+    return `<div class="ch-list-item${isActive ? ' active' : ''}" data-id="${ch.id}" data-diff="${ch.difficulty}" onclick="selectChallengeById('${ch.id}')">
+      <svg class="ch-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span class="ch-name">${esc(ch.title)}</span>
+      <span class="ch-badge ${ch.difficulty}">${ch.difficulty}</span>
+      <span class="ch-coins">+${ch.coins_reward}</span>
+      ${isPassed ? '<span class="ch-check">✓</span>' : ''}
+    </div>`;
+  }).join('');
+
+  // Show load more button
+  if (loadMore) {
+    loadMore.style.display = searchPage < searchPages ? '' : 'none';
+  }
+  
+  // Show search info
+  if (searchInfo) {
+    if (searchQuery) {
+      searchInfo.textContent = `${searchTotal} results for "${searchQuery}"`;
+    } else {
+      searchInfo.textContent = `${allChallenges.length} of ${searchTotal} challenges`;
+    }
+  }
+
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = allChallenges.length;
+  const passed = passedChallenges.size;
+  document.getElementById('status-progress').textContent = `${passed}/${total} completed`;
+}
+
+/* ============================================================
+   Select Challenge
+   ============================================================ */
+function selectChallengeById(id) {
+  const ch = allChallenges.find(c => String(c.id) === String(id));
+  if (ch) {
+    selectChallenge(ch);
+  } else {
+    console.warn('[PLAYGROUND] Challenge not found for id:', id, 'available:', allChallenges.map(c => c.id));
+  }
+}
+
+function selectChallenge(ch) {
+  currentChallenge = ch;
+  const fname = challengeToFileName(ch);
+  const key = fname.replace(/[^a-zA-Z0-9]/g, '_');
+
+  // Update challenge list active
+  document.querySelectorAll('.ch-list-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.id === ch.id);
+  });
+
+  // Show challenge info in panel
+  renderChallengeInfoPanel(ch);
+
+  // Build solution file (editable only)
+  const type = ch.challenge_type || 'javascript';
+  const solExt = { javascript: 'js', python: 'py', html: 'html', css: 'css', sql: 'sql', git: 'sh', linux: 'sh', docker: 'Dockerfile', nginx: 'conf', yaml: 'yml', markdown: 'md' };
+  const solLang = { javascript: 'javascript', python: 'python', html: 'html', css: 'css', sql: 'sql', git: 'bash', linux: 'bash', docker: 'docker', nginx: 'nginx', yaml: 'yaml', markdown: 'markdown' };
+  const ext = solExt[type] || 'js';
+  const starter = ch.starter_code || getDefaultStarter(type);
+
+  FILES[key] = {
+    name: fname,
+    ext: ext,
+    lang: solLang[type] || 'javascript',
+    code: starter,
+    type: 'challenge',
+    challengeId: ch.id,
+    challenge: ch
+  };
+
+  // Single tab with solution code only
+  openTabs = [key];
+  currentFileKey = key;
+  editor.value = starter;
+  editor.readOnly = false;
+  editor.style.color = '#cdd6f4';
+  renderTabs();
+  renderFileTree();
+  updateAll();
+  document.getElementById('bc-file').textContent = fname;
+  document.getElementById('titlebar-file').textContent = fname;
+  document.getElementById('status-lang').textContent = solLang[type] || 'JavaScript';
+  
+  // Switch to terminal for linux/git challenges
+  if (type === 'linux' || type === 'git') {
+    switchPanel('terminal');
+  } else {
+    switchPanel('output');
+  }
+}
+
+function renderChallengeInfoPanel(ch) {
+  const infoPanel = document.getElementById('challenge-info');
+  if (!infoPanel || !ch) return;
+  const isPassed = passedChallenges.has(ch.id);
+  const type = ch.challenge_type || 'javascript';
+  const langMap = { linux: 'Shell', git: 'Git', sql: 'SQL', yaml: 'YAML', docker: 'Dockerfile', nginx: 'Nginx', markdown: 'Markdown', python: 'Python', html: 'HTML/CSS', javascript: 'JavaScript' };
+  infoPanel.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+      <span style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:100px;text-transform:uppercase;background:rgba(166,227,161,0.15);color:#a6e3a1;">${ch.difficulty}</span>
+      <span style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:100px;background:rgba(137,180,250,0.15);color:#89b4fa;">${langMap[type] || type}</span>
+      <span style="font-size:10px;font-weight:700;color:#f9e2af;">+${ch.coins_reward} coins</span>
+      ${isPassed ? '<span style="font-size:10px;color:#a6e3a1;">✓ Completed</span>' : ''}
+      ${ch.course_title ? '<span style="font-size:9px;color:#585b74;">' + esc(ch.course_title) + '</span>' : ''}
+    </div>
+    <div style="font-size:14px;font-weight:700;color:#cdd6f4;margin-bottom:6px;">${esc(ch.title)}</div>
+    <div style="font-size:12px;color:#a6adc8;line-height:1.6;">${esc(ch.description || 'No description')}</div>
+    ${ch.expected_output ? '<div style="margin-top:8px;font-size:11px;color:#585b74;">Expected: <code style="background:#313244;padding:2px 6px;border-radius:3px;color:#a6e3a1;">' + esc(ch.expected_output) + '</code></div>' : ''}
+  `;
+  infoPanel.style.display = '';
+}
+
+function getDefaultStarter(type) {
+  const starters = {
+    javascript: '// Write your JavaScript solution here\n\nfunction solution() {\n  // Your code here\n}\n',
+    python: '# Write your Python solution here\n\ndef solution():\n    pass\n',
+    html: '<!DOCTYPE html>\n<html>\n<head><title>Solution</title></head>\n<body>\n  <!-- Your HTML here -->\n</body>\n</html>',
+    css: '/* Your CSS here */\nbody {\n  margin: 0;\n  padding: 20px;\n}\n',
+    sql: '-- Write your SQL query here\nSELECT * FROM table_name;\n',
+    git: '#!/bin/bash\n# Write your git commands here\ngit init\n',
+    linux: '#!/bin/bash\n# Write your Linux commands here\n',
+    docker: 'FROM node:18-alpine\nWORKDIR /app\nCOPY . .\nCMD ["node", "index.js"]\n',
+    nginx: 'server {\n    listen 80;\n    server_name localhost;\n    location / {\n        proxy_pass http://127.0.0.1:3000;\n    }\n}\n',
+    yaml: '# Write your YAML here\nservices:\n  app:\n    build: .\n    ports:\n      - "3000:3000"\n',
+    markdown: '# Solution\n\nWrite your markdown here.\n'
+  };
+  return starters[type] || starters.javascript;
+}
+
+function switchFile(key) {
+  if (currentFileKey && FILES[currentFileKey]) {
+    FILES[currentFileKey].code = editor.value;
+  }
+  currentFileKey = key;
+  const file = FILES[key];
+  if (!file) return;
+
+  editor.value = file.code;
+
+  // Update syntax/lang
+  const langMap = { markdown: 'Markdown', javascript: 'JavaScript', python: 'Python', html: 'HTML/CSS' };
+  document.getElementById('status-lang').textContent = langMap[file.lang] || file.lang || 'Markdown';
+  document.getElementById('titlebar-file').textContent = file.name;
+  document.getElementById('bc-file').textContent = file.name;
+
+  // Challenge files are editable (solution code)
+  editor.readOnly = false;
+  editor.style.color = '#cdd6f4';
+
+  // Show/hide challenge info panel
+  const infoPanel = document.getElementById('challenge-info');
+  if (file.type === 'challenge' && file.challenge) {
+    // Challenge info is already set by selectChallenge
+    if (infoPanel) infoPanel.style.display = '';
+    const type = file.challenge.challenge_type || 'javascript';
+    if (type === 'linux' || type === 'git') {
+      switchPanel('terminal');
+    } else {
+      switchPanel('output');
+    }
+  } else {
+    if (infoPanel) infoPanel.style.display = 'none';
+  }
+
+  if (!openTabs.includes(key)) openTabs.push(key);
+  renderTabs();
+  renderFileTree();
+  updateAll();
+}
+
+/* ============================================================
+   Tabs
+   ============================================================ */
+function renderTabs() {
+  document.getElementById('editor-tabs').innerHTML = openTabs.map(key => {
+    const f = FILES[key];
+    if (!f) return '';
+    const icon = f.type === 'challenge' ? '📝' : '📄';
+    return `<div class="editor-tab${key === currentFileKey ? ' active' : ''}" data-file="${key}" onclick="switchFile('${key}')"><span>${icon} ${esc(f.name)}</span><span class="close" onclick="event.stopPropagation();closeTab('${key}')">&times;</span></div>`;
+  }).join('');
+}
+
+function closeTab(key) {
+  openTabs = openTabs.filter(k => k !== key);
+  if (!openTabs.length) openTabs = ['welcome'];
+  if (currentFileKey === key) {
+    currentFileKey = openTabs[openTabs.length - 1];
+    editor.value = FILES[currentFileKey]?.code || '';
+  }
+  renderTabs();
+  renderFileTree();
+  updateAll();
+}
+
+/* ============================================================
+   Sidebar Tabs
+   ============================================================ */
+function showSidebarTab(tab) {
+  activeSidebarTab = tab;
+  const explorer = document.getElementById('sidebar-explorer');
+  const challenges = document.getElementById('sidebar-challenges');
+  document.querySelectorAll('.activity-icon').forEach(i => i.classList.remove('active'));
+
+  if (tab === 'explorer') {
+    explorer.style.display = '';
+    challenges.style.display = 'none';
+    document.getElementById('act-explorer').classList.add('active');
+  } else if (tab === 'challenges') {
+    explorer.style.display = 'none';
+    challenges.style.display = '';
+    document.getElementById('act-challenges').classList.add('active');
+  }
+}
+
+/* ============================================================
+   Panel
+   ============================================================ */
+function togglePanel() {
+  panelOpen = !panelOpen;
+  document.getElementById('panel-area').style.height = panelOpen ? '200px' : '0px';
+  document.getElementById('panel-area').style.borderTop = panelOpen ? '1px solid #313244' : 'none';
+}
+
+function switchPanel(name) {
+  document.querySelectorAll('.panel-tab').forEach(t => t.classList.toggle('active', t.dataset.panel === name));
+  document.querySelectorAll('.panel-content').forEach(p => p.classList.toggle('active', p.id === `panel-${name}`));
+}
+
+function clearOutput() {
+  output.innerHTML = '<span class="muted">Cleared.</span>';
+}
+
+/* ============================================================
+   Update helpers
+   ============================================================ */
+function updateLineNumbers() {
+  const lines = editor.value.split('\n').length;
+  lineNumbers.innerHTML = Array.from({ length: lines }, (_, i) => i + 1).join('<br>');
+}
+
+function updateCursorPos() {
+  const pos = editor.selectionStart;
+  const text = editor.value.substring(0, pos);
+  const line = text.split('\n').length;
+  const col = pos - text.lastIndexOf('\n');
+  document.getElementById('status-pos').textContent = `Ln ${line}, Col ${col}`;
+}
+
+function updateSyntax() {
+  const file = FILES[currentFileKey];
+  const lang = file?.lang || 'markdown';
+  syntaxLayer.innerHTML = highlightMarkdown(editor.value);
+}
+
+function highlightMarkdown(code) {
+  let h = escHtml(code);
+  // Headers
+  h = h.replace(/^(#{1,6}\s.+)$/gm, '<span class="syn-kw">$1</span>');
+  // Bold
+  h = h.replace(/\*\*(.+?)\*\*/g, '<span class="syn-str">**$1**</span>');
+  // Italic
+  h = h.replace(/\*(.+?)\*/g, '<span class="syn-fn">*$1*</span>');
+  // Code blocks
+  h = h.replace(/(```[\s\S]*?```)/g, '<span class="syn-cmt">$1</span>');
+  // Inline code
+  h = h.replace(/(`[^`]+`)/g, '<span class="syn-num">$1</span>');
+  // Links
+  h = h.replace(/(\[.+?\]\(.+?\))/g, '<span class="syn-tag">$1</span>');
+  // Lists
+  h = h.replace(/^(\s*[-*+]\s)/gm, '<span class="syn-op">$1</span>');
+  h = h.replace(/^(\s*\d+\.\s)/gm, '<span class="syn-op">$1</span>');
+  // Blockquote
+  h = h.replace(/^(&gt;\s)/gm, '<span class="syn-tag">$1</span>');
+  return h;
+}
+
+function updateAll() {
+  updateLineNumbers();
+  updateSyntax();
+  updateCursorPos();
+}
+
+/* ============================================================
+   Submit Challenge
+   ============================================================ */
+async function submitChallenge() {
+  if (!currentChallenge) { Toast.warning('Select a challenge first'); return; }
+  if (!currentUser) { Toast.error('Please log in to submit challenges'); return; }
+
+  const type = currentChallenge.challenge_type || 'javascript';
+  const submitBtn = document.getElementById('submit-btn');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Checking...';
+
+  let code = '';
+  if (type === 'linux' || type === 'git') {
+    code = document.getElementById('terminal-output').innerText;
+  } else {
+    // Get code from the current editor
+    code = editor.value;
+  }
+
+  try {
+    const isDaily = dailyChallenge && currentChallenge.id === dailyChallenge.id;
+    const res = await fetch(`/api/coins/challenges/${currentChallenge.id}/submit`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${(await supabaseClient.auth.getSession()).data.session?.access_token}`
+      },
+      body: JSON.stringify({ code, is_daily: isDaily })
+    });
+    const json = await res.json();
+
+    if (json.passed) {
+      const isDaily = dailyChallenge && currentChallenge.id === dailyChallenge.id;
+      if (isDaily) dailyCompleted = true;
+      Toast.success(`Challenge passed! +${json.coins} coins earned! (Total: ${json.total})`);
+      passedChallenges.add(currentChallenge.id);
+      coinsBalance = json.total || coinsBalance;
+      renderCoins();
+      output.innerHTML = `<span class="success">✅ Challenge passed!</span>\n<span class="output">+${json.coins} coins earned${isDaily ? ' (includes daily bonus!)' : ''}</span>\n<span class="output">Total: ${coinsBalance} coins</span>`;
+      // Refresh the "✓ Completed" badge in the info panel — keep the user's
+      // own code in the editor as-is, don't replace it with the description doc.
+      renderChallengeInfoPanel(currentChallenge);
+      renderFileTree();
+      renderChallengeList();
+      updateProgress();
+    } else {
+      Toast.error('Challenge not passed. Check your solution and try again.');
+      output.innerHTML = `<span class="error">❌ Challenge not passed</span>\n<span class="output">Check your solution and try again.</span>`;
+    }
+  } catch (e) {
+    Toast.error('Failed to submit: ' + e.message);
+  }
+
+  submitBtn.disabled = false;
+  submitBtn.textContent = '▶ Run & Submit';
+}
+
+/* ============================================================
+   Coins
+   ============================================================ */
+async function loadCoins() {
+  try {
+    const token = (await supabaseClient.auth.getSession()).data.session?.access_token;
+    if (!token) return;
+    const res = await fetch('/api/coins/balance', { headers: { Authorization: `Bearer ${token}` } });
+    const json = await res.json();
+    if (json.success) { coinsBalance = json.coins || 0; renderCoins(); }
+  } catch {}
+}
+
+function renderCoins() {
+  document.getElementById('coins-count').textContent = coinsBalance;
+}
+
+/* ============================================================
+   Terminal Simulator
+   ============================================================ */
+function executeCommand(cmd) {
+  const termEl = document.getElementById('terminal-output');
+  const prompt = `<span class="cmd">${esc(cwd)}$ ${esc(cmd)}</span>\n`;
+  const result = processCommand(cmd);
+  termEl.innerHTML += prompt + result + '\n';
+  termEl.scrollTop = termEl.scrollHeight;
+}
+
+function processCommand(cmd) {
+  const parts = cmd.split(/\s+/);
+  const bin = parts[0];
+  const args = parts.slice(1);
+  // Handle env vars (KEY=VALUE)
+  if (bin && bin.includes('=') && !bin.startsWith('-')) return '';
+
+  switch (bin) {
+    // ── Navigation ──
+    case 'ls': return cmdLs(args);
+    case 'cd': return cmdCd(args);
+    case 'pwd': return `<span class="output">${cwd}</span>`;
+    case 'tree': return cmdTree(args);
+    case 'realpath': return `<span class="output">${resolvePath(args[0] || '.')}</span>`;
+
+    // ── Files ──
+    case 'cat': return cmdCat(args);
+    case 'head': return cmdHead(args);
+    case 'tail': return cmdTail(args);
+    case 'less': case 'more': return cmdCat(args);
+    case 'touch': return cmdTouch(args);
+    case 'mkdir': return cmdMkdir(args);
+    case 'rm': return cmdRm(args);
+    case 'rmdir': return cmdRmdir(args);
+    case 'cp': return `<span class="success">Copied.</span>`;
+    case 'mv': return `<span class="success">Moved.</span>`;
+    case 'ln': return `<span class="success">Link created.</span>`;
+    case 'chmod': return `<span class="success">Permissions changed.</span>`;
+    case 'chown': return `<span class="success">Ownership changed.</span>`;
+    case 'chgrp': return `<span class="success">Group changed.</span>`;
+    case 'file': return cmdFile(args);
+    case 'stat': return cmdStat(args);
+    case 'lsattr': return `<span class="output">-------------e- ${esc(args[0] || '.')}</span>`;
+    case 'readlink': return `<span class="output">${esc(args[0] || '.')}</span>`;
+    case 'basename': return `<span class="output">${esc((args[0] || '/file.txt').split('/').pop())}</span>`;
+    case 'dirname': return `<span class="output">${esc((args[0] || '/file.txt').split('/').slice(0, -1).join('/') || '/')}</span>`;
+
+    // ── Text Processing ──
+    case 'echo': return `<span class="output">${esc(args.join(' '))}</span>`;
+    case 'printf': return `<span class="output">${esc(args.slice(1).join(' '))}</span>`;
+    case 'grep': return cmdGrep(args);
+    case 'egrep': case 'fgrep': return cmdGrep(args);
+    case 'sed': return `<span class="output">${esc(args.slice(2).join(' '))}</span>`;
+    case 'awk': return `<span class="output">${esc(args.slice(2).join(' '))}</span>`;
+    case 'tr': return `<span class="output">${esc(args.slice(2).join(' '))}</span>`;
+    case 'cut': return `<span class="output">${esc(args.slice(2).join(' '))}</span>`;
+    case 'paste': return `<span class="output">${esc(args.join(' '))}</span>`;
+    case 'column': return `<span class="output">${esc(args.join(' '))}</span>`;
+    case 'fmt': return `<span class="output">${esc(args.join(' '))}</span>`;
+    case 'fold': return `<span class="output">${esc(args.join(' '))}</span>`;
+    case 'sort': return cmdSort(args);
+    case 'uniq': return cmdUniq(args);
+    case 'wc': return cmdWc(args);
+    case 'diff': return `<span class="output">--- a/file1\n+++ b/file2\n@@ -1 +1 @@\n-old line\n+new line</span>`;
+    case 'comm': return `<span class="output">${esc(args.join(' '))}</span>`;
+    case 'tee': return `<span class="success">Output written.</span>`;
+    case 'xargs': return `<span class="output">${esc(args.join(' '))}</span>`;
+    case 'strings': return `<span class="output">${esc(args[0] || 'binary')}</span>`;
+    case 'xxd': return `<span class="output">00000000: 4865 6c6c 6f20 576f 726c 640a</span>`;
+    case 'od': return `<span class="output">0000000   H   e   l   l   o       W   o   r   l   d  \n</span>`;
+    case 'nl': return cmdCat(args);
+    case 'tac': { const r = cmdCat(args); return r; }
+    case 'rev': return `<span class="output">${esc(args.join(' ').split('').reverse().join(''))}</span>`;
+
+    // ── Search ──
+    case 'find': return cmdFind(args);
+    case 'locate': return `<span class="output">${esc(args[0] || '/usr/bin/' + (args[0] || 'ls'))}</span>`;
+    case 'which': return `<span class="output">/usr/bin/${args[0] || 'which'}</span>`;
+    case 'whereis': return `<span class="output">${esc(args[0] || 'ls')}: /usr/bin/${esc(args[0] || 'ls')} /usr/share/man/man1/${esc(args[0] || 'ls')}.1.gz</span>`;
+    case 'type': return `<span class="output">${esc(args[0] || 'type')} is /usr/bin/${esc(args[0] || 'type')}</span>`;
+
+    // ── System Info ──
+    case 'whoami': { const name = currentUser?.user_metadata?.full_name || currentUser?.email || 'user'; return `<span class="output">${esc(name)}</span>`; }
+    case 'hostname': return `<span class="output">1percent-server</span>`;
+    case 'domainname': return `<span class="output">1percent.dev</span>`;
+    case 'date': return `<span class="output">${new Date().toString()}</span>`;
+    case 'cal': return `<span class="output">     ${new Date().toLocaleString('en',{month:'long'})} ${new Date().getFullYear()}\nSu Mo Tu We Th Fr Sa\n                1  2\n 3  4  5  6  7  8  9\n10 11 12 13 14 15 16\n17 18 19 20 21 22 23\n24 25 26 27 28 29 30</span>`;
+    case 'uname': {
+      if (args.includes('-a')) return `<span class="output">Linux 1percent-server 5.15.0-1 SMP x86_64 GNU/Linux</span>`;
+      if (args.includes('-r')) return `<span class="output">5.15.0-1-generic</span>`;
+      if (args.includes('-n')) return `<span class="output">1percent-server</span>`;
+      if (args.includes('-m')) return `<span class="output">x86_64</span>`;
+      if (args.includes('-o')) return `<span class="output">GNU/Linux</span>`;
+      return `<span class="output">Linux</span>`;
+    }
+    case 'uptime': return `<span class="output"> ${new Date().toLocaleTimeString()} up 42 days, 3:14, 1 user, load average: 0.12, 0.08, 0.05</span>`;
+    case 'id': return `<span class="output">uid=1000(user) gid=1000(user) groups=1000(user),27(sudo),33(www-data)</span>`;
+    case 'groups': return `<span class="output">user sudo www-data docker</span>`;
+    case 'who': return `<span class="output">user     pts/0        ${new Date().toISOString().slice(0,16)} (192.168.1.100)</span>`;
+    case 'w': return `<span class="output">${new Date().toLocaleTimeString()} up 42 days,  1 user,  load average: 0.12, 0.08, 0.05\nUSER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT\nuser     pts/0    192.168.1.100    10:00    0.00s  0.12s  0.01s w</span>`;
+    case 'last': return `<span class="output">user     pts/0        192.168.1.100    Mon Aug 29 10:00   still logged in\nuser     pts/0        192.168.1.100    Sun Aug 28 09:00 - 18:00  (09:00)</span>`;
+    case 'lastlog': return `<span class="output">Username         Port     From             Latest\nuser             pts/0    192.168.1.100    Mon Aug 29 10:00:00 +0000 2026</span>`;
+    case 'lscpu': return `<span class="output">Architecture:        x86_64\nCPU op-mode(s):      32-bit, 64-bit\nByte Order:          Little Endian\nCPU(s):              4\nModel name:          Intel(R) Core(TM) i7-10700K CPU @ 3.80GHz\nCPU MHz:             3800.000\nCache L1i:           256K\nCache L1d:           256K\nCache L2:            2048K\nCache L3:            16384K</span>`;
+    case 'lsmem': return `<span class="output">TOTAL SIZE  TYPE  BLOCKS\n  4096M     RAM   16 blocks of 256M each</span>`;
+    case 'lsblk': return `<span class="output">NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT\nsda      8:0    0   100G  0 disk \n├─sda1   8:1    0    42G  0 part /\n├─sda2   8:2    0     4G  0 part [SWAP]\n└─sda3   8:3    0    54G  0 part /home\nsr11    11:0    1  1024M  0 rom</span>`;
+    case 'lsusb': return `<span class="output">Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub\nBus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub\nBus 001 Device 002: ID 8087:0026 Intel Corp. </span>`;
+    case 'lspci': return `<span class="output">00:00.0 Host bridge: Intel Corporation 10th Gen Core Processor Host Bridge\n00:02.0 VGA compatible controller: Intel Corporation UHD Graphics 630\n00:1f.0 ISA bridge: Intel Corporation Intel Z490 Chipset LPC/eSPI Controller\n00:1f.2 Memory controller: Intel Corporation 10th Gen Core DRAM Controller</span>`;
+    case 'lsmod': return `<span class="output">Module                  Size  Used by\nnvidia_drm            110592  1\nnvidia_modeset       1505280  1 nvidia_drm\nnvidia              59566080  3 nvidia_modeset\noverlay                65536  0\nbr_netfilter           28672  0\nxt_nat                 16384  1</span>`;
+    case 'dmidecode': return `<span class="output"># dmidecode 3.3\nGetting SMBIOS data from sysfs.\nSMBIOS 3.3.0 present.\nHandle 0x0001, DMI type 1, 27 bytes\nSystem Information\n\tManufacturer: Dell Inc.\n\tProduct Name: PowerEdge T40\n\tSerial Number: ABC123XYZ</span>`;
+
+    // ── Memory & Disk ──
+    case 'df': return `<span class="output">Filesystem     Size  Used Avail Use% Mounted on\n/dev/sda1      100G   42G   58G  42% /\n/dev/sda3      200G   85G  115G  43% /home\ntmpfs          2.0G     0  2.0G   0% /dev/shm\n/dev/sda2      4.0G  64M  3.9G   2% [SWAP]</span>`;
+    case 'du': { const target = args.filter(a => !a.startsWith('-'))[0] || '.'; return `<span class="output">4.0K\t${esc(target)}/node_modules\n16K\t${esc(target)}\n8.0K\t${esc(target)}/src\n28K\ttotal</span>`; }
+    case 'free': return `<span class="output">              total        used        free      shared  buff/cache   available\nMem:          4096        1536        1792         256         768        2304\nSwap:         2048          64        1984</span>`;
+    case 'swapon': return `<span class="success">Swap enabled.</span>`;
+    case 'swapoff': return `<span class="success">Swap disabled.</span>`;
+    case 'mount': return `<span class="output">/dev/sda1 on / type ext4 (rw,relatime,errors=remount-ro)\nproc on /proc type proc (rw,nosuid,nodev,noexec,relatime)\nsysfs on /sys type sysfs (rw,nosuid,nodev,noexec,relatime)\ntmpfs on /dev/shm type tmpfs (rw,nosuid,nodev)\n/dev/sda3 on /home type ext4 (rw,relatime)</span>`;
+    case 'umount': return `<span class="success">Unmounted.</span>`;
+    case 'fdisk': return `<span class="output">Disk /dev/sda: 100 GiB, 107374182400 bytes, 209715200 sectors\nDisk model: VBOX HARDDISK   \nUnits: sectors of 1 * 512 = 512 bytes\n\nDevice     Boot   Start       End   Sectors  Size Id Type\n/dev/sda1  *       2048  88080383  88078336   42G 83 Linux\n/dev/sda2      88080384  96468991   8388608    4G 82 Linux swap\n/dev/sda3      96468992 209715199 113246208   54G 83 Linux</span>`;
+
+    // ── Processes ──
+    case 'ps': {
+      if (args.includes('aux') || args.includes('-ef')) return `<span class="output">USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND\nroot         1  0.0  0.1 169432 13244 ?        Ss   Aug28   0:15 /sbin/init\nroot         2  0.0  0.0      0     0 ?        S    Aug28   0:00 [kthreadd]\nuser        42  0.5  2.3 724032 94208 ?       Sl   Aug28   2:45 node server.js\nuser       128  0.1  0.8 215040 32768 pts/0    Ss   10:00   0:05 bash\nuser       256  0.0  0.0  37376  3072 pts/0    R+   10:05   0:00 ps aux</span>`;
+      return `<span class="output">  PID TTY          TIME CMD\n    1 ?        00:00:01 systemd\n   42 pts/0    00:00:05 node\n  128 pts/0    00:00:00 bash\n  256 pts/0    00:00:00 ps</span>`;
+    }
+    case 'top': return `<span class="output">top - ${new Date().toLocaleTimeString()} up 42 days, 1 user, load average: 0.12, 0.08, 0.05\nTasks: 156 total,   1 running, 155 sleeping,   0 stopped,   0 zombie\n%Cpu(s):  2.3 us,  1.0 sy,  0.0 ni, 96.5 id,  0.2 wa,  0.0 hi,  0.0 si\nMiB Mem :   4096.0 total,   1792.0 free,   1536.0 used,    768.0 buff/cache\nMiB Swap:   2048.0 total,   1984.0 free,     64.0 used.   2304.0 avail Mem\n\n    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND\n     42 user      20   0  724032  94208  12288 S   0.5   2.3   2:45.12 node\n      1 root      20   0  169432  13244   9012 S   0.0   0.3   0:15.23 systemd\n    128 user      20   0  215040  32768  16384 S   0.0   0.8   0:05.45 bash</span>`;
+    case 'htop': return `<span class="output">  [1]  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░  2.3%  cpu0\n  [2]  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░  1.0%  cpu1\n  [3]  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░  0.5%  cpu2\n  [4]  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░  0.2%  cpu3\n\nMem[|||||||||||||||░░░░░░░░░░░░░] 1.5G/4.0G\nSwap[|░░░░░░░░░░░░░░░░░░░░░░░░░░] 64M/2.0G\n\n  PID USER  PRI  NI  VIRT   RES   SHR S CPU% MEM%   TIME+  Command\n    42 user   20   0  724M 94208 12288 S  0.5  2.3  2:45.1  node server.js\n     1 root   20   0  169M 13244  9012 S  0.0  0.3  0:15.2  /sbin/init</span>`;
+    case 'pgrep': return `<span class="output">${Math.floor(Math.random()*900)+100}</span>`;
+    case 'pkill': return `<span class="success">Process killed.</span>`;
+    case 'kill': return `<span class="success">Signal sent.</span>`;
+    case 'killall': return `<span class="success">All processes killed.</span>`;
+    case 'nice': return `<span class="output">0</span>`;
+    case 'nohup': return `<span class="output">nohup: ignoring input and appending output to 'nohup.out'</span>`;
+    case 'bg': return `<span class="output">[1]+ stopped    ${esc(args.join(' '))}</span>`;
+    case 'fg': return `<span class="output">${esc(args.join(' '))}</span>`;
+    case 'jobs': return `<span class="output">[1]+  Running                 ${esc(args.join(' '))} &</span>`;
+    case 'sleep': return '';
+    case 'watch': return `<span class="output">Every 2s: ${esc(args.join(' '))}     ${new Date().toLocaleTimeString()}</span>`;
+    case 'time': return `<span class="output">\nreal\t0m0.012s\nuser\t0m0.008s\nsys\t0m0.004s</span>`;
+    case 'timeout': return '';
+    case 'stty': return '';
+    case 'tput': return '';
+    case 'reset': document.getElementById('terminal-output').innerHTML = ''; return '';
+    case 'tset': return '';
+
+    // ── Networking ──
+    case 'ping': return `<span class="output">PING ${esc(args[0] || 'localhost')} (127.0.0.1) 56(84) bytes of data.\n64 bytes from 127.0.0.1: icmp_seq=1 ttl=64 time=0.042 ms\n64 bytes from 127.0.0.1: icmp_seq=2 ttl=64 time=0.038 ms\n64 bytes from 127.0.0.1: icmp_seq=3 ttl=64 time=0.041 ms\n\n--- ${esc(args[0] || 'localhost')} ping statistics ---\n3 packets transmitted, 3 received, 0% packet loss, time 2004ms\nrtt min/avg/max/mdev = 0.038/0.040/0.042/0.002 ms</span>`;
+    case 'curl': return cmdCurl(args);
+    case 'wget': return `<span class="output">--${new Date().toISOString()}--  https://${esc(args[0] || 'example.com')}/\nResolving ${esc(args[0] || 'example.com')}... 93.184.216.34\nConnecting to ${esc(args[0] || 'example.com')}|93.184.216.34|:443... connected.\nHTTP request sent, awaiting response... 200 OK\nLength: 1256 (1.2K) [text/html]\nSaving to: 'index.html'\n\nindex.html      100%[===================>]   1.23K  --.-KB/s    in 0s\n\n${new Date().toISOString().slice(11,19)} (11.8 MB/s) - 'index.html' saved [1256/1256]</span>`;
+    case 'netstat': case 'ss': return `<span class="output">State    Recv-Q Send-Q   Local Address:Port    Peer Address:Port  Process\nLISTEN   0      128      0.0.0.0:3000           0.0.0.0:*\nLISTEN   0      128      0.0.0.0:22             0.0.0.0:*\nLISTEN   0      5        127.0.0.1:5432         0.0.0.0:*\nLISTEN   0      128      [::]:80                [::]:*\nESTAB    0      0        192.168.1.1:22        192.168.1.100:52432</span>`;
+    case 'ifconfig': return `<span class="output">eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500\n        inet 192.168.1.50  netmask 255.255.255.0  broadcast 192.168.1.255\n        inet6 fe80::a00:27ff:fe4e:66a1  prefixlen 64  scopeid 0x20<link>\n        ether 08:00:27:4e:66:a1  txqueuelen 1000  (Ethernet)\n        RX packets 1234567  bytes 1234567890 (1.2 GB)\n        TX packets 987654  bytes 987654321 (987.6 MB)\n\nlo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536\n        inet 127.0.0.1  netmask 255.0.0.0\n        loop  txqueuelen 1000  (Local Loopback)</span>`;
+    case 'ip': {
+      if (args.includes('addr') || args.includes('a')) return `<span class="output">1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN\n    inet 127.0.0.1/8 scope host lo\n2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP\n    inet 192.168.1.50/24 brd 192.168.1.255 scope global eth0</span>`;
+      if (args.includes('route') || args.includes('r')) return `<span class="output">default via 192.168.1.1 dev eth0 proto dhcp metric 100\n192.168.1.0/24 dev eth0 proto kernel scope link src 192.168.1.50 metric 100</span>`;
+      if (args.includes('link') || args.includes('l')) return `<span class="output">1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT\n    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00\n2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP mode DEFAULT\n    link/ether 08:00:27:4e:66:a1 brd ff:ff:ff:ff:ff:ff</span>`;
+      return `<span class="output">Usage: ip [ addr | route | link ]</span>`;
+    }
+    case 'traceroute': return `<span class="output">traceroute to ${esc(args[0] || 'google.com')} (142.250.80.46), 30 hops max, 60 byte packets\n 1  gateway (192.168.1.1)  0.523 ms  0.487 ms  0.465 ms\n 2  10.0.0.1 (10.0.0.1)  3.214 ms  3.189 ms  3.156 ms\n 3  isp-router.net (72.14.236.1)  8.432 ms  8.398 ms  8.365 ms\n 4  142.250.80.46 (142.250.80.46)  12.543 ms  12.512 ms  12.487 ms</span>`;
+    case 'dig': case 'nslookup': case 'host': return `<span class="output">${esc(args[0] || 'google.com')}:\nAddress: 142.250.80.46\n\nNon-authoritative answer:\nName: ${esc(args[0] || 'google.com')}\nAddress: 142.250.80.46</span>`;
+    case 'nc': case 'ncat': return `<span class="output">Connection to ${esc(args[0] || 'localhost')} ${esc(args[1] || '80')} port [tcp/http] succeeded!</span>`;
+    case 'nmap': return `<span class="output">Starting Nmap 7.92 ( https://nmap.org ) at ${new Date().toISOString().slice(0,10)}\nNmap scan report for ${esc(args[0] || 'localhost')} (127.0.0.1)\nHost is up (0.00042s latency).\n\nPORT     STATE SERVICE\n22/tcp   open  ssh\n80/tcp   open  http\n443/tcp  open  https\n3000/tcp open  unknown\n5432/tcp open  postgresql\n\nNmap done: 1 IP address (1 host up) scanned in 0.15 seconds</span>`;
+    case 'iptables': return `<span class="output">Chain INPUT (policy ACCEPT 0 packets, 0 bytes)\n pkts bytes target     prot opt in     out     source               destination\n  100  6000 ACCEPT     all  --  any    any     anywhere             anywhere             state RELATED,ESTABLISHED\n    0     0 ACCEPT     tcp  --  any    any     anywhere             anywhere             tcp dpt:ssh\n    0     0 DROP       all  --  any    any     anywhere             anywhere</span>`;
+    case 'ufw': return `<span class="output">Status: active\n\nTo                         Action      From\n--                         ------      ----\n22/tcp                     ALLOW       Anywhere\n80/tcp                     ALLOW       Anywhere\n443/tcp                    ALLOW       Anywhere</span>`;
+
+    // ── Archive ──
+    case 'tar': return `<span class="success">tar: ${esc(args.join(' '))}\nArchive created successfully.</span>`;
+    case 'gzip': case 'gunzip': case 'bzip2': case 'bunzip2': case 'xz': case 'unxz': case 'zip': case 'unzip': return `<span class="success">Archive operation complete.</span>`;
+    case 'zcat': case 'bzcat': return cmdCat(args);
+
+    // ── Users ──
+    case 'su': return `<span class="output">Password: </span>`;
+    case 'sudo': return `<span class="output">[sudo] password for user: </span>`;
+    case 'passwd': return `<span class="output">Changing password for user.\nNew password: </span>`;
+    case 'adduser': case 'useradd': return `<span class="success">User created successfully.</span>`;
+    case 'userdel': return `<span class="success">User deleted.</span>`;
+    case 'usermod': return `<span class="success">User modified.</span>`;
+    case 'addgroup': case 'groupadd': return `<span class="success">Group created.</span>`;
+    case 'visudo': return `<span class="output"># /etc/sudoers\nroot    ALL=(ALL:ALL) ALL\nuser    ALL=(ALL:ALL) ALL</span>`;
+
+    // ── Cron ──
+    case 'crontab': {
+      if (args.includes('-l')) return `<span class="output"># Edit this file to introduce tasks to be run by cron.\n# m h  dom mon dow   command\n*/5 * * * * /usr/bin/certbot renew --quiet\n0 0 * * * /home/user/backup.sh\n@reboot /home/user/start-server.sh</span>`;
+      return `<span class="output">crontab: installing new crontab</span>`;
+    }
+    case 'at': return `<span class="output">warning: commands will be executed using /bin/sh\nat></span>`;
+    case 'systemctl': return `<span class="output">${esc(args.join(' '))} ... ${args[0] === 'status' ? 'active (running)' : 'done'}</span>`;
+    case 'service': return `<span class="output">${esc(args[0] || 'nginx')} ${esc(args[1] || 'status')} ... ${args[1] === 'status' ? 'running' : 'done'}</span>`;
+
+    // ── Permissions ──
+    case 'umask': return `<span class="output">0022</span>`;
+    case 'getfacl': return `<span class="output"># file: ${esc(args[0] || '.')}\n# owner: user\n# group: user\nuser::rwx\ngroup::r-x\nother::r--</span>`;
+    case 'setfacl': return `<span class="success">ACL set.</span>`;
+    case 'su': return `<span class="output">Password:</span>`;
+
+    // ── Disk/IO ──
+    case 'iostat': return `<span class="output">Device             tps    kB_read/s    kB_wrtn/s\nsda              12.50         2.34         8.56\nsdb               0.00         0.00         0.00</span>`;
+    case 'iotop': return `<span class="output">Total DISK READ:    2.34 M/s | Total DISK WRITE:    8.56 M/s\n  PID  PRIO  USER     DISK READ  DISK WRITE  SWAPIN     IO>    COMMAND\n   42 be/4  user       1.23 M/s    5.67 M/s  0.00 %  0.12 %  node server.js\n    1 be/4  root       0.00 B/s    0.00 B/s  0.00 %  0.00 %  init</span>`;
+    case 'lsof': return `<span class="output">COMMAND    PID   USER   FD   TYPE DEVICE SIZE/OFF    NODE NAME\nnode        42   user  cwd    DIR    8,1     4096  123456 /home/user/projects/app\nnode        42   user  3u  IPv4  45678      0t0     TCP *:3000 (LISTEN)\nbash       128   user  0u   CHR    136      0t0       3 /dev/pts/0</span>`;
+    case 'strace': return `<span class="output">execve(\"${esc(args[0] || '/bin/ls')}\", [\"${esc(args[0] || 'ls')}\"], 0x7ffd3a2b1e80 /* 23 vars */) = 0\nbrk(NULL)                               = 0x55a8b3c4d000\naccess(\"/etc/ld.so.preload\", R_OK)      = -1 ENOENT\nopenat(AT_FDCWD, \"/etc/ld.so.cache\", O_RDONLY|O_CLOEXEC) = 3\nread(3, \"\\x7fELF\\x02\\x01\\x01\\x00\\x00\\x00\", 832)    = 832\n--- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=42, si_uid=1000} ---\n+++ exited with 0 +++</span>`;
+    case 'ltrace': return `<span class="output">__libc_start_main(0x55a8b3c4d120, 1, 0x7ffd3a2b1e88) = 0x55a8b3c4d200\nprintf("Hello, World!\n")               = 14\n+++ exited (status 0) +++</span>`;
+    case 'ldd': return `<span class="output">linux-vdso.so.1 (0x00007ffc3a5fe000)\nlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007f8b3c6a8000)\nlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f8b3c480000)\n/lib64/ld-linux-x86-64.so.2 (0x00007f8b3c8c4000)</span>`;
+
+    // ── Misc ──
+    case 'env': return `<span class="output">SHELL=/bin/bash\nUSER=user\nHOME=/home/user\nPATH=/usr/local/bin:/usr/bin:/bin\nLANG=en_US.UTF-8\nTERM=xterm-256color\nEDITOR=vim\nNODE_ENV=development</span>`;
+    case 'printenv': return `<span class="output">SHELL=/bin/bash\nUSER=user\nHOME=/home/user</span>`;
+    case 'export': return '';
+    case 'alias': return `<span class="output">alias ll='ls -la'\nalias la='ls -A'\nalias l='ls -CF'\nalias grep='grep --color=auto'</span>`;
+    case 'unalias': return '';
+    case 'source': case '.': return '';
+    case 'history': return `<span class="output">${terminalHistory.slice().reverse().map((h, i) => `  ${i + 1}  ${esc(h)}`).join('\n')}</span>`;
+    case 'clear': document.getElementById('terminal-output').innerHTML = ''; return '';
+    case 'reset': document.getElementById('terminal-output').innerHTML = ''; return '';
+    case 'man': return `<span class="output">No manual entry for ${esc(args[0] || 'man')}</span>`;
+    case 'info': return `<span class="output">${esc(args[0] || 'info')}: No info entry for ${esc(args[0] || 'info')}.</span>`;
+    case 'whatis': return `<span class="output">${esc(args[0] || 'ls')}        (1)         - list directory contents</span>`;
+    case 'apropos': return `<span class="output">${esc(args[0] || 'ls')} (1) - list directory contents\n${esc(args[0] || 'ls')} (1) - list files</span>`;
+    case 'xdg-open': return `<span class="success">Opened.</span>`;
+    case 'xdg-settings': return '';
+    case 'notify-send': return `<span class="success">Notification sent.</span>`;
+    case 'fortune': return `<span class="output">A journey of a thousand miles begins with a single step. -- Lao Tzu</span>`;
+    case 'cowsay': { const msg = args.join(' ') || 'Moo!'; return `<span class="output"> ${'_'.repeat(msg.length+2)}\n< ${esc(msg)} >\n ${'‾'.repeat(msg.length+2)}\n        \   ^__^\n         \  (oo)\_______\n            (__)\       )\/\\\n                ||----w |\n                ||     ||</span>`; }
+    case 'figlet': { const msg = args.join(' ') || 'Hello'; return `<span class="output">${esc(msg.toUpperCase())}</span>`; }
+    case 'yes': return `<span class="output">y\ny\ny\n... (Ctrl+C to stop)</span>`;
+    case 'seq': { const end = parseInt(args[0]) || 10; return `<span class="output">${Array.from({length:end},(_,i)=>i+1).join('\n')}</span>`; }
+    case 'factor': return `<span class="output">${args[0] || '12'}: ${args[0] || '12'}\n  (prime)</span>`;
+    case 'bc': return `<span class="output">${args.join(' ') || '1+1'}\n= ${eval(args.join(' ') || '2')}</span>`;
+    case 'expr': return `<span class="output">${eval(args.join(' ') || '0')}</span>`;
+    case 'date': return `<span class="output">${new Date().toString()}</span>`;
+    case 'cal': return `<span class="output">     ${new Date().toLocaleString('en',{month:'long'})} ${new Date().getFullYear()}\nSu Mo Tu We Th Fr Sa\n                1  2\n 3  4  5  6  7  8  9\n10 11 12 13 14 15 16\n17 18 19 20 21 22 23\n24 25 26 27 28 29 30</span>`;
+    case 'test': case '[': case '[[': return '';
+    case 'true': return '';
+    case 'false': return '<span class="error">(exit 1)</span>';
+    case 'help': return cmdHelp();
+    case 'version': case '--version': return `<span class="output">1% Playground Terminal v2.0.0\nBuilt with ❤️ by 1% Digital Solutions</span>`;
+    case 'exit': return `<span class="output">logout\nConnection to 1percent-server closed.</span>`;
+    case 'reboot': return `<span class="warning">System going down for reboot NOW!</span>`;
+    case 'shutdown': return `<span class="warning">System is going down for poweroff immediately!</span>`;
+    case 'halt': return `<span class="warning">System halted.</span>`;
+
+    // ── Docker ──
+    case 'docker': return cmdDocker(args);
+    case 'docker-compose': case 'docker compose': return `<span class="output">${esc(args.join(' '))} ... done</span>`;
+
+    // ── Git ──
+    case 'git': return cmdGit(args);
+
+    default: return `<span class="error">-bash: ${esc(bin)}: command not found\n<span class="muted">Type "help" for available commands</span></span>`;
+  }
+}
+
+function cmdLs(args) {
+  const showAll = args.includes('-a') || args.includes('-la') || args.includes('-al');
+  const showLong = args.includes('-l') || args.includes('-la') || args.includes('-al');
+  const target = args.filter(a => !a.startsWith('-'))[0] || cwd;
+  const dir = resolvePath(target);
+  const node = FS[dir];
+  if (!node || node.type !== 'dir') return `<span class="error">ls: cannot access '${esc(target)}': Not a directory</span>`;
+  let items = [...(node.children || [])];
+  if (showAll) items = ['.', '..', ...items];
+  if (showLong) {
+    return `<span class="output">total ${items.length}\ndrwxr-xr-x  2 user user  4096 Aug 29 10:00 .\ndrwxr-xr-x  3 user user  4096 Aug 29 09:00 ..\n` +
+      items.filter(i => i !== '.' && i !== '..').map(i => {
+        const childPath = dir === '/' ? '/' + i : dir + '/' + i;
+        const child = FS[childPath];
+        const isDir = child && child.type === 'dir';
+        return `${isDir ? 'drwxr-xr-x' : '-rw-r--r--'}  1 user user  ${isDir ? '4096' : ' 512'} Aug 29 10:00 ${i}`;
+      }).join('\n') + '</span>';
+  }
+  return `<span class="output">${items.map(i => {
+    const childPath = dir === '/' ? '/' + i : dir + '/' + i;
+    const child = FS[childPath];
+    return child && child.type === 'dir' ? `<span class="success">${esc(i)}</span>` : esc(i);
+  }).join('  ')}</span>`;
+}
+
+function cmdCd(args) {
+  const target = args[0] || '/home/user';
+  const path = resolvePath(target);
+  if (FS[path] && FS[path].type === 'dir') { cwd = path; return ''; }
+  return `<span class="error">-bash: cd: ${esc(target)}: No such file or directory</span>`;
+}
+
+function cmdCat(args) {
+  if (!args.length) return `<span class="error">cat: missing file operand</span>`;
+  const path = resolvePath(args[0]);
+  const node = FS[path];
+  if (!node) return `<span class="error">cat: ${esc(args[0])}: No such file or directory</span>`;
+  if (node.type === 'dir') return `<span class="error">cat: ${esc(args[0])}: Is a directory</span>`;
+  return `<span class="output">${esc(node.content)}</span>`;
+}
+
+function cmdHead(args) {
+  const nIdx = args.indexOf('-n');
+  const n = nIdx >= 0 ? parseInt(args[nIdx + 1]) || 10 : 10;
+  const file = args.filter(a => !a.startsWith('-') && a !== String(n))[0];
+  if (!file) return `<span class="error">head: missing file operand</span>`;
+  const path = resolvePath(file);
+  const node = FS[path];
+  if (!node || node.type === 'dir') return `<span class="error">head: ${esc(file)}: No such file</span>`;
+  return `<span class="output">${esc(node.content.split('\n').slice(0, n).join('\n'))}</span>`;
+}
+
+function cmdTail(args) {
+  const nIdx = args.indexOf('-n');
+  const n = nIdx >= 0 ? parseInt(args[nIdx + 1]) || 10 : 10;
+  const file = args.filter(a => !a.startsWith('-') && a !== String(n))[0];
+  if (!file) return `<span class="error">tail: missing file operand</span>`;
+  const path = resolvePath(file);
+  const node = FS[path];
+  if (!node || node.type === 'dir') return `<span class="error">tail: ${esc(file)}: No such file</span>`;
+  return `<span class="output">${esc(node.content.split('\n').slice(-n).join('\n'))}</span>`;
+}
+
+function cmdWc(args) {
+  const file = args.filter(a => !a.startsWith('-'))[0];
+  if (!file) return `<span class="error">wc: missing file operand</span>`;
+  const path = resolvePath(file);
+  const node = FS[path];
+  if (!node || node.type === 'dir') return `<span class="error">wc: ${esc(file)}: No such file</span>`;
+  const lines = node.content.split('\n').length;
+  const words = node.content.split(/\s+/).length;
+  return `<span class="output">${lines} ${words} ${node.content.length} ${file}</span>`;
+}
+
+function cmdGrep(args) {
+  const pattern = args[0];
+  const file = args.filter(a => !a.startsWith('-'))[1];
+  if (!pattern || !file) return `<span class="error">grep: missing arguments. Usage: grep PATTERN FILE</span>`;
+  const path = resolvePath(file);
+  const node = FS[path];
+  if (!node || node.type === 'dir') return `<span class="error">grep: ${esc(file)}: No such file</span>`;
+  try {
+    const re = new RegExp(pattern, 'gi');
+    const matches = node.content.split('\n').filter(l => re.test(l));
+    return `<span class="output">${esc(matches.join('\n')) || '(no matches)'}</span>`;
+  } catch { return `<span class="error">grep: invalid pattern</span>`; }
+}
+
+function cmdFind(args) {
+  const startDir = args[0] || '.';
+  const nameIdx = args.indexOf('-name');
+  const pattern = nameIdx >= 0 ? args[nameIdx + 1] : null;
+  const dir = resolvePath(startDir);
+  const results = [];
+  function walk(path) {
+    const node = FS[path];
+    if (!node || node.type !== 'dir') return;
+    (node.children || []).forEach(child => {
+      const childPath = path === '/' ? '/' + child : path + '/' + child;
+      if (!pattern || matchGlob(child, pattern.replace(/"/g, ''))) results.push(childPath);
+      walk(childPath);
+    });
+  }
+  walk(dir);
+  return `<span class="output">${esc(results.join('\n')) || '(no results)'}</span>`;
+}
+
+function cmdTouch(args) {
+  if (!args[0]) return `<span class="error">touch: missing file operand</span>`;
+  const path = resolvePath(args[0]);
+  FS[path] = { type: 'file', content: '' };
+  const parts = path.split('/');
+  const parent = parts.slice(0, -1).join('/') || '/';
+  const name = parts[parts.length - 1];
+  if (FS[parent] && FS[parent].type === 'dir' && !FS[parent].children.includes(name)) FS[parent].children.push(name);
+  return '';
+}
+
+function cmdMkdir(args) {
+  if (!args[0]) return `<span class="error">mkdir: missing operand</span>`;
+  const path = resolvePath(args[0]);
+  FS[path] = { type: 'dir', children: [] };
+  const parts = path.split('/');
+  const parent = parts.slice(0, -1).join('/') || '/';
+  const name = parts[parts.length - 1];
+  if (FS[parent] && FS[parent].type === 'dir' && !FS[parent].children.includes(name)) FS[parent].children.push(name);
+  return '';
+}
+
+function cmdRm(args) {
+  const target = args.filter(a => !a.startsWith('-'))[0];
+  if (!target) return `<span class="error">rm: missing operand</span>`;
+  const path = resolvePath(target);
+  if (!FS[path]) return `<span class="error">rm: ${esc(target)}: No such file or directory</span>`;
+  const parts = path.split('/');
+  const parent = parts.slice(0, -1).join('/') || '/';
+  const name = parts[parts.length - 1];
+  if (FS[parent] && FS[parent].type === 'dir') FS[parent].children = FS[parent].children.filter(c => c !== name);
+  delete FS[path];
+  return '';
+}
+
+function cmdRmdir(args) {
+  if (!args[0]) return `<span class="error">rmdir: missing operand</span>`;
+  const path = resolvePath(args[0]);
+  if (!FS[path]) return `<span class="error">rmdir: ${esc(args[0])}: No such file or directory</span>`;
+  if (FS[path].type !== 'dir') return `<span class="error">rmdir: ${esc(args[0])}: Not a directory</span>`;
+  if (FS[path].children?.length) return `<span class="error">rmdir: ${esc(args[0])}: Directory not empty</span>`;
+  const parts = path.split('/');
+  const parent = parts.slice(0, -1).join('/') || '/';
+  const name = parts[parts.length - 1];
+  if (FS[parent] && FS[parent].type === 'dir') FS[parent].children = FS[parent].children.filter(c => c !== name);
+  delete FS[path];
+  return '';
+}
+
+function cmdTree(args) {
+  const target = args.filter(a => !a.startsWith('-'))[0] || '.';
+  const dir = resolvePath(target);
+  const node = FS[dir];
+  if (!node || node.type !== 'dir') return `<span class="error">tree: ${esc(target)}: Not a directory</span>`;
+  let output = `<span class="output">${esc(target)}</span>`;
+  let dirs = 0, files = 0;
+  function walk(path, prefix) {
+    const n = FS[path];
+    if (!n || n.type !== 'dir') return;
+    (n.children || []).forEach((child, i) => {
+      const isLast = i === (n.children.length - 1);
+      const connector = isLast ? '└── ' : '├── ';
+      const childPath = path === '/' ? '/' + child : path + '/' + child;
+      const childNode = FS[childPath];
+      const isDir = childNode && childNode.type === 'dir';
+      if (isDir) dirs++; else files++;
+      output += `\n<span class="output">${prefix}${connector}${isDir ? '<span class="success">' + esc(child) + '</span>' : esc(child)}</span>`;
+      if (isDir) walk(childPath, prefix + (isLast ? '    ' : '│   '));
+    });
+  }
+  walk(dir, '');
+  output += `\n<span class="output">\n${dirs} directories, ${files} files</span>`;
+  return output;
+}
+
+function cmdSort(args) {
+  const file = args.filter(a => !a.startsWith('-'))[0];
+  if (!file) return `<span class="output">${esc(args.join(' '))}</span>`;
+  const path = resolvePath(file);
+  const node = FS[path];
+  if (!node || node.type === 'dir') return `<span class="error">sort: ${esc(file)}: No such file</span>`;
+  const lines = node.content.split('\n').sort();
+  if (args.includes('-r')) lines.reverse();
+  if (args.includes('-n')) lines.sort((a, b) => parseFloat(a) - parseFloat(b));
+  return `<span class="output">${esc(lines.join('\n'))}</span>`;
+}
+
+function cmdUniq(args) {
+  const file = args.filter(a => !a.startsWith('-'))[0];
+  if (!file) return `<span class="output">${esc(args.join(' '))}</span>`;
+  const path = resolvePath(file);
+  const node = FS[path];
+  if (!node || node.type === 'dir') return `<span class="error">uniq: ${esc(file)}: No such file</span>`;
+  const lines = node.content.split('\n');
+  const unique = lines.filter((l, i) => i === 0 || l !== lines[i - 1]);
+  return `<span class="output">${esc(unique.join('\n'))}</span>`;
+}
+
+function cmdCurl(args) {
+  const url = args.filter(a => !a.startsWith('-'))[0] || 'https://api.example.com';
+  if (args.includes('-I') || args.includes('--head')) {
+    return `<span class="output">HTTP/1.1 200 OK\nContent-Type: application/json\nContent-Length: 1234\nDate: ${new Date().toUTCString()}\nServer: nginx/1.18.0</span>`;
+  }
+  if (args.includes('-v') || args.includes('--verbose')) {
+    return `<span class="output">*   Trying 93.184.216.34:443...\n* Connected to ${esc(url.replace(/https?:\/\//, '').split('/')[0])} port 443 (#0)\n* ALPN, server accepted h2\n* SSL connection using TLSv1.3 / TLS_AES_256_GCM_SHA384\n> GET / HTTP/2\n> Host: ${esc(url.replace(/https?:\/\//, '').split('/')[0])}\n> User-Agent: curl/7.68.0\n> Accept: */*\n>\n< HTTP/2 200\n< content-type: application/json\n< {"status":"ok","message":"Hello from ${esc(url)}"}</span>`;
+  }
+  return `<span class="output">{"status":"ok","message":"Response from ${esc(url)}","timestamp":"${new Date().toISOString()}"}</span>`;
+}
+
+function cmdDocker(args) {
+  const sub = args[0];
+  switch (sub) {
+    case 'ps': return `<span class="output">CONTAINER ID  IMAGE                  COMMAND                 CREATED        STATUS        PORTS                  NAMES\nabc123def456  nginx:latest           \"/docker-entrypoint…\"   2 hours ago    Up 2 hours    0.0.0.0:80->80/tcp     web-server\nghi789jkl012  postgres:14            \"docker-entrypoint.s…\"   3 hours ago    Up 3 hours    0.0.0.0:5432->5432/tcp db\nmno345pqr678  redis:7                \"docker-entrypoint.s…\"   3 hours ago    Up 3 hours    0.0.0.0:6379->6379/tcp cache</span>`;
+    case 'images': return `<span class="output">REPOSITORY    TAG       IMAGE ID       CREATED        SIZE\nnginx         latest    a8758716bb6a   2 weeks ago    187MB\npostgres      14        8e3c5dc3b7aa   3 weeks ago    379MB\nredis         7         f82398c5e51e   1 month ago    138MB\nnode          18-alpine  6db3fe15a564   2 months ago   178MB</span>`;
+    case 'images': return `<span class="output">REPOSITORY    TAG       IMAGE ID       CREATED        SIZE\nnginx         latest    a8758716bb6a   2 weeks ago    187MB\npostgres      14        8e3c5dc3b7aa   3 weeks ago    379MB\nredis         7         f82398c5e51e   1 month ago    138MB</span>`;
+    case 'logs': return `<span class="output">${new Date().toISOString()} [notice] 1#1: signal process started\n${new Date().toISOString()} [notice] Creating HTTP server\n${new Date().toISOString()} [notice] start worker processes 1</span>`;
+    case 'inspect': return `<span class="output">[\n    {\n        \"Id\": \"abc123def456\",\n        \"State\": { \"Status\": \"running\", \"Running\": true },\n        \"NetworkSettings\": { \"IPAddress\": \"172.17.0.2\" }\n    }\n]</span>`;
+    case 'exec': return `<span class="output">root@abc123def456:/#</span>`;
+    case 'run': return `<span class="output">Unable to find image 'latest:latest' locally\nlatest: Pulling from library/${esc(args[1] || 'ubuntu')}\nDigest: sha256:abc123...\nStatus: Downloaded newer image for ${esc(args[1] || 'ubuntu')}:latest\n${Math.random().toString(16).slice(2,14)}</span>`;
+    case 'build': return `<span class="output">Step 1/5 : FROM node:18-alpine\n ---> 6db3fe15a564\nStep 2/5 : WORKDIR /app\n ---> Running in abc123\nSuccessfully built abc123\nSuccessfully tagged myapp:latest</span>`;
+    case 'stop': case 'start': case 'restart': case 'rm': return `<span class="success">Container ${esc(sub)}ed.</span>`;
+    case 'pull': return `<span class="output">Using default tag: latest\nlatest: Pulling from library/${esc(args[1] || 'nginx')}\nDigest: sha256:abc123...\nStatus: Downloaded newer image for ${esc(args[1] || 'nginx')}:latest</span>`;
+    case 'network': return `<span class="output">NETWORK ID     NAME      DRIVER    SCOPE\nabc123def456   bridge    bridge    local\nfedcba987654   host      host      local\n123456789abc   none      null      local</span>`;
+    case 'volume': return `<span class="output">DRIVER    VOLUME NAME\nlocal     postgres_data\nlocal     redis_data</span>`;
+    case 'system': return `<span class="output">TYPE          TOTAL     ACTIVE    SIZE     RECLAIMABLE\nImages        5         3         1.2GB    500MB (41%)\nContainers    3         3         150MB    0B (0%)\nLocal Volumes 2         2         100MB    0B (0%)\nBuild Cache   0         0         0B       0B</span>`;
+    case 'help': return `<span class="output">Usage: docker [command]\n\nCommands:\n  ps          List containers\n  images      List images\n  logs        Fetch logs\n  inspect     Inspect container\n  exec        Run command in container\n  run         Run container\n  build       Build image\n  stop/start  Stop/start container\n  pull        Pull image\n  network     List networks\n  volume      List volumes\n  system      System info\n  help        Show this help</span>`;
+    default: return `<span class="output">docker: '${esc(sub || '')}' is not a docker command.\n<span class="muted">Type 'docker help' for available commands.</span></span>`;
+  }
+}
+
+function cmdFile(args) {
+  const file = args[0];
+  if (!file) return `<span class="error">file: missing operand</span>`;
+  const ext = file.split('.').pop();
+  const types = { js: 'JavaScript source', py: 'Python script', html: 'HTML document', css: 'CSS stylesheet', md: 'Markdown text', sh: 'Bash script', txt: 'ASCII text', json: 'JSON data', png: 'PNG image data', jpg: 'JPEG image data', pdf: 'PDF document', zip: 'Zip archive data', gz: 'gzip compressed data' };
+  return `<span class="output">${esc(file)}: ${types[ext] || 'data'}</span>`;
+}
+
+function cmdStat(args) {
+  const file = args[0] || '.';
+  const path = resolvePath(file);
+  const node = FS[path];
+  if (!node) return `<span class="error">stat: cannot stat '${esc(file)}': No such file or directory</span>`;
+  const isDir = node.type === 'dir';
+  return `<span class="output">  File: ${esc(file)}\n  Size: ${isDir ? '4096' : (node.content?.length || 0)}\tBlocks: ${isDir ? '8' : '8'}\tIO Block: ${isDir ? '4096' : '4096'}   ${isDir ? 'directory' : 'regular file'}\nAccess: (0${isDir ? '755' : '644'}/${isDir ? 'rwxr-xr-x' : 'rw-r--r--'})\tUid: ( 1000/   user)\tGid: ( 1000/   user)\nAccess: ${new Date().toISOString()}\nModify: ${new Date().toISOString()}\nChange: ${new Date().toISOString()}</span>`;
+}
+
+function cmdHelp() {
+  return `<span class="success">═══════════════════════════════════════════════════════════
+  1% Playground — Available Commands (${new Date().toISOString().slice(0,10)})
+═══════════════════════════════════════════════════════════</span>
+<span class="output">
+<span class="success">📁 Navigation:</span>  ls [-la], cd, pwd, tree, realpath
+<span class="success">📄 Files:</span>  cat, head, tail, less, touch, mkdir, rmdir, rm, cp, mv, ln, chmod, chown, chgrp, file, stat, basename, dirname, readlink
+<span class="success">🔍 Search:</span>  grep, find, locate, which, whereis, type
+<span class="success">✏️  Text:</span>  echo, printf, sed, awk, tr, cut, sort, uniq, wc, diff, nl, rev, strings, xxd, tee, xargs
+<span class="success">💻 System:</span>  ps, top, htop, df, free, du, mount, uptime, whoami, hostname, id, groups, who, w, last, uname, date, cal, lscpu, lsmem, lsblk, lsusb, lspci, lsmod
+<span class="success">🌐 Network:</span>  ping, curl, wget, netstat, ss, ifconfig, ip, traceroute, dig, nslookup, nmap, iptables, ufw, nc
+<span class="success">📦 Archive:</span>  tar, gzip, gunzip, zip, unzip, bzip2, xz
+<span class="success">👥 Users:</span>  su, sudo, passwd, adduser, userdel, usermod, groups, visudo
+<span class="success">⏰ Cron:</span>  crontab, at, systemctl, service
+<span class="success">🐳 Docker:</span>  docker ps, docker images, docker logs, docker run, docker build, docker exec, docker network, docker volume, docker system
+<span class="success">🔧 System:</span>  ps, lsof, strace, ltrace, ldd, iostat, iotop, nice, nohup, kill, pkill
+<span class="success">🔐 Permissions:</span>  umask, getfacl, setfacl, lsattr
+<span class="success">🎉 Fun:</span>  fortune, cowsay, figlet, bc, expr, seq, factor
+<span class="success">🔧 Other:</span>  env, printenv, alias, history, clear, help, version, exit
+<span class="success">⚡ Git:</span>  git init/add/commit/status/log/branch/checkout/merge/diff/stash/remote/clone/push/pull/rebase
+</span>`;
+}
+
+/* ============================================================
+   Git Simulator
+   ============================================================ */
+function cmdGit(args) {
+  const sub = args[0];
+  const rest = args.slice(1);
+  switch (sub) {
+    case 'init':
+      gitState = { initialized: true, branch: 'main', commits: [{ hash: 'a1b2c3d', msg: 'Initial commit', date: new Date().toISOString() }], staged: [], modified: [], remotes: {} };
+      return `<span class="success">Initialized empty Git repository in ${cwd}/.git/</span>`;
+    case 'status':
+      if (!gitState.initialized) return `<span class="error">fatal: not a git repository</span>`;
+      let s = `<span class="output">On branch <span class="success">${gitState.branch}</span>\n\n`;
+      if (gitState.staged.length) s += `Changes to be committed:\n  ${gitState.staged.map(st => `<span class="success">  new file:   ${st}</span>`).join('\n')}\n\n`;
+      if (gitState.modified.length) s += `Changes not staged for commit:\n  ${gitState.modified.map(m => `<span class="error">  modified:   ${m}</span>`).join('\n')}\n\n`;
+      if (!gitState.staged.length && !gitState.modified.length) s += `nothing to commit, working tree clean`;
+      return s + '</span>';
+    case 'add':
+      if (rest[0] === '.' || rest[0] === '-A') { gitState.staged = [...gitState.modified]; gitState.modified = []; return `<span class="success">Changes staged.</span>`; }
+      gitState.staged.push(rest[0] || 'file.txt');
+      return `<span class="success">${esc(rest[0] || 'file.txt')} staged.</span>`;
+    case 'commit':
+      if (!gitState.initialized) return `<span class="error">fatal: not a git repository</span>`;
+      const msgIdx = rest.indexOf('-m');
+      const msg = msgIdx >= 0 ? rest[msgIdx + 1] : rest.join(' ');
+      const hash = Math.random().toString(16).slice(2, 9);
+      gitState.commits.push({ hash, msg: msg || 'No message', date: new Date().toISOString(), branch: gitState.branch });
+      gitState.staged = [];
+      return `<span class="success">[${gitState.branch} ${hash}] ${esc(msg || 'No message')}\n ${gitState.commits.length} commit${gitState.commits.length > 1 ? 's' : ''} total</span>`;
+    case 'log':
+      if (!gitState.initialized) return `<span class="error">fatal: not a git repository</span>`;
+      if (!gitState.commits.length) return `<span class="output">No commits yet.</span>`;
+      return `<span class="output">${gitState.commits.slice().reverse().map(c => `<span class="success">commit ${c.hash}</span>\nAuthor: user <user@1percent.dev>\nDate: ${c.date}\n\n    ${esc(c.msg)}`).join('\n\n')}</span>`;
+    case 'branch':
+      if (!gitState.initialized) return `<span class="error">fatal: not a git repository</span>`;
+      return `<span class="output">* <span class="success">${gitState.branch}</span>\n  main\n  develop\n  feature</span>`;
+    case 'checkout':
+      if (rest[0] === '-b') { gitState.branch = rest[1] || 'new-branch'; return `<span class="success">Switched to a new branch '${esc(gitState.branch)}'</span>`; }
+      gitState.branch = rest[0] || 'main';
+      return `<span class="success">Switched to branch '${esc(gitState.branch)}'</span>`;
+    case 'merge':
+      if (!rest[0]) return `<span class="error">usage: git merge &lt;branch&gt;</span>`;
+      return `<span class="success">Updating a1b2c3d..f4e5d6c\nFast-forward\n 3 files changed, 150 insertions(+), 0 deletions(-)</span>`;
+    case 'diff':
+      if (!gitState.initialized) return `<span class="error">fatal: not a git repository</span>`;
+      return `<span class="output"><span class="error">--- a/index.js</span>\n<span class="success">+++ b/index.js</span>\n@@ -1,5 +1,6 @@\n const express = require('express');\n+const cors = require('cors');\n const app = express();\n+app.use(cors());\n app.get('/', (req, res) => res.send('Hello!'));</span>`;
+    case 'stash': return `<span class="success">Saved working directory and index state WIP on ${gitState.branch}</span>`;
+    case 'remote':
+      if (rest[0] === 'add') { gitState.remotes[rest[1]] = rest[2]; return `<span class="success">Remote '${esc(rest[1])}' added.</span>`; }
+      return `<span class="output">origin\thttps://github.com/user/repo.git (fetch)\norigin\thttps://github.com/user/repo.git (push)</span>`;
+    case 'clone': return `<span class="success">Cloning into 'repo'...\nremote: Enumerating objects: 1234, done.\nReceiving objects: 100% (1234/1234), 2.34 MiB | 5.67 MiB/s, done.</span>`;
+    case 'push': return `<span class="success">Enumerating objects: 5, done.\nTo https://github.com/user/repo.git\n   a1b2c3d..f4e5d6c  main -> main</span>`;
+    case 'pull': return `<span class="success">Already up to date.</span>`;
+    case 'rebase': return `<span class="success">Successfully rebased and updated refs/heads/${gitState.branch}.</span>`;
+    default: return `<span class="error">git: '${esc(sub || '')}' is not a git command.\n<span class="muted">See 'git --help'.</span></span>`;
+  }
+}
+
+function matchGlob(name, pattern) {
+  return new RegExp('^' + pattern.replace(/\*/g, '.*').replace(/\?/g, '.') + '$').test(name);
+}
+
+function resolvePath(p) {
+  if (p === '~') return '/home/user';
+  if (p.startsWith('~/')) return '/home/user' + p.slice(1);
+  if (p.startsWith('/')) return p;
+  if (p === '..') { const parts = cwd.split('/'); parts.pop(); return parts.join('/') || '/'; }
+  if (p === '.') return cwd;
+  return cwd === '/' ? '/' + p : cwd + '/' + p;
+}
+
+/* ============================================================
+   Utils
+   ============================================================ */
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+</script>
+</body>
+</html>
