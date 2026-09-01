@@ -177,34 +177,41 @@ body{font-family:'Inter',sans-serif;background:var(--c-bg);color:var(--c-text);o
 
 /* ── Responsive ──────────────────────────────────── */
 @media(max-width:900px){
-  .layout{grid-template-columns:1fr;grid-template-rows:auto 1fr;}
-  .sidebar{max-height:280px;border-right:none;border-bottom:1px solid var(--c-border);}
-  .sidebar-bottom{max-height:120px;overflow-y:auto;}
-  .content-header{padding:20px 16px 16px;}
+  /* Mobile: sidebar is hidden by default, toggled via JS */
+  .layout{grid-template-columns:1fr;grid-template-rows:1fr;position:relative;overflow:hidden;}
+  .sidebar{position:absolute;inset:0;z-index:50;border-right:none;border-bottom:none;display:flex;flex-direction:column;transform:translateX(0);transition:transform .25s ease;}
+  .sidebar.hidden-mobile{transform:translateX(-100%);pointer-events:none;}
+  .main{position:relative;z-index:10;}
+  .content-header{padding:16px;padding-top:8px;}
   .content-header h1{font-size:20px;}
-  .content-body{padding:20px 16px 30px;}
+  .content-body{padding:16px 16px 100px;}
   .content-body h2{font-size:18px;}
   .content-body h3{font-size:15px;}
   .content-body p{font-size:14px;}
-  .content-footer{padding:12px 16px;flex-direction:column;gap:8px;}
+  .content-footer{padding:12px 16px;flex-direction:column;gap:8px;padding-bottom:80px;}
   .footer-actions{width:100%;justify-content:center;}
   .topbar-course{max-width:150px;}
+  .topbar-right .topbar-btn{display:none;}
+  .mobile-back-btn{display:inline-flex !important;align-items:center;gap:6px;}
+  .mobile-lesson-list-btn{display:inline-flex !important;align-items:center;gap:6px;}
+  /* Bottom nav for mobile */
+  .mobile-bottom-nav{display:flex !important;}
 }
 @media(max-width:600px){
   .topbar{height:40px;padding:0 12px;}
   .topbar-logo .mark{width:16px;height:16px;font-size:8px;}
   .topbar-btn{padding:4px 8px;font-size:11px;}
-  .sidebar{max-height:200px;}
+  .sidebar{padding-bottom:60px;}
   .sidebar-head{padding:10px 12px;}
   .sidebar-head h3{font-size:12px;}
   .lesson-item{padding:8px 12px;}
   .lesson-info h4{font-size:11px;}
   .lesson-meta{font-size:9px;}
   .lesson-num{width:22px;height:22px;font-size:9px;}
-  .content-header{padding:16px 12px 12px;}
+  .content-header{padding:12px;}
   .content-header h1{font-size:18px;}
   .content-header .meta{font-size:11px;flex-wrap:wrap;gap:8px;}
-  .content-body{padding:16px 12px 24px;}
+  .content-body{padding:12px 12px 100px;}
   .content-body h2{font-size:16px;margin:20px 0 8px;}
   .content-body p{font-size:13px;line-height:1.7;}
   .content-body pre{font-size:11px;padding:10px;}
@@ -215,6 +222,19 @@ body{font-family:'Inter',sans-serif;background:var(--c-bg);color:var(--c-text);o
   .quiz-modal-body{padding:16px;}
   .quiz-option{font-size:12px;padding:8px 10px;}
 }
+
+/* Hidden by default on desktop, shown on mobile */
+.mobile-back-btn{display:none;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--c-border);background:#fff;color:var(--c-muted);transition:all .15s;text-decoration:none;margin-bottom:8px;}
+.mobile-back-btn:hover{border-color:var(--c-muted);color:var(--c-text);}
+.mobile-lesson-list-btn{display:none;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--c-border);background:#fff;color:var(--c-muted);transition:all .15s;text-decoration:none;}
+.mobile-lesson-list-btn:hover{border-color:var(--c-muted);color:var(--c-text);}
+
+/* Mobile bottom nav */
+.mobile-bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;background:#fff;border-top:1px solid var(--c-border);padding:6px 16px;padding-bottom:max(6px,env(safe-area-inset-bottom));justify-content:space-around;align-items:center;}
+.mobile-bottom-nav a{display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;font-size:10px;font-weight:600;color:var(--c-muted);padding:4px 8px;border-radius:6px;transition:all .15s;}
+.mobile-bottom-nav a.active{color:var(--c-accent);}
+.mobile-bottom-nav a:hover{color:var(--c-accent);}
+.mobile-bottom-nav svg{width:20px;height:20px;}
 </style>
 </head>
 <body>
@@ -232,6 +252,26 @@ body{font-family:'Inter',sans-serif;background:var(--c-bg);color:var(--c-text);o
     <a href="/learn" id="logout-btn" class="topbar-btn">Logout</a>
   </div>
 </div>
+
+<!-- Mobile bottom nav -->
+<nav class="mobile-bottom-nav" id="mobile-bottom-nav">
+  <a href="/learn/dashboard" style="flex-direction:row;gap:6px;">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Dashboard
+  </a>
+  <a href="#" id="mobile-lessons-tab" class="active" onclick="showMobileSidebar();return false;">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+    Lessons
+  </a>
+  <a href="/learn/playground">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+    Challenges
+  </a>
+  <a href="/learn" id="mobile-nav-logout">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    Logout
+  </a>
+</nav>
 
 <!-- Layout -->
 <div class="layout">
@@ -468,6 +508,10 @@ function doOpenLesson(lessonId){
 
   render.innerHTML=`
     <div class="content-header">
+      <button class="mobile-back-btn" onclick="showMobileSidebar()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Lessons
+      </button>
       <span class="type-badge" style="background:${color}20;color:${color};">${lesson.lesson_type}</span>
       <h1>${escapeHTML(lesson.title)}</h1>
       <div class="meta">
@@ -742,6 +786,46 @@ async function unlockLesson(lessonId){
 document.getElementById('logout-btn')?.addEventListener('click',async e=>{
   e.preventDefault();if(supabaseClient)await supabaseClient.auth.signOut();window.location.href='/learn';
 });
+
+// Mobile nav logout
+document.getElementById('mobile-nav-logout')?.addEventListener('click',async e=>{
+  e.preventDefault();if(supabaseClient)await supabaseClient.auth.signOut();window.location.href='/learn';
+});
+
+// ── Mobile sidebar toggle ───────────────────────
+function showMobileSidebar(){
+  const sidebar=document.querySelector('.sidebar');
+  const main=document.querySelector('.main');
+  if(sidebar)sidebar.classList.remove('hidden-mobile');
+  if(main)main.style.display='none';
+  // Update bottom nav active state
+  document.querySelectorAll('.mobile-bottom-nav a').forEach(a=>a.classList.remove('active'));
+  const lessonsTab=document.getElementById('mobile-lessons-tab');
+  if(lessonsTab)lessonsTab.classList.add('active');
+}
+
+function showMobileContent(){
+  const sidebar=document.querySelector('.sidebar');
+  const main=document.querySelector('.main');
+  if(sidebar)sidebar.classList.add('hidden-mobile');
+  if(main)main.style.display='';
+  // Update bottom nav active state
+  document.querySelectorAll('.mobile-bottom-nav a').forEach(a=>a.classList.remove('active'));
+}
+
+// On mobile, when a lesson is clicked, switch to content view
+const origDoOpenLesson=doOpenLesson;
+doOpenLesson=function(lessonId){
+  origDoOpenLesson(lessonId);
+  if(window.innerWidth<=900){
+    setTimeout(()=>showMobileContent(),50);
+  }
+};
+
+// On mobile, start with sidebar visible
+if(window.innerWidth<=900){
+  showMobileSidebar();
+}
 
 init();
 </script>

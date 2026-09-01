@@ -231,29 +231,44 @@ class PdfService {
 
         if (codeLines.length > 0) {
           doc.moveDown(0.3);
-          const startY = doc.y;
-          const maxCodeHeight = Math.min(codeLines.length * 13 + 16, 400);
 
-          // Code background
-          doc.save();
-          doc.roundedRect(55, startY, 500, maxCodeHeight, 4)
-            .fillColor('#f8f8f8').fill();
+          // Split into chunks that fit on a page
+          const lineHeight = 12;
+          const padding = 12;
+          const maxLinesPerPage = Math.floor((750 - doc.y - padding * 2) / lineHeight);
+          const chunks = [];
+          for (let c = 0; c < codeLines.length; c += maxLinesPerPage) {
+            chunks.push(codeLines.slice(c, c + maxLinesPerPage));
+          }
 
-          // Left border accent
-          doc.rect(55, startY, 3, maxCodeHeight)
-            .fillColor('#6366f1').fill();
+          chunks.forEach((chunk, chunkIdx) => {
+            if (chunkIdx > 0) doc.addPage();
+            const startY = doc.y;
+            const codeHeight = chunk.length * lineHeight + padding * 2;
 
-          // Code text with proper line spacing
-          doc.fontSize(9).fillColor('#333').font('Courier');
-          codeLines.forEach((codeLine, idx) => {
-            doc.text(codeLine || ' ', 68, startY + 8 + (idx * 13), {
-              width: 480,
-              lineBreak: false
+            // Code background
+            doc.save();
+            doc.roundedRect(50, startY, 510, codeHeight, 4)
+              .fillColor('#f4f4f5').fill();
+
+            // Left accent bar
+            doc.rect(50, startY, 3, codeHeight)
+              .fillColor('#6366f1').fill();
+
+            // Code text
+            doc.fontSize(9).fillColor('#333').font('Courier');
+            chunk.forEach((codeLine, idx) => {
+              const truncated = codeLine.length > 80 ? codeLine.slice(0, 77) + '...' : codeLine;
+              doc.text(truncated || ' ', 64, startY + padding + (idx * lineHeight), {
+                width: 490,
+                lineBreak: false
+              });
             });
+
+            doc.y = startY + codeHeight + 6;
+            doc.restore();
           });
-          doc.y = startY + maxCodeHeight + 8;
-          doc.moveDown(0.3);
-          doc.restore();
+          doc.moveDown(0.2);
         }
         continue;
       }
@@ -286,24 +301,42 @@ class PdfService {
           i++;
         }
 
-        // Render table
+        // Render table with borders
         const colWidth = Math.floor(490 / headers.length);
+        const tableX = 60;
+        const rowHeight = 18;
+
+        // Header row background
+        doc.save();
+        doc.rect(tableX, doc.y - 2, 490, rowHeight + 4).fillColor('#f1f3f5').fill();
         doc.fontSize(9).font('Helvetica-Bold').fillColor('#333');
-        let x = 60;
+        let x = tableX;
         headers.forEach(h => {
-          doc.text(h, x, doc.y, { width: colWidth, continued: true });
+          doc.text(h, x + 4, doc.y, { width: colWidth - 8, continued: false });
           x += colWidth;
         });
-        doc.moveDown(0.3);
+        doc.y += rowHeight;
 
-        doc.font('Helvetica').fillColor('#444');
-        rows.forEach(row => {
-          x = 60;
+        // Divider
+        doc.moveTo(tableX, doc.y).lineTo(tableX + 490, doc.y).lineWidth(1).strokeColor('#dee2e6').stroke();
+        doc.moveDown(0.2);
+
+        // Data rows
+        doc.font('Helvetica').fillColor('#444').fontSize(9);
+        rows.forEach((row, ri) => {
+          if (doc.y > 720) doc.addPage();
+          // Zebra striping
+          if (ri % 2 === 0) {
+            doc.save();
+            doc.rect(tableX, doc.y - 2, 490, rowHeight).fillColor('#f8f9fa').fill();
+            doc.restore();
+          }
+          x = tableX;
           row.forEach(cell => {
-            doc.text(cell, x, doc.y, { width: colWidth, continued: true });
+            doc.text(cell, x + 4, doc.y, { width: colWidth - 8, continued: false });
             x += colWidth;
           });
-          doc.moveDown(0.2);
+          doc.y += rowHeight;
         });
         doc.moveDown(0.3);
         continue;
@@ -311,8 +344,9 @@ class PdfService {
 
       // List item
       if (line.trim().startsWith('- ')) {
+        const text = line.trim().replace(/^-\s*/, '');
         doc.fontSize(10).fillColor('#333').font('Helvetica')
-          .text(`•  ${line.trim().replace(/^-\s*/, '')}`, 75, doc.y, { width: 470 });
+          .text(`\u2022  ${text}`, 75, doc.y, { width: 470 });
         doc.moveDown(0.1);
         i++;
         continue;
@@ -333,7 +367,7 @@ class PdfService {
       if (line.trim().startsWith('> ')) {
         const text = line.trim().replace(/^>\s*/, '');
         doc.save();
-        doc.rect(60, doc.y, 3, 16).fillColor('#6366f1').fill();
+        doc.rect(60, doc.y, 3, 14).fillColor('#6366f1').fill();
         doc.fontSize(10).fillColor('#555').font('Helvetica-Oblique')
           .text(text, 72, doc.y, { width: 460 });
         doc.restore();
@@ -345,7 +379,7 @@ class PdfService {
       // Horizontal rule
       if (line.trim() === '---') {
         doc.moveDown(0.5);
-        doc.moveTo(60, doc.y).lineTo(555, doc.y).strokeColor('#ddd').stroke();
+        doc.moveTo(60, doc.y).lineTo(555, doc.y).strokeColor('#dee2e6').lineWidth(0.5).stroke();
         doc.moveDown(0.5);
         i++;
         continue;
@@ -358,11 +392,13 @@ class PdfService {
         continue;
       }
 
-      // Regular paragraph
+      // Regular paragraph — render inline formatting
+      // PDFKit doesn't support inline style changes easily, so we render
+      // bold/italic text as normal but with emphasis via font choice where possible
       const text = line
-        .replace(/\*\*(.+?)\*\*/g, '$1')  // bold (PDFKit doesn't support inline bold easily)
-        .replace(/\*(.+?)\*/g, '$1')       // italic
-        .replace(/`([^`]+)`/g, '$1');       // inline code
+        .replace(/`([^`]+)`/g, '$1')       // strip inline code backticks
+        .replace(/\*\*([^*]+)\*\*/g, '$1') // strip bold markers
+        .replace(/\*([^*]+)\*/g, '$1');     // strip italic markers
 
       if (text.trim()) {
         doc.fontSize(10).fillColor('#333').font('Helvetica')
@@ -392,7 +428,7 @@ class PdfService {
       const doc = new PDFDocument({
         size: 'A4',
         layout: 'landscape',
-        margin: 50,
+        margin: 0,
         info: {
           Title: `Certificate - ${cert.certificate_number}`,
           Author: '1% Digital Solutions',
@@ -404,160 +440,217 @@ class PdfService {
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
 
-      const width = doc.page.width;
-      const height = doc.page.height;
+      const w = doc.page.width;
+      const h = doc.page.height;
 
-      // Outer border
-      doc.rect(30, 30, width - 60, height - 60)
-        .lineWidth(2)
-        .strokeColor('#1a1a2e')
+      // Subtle background gradient (top-left lighter)
+      doc.rect(0, 0, w, h).fill('#fffef9');
+
+      // ── Decorative Borders ──────────────────────────────
+      // Outer border (dark green)
+      doc.rect(24, 24, w - 48, h - 48)
+        .lineWidth(3)
+        .strokeColor('#0d6e3f')
         .stroke();
 
-      // Inner border
-      doc.rect(40, 40, width - 80, height - 80)
+      // Inner border (lighter green)
+      doc.rect(32, 32, w - 64, h - 64)
         .lineWidth(1)
-        .strokeColor('#6366f1')
+        .strokeColor('rgba(13,110,63,0.3)')
         .stroke();
 
-      // Corner accents
-      const cornerSize = 20;
-      [[50, 50], [width - 50 - cornerSize, 50], [50, height - 50 - cornerSize], [width - 50 - cornerSize, height - 50 - cornerSize]].forEach(([x, y]) => {
-        doc.rect(x, y, cornerSize, cornerSize)
-          .fillColor('#6366f1')
-          .fill();
-      });
+      // Gold accent lines (top and bottom)
+      doc.moveTo(40, 40).lineTo(w - 40, 40)
+        .lineWidth(2).strokeColor('#d4a843').stroke();
+      doc.moveTo(40, h - 40).lineTo(w - 40, h - 40)
+        .lineWidth(2).strokeColor('#d4a843').stroke();
 
-      // Header: Company name
-      doc.fontSize(12)
-        .fillColor('#6366f1')
-        .font('Helvetica-Bold')
-        .text('1% DIGITAL SOLUTIONS', 0, 70, { align: 'center', width });
+      // Corner ornaments (L-shapes)
+      const ornLen = 35;
+      const ornW = 3;
+      // Top-left
+      doc.rect(30, 30, ornLen, ornW).fill('#0d6e3f');
+      doc.rect(30, 30, ornW, ornLen).fill('#0d6e3f');
+      // Top-right
+      doc.rect(w - 30 - ornLen, 30, ornLen, ornW).fill('#0d6e3f');
+      doc.rect(w - 30 - ornW, 30, ornW, ornLen).fill('#0d6e3f');
+      // Bottom-left
+      doc.rect(30, h - 30 - ornW, ornLen, ornW).fill('#0d6e3f');
+      doc.rect(30, h - 30 - ornLen, ornW, ornLen).fill('#0d6e3f');
+      // Bottom-right
+      doc.rect(w - 30 - ornLen, h - 30 - ornW, ornLen, ornW).fill('#0d6e3f');
+      doc.rect(w - 30 - ornW, h - 30 - ornLen, ornW, ornLen).fill('#0d6e3f');
 
-      doc.fontSize(10)
-        .fillColor('#888')
-        .font('Helvetica')
-        .text('Kigali, Rwanda', 0, 88, { align: 'center', width });
+      // ── Watermark ──────────────────────────────────────
+      doc.save();
+      doc.translate(w / 2, h / 2).rotate(-30);
+      doc.fontSize(100).fillColor('rgba(13,110,63,0.025)').font('Helvetica-Bold')
+        .text('1% DIGITAL', -200, -40, { width: 400, align: 'center' });
+      doc.restore();
 
-      // Certificate of Completion title
-      doc.moveDown(1.5);
-      doc.fontSize(36)
-        .fillColor('#1a1a2e')
-        .font('Helvetica-Bold')
-        .text('Certificate of Completion', 0, doc.y, { align: 'center', width });
+      // ── Header ─────────────────────────────────────────
+      doc.fontSize(11).fillColor('#0d6e3f').font('Helvetica-Bold')
+        .text('1% DIGITAL SOLUTIONS', 0, 60, { align: 'center', width: w });
+      doc.fontSize(9).fillColor('#9ca3af').font('Helvetica')
+        .text('Kigali, Rwanda', 0, 76, { align: 'center', width: w });
 
-      // Decorative line
-      doc.moveDown(0.5);
-      const lineY = doc.y;
-      doc.moveTo(width / 2 - 100, lineY)
-        .lineTo(width / 2 + 100, lineY)
-        .lineWidth(2)
-        .strokeColor('#6366f1')
-        .stroke();
+      // ── Certificate Title ──────────────────────────────
+      doc.moveDown(2.0);
+      doc.fontSize(34).fillColor('#1a1a2e').font('Helvetica-Bold')
+        .text('Certificate of Completion', 0, doc.y, { align: 'center', width: w });
 
-      // Awarded to
-      doc.moveDown(1);
-      doc.fontSize(12)
-        .fillColor('#888')
-        .font('Helvetica')
-        .text('This is to certify that', 0, doc.y, { align: 'center', width });
+      // Decorative divider with diamond
+      doc.moveDown(0.6);
+      const divY = doc.y;
+      const divW = 80;
+      doc.moveTo(w / 2 - divW, divY).lineTo(w / 2 - 6, divY)
+        .lineWidth(1).strokeColor('#0d6e3f').stroke();
+      doc.moveTo(w / 2 + 6, divY).lineTo(w / 2 + divW, divY)
+        .lineWidth(1).strokeColor('#0d6e3f').stroke();
+      // Diamond
+      doc.save();
+      doc.translate(w / 2, divY).rotate(45);
+      doc.rect(-4, -4, 8, 8).fill('#d4a843');
+      doc.restore();
 
-      // Student name
-      doc.moveDown(0.3);
-      doc.fontSize(28)
-        .fillColor('#1a1a2e')
-        .font('Helvetica-Bold')
-        .text(cert.learner_name || 'Student', 0, doc.y, { align: 'center', width });
+      // ── "This is to certify that" ──────────────────────
+      doc.moveDown(1.0);
+      doc.fontSize(11).fillColor('#9ca3af').font('Helvetica')
+        .text('This is to certify that', 0, doc.y, { align: 'center', width: w, characterSpacing: 3 });
 
-      // Decorative underline
-      const nameY = doc.y + 2;
-      doc.moveTo(width / 2 - 120, nameY)
-        .lineTo(width / 2 + 120, nameY)
-        .lineWidth(1)
-        .strokeColor('#ddd')
-        .stroke();
-
-      // Has successfully completed
-      doc.moveDown(0.8);
-      doc.fontSize(12)
-        .fillColor('#888')
-        .font('Helvetica')
-        .text('has successfully completed the course', 0, doc.y, { align: 'center', width });
-
-      // Course title
-      doc.moveDown(0.3);
-      doc.fontSize(20)
-        .fillColor('#6366f1')
-        .font('Helvetica-Bold')
-        .text(cert.course_title || course?.title || 'Course', 0, doc.y, { align: 'center', width });
-
-      // Course details
+      // ── Student Name ──────────────────────────────────
       doc.moveDown(0.4);
-      doc.fontSize(10)
-        .fillColor('#888')
-        .font('Helvetica')
+      const nameFontSize = Math.min(30, Math.max(20, 300 / (cert.learner_name || 'Student').length));
+      doc.fontSize(nameFontSize).fillColor('#1a1a2e').font('Helvetica-Bold')
+        .text(cert.learner_name || 'Student', 0, doc.y, { align: 'center', width: w });
+
+      // Name underline
+      const nameLineY = doc.y + 3;
+      doc.moveTo(w / 2 - 130, nameLineY).lineTo(w / 2 + 130, nameLineY)
+        .lineWidth(1).strokeColor('#d1d5db').stroke();
+
+      // ── Course completion text ─────────────────────────
+      doc.moveDown(0.8);
+      doc.fontSize(11).fillColor('#9ca3af').font('Helvetica')
+        .text('has successfully completed the course', 0, doc.y, { align: 'center', width: w, characterSpacing: 0.5 });
+
+      // ── Course Title ──────────────────────────────────
+      doc.moveDown(0.3);
+      const courseFontSize = Math.min(22, Math.max(16, 400 / (cert.course_title || course?.title || 'Course').length));
+      doc.fontSize(courseFontSize).fillColor('#0d6e3f').font('Helvetica-Bold')
+        .text(cert.course_title || course?.title || 'Course', 0, doc.y, { align: 'center', width: w });
+
+      // ── Course Details ────────────────────────────────
+      doc.moveDown(0.3);
+      const dateStr = cert.completed_at
+        ? new Date(cert.completed_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+        : cert.issued_at
+          ? new Date(cert.issued_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+          : '';
+      doc.fontSize(9).fillColor('#9ca3af').font('Helvetica')
         .text(
-          `Level: ${cert.course_level || 'Beginner'}  |  Duration: ${cert.duration_weeks || 0} weeks  |  ${cert.completed_at ? new Date(cert.completed_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : ''}`,
-          0, doc.y, { align: 'center', width }
+          `Level: ${cert.course_level || 'Beginner'}  |  Duration: ${cert.duration_weeks || 0} weeks${dateStr ? '  |  ' + dateStr : ''}`,
+          0, doc.y, { align: 'center', width: w, characterSpacing: 0.5 }
         );
 
-      // Signature and certificate number section
-      const bottomY = height - 120;
+      // ── Verified Seal (bottom right area) ─────────────
+      const sealX = w - 110;
+      const sealY = h - 130;
+      const sealR = 35;
+      // Outer circle
+      doc.circle(sealX, sealY, sealR)
+        .lineWidth(2.5).strokeColor('#d4a843').stroke();
+      // Inner circle
+      doc.circle(sealX, sealY, sealR - 5)
+        .lineWidth(1).strokeColor('rgba(212,168,67,0.4)').stroke();
+      // "VERIFIED" text
+      doc.fontSize(6).fillColor('#d4a843').font('Helvetica-Bold')
+        .text('VERIFIED', sealX - 20, sealY - 14, { width: 40, align: 'center', characterSpacing: 2 });
+      // Checkmark icon (simple circle with check)
+      doc.fontSize(14).fillColor('#d4a843').font('Helvetica-Bold')
+        .text('✓', sealX - 5, sealY - 4, { width: 10, align: 'center' });
+      // "1% EXPERT" text
+      doc.fontSize(5.5).fillColor('#d4a843').font('Helvetica-Bold')
+        .text('1% EXPERT', sealX - 20, sealY + 8, { width: 40, align: 'center', characterSpacing: 2 });
 
-      // Left side: date
-      doc.fontSize(9)
-        .fillColor('#888')
-        .font('Helvetica')
-        .text('Date Issued', 80, bottomY, { align: 'center', width: 180 });
-      doc.fontSize(10)
-        .fillColor('#333')
-        .font('Helvetica-Bold')
-        .text(cert.issued_at ? new Date(cert.issued_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '', 80, bottomY + 14, { align: 'center', width: 180 });
+      // ── Bottom Section ────────────────────────────────
+      const bottomY = h - 80;
+      const colW = 180;
 
-      // Center: certificate number
-      doc.fontSize(9)
-        .fillColor('#888')
-        .font('Helvetica')
-        .text('Certificate Number', 0, bottomY, { align: 'center', width: 200, offset: (width - 200) / 2 });
-      doc.fontSize(10)
-        .fillColor('#333')
-        .font('Courier-Bold')
-        .text(cert.certificate_number, 0, bottomY + 14, { align: 'center', width: 200, offset: (width - 200) / 2 });
+      // Left: Date Issued
+      doc.fontSize(8).fillColor('#9ca3af').font('Helvetica')
+        .text('DATE ISSUED', 60, bottomY, { width: colW, align: 'center', characterSpacing: 1.5 });
+      doc.fontSize(10).fillColor('#374151').font('Helvetica-Bold')
+        .text(cert.issued_at ? new Date(cert.issued_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '', 60, bottomY + 12, { width: colW, align: 'center' });
 
-      // Right side: signature
-      if (signatureUrl && signatureUrl.startsWith('data:image')) {
+      // Center: Certificate Number
+      doc.fontSize(8).fillColor('#9ca3af').font('Helvetica')
+        .text('CERTIFICATE NUMBER', w / 2 - colW / 2, bottomY, { width: colW, align: 'center', characterSpacing: 1.5 });
+      doc.fontSize(10).fillColor('#374151').font('Courier-Bold')
+        .text(cert.certificate_number, w / 2 - colW / 2, bottomY + 12, { width: colW, align: 'center' });
+
+      // Right: Signature
+      const sigX = w - 60 - colW;
+      doc.fontSize(8).fillColor('#9ca3af').font('Helvetica')
+        .text('AUTHORIZED SIGNATURE', sigX, bottomY, { width: colW, align: 'center', characterSpacing: 1.5 });
+
+      // Signature image or placeholder line
+      if (signatureUrl) {
         try {
-          const base64Data = signatureUrl.replace(/^data:image\/\w+;base64,/, '');
-          const sigBuffer = Buffer.from(base64Data, 'base64');
-          doc.image(sigBuffer, width - 260, bottomY - 10, { width: 120, height: 40 });
+          let sigBuffer = null;
+          if (signatureUrl.startsWith('data:image')) {
+            const base64Data = signatureUrl.replace(/^data:image\/\w+;base64,/, '');
+            sigBuffer = Buffer.from(base64Data, 'base64');
+          } else if (signatureUrl.startsWith('http')) {
+            // Download remote signature image
+            sigBuffer = await this._fetchImageBuffer(signatureUrl);
+          }
+          if (sigBuffer) {
+            doc.image(sigBuffer, sigX + colW / 2 - 55, bottomY + 12, { width: 110, height: 30, fit: [110, 30] });
+          } else {
+            this._drawSigLine(doc, sigX, bottomY + 25, colW);
+          }
         } catch (e) {
-          // Fallback: draw line for signature
-          doc.moveTo(width - 260, bottomY + 10)
-            .lineTo(width - 140, bottomY + 10)
-            .lineWidth(1)
-            .strokeColor('#ccc')
-            .stroke();
+          console.warn('[PDF] Signature image failed, drawing line:', e.message);
+          this._drawSigLine(doc, sigX, bottomY + 25, colW);
         }
       } else {
-        // No signature — draw placeholder line
-        doc.moveTo(width - 260, bottomY + 10)
-          .lineTo(width - 140, bottomY + 10)
-          .lineWidth(1)
-          .strokeColor('#ccc')
-          .stroke();
+        this._drawSigLine(doc, sigX, bottomY + 25, colW);
       }
 
-      doc.fontSize(9)
-        .fillColor('#888')
-        .font('Helvetica')
-        .text('Authorized Signature', width - 260, bottomY + 30, { width: 120, align: 'center' });
-
-      // Footer
-      doc.fontSize(7)
-        .fillColor('#bbb')
-        .font('Helvetica')
-        .text('Verify at: 1percentrwanda.com/learn  |  1% Digital Solutions  |  Kigali, Rwanda', 0, height - 45, { align: 'center', width });
+      // ── Footer ────────────────────────────────────────
+      doc.fontSize(7).fillColor('#c4c8cf').font('Helvetica')
+        .text('Verify at: 1percentrwanda.com/learn  |  1% Digital Solutions  |  Kigali, Rwanda', 0, h - 32, { align: 'center', width: w, characterSpacing: 1 });
 
       doc.end();
+    });
+  }
+
+  /**
+   * Draw a placeholder signature line
+   */
+  _drawSigLine(doc, x, y, width) {
+    doc.moveTo(x + 10, y).lineTo(x + width - 10, y)
+      .lineWidth(1).strokeColor('#374151').stroke();
+  }
+
+  /**
+   * Fetch an image from a URL and return as Buffer
+   */
+  _fetchImageBuffer(url) {
+    return new Promise((resolve, reject) => {
+      const https = require('https');
+      const http = require('http');
+      const client = url.startsWith('https') ? https : http;
+      client.get(url, (res) => {
+        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          return this._fetchImageBuffer(res.headers.location).then(resolve).catch(reject);
+        }
+        const chunks = [];
+        res.on('data', chunk => chunks.push(chunk));
+        res.on('end', () => resolve(Buffer.concat(chunks)));
+        res.on('error', reject);
+      }).on('error', reject);
     });
   }
 }
