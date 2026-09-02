@@ -1,186 +1,1034 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>1percent Rwanda | Under Construction</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            background-color: #ffffff;
-            color: #1a1a1a;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            padding: 40px 24px;
-            -webkit-font-smoothing: antialiased;
-        }
-        .header {
-            width: 100%;
-            max-width: 1000px;
-            display: flex;
-            justify-content: flex-start;
-        }
-        .brand {
-            font-size: 1.25rem;
-            font-weight: 600;
-            letter-spacing: -0.02em;
-            color: #15803d; /* Soft dark emerald green */
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .brand-dot {
-            width: 8px;
-            height: 8px;
-            background-color: #22c55e; /* Vibrant mint green dot */
-            border-radius: 50%;
-            display: inline-block;
-        }
-        .main-content {
-            max-width: 580px;
-            text-align: center;
-            margin: auto 0;
-        }
-        .status-badge {
-            display: inline-block;
-            background-color: #f0fdf4; /* Soft white-green background */
-            color: #166534;
-            border: 1px solid #dcfce7;
-            font-size: 0.8rem;
-            font-weight: 600;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            padding: 6px 14px;
-            border-radius: 20px;
-            margin-bottom: 24px;
-        }
-        h1 {
-            font-size: 2.75rem;
-            font-weight: 600;
-            letter-spacing: -0.03em;
-            line-height: 1.15;
-            margin-bottom: 16px;
-            color: #09090b;
-        }
-        p {
-            font-size: 1.05rem;
-            line-height: 1.6;
-            color: #71717a;
-            font-weight: 300;
-            margin-bottom: 28px;
-        }
-        .features-box {
-            background-color: #fafafa;
-            border: 1px solid #f4f4f5;
-            border-radius: 12px;
-            padding: 20px 24px;
-            margin-bottom: 32px;
-            text-align: left;
-        }
-        .features-title {
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            color: #15803d;
-            margin-bottom: 12px;
-        }
-        .feature-tags {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .feature-tag {
-            background-color: #ffffff;
-            border: 1px solid #e4e4e7;
-            color: #27272a;
-            padding: 8px 14px;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-        .cta-group {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 12px 24px;
-            border-radius: 6px;
-            font-size: 0.95rem;
-            font-weight: 500;
-            text-decoration: none;
-            transition: all 0.2s ease;
-        }
-        .btn-primary {
-            background-color: #15803d;
-            color: #ffffff;
-        }
-        .btn-primary:hover {
-            background-color: #166534;
-        }
-        .btn-secondary {
-            background-color: #ffffff;
-            color: #09090b;
-            border: 1px solid #e4e4e7;
-        }
-        .btn-secondary:hover {
-            background-color: #fafafa;
-            border-color: #d4d4d8;
-        }
-        .footer {
-            font-size: 0.85rem;
-            color: #a1a1aa;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1% Digital Solutions — Full-Stack Software Studio | Kigali, Rwanda</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="description" content="1percent Rwanda is software company that aims to transform African business with technology and train young minds to become experts in tech and be 1percent on the market">
+<meta name="google-site-verification" content="ZfOqpsVV7Mv1-PxcKiUDQBBONWc1SKmeTi2y2OnZ_RY">
+
+<!-- Open Graph / Social sharing -->
+<meta property="og:title" content="1% Digital Solutions — Full-Stack Software Studio | Kigali, Rwanda">
+<meta property="og:description" content="Enterprise software development, mobile apps, AI & automation, cybersecurity — built in Kigali for Rwanda and Africa.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://1percentrwanda.com">
+<meta name="twitter:card" content="summary">
+
+<!-- Schema.org -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "1percent Rwanda",
+  "url": "https://1percentrwanda.com",
+  "description": "1percent Rwanda is software company that aims to transform African business with technology and train young minds to become experts in tech and be 1percent on the market",
+  "foundingDate": "2025",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Kigali",
+    "addressCountry": "RW"
+  },
+  "employee": [
+    {"@type": "Person", "name": "Aimé Loïc", "jobTitle": "Founder & CEO"},
+    {"@type": "Person", "name": "Nani", "jobTitle": "Co-founder, Frontend Lead"},
+    {"@type": "Person", "name": "Greyson", "jobTitle": "Design & Blockchain Lead"},
+    {"@type": "Person", "name": "Dieu Merci", "jobTitle": "Cybersecurity Lead"}
+  ]
+}
+</script>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- Stylesheets -->
+<link rel="stylesheet" href="/css/main.css">
+<style>
+  /* Business page specific overrides */
+  .biz-hero {
+    padding: 160px 0 100px;
+    background: linear-gradient(170deg, #0a0f1a 0%, #111827 40%, #0f172a 100%);
+    color: #fff;
+    overflow: hidden;
+    position: relative;
+  }
+  .biz-hero::before {
+    content: '';
+    position: absolute;
+    top: -200px;
+    right: -100px;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(13,110,63,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .biz-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -150px;
+    left: -100px;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .biz-hero .container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+  }
+  .biz-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(13,110,63,0.2);
+    color: #34d399;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 100px;
+    margin-bottom: 24px;
+    border: 1px solid rgba(13,110,63,0.3);
+  }
+  .biz-hero-badge .dot {
+    width: 7px;
+    height: 7px;
+    background: #34d399;
+    border-radius: 50%;
+    animation: pulse-dot 2s infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .biz-hero-title {
+    font-size: clamp(38px, 5vw, 60px);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -2px;
+    margin-bottom: 24px;
+    color: #fff;
+  }
+  .biz-hero-title .highlight { color: #34d399; }
+  .biz-hero-title .accent { color: #f59e0b; }
+  .biz-hero-desc {
+    font-size: 18px;
+    color: rgba(255,255,255,0.65);
+    line-height: 1.7;
+    margin-bottom: 36px;
+    max-width: 520px;
+  }
+  .biz-hero-actions { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 48px; }
+  .biz-hero-actions .btn-primary {
+    background: #0d6e3f;
+    color: #fff;
+    border-color: #0d6e3f;
+    padding: 16px 36px;
+    font-size: 15px;
+  }
+  .biz-hero-actions .btn-primary:hover {
+    background: #0a5c34;
+    border-color: #0a5c34;
+    box-shadow: 0 4px 20px rgba(13,110,63,0.4);
+  }
+  .biz-hero-actions .btn-outline {
+    color: rgba(255,255,255,0.8);
+    border-color: rgba(255,255,255,0.2);
+    padding: 16px 36px;
+    font-size: 15px;
+  }
+  .biz-hero-actions .btn-outline:hover {
+    border-color: rgba(255,255,255,0.5);
+    color: #fff;
+  }
+  .biz-hero-stats { display: flex; gap: 48px; }
+  .biz-hero-stat b {
+    display: block;
+    font-size: 32px;
+    font-weight: 900;
+    color: #34d399;
+    line-height: 1;
+  }
+  .biz-hero-stat span { font-size: 13px; color: rgba(255,255,255,0.5); font-weight: 500; }
+
+  /* Hero visual — project showcase */
+  .biz-hero-visual { position: relative; }
+  .biz-hero-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    backdrop-filter: blur(12px);
+    width: 100%;
+    max-width: 480px;
+  }
+  .biz-hero-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .biz-hero-card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    background: rgba(13,110,63,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #34d399;
+  }
+  .biz-hero-card-meta b { display: block; font-size: 14px; font-weight: 700; color: #fff; }
+  .biz-hero-card-meta span { font-size: 12px; color: rgba(255,255,255,0.5); }
+  .biz-hero-code {
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.8;
+    color: rgba(255,255,255,0.6);
+    background: rgba(0,0,0,0.3);
+    padding: 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .biz-hero-code .keyword { color: #c084fc; }
+  .biz-hero-code .func { color: #34d399; }
+  .biz-hero-code .string { color: #fb923c; }
+  .biz-hero-code .comment { color: rgba(255,255,255,0.35); font-style: italic; }
+  .biz-hero-float {
+    position: absolute;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    backdrop-filter: blur(8px);
+    animation: float 3s ease-in-out infinite;
+  }
+  .biz-hero-float.tr { top: -12px; right: -12px; }
+  .biz-hero-float.bl { bottom: -12px; left: -12px; animation-delay: 1.5s; }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  /* Trusted by strip */
+  .trust-strip {
+    padding: 40px 0;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border-light);
+  }
+  .trust-strip .container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 48px;
+    flex-wrap: wrap;
+  }
+  .trust-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    font-family: var(--mono);
+  }
+  .trust-logos {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .trust-logo {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text-muted);
+    opacity: 0.5;
+    letter-spacing: -0.5px;
+    white-space: nowrap;
+  }
+
+  /* Process section */
+  .process-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+  }
+  .process-step {
+    text-align: center;
+    padding: 32px 20px;
+    position: relative;
+  }
+  .process-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 52px;
+    right: -12px;
+    width: 24px;
+    height: 2px;
+    background: var(--border);
+  }
+  .process-num {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-weight: 800;
+    font-size: 16px;
+    margin: 0 auto 16px;
+    border: 2px solid rgba(13,110,63,0.15);
+  }
+  .process-step h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .process-step p { font-size: 13.5px; color: var(--text-secondary); line-height: 1.6; }
+
+  /* CTA section */
+  .biz-cta {
+    background: linear-gradient(135deg, #0d6e3f 0%, #0a5c34 100%);
+    border-radius: var(--radius-xl);
+    padding: 72px 60px;
+    text-align: center;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+  .biz-cta::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+  }
+  .biz-cta::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: -10%;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.03);
+  }
+  .biz-cta .eyebrow { color: #f59e0b; }
+  .biz-cta .section-title { color: #fff; }
+  .biz-cta .section-subtitle { color: rgba(255,255,255,0.8); margin: 0 auto 32px; }
+  .biz-cta .btn { position: relative; z-index: 1; }
+  .biz-cta .btn-white {
+    background: #fff;
+    color: #0d6e3f;
+    border-color: #fff;
+    padding: 16px 40px;
+    font-size: 15px;
+  }
+  .biz-cta .btn-white:hover {
+    background: #f0fdf4;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
+  .biz-cta .btn-outline-white {
+    background: transparent;
+    color: #fff;
+    border-color: rgba(255,255,255,0.3);
+    padding: 16px 40px;
+    font-size: 15px;
+  }
+  .biz-cta .btn-outline-white:hover {
+    border-color: rgba(255,255,255,0.6);
+    background: rgba(255,255,255,0.1);
+  }
+
+  /* Contact form section */
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: start;
+  }
+  .contact-info h3 { font-size: 20px; font-weight: 800; margin-bottom: 12px; }
+  .contact-info p { font-size: 15px; color: var(--text-secondary); line-height: 1.7; margin-bottom: 24px; }
+  .contact-detail {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .contact-detail-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    background: var(--primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    flex-shrink: 0;
+  }
+  .contact-detail-text b { display: block; font-size: 14px; font-weight: 700; }
+  .contact-detail-text span { font-size: 13px; color: var(--text-muted); }
+  .contact-form {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+  }
+  .contact-form label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    margin-top: 16px;
+  }
+  .contact-form label:first-child { margin-top: 0; }
+  .contact-form input, .contact-form textarea, .contact-form select {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    color: var(--text);
+    background: var(--bg);
+    outline: none;
+    transition: border-color var(--transition);
+    font-family: var(--sans);
+  }
+  .contact-form input:focus, .contact-form textarea:focus, .contact-form select:focus {
+    border-color: var(--primary);
+  }
+  .contact-form textarea { resize: vertical; min-height: 100px; }
+  .contact-form .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .biz-hero .container { grid-template-columns: 1fr; gap: 40px; }
+    .biz-hero-visual { display: none; }
+    .process-grid { grid-template-columns: repeat(2, 1fr); }
+    .process-step:not(:last-child)::after { display: none; }
+    .contact-grid { grid-template-columns: 1fr; }
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 640px) {
+    .biz-hero { padding: 120px 0 60px; }
+    .biz-hero-stats { gap: 24px; flex-wrap: wrap; }
+    .process-grid { grid-template-columns: 1fr; }
+    .contact-form .form-row { grid-template-columns: 1fr; }
+    .footer-grid { grid-template-columns: 1fr; }
+    .biz-cta { padding: 48px 24px; }
+  }
+</style>
+
+<!-- Icons -->
+<script src="/js/icons.js"></script>
 </head>
 <body>
 
-    <header class="header">
-        <div class="brand">
-            <span class="brand-dot"></span>
-            1percent Rwanda
+<!-- ============================================================
+     HEADER
+     ============================================================ -->
+<header id="header">
+  <div class="container">
+    <a href="/" class="logo">
+      <div class="logo-text">
+        <span class="name">1% Digital Solutions</span>
+        <span class="tagline">Kigali, Rwanda</span>
+      </div>
+    </a>
+    <button class="mobile-toggle" id="mobile-toggle" aria-label="Menu"><span class="icon-menu"></span></button>
+    <nav id="main-nav">
+      <a href="#services">Services</a>
+      <a href="#work">Portfolio</a>
+      <a href="#process">Process</a>
+      <a href="#team">Team</a>
+      <a href="#contact">Contact</a>
+      <a href="https://learn-1percent-rwanda.onrender.com/learn" class="btn btn-outline btn-sm nav-cta" style="border-color:var(--primary);color:var(--primary);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        Learning Platform
+      </a>
+    </nav>
+  </div>
+</header>
+
+<!-- ============================================================
+     HERO
+     ============================================================ -->
+<section class="biz-hero">
+  <div class="container">
+    <div class="hero-content">
+      <div class="biz-hero-badge"><span class="dot"></span> Available for new projects — 2026</div>
+      <h1 class="biz-hero-title">
+        We build the software<br>
+        that <span class="highlight">powers businesses</span><br>
+        across <span class="accent">Rwanda &amp; Africa</span>.
+      </h1>
+      <p class="biz-hero-desc">
+        Full-stack software studio in Kigali. From web platforms and mobile apps to AI systems and cybersecurity — we deliver production-grade solutions that scale.
+      </p>
+      <div class="biz-hero-actions">
+        <a href="#contact" class="btn btn-primary btn-lg">Start a Project</a>
+        <a href="#work" class="btn btn-outline btn-lg">See Our Work</a>
+      </div>
+      <div class="biz-hero-stats">
+        <div class="biz-hero-stat"><b>28+</b><span>Projects Shipped</span></div>
+        <div class="biz-hero-stat"><b>4</b><span>Expert Engineers</span></div>
+        <div class="biz-hero-stat"><b>100%</b><span>Production-Grade</span></div>
+      </div>
+    </div>
+    <div class="biz-hero-visual">
+      <div class="biz-hero-card">
+        <div class="biz-hero-card-header">
+          <div class="biz-hero-card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
+          <div class="biz-hero-card-meta">
+            <b>1% Engineering</b>
+            <span>Production deployment pipeline</span>
+          </div>
         </div>
-    </header>
-
-    <main class="main-content">
-        <span class="status-badge">Under Construction</span>
-        <h1>We are building something new.</h1>
-        <p>Our website is currently undergoing planned upgrades. We are getting ready to launch brand new experiences for you.</p>
-
-        <div class="features-box">
-            <div class="features-title">Expected Features</div>
-            <div class="feature-tags">
-                <span class="feature-tag">1percent Business Suite</span>
-                <span class="feature-tag">1percent Learn</span>
-            </div>
+        <div class="biz-hero-code">
+          <span class="comment">// Deploying to production</span><br>
+          <span class="keyword">const</span> <span class="func">deploy</span> = <span class="keyword">async</span> () => {<br>
+          &nbsp;&nbsp;<span class="keyword">await</span> <span class="func">runTests</span>();<br>
+          &nbsp;&nbsp;<span class="keyword">await</span> <span class="func">build</span>(<span class="string">'production'</span>);<br>
+          &nbsp;&nbsp;<span class="keyword">await</span> <span class="func">deploy</span>(<span class="string">'aws-lambda'</span>);<br>
+          &nbsp;&nbsp;<span class="func">notify</span>(<span class="string">'✅ Live!'</span>);<br>
+          };
         </div>
-        
-        <div class="cta-group">
-            <a href="mailto:1percentrwanda@gmail.com" class="btn btn-primary">Email Us</a>
-            <a href="tel:0791749219" class="btn btn-secondary">Call 0791749219</a>
+      </div>
+      <div class="biz-hero-float tr"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg> Deployed to AWS</div>
+      <div class="biz-hero-float bl"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg> CI/CD Pipeline Active</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     TRUSTED BY
+     ============================================================ -->
+<div class="trust-strip">
+  <div class="container">
+    <span class="trust-label">Trusted by</span>
+    <div class="trust-logos">
+      <span class="trust-logo">Rwanda Transport</span>
+      <span class="trust-logo">Kigali FinTech</span>
+      <span class="trust-logo">Africa IoT Labs</span>
+      <span class="trust-logo">Genesis Platform</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SERVICES
+     ============================================================ -->
+<section id="services" class="section">
+  <div class="container">
+    <div class="text-center" style="margin-bottom:56px;">
+      <span class="eyebrow">What We Build</span>
+      <h2 class="section-title">Full-Stack Software Services</h2>
+      <p class="section-subtitle">From concept to deployment — we deliver the software, systems, and infrastructure your business needs to grow.</p>
+    </div>
+    <div class="grid-3" id="services-grid"></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     PORTFOLIO / WORK
+     ============================================================ -->
+<section id="work" class="section section-alt">
+  <div class="container">
+    <div class="text-center" style="margin-bottom:56px;">
+      <span class="eyebrow">Our Work</span>
+      <h2 class="section-title">What We've Actually Shipped</h2>
+      <p class="section-subtitle">Real products, solving real problems — built for businesses in Rwanda and beyond.</p>
+    </div>
+    <div class="grid-2">
+      <div class="work-card">
+        <div class="work-tag">Transport &amp; Fintech</div>
+        <h3>BookIt</h3>
+        <p>Intercity bus ticketing for Rwanda — real operators, real payment rails, route-chaining priced off actual RURA tariff data.</p>
+      </div>
+      <div class="work-card">
+        <div class="work-tag">AI &amp; Energy</div>
+        <h3>FRIDAY</h3>
+        <p>An AI agent for smart energy management, with a working device-simulation backend and a 3D digital-twin walkthrough.</p>
+      </div>
+      <div class="work-card">
+        <div class="work-tag">Community Platform</div>
+        <h3>Genesis</h3>
+        <p>A platform for pairing people with project ideas — team formation, sponsorship, and built-in group chat.</p>
+      </div>
+      <div class="work-card">
+        <div class="work-tag">Developer Tools</div>
+        <h3>monkey-tester</h3>
+        <p>An open-source npm package that auto-discovers Express routes and generates a live API testing UI. Public on npm.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     OUR PROCESS
+     ============================================================ -->
+<section id="process" class="section">
+  <div class="container">
+    <div class="text-center" style="margin-bottom:56px;">
+      <span class="eyebrow">How We Work</span>
+      <h2 class="section-title">From Idea to Production</h2>
+      <p class="section-subtitle">A proven process that delivers results — every time.</p>
+    </div>
+    <div class="process-grid">
+      <div class="process-step">
+        <div class="process-num">1</div>
+        <h3>Discovery</h3>
+        <p>We learn your business, your users, and your goals. No assumptions — just clarity.</p>
+      </div>
+      <div class="process-step">
+        <div class="process-num">2</div>
+        <h3>Design</h3>
+        <p>Wireframes, prototypes, and a design system built for scale. You see it before we build it.</p>
+      </div>
+      <div class="process-step">
+        <div class="process-num">3</div>
+        <h3>Build</h3>
+        <p>Full-stack engineering with modern tools. Weekly demos so you're never surprised.</p>
+      </div>
+      <div class="process-step">
+        <div class="process-num">4</div>
+        <h3>Launch &amp; Scale</h3>
+        <p>Deploy, monitor, and iterate. We stay with you as your product grows.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     TEAM
+     ============================================================ -->
+<section id="team" class="section section-alt">
+  <div class="container">
+    <div class="text-center" style="margin-bottom:56px;">
+      <span class="eyebrow">Our Team</span>
+      <h2 class="section-title">Small on Purpose</h2>
+      <p class="section-subtitle">Four experts, each owning a full domain. No middlemen — you work directly with the people building your software.</p>
+    </div>
+    <div class="grid-4">
+      <div class="team-card">
+        <div class="team-avatar"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <h3>Aimé Loïc</h3>
+        <span class="role">Founder &amp; CEO</span>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
+        <h3>Nani</h3>
+        <span class="role">Co-founder, Frontend Lead</span>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg></div>
+        <h3>Greyson</h3>
+        <span class="role">Design &amp; Blockchain Lead</span>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg></div>
+        <h3>Dieu Merci</h3>
+        <span class="role">Cybersecurity Lead</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     CTA
+     ============================================================ -->
+<section class="section">
+  <div class="container">
+    <div class="biz-cta">
+      <span class="eyebrow">Ready to Build?</span>
+      <h2 class="section-title">Let's Grow Your Business Together</h2>
+      <p class="section-subtitle">Whether you need a web platform, mobile app, AI system, or security audit — we're ready to deliver.</p>
+      <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;position:relative;z-index:1;">
+        <a href="#contact" class="btn btn-white btn-lg">Get in Touch</a>
+        <a href="#work" class="btn btn-outline-white btn-lg">See Our Work</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     CONTACT
+     ============================================================ -->
+<section id="contact" class="section section-alt">
+  <div class="container">
+    <div class="text-center" style="margin-bottom:56px;">
+      <span class="eyebrow">Get in Touch</span>
+      <h2 class="section-title">Let's Talk About Your Project</h2>
+      <p class="section-subtitle">Tell us about your idea and we'll get back to you within 24 hours.</p>
+    </div>
+    <div class="contact-grid">
+      <div class="contact-info">
+        <h3>1% Digital Solutions</h3>
+        <p>We're a Kigali-based software studio. Reach out for project inquiries, partnerships, or just to say hello.</p>
+        <div class="contact-detail">
+          <div class="contact-detail-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></div>
+          <div class="contact-detail-text">
+            <b>Email</b>
+            <span>1percentrwanda@gmail.com</span>
+          </div>
         </div>
-    </main>
+        <div class="contact-detail">
+          <div class="contact-detail-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></div>
+          <div class="contact-detail-text">
+            <b>Location</b>
+            <span>Kigali, Rwanda</span>
+          </div>
+        </div>
+        <div class="contact-detail">
+          <div class="contact-detail-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg></div>
+          <div class="contact-detail-text">
+            <b>LinkedIn</b>
+            <span>1% Digital Solutions</span>
+          </div>
+        </div>
+      </div>
+      <form class="contact-form" id="contact-form">
+        <div class="form-row">
+          <label for="contact-name">Full Name</label>
+          <label for="contact-company">Company</label>
+        </div>
+        <div class="form-row">
+          <input type="text" id="contact-name" placeholder="Your name" required>
+          <input type="text" id="contact-company" placeholder="Company name">
+        </div>
+        <label for="contact-email">Email</label>
+        <input type="email" id="contact-email" placeholder="you@company.com" required>
+        <label for="contact-service">What do you need?</label>
+        <select id="contact-service">
+          <option value="">Select a service...</option>
+          <option value="web">Web Development</option>
+          <option value="mobile">Mobile App</option>
+          <option value="ai">AI & Automation</option>
+          <option value="security">Cybersecurity</option>
+          <option value="iot">IoT & Embedded</option>
+          <option value="design">UI/UX Design</option>
+          <option value="other">Something Else</option>
+        </select>
+        <label for="contact-message">Project Details</label>
+        <textarea id="contact-message" placeholder="Tell us about your project, timeline, and budget..." rows="4"></textarea>
+        <div style="margin-top:20px;">
+          <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;">Send Message</button>
+        </div>
+        <div id="contact-status" style="margin-top:12px;font-size:13px;font-family:var(--mono);display:none;"></div>
+      </form>
+    </div>
+  </div>
+</section>
 
-    <footer class="footer">
-        &copy; 1percent Rwanda. All rights reserved.
-    </footer>
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer id="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="logo-mark" style="margin-bottom:12px;">1%</div>
+        <p>Full-stack software studio in Kigali, Rwanda. Building enterprise software and training the next generation of expert developers.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Services</h4>
+        <ul>
+          <li><a href="#services">Web Development</a></li>
+          <li><a href="#services">Mobile Apps</a></li>
+          <li><a href="#services">AI & Automation</a></li>
+          <li><a href="#services">Cybersecurity</a></li>
+          <li><a href="#services">IoT & Embedded</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Learning</h4>
+        <ul>
+          <li><a href="/learn">1% Expert Programme</a></li>
+          <li><a href="/learn">Start Learning</a></li>
+          <li><a href="/learn/dashboard">Student Dashboard</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="#team">Our Team</a></li>
+          <li><a href="#work">Portfolio</a></li>
+          <li><a href="#contact">Contact</a></li>
+          <li><a href="mailto:1percentrwanda@gmail.com">1percentrwanda@gmail.com</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 1% Digital Solutions — Kigali, Rwanda</span>
+      <div class="footer-bottom-links">
+        <a href="#" data-modal="terms-modal">Terms of Service</a>
+        <a href="#" data-modal="privacy-modal">Privacy Policy</a>
+      </div>
+      <div class="footer-social">
+        <a href="#" aria-label="LinkedIn" class="icon-linkedin"></a>
+        <a href="#" aria-label="Twitter" class="icon-twitter"></a>
+        <a href="#" aria-label="GitHub" class="icon-github"></a>
+        <a href="#" aria-label="Instagram" class="icon-instagram"></a>
+      </div>
+    </div>
+  </div>
+</footer>
 
+<!-- ============================================================
+     COOKIE CONSENT BANNER
+     ============================================================ -->
+<div id="cookie-banner">
+  <div class="container">
+    <div class="cookie-text">
+      <span class="icon-cookie"></span> We use cookies to improve your experience. By continuing to use this site, you agree to our
+      <a href="#" data-modal="privacy-modal">Privacy Policy</a> and
+      <a href="#" data-modal="terms-modal">Terms of Service</a>.
+    </div>
+    <div class="cookie-actions">
+      <button class="btn btn-outline btn-sm" id="cookie-reject">Reject</button>
+      <button class="btn btn-primary btn-sm" id="cookie-accept">Accept All</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     TERMS OF SERVICE MODAL
+     ============================================================ -->
+<div class="modal-overlay" id="terms-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Terms of Service</h3>
+      <button class="modal-close" data-close-modal>✕</button>
+    </div>
+    <div class="modal-body">
+      <h4>1. Acceptance of Terms</h4>
+      <p>By accessing or using the services provided by 1% Digital Solutions ("the Company"), including our website, training programmes, and software development services, you agree to be bound by these Terms of Service. If you do not agree, do not use our services.</p>
+      <h4>2. Services</h4>
+      <p>1% Digital Solutions provides the following services from Kigali, Rwanda:</p>
+      <ul>
+        <li>Full-stack software development (web, mobile, AI, IoT)</li>
+        <li>The 1% Expert developer training programme</li>
+        <li>Cybersecurity consulting and penetration testing</li>
+        <li>UI/UX design and consulting services</li>
+      </ul>
+      <h4>3. Training Programme</h4>
+      <p>Enrolment in the 1% Expert Programme requires acceptance of these terms. Students must:</p>
+      <ul>
+        <li>Be at least 16 years of age</li>
+        <li>Complete assigned coursework and projects</li>
+        <li>Adhere to the code of conduct</li>
+        <li>Not redistribute course materials</li>
+      </ul>
+      <h4>4. Intellectual Property</h4>
+      <p>All course materials, software, and content created by 1% Digital Solutions remain the intellectual property of the Company unless otherwise stated. Students retain ownership of their original project work.</p>
+      <h4>5. Limitation of Liability</h4>
+      <p>1% Digital Solutions shall not be liable for any indirect, incidental, or consequential damages. Our total liability shall not exceed the amount paid for the specific service in question.</p>
+      <h4>6. Governing Law</h4>
+      <p>These terms are governed by the laws of the Republic of Rwanda. Any disputes shall be resolved in the courts of Kigali.</p>
+      <h4>7. Changes</h4>
+      <p>We reserve the right to modify these terms at any material time. Continued use of our services constitutes acceptance of updated terms.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" data-close-modal>Close</button>
+      <button class="btn btn-primary btn-sm" data-close-modal>I Accept</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PRIVACY POLICY MODAL
+     ============================================================ -->
+<div class="modal-overlay" id="privacy-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Privacy Policy</h3>
+      <button class="modal-close" data-close-modal>✕</button>
+    </div>
+    <div class="modal-body">
+      <h4>1. Information We Collect</h4>
+      <p>When you use our services, we may collect:</p>
+      <ul>
+        <li>Name and email address (when you sign up or contact us)</li>
+        <li>Account credentials (managed securely via Supabase Auth)</li>
+        <li>Course progress and completion data</li>
+        <li>Service inquiry details (project requirements, budget)</li>
+        <li>Cookie and usage data</li>
+      </ul>
+      <h4>2. How We Use Your Information</h4>
+      <ul>
+        <li>To provide and improve our training and development services</li>
+        <li>To track your learning progress and issue certifications</li>
+        <li>To communicate about courses, services, and updates</li>
+        <li>To process service inquiries and project proposals</li>
+        <li>To comply with legal obligations</li>
+      </ul>
+      <h4>3. Data Storage & Security</h4>
+      <p>Your data is stored securely using Supabase (hosted on AWS infrastructure). We implement industry-standard encryption, access controls, and regular security audits.</p>
+      <h4>4. Data Sharing</h4>
+      <p>We do not sell your personal data. We may share data with:</p>
+      <ul>
+        <li>Service providers essential to our operations (hosting, email)</li>
+        <li>Law enforcement when legally required</li>
+      </ul>
+      <h4>5. Your Rights</h4>
+      <p>You have the right to access, correct, or delete your personal data. Contact us at 1percentrwanda@gmail.com to exercise these rights.</p>
+      <h4>6. Cookies</h4>
+      <p>We use essential cookies for site functionality and optional analytics cookies. You can manage preferences through the cookie consent banner.</p>
+      <h4>7. Contact</h4>
+      <p>For privacy concerns, contact: 1percentrwanda@gmail.com — 1% Digital Solutions, Kigali, Rwanda.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" data-close-modal>Close</button>
+      <button class="btn btn-primary btn-sm" data-close-modal>I Understand</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script src="/js/modal.js"></script>
+<script src="/js/cookie.js"></script>
+<script src="/js/icons.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Header scroll
+  const header = document.getElementById('header');
+  window.addEventListener('scroll', () => {
+    header.classList.toggle('scrolled', window.scrollY > 20);
+  }, { passive: true });
+
+  // Mobile nav
+  const toggle = document.getElementById('mobile-toggle');
+  const nav = document.getElementById('main-nav');
+  if (toggle && nav) {
+    toggle.addEventListener('click', () => nav.classList.toggle('open'));
+  }
+
+  // Smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(link => {
+    link.addEventListener('click', (e) => {
+      const href = link.getAttribute('href');
+      if (href === '#') return;
+      const target = document.querySelector(href);
+      if (target) {
+        e.preventDefault();
+        nav?.classList.remove('open');
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+
+  // Load services
+  loadServices();
+
+  // Contact form
+  const form = document.getElementById('contact-form');
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const status = document.getElementById('contact-status');
+      const data = {
+        name: document.getElementById('contact-name').value,
+        email: document.getElementById('contact-email').value,
+        company: document.getElementById('contact-company').value,
+        service: document.getElementById('contact-service').value,
+        message: document.getElementById('contact-message').value,
+      };
+      status.style.display = 'block';
+      status.style.color = 'var(--text-muted)';
+      status.textContent = 'Sending...';
+      try {
+        const res = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        const json = await res.json();
+        if (json.success) {
+          status.style.color = 'var(--success)';
+          status.textContent = '✓ Message sent! We\'ll get back to you within 24 hours.';
+          form.reset();
+        } else {
+          status.style.color = 'var(--danger)';
+          status.textContent = json.error || 'Failed to send. Please try again.';
+        }
+      } catch {
+        status.style.color = 'var(--danger)';
+        status.textContent = 'Network error. Please try again.';
+      }
+    });
+  }
+});
+
+async function loadServices() {
+  const grid = document.getElementById('services-grid');
+  if (!grid) return;
+
+  const serviceIcons = {
+    'web-development': 'globe', 'mobile-apps': 'smartphone',
+    'ai-automation': 'brain', 'cybersecurity': 'shield',
+    'iot-embedded': 'plug', 'ui-ux-design': 'palette'
+  };
+
+  try {
+    const res = await fetch('/api/contact/services');
+    const json = await res.json();
+    if (json.success && json.services?.length > 0) {
+      grid.innerHTML = json.services.map(s => `
+        <div class="service-card">
+          <div class="service-icon">${Icons.get(serviceIcons[s.slug] || 'rocket', 22)}</div>
+          <h3>${escapeHTML(s.title)}</h3>
+          <p>${escapeHTML(s.description)}</p>
+          <div class="service-features">
+            ${(s.features || []).map(f => `<span>${escapeHTML(f)}</span>`).join('')}
+          </div>
+        </div>
+      `).join('');
+      return;
+    }
+  } catch {}
+
+  // Static fallback
+  const fb = [
+    { icon: 'globe', title: 'Web Development', desc: 'Full-stack web apps built with modern frameworks — React, Next.js, Node.js, PostgreSQL.', tags: ['React / Next.js','Node.js','PostgreSQL','REST & GraphQL'] },
+    { icon: 'smartphone', title: 'Mobile Applications', desc: 'Cross-platform mobile apps for iOS and Android with offline-first architecture.', tags: ['React Native','Flutter','Push Notifications','App Store'] },
+    { icon: 'brain', title: 'AI & Automation', desc: 'Intelligent agents, workflow automation, and ML pipelines built in-house.', tags: ['Custom AI Agents','NLP & Vision','Workflows','Data Pipelines'] },
+    { icon: 'shield', title: 'Cybersecurity', desc: 'Offensive testing, hardening, and incident response for critical systems.', tags: ['Pen Testing','Auditing','Hardening','Incident Response'] },
+    { icon: 'plug', title: 'IoT & Embedded', desc: 'Hardware-software integration with real devices, sensors, and digital twins.', tags: ['ESP32 / Arduino','Sensors','MQTT','Digital Twins'] },
+    { icon: 'palette', title: 'UI/UX Design', desc: 'User research, wireframing, prototyping, and polished design systems.', tags: ['User Research','Prototypes','Design Systems','Figma'] },
+  ];
+  grid.innerHTML = fb.map(s => `
+    <div class="service-card">
+      <div class="service-icon">${Icons.get(s.icon, 22)}</div>
+      <h3>${s.title}</h3>
+      <p>${s.desc}</p>
+      <div class="service-features">${s.tags.map(t => `<span>${t}</span>`).join('')}</div>
+    </div>
+  `).join('');
+}
+
+function escapeHTML(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/[&<>\"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', "'": '&#39;' }[c]));
+}
+</script>
 </body>
 </html>
