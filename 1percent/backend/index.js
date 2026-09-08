@@ -23,8 +23,10 @@ const pdfRoutes = require('./routes/pdfRoutes');
 const premiumRoutes = require('./routes/premiumRoutes');
 const coinsRoutes = require('./routes/coinsRoutes');
 const labRoutes = require('./routes/labRoutes');
+const docsRoutes = require('./routes/docsRoutes');
 const signatureRoutes = require('./routes/signatureRoutes');
 const fileRoutes = require('./routes/fileRoutes');
+const challengesRoutes = require('./routes/challengesRoutes');
 
 const app = express();
 
@@ -124,6 +126,8 @@ app.use('/api/coins', coinsRoutes);
 app.use('/api/lab', labRoutes);
 app.use('/api/sign', signatureRoutes);
 app.use('/api/files', fileRoutes);
+app.use('/api/challenges', challengesRoutes);
+app.use('/api/docs', docsRoutes);
 app.use('/api', courseRoutes);  // /api/roadmap, /api/courses (has /:slug)
 
 /* ============================================================
@@ -142,6 +146,7 @@ const htmlRoutes = {
   '/learn/certificate': 'certificate-view.html',
   '/admin': 'admin.html',
   '/admin/': 'admin.html',
+  '/docs': 'docs.html',
 };
 
 app.get('*', (req, res) => {
