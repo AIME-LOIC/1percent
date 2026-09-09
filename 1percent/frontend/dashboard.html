@@ -17,12 +17,33 @@
 <script src="/js/icons.js" defer></script>
 <script src="/js/modal.js" defer></script>
 <script src="/js/dashboard.js" defer></script>
+<script>
+// Subdomain-aware link rewriting: strip /learn prefix on learn.1percent.rw
+(function() {
+  const host = location.hostname;
+  const isLearn = host === 'learn.1percent.rw' || host === 'www.learn.1percent.rw';
+  if (!isLearn) return;
+  const base = 'https://learn.1percent.rw';
+  // Rewrite all /learn/* hrefs and onclick handlers
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('a[href*="/learn"]').forEach(function(a) {
+      a.href = a.href.replace(/\/learn(\/|$)/, '/');
+    });
+    // Also fix inline onclick handlers
+    document.querySelectorAll('[onclick*="/learn"]').forEach(function(el) {
+      el.setAttribute('onclick', el.getAttribute('onclick').replace(/\/learn(\/|$)/g, '/'));
+    });
+  });
+  // Override window.location.href setter to strip /learn
+  var origAssign = Object.getOwnPropertyDescriptor(window.location.__proto__, 'href');
+})();
+</script>
 </head>
 <body>
 
 <header id="header" class="scrolled">
   <div class="container">
-    <a href="/learn" class="logo">
+    <a href="/" class="logo">
       <div class="logo-text">
         <span class="name">1% Expert Programme</span>
         <span class="tagline">Student Dashboard</span>
@@ -47,7 +68,7 @@
   <div class="container dashboard-guest">
     <h1>You need to log in to view your dashboard.</h1>
     <p class="text-secondary">Head back to the learning platform and use "Student Login" to sign in or create an account.</p>
-    <a href="/learn" class="btn btn-primary btn-lg">Back to Learning Platform</a>
+    <a href="/" class="btn btn-primary btn-lg">Back to Learning Platform</a>
   </div>
 </template>
 
@@ -89,7 +110,7 @@
     <!-- Challenges -->
     <div class="dash-section">
       <h2>Challenges</h2>
-      <a href="/learn/playground" style="font-size:12px;color:var(--primary);font-weight:600;text-decoration:none;">View All &rarr;</a>
+      <a href="/playground" style="font-size:12px;color:var(--primary);font-weight:600;text-decoration:none;">View All &rarr;</a>
     </div>
     <div class="dash-challenges" id="dash-challenges">
       <div class="dash-challenge-filters" id="challenge-filters"></div>
@@ -137,19 +158,19 @@
 
 <!-- Mobile bottom nav -->
 <nav class="mobile-bottom-nav" id="mobile-bottom-nav" style="display:none;">
-  <a href="/learn/dashboard" class="active">
+  <a href="/dashboard" class="active">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     Home
   </a>
-  <a href="/learn">
+  <a href="/">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
     Courses
   </a>
-  <a href="/learn/playground">
+  <a href="/playground">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
     Challenges
   </a>
-  <a href="/learn/lab">
+  <a href="/lab">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
     Lab
   </a>

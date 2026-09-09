@@ -9,6 +9,15 @@ function escapeHTML(str) {
   }[c]));
 }
 
+// Subdomain-aware URL helper
+const _host = location.hostname;
+const _isLearn = _host === 'learn.1percent.rw' || _host === 'www.learn.1percent.rw';
+function _url(path) {
+  // path should NOT include /learn prefix
+  if (_isLearn) return 'https://learn.1percent.rw' + path;
+  return '/learn' + path;
+}
+
 const Dashboard = {
   supabase: null,
 
@@ -45,9 +54,9 @@ const Dashboard = {
     const nav = document.getElementById('main-nav');
     // Add nav links
     nav.innerHTML = `
-      <a href="/learn/dashboard">Dashboard</a>
-      <a href="/learn/lab">Code Lab</a>
-      <a href="/learn/playground">Challenges</a>
+      <a href="${_url('/dashboard')}">Dashboard</a>
+      <a href="${_url('/lab')}">Code Lab</a>
+      <a href="${_url('/playground')}">Challenges</a>
     `;
     const menu = document.createElement('div');
     menu.className = 'user-menu';
@@ -60,7 +69,7 @@ const Dashboard = {
           <b>${escapeHTML(name)}</b>
           <span>${escapeHTML(user.email || '')}</span>
         </div>
-        <a href="/learn">Homepage</a>
+        <a href="${_url('/')}">Homepage</a>
         <button type="button" id="user-menu-logout">Log Out</button>
       </div>`;
     nav.appendChild(menu);
@@ -74,7 +83,7 @@ const Dashboard = {
     document.addEventListener('click', () => dropdown.classList.remove('open'));
     menu.querySelector('#user-menu-logout').addEventListener('click', async () => {
       await this.supabase.auth.signOut();
-      window.location.href = '/learn';
+      window.location.href = _url('/');
     });
   },
 
@@ -181,7 +190,7 @@ const Dashboard = {
             <div style="font-size:14px;font-weight:700;">${escapeHTML(c.course_title || c.courses?.title || 'Course')}</div>
             <div style="font-size:11px;color:var(--text-muted);">${escapeHTML(c.certificate_number)} · ${date}</div>
           </div>
-          <a href="/learn/certificate?number=${escapeHTML(c.certificate_number)}" style="font-size:12px;color:var(--primary);font-weight:600;text-decoration:none;">View</a>
+          <a href="${_url('/certificate?number=' + escapeHTML(c.certificate_number))}" style="font-size:12px;color:var(--primary);font-weight:600;text-decoration:none;">View</a>
         </div>`;
       }).join('');
     } catch {
@@ -199,7 +208,7 @@ const Dashboard = {
     }
 
     grid.innerHTML = enrolled.map(c => `
-      <a href="/learn/course/${escapeHTML(c.slug)}" class="dash-enrolled-card">
+      <a href="${_url('/course/' + escapeHTML(c.slug))}" class="dash-enrolled-card">
         <div class="dash-enrolled-icon" style="background:${escapeHTML(c.color || '#d1fae5,#a7f3d0')};">
           ${Icons.get(c.icon || 'rocket', 22)}
         </div>
@@ -237,7 +246,7 @@ const Dashboard = {
       };
 
       grid.innerHTML = json.courses.map(c => `
-        <a href="/learn/course/${escapeHTML(c.slug)}" class="dash-course-card">
+        <a href="${_url('/course/' + escapeHTML(c.slug))}" class="dash-course-card">
           <div class="dash-course-thumb" style="background:${colorMap[c.level] || colorMap.beginner};">
             ${Icons.get(c.icon || 'book-open', 36)}
             <span class="level-tag" style="color:${levelColor[c.level] || levelColor.beginner};">${escapeHTML(c.level || '')}</span>
@@ -295,7 +304,7 @@ const Dashboard = {
 
       // Render challenge cards
       grid.innerHTML = display.map(c => `
-        <a href="/learn/playground?id=${c.id}" class="dash-challenge-card${passedSet.has(c.id) ? ' passed' : ''}">
+        <a href="${_url('/playground?id=' + c.id)}" class="dash-challenge-card${passedSet.has(c.id) ? ' passed' : ''}">
           <div class="ch-top">
             <span class="ch-diff ${c.difficulty}">${c.difficulty}</span>
             <span class="ch-type">${c.challenge_type || 'javascript'}</span>
@@ -425,7 +434,7 @@ const Dashboard = {
       const header = document.querySelector('.dash-header');
       if (!header) return;
       const upgradeBtn = document.createElement('a');
-      upgradeBtn.href = '/learn/payment';
+      upgradeBtn.href = _url('/payment');
       upgradeBtn.className = 'dash-upgrade-btn';
       upgradeBtn.innerHTML = isPro 
         ? `${Icons.get('crown', 14)} Pro Member`

@@ -62,11 +62,22 @@ const Auth = {
    * Login with email/password
    */
   async login(email, password) {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    let res;
+    try {
+      res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+        signal: controller.signal
+      });
+    } catch (err) {
+      if (err.name === 'AbortError') throw new Error('Connection timed out. Please check your internet connection and try again.');
+      throw new Error('Network error. Please check your connection and try again.');
+    } finally {
+      clearTimeout(timeout);
+    }
     const json = await res.json();
     if (!res.ok || !json.success) throw new Error(json.error || 'Login failed');
     // Store session in Supabase client so getToken() works
@@ -83,14 +94,25 @@ const Auth = {
    * Signup with email/password — uses backend API (service role key bypasses rate limits)
    */
   async signup(email, password, fullName) {
-    const res = await fetch('/api/auth/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, full_name: fullName })
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    let res;
+    try {
+      res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, full_name: fullName }),
+        signal: controller.signal
+      });
+    } catch (err) {
+      if (err.name === 'AbortError') throw new Error('Connection timed out. Please check your internet connection and try again.');
+      throw new Error('Network error. Please check your connection and try again.');
+    } finally {
+      clearTimeout(timeout);
+    }
     const json = await res.json();
     if (!res.ok || !json.success) throw new Error(json.error || 'Signup failed');
-    return data;
+    return json;
   },
 
   /**
@@ -100,7 +122,8 @@ const Auth = {
     if (!this.supabase) return;
     await this.supabase.auth.signOut();
     this.currentUser = null;
-    window.location.href = '/learn';
+    const _isLearn = location.hostname === 'learn.1percent.rw';
+    window.location.href = _isLearn ? '/' : '/learn';
   },
 
   /**
@@ -232,11 +255,16 @@ const Auth = {
       status.textContent = 'Welcome back! Redirecting...';
       setTimeout(() => {
         Modal.close('auth-modal');
-        window.location.href = '/dashboard';
+        const _isLearn = location.hostname === 'learn.1percent.rw';
+        window.location.href = _isLearn ? '/dashboard' : '/learn/dashboard';
       }, 1200);
     } catch (err) {
       status.className = 'form-status error';
-      status.textContent = err.message?.includes('Invalid') ? 'Invalid email or password.' : 'Login failed. Please try again.';
+      const msg = err.message || '';
+      if (msg.includes('timed out')) status.textContent = 'Connection timed out. Check your internet and try again.';
+      else if (msg.includes('Network error')) status.textContent = 'Network error. Check your connection and try again.';
+      else if (msg.includes('Invalid')) status.textContent = 'Invalid email or password.';
+      else status.textContent = 'Login failed. Please try again.';
     } finally {
       btn.disabled = false;
       btn.textContent = 'Log In';

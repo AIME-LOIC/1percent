@@ -143,10 +143,10 @@ body{-webkit-user-select:none;user-select:none;}
 
 <!-- Top bar -->
 <div class="topbar">
-  <a href="/learn" class="topbar-logo"><div class="mark">1%</div> Expert Programme</a>
+  <a href="/" class="topbar-logo"><div class="mark">1%</div> Expert Programme</a>
   <div class="topbar-actions">
     <span id="view-count" style="font-size:12px;color:#6b7280;display:none;"></span>
-    <a href="/learn/dashboard" class="topbar-btn">Dashboard</a>
+    <a href="/dashboard" class="topbar-btn">Dashboard</a>
   </div>
 </div>
 
@@ -163,7 +163,7 @@ body{-webkit-user-select:none;user-select:none;}
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
       <h2>No Certificate Found</h2>
       <p>Complete all lessons and pass the end-of-course quiz to earn your certificate.</p>
-      <a href="/learn/dashboard" class="btn btn-primary">Go to Dashboard</a>
+      <a href="/dashboard" class="btn btn-primary">Go to Dashboard</a>
     </div>
 
     <!-- Free view overlay (first time) -->
@@ -184,8 +184,8 @@ body{-webkit-user-select:none;user-select:none;}
       <h2>Free View Used</h2>
       <p>You've used your one free certificate view. Subscribe to Pro or Unlimited to download and view certificates anytime.</p>
       <div>
-        <a href="/learn/payment" class="btn btn-primary">Upgrade Plan</a>
-        <a href="/learn/dashboard" class="btn btn-outline">Back to Dashboard</a>
+        <a href="/payment" class="btn btn-primary">Upgrade Plan</a>
+        <a href="/dashboard" class="btn btn-outline">Back to Dashboard</a>
       </div>
     </div>
 
@@ -345,7 +345,7 @@ const certNumber = urlParams.get('number');
       overlay.querySelector('h2').textContent = 'Log in to View';
       overlay.querySelector('p').textContent = 'Log in to view this certificate. You get 1 free view.';
       overlay.querySelector('button').textContent = 'Log In';
-      overlay.querySelector('button').onclick = () => window.location.href = '/learn';
+      overlay.querySelector('button').onclick = () => window.location.href = (location.hostname==='learn.1percent.rw'?'/':'/learn');
     }
   } catch (e) {
     document.getElementById('cert-loading').classList.add('hidden');
@@ -362,7 +362,7 @@ function showCertificate() {
 
 async function useFreeView() {
   if (!user || !session) {
-    window.location.href = '/learn';
+    window.location.href = (location.hostname==='learn.1percent.rw'?'/':'/learn');
     return;
   }
 

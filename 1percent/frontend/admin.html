@@ -126,12 +126,12 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
   <!-- Top Bar -->
   <div class="topbar">
     <div class="topbar-left">
-      <a href="/learn/dashboard" class="topbar-logo"><div class="mark">1%</div> Admin Panel</a>
+      <a href="/dashboard" class="topbar-logo"><div class="mark">1%</div> Admin Panel</a>
       <span class="topbar-title" id="topbar-section-title">Dashboard</span>
     </div>
     <div class="topbar-right">
       <span class="topbar-user"><span class="topbar-avatar" id="admin-avatar">A</span> <span id="admin-name">Admin</span></span>
-      <button class="topbar-btn" onclick="window.location.href='/learn/dashboard'">Dashboard</button>
+      <button class="topbar-btn" onclick="window.location.href='/dashboard'">Dashboard</button>
     </div>
   </div>
 
@@ -357,8 +357,8 @@ function showUnauthorized(msg){
         <h1 style="font-size:24px;font-weight:800;margin-bottom:8px;color:#111827;">Unauthorized</h1>
         <p style="font-size:14px;color:#6b7280;margin-bottom:24px;line-height:1.6;">${msg}</p>
         <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-          <a href="/learn" style="padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;background:#0d6e3f;color:#fff;text-decoration:none;">Go to Homepage</a>
-          <a href="/learn/dashboard" style="padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;background:#fff;color:#374151;border:1px solid #d1d5db;text-decoration:none;">Dashboard</a>
+          <a href="/" style="padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;background:#0d6e3f;color:#fff;text-decoration:none;">Go to Homepage</a>
+          <a href="/dashboard" style="padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;background:#fff;color:#374151;border:1px solid #d1d5db;text-decoration:none;">Dashboard</a>
         </div>
       </div>
     </div>`;
@@ -691,7 +691,7 @@ function renderEnrollments(enrollments){
 }
 
 // ── Logout ─────────────────────────────────────────
-async function doLogout(){if(supabaseClient)await supabaseClient.auth.signOut();window.location.href='/learn';}
+async function doLogout(){if(supabaseClient)await supabaseClient.auth.signOut();window.location.href='/';}
 
 function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
