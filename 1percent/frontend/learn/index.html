@@ -3,13 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>1% Expert Programme — Learn to Build Production Software | Kigali, Rwanda</title>
+<title>1percent Rwanda — Expert Programme | Learn to Build Production Software</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<meta name="description" content="The 1% Expert Programme turns junior developers into world-class engineers. Hands-on training in full-stack development, AI, cybersecurity, and DevOps from Kigali, Rwanda.">
-<meta property="og:title" content="1% Expert Programme — Learn to Build Production Software">
+<meta name="description" content="1percent Rwanda's Expert Programme turns junior developers into world-class engineers. Hands-on training in full-stack development, AI, cybersecurity, and DevOps from Kigali, Rwanda.">
+<meta property="og:title" content="1percent Rwanda — Expert Programme">
 <meta property="og:description" content="Rigorous, hands-on developer training from Kigali. Master full-stack engineering, AI, cybersecurity, and ship real projects.">
 <meta property="og:type" content="website">
-<meta name="twitter:card" content="summary">
+<meta property="og:url" content="https://learn.1percent.rw">
+<meta property="og:site_name" content="1percent Rwanda">
+<meta property="og:image" content="https://learn.1percent.rw/favicon.svg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="1percent Rwanda — Expert Programme">
+<meta name="twitter:description" content="Rigorous, hands-on developer training from Kigali. Master full-stack engineering, AI, cybersecurity, and ship real projects.">
+<meta name="twitter:image" content="https://learn.1percent.rw/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -112,9 +118,9 @@
 
 <header id="header">
   <div class="container">
-    <a href="/learn" class="logo">
+    <a href="/" class="logo">
       <div class="logo-text">
-        <span class="name">1% Expert Programme</span>
+        <span class="name">1percent Rwanda</span>
         <span class="tagline">Learn. Build. Ship.</span>
       </div>
     </a>
@@ -127,7 +133,7 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         Business Site
       </a>
-      <a href="/learn/dashboard" class="btn btn-outline btn-sm nav-cta" id="nav-dashboard-link" style="display:none;">Dashboard</a>
+      <a href="/dashboard" class="btn btn-outline btn-sm nav-cta" id="nav-dashboard-link" style="display:none;">Dashboard</a>
       <a href="#" class="btn btn-primary btn-sm nav-cta" id="open-auth">Student Login</a>
     </nav>
   </div>
@@ -346,22 +352,22 @@
       <div class="footer-col">
         <h4>Platform</h4>
         <ul>
-          <li><a href="/learn/dashboard">Student Dashboard</a></li>
-          <li><a href="/learn/playground">Challenges</a></li>
-          <li><a href="/learn/lab">Code Lab</a></li>
-          <li><a href="/learn/payment">Pricing</a></li>
+          <li><a href="/dashboard">Student Dashboard</a></li>
+          <li><a href="/playground">Challenges</a></li>
+          <li><a href="/lab">Code Lab</a></li>
+          <li><a href="/payment">Pricing</a></li>
         </ul>
       </div>
       <div class="footer-col">
         <h4>Company</h4>
         <ul>
-          <li><a href="/">1% Digital Solutions</a></li>
+          <li><a href="https://1percent.rw">1percent Rwanda</a></li>
           <li><a href="mailto:1percentrwanda@gmail.com">1percentrwanda@gmail.com</a></li>
         </ul>
       </div>
     </div>
     <div class="footer-bottom">
-      <span>&copy; 2026 1% Digital Solutions — Kigali, Rwanda</span>
+      <span>&copy; 2026 1percent Rwanda — Kigali, Rwanda</span>
       <div class="footer-bottom-links">
         <a href="#" data-modal="terms-modal">Terms of Service</a>
         <a href="#" data-modal="privacy-modal">Privacy Policy</a>
@@ -401,9 +407,9 @@
       <h4>2. Training Programme</h4>
       <p>Enrolment requires acceptance of these terms. Students must be at least 16 years of age, complete assigned coursework and projects, adhere to the code of conduct, and not redistribute course materials.</p>
       <h4>3. Intellectual Property</h4>
-      <p>All course materials remain the intellectual property of 1% Digital Solutions unless otherwise stated. Students retain ownership of their original project work.</p>
+      <p>All course materials remain the intellectual property of 1percent Rwanda unless otherwise stated. Students retain ownership of their original project work.</p>
       <h4>4. Limitation of Liability</h4>
-      <p>1% Digital Solutions shall not be liable for any indirect, incidental, or consequential damages.</p>
+      <p>1percent Rwanda shall not be liable for any indirect, incidental, or consequential damages.</p>
       <h4>5. Governing Law</h4>
       <p>These terms are governed by the laws of the Republic of Rwanda.</p>
     </div>
@@ -466,6 +472,7 @@
 
 <script src="/js/modal.js"></script>
 <script src="/js/cookie.js"></script>
+<script>Modal.init();</script>
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
   // Header scroll
@@ -501,15 +508,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function onLoggedIn() {
     const loginBtn = document.getElementById('open-auth');
-    // Check role to set correct destination
-    let dashUrl = '/learn/dashboard';
+    // Check role to set correct destination        let dashUrl = '/dashboard';
     try {
       const { data: { session } } = await supabaseClient.auth.getSession();
       const meRes = await fetch('/api/auth/me', {
         headers: { 'Authorization': `Bearer ${session?.access_token}` }
       });
       const meJson = await meRes.json();
-      if (meJson.success && meJson.user?.role === 'admin') dashUrl = '/learn/admin';
+      if (meJson.success && meJson.user?.role === 'admin') dashUrl = '/admin';
     } catch {}
     loginBtn.textContent = 'Dashboard';
     loginBtn.href = dashUrl;
@@ -560,9 +566,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           sessionStorage.setItem('sb-refresh-token', json.session.refresh_token);
         }
         // Detect role from login response (fast, no extra API call)
-        let redirectTo = '/learn/dashboard';
+        let redirectTo = '/dashboard';
         if (json.user?.role === 'admin') {
-          redirectTo = '/learn/admin';
+          redirectTo = '/admin';
         }
         status.style.color = 'var(--success)';
         status.textContent = 'Login successful! Redirecting...';
@@ -599,7 +605,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (supabaseClient && json.session) {
           await supabaseClient.auth.setSession({ access_token: json.session.access_token, refresh_token: json.session.refresh_token });
         }
-        setTimeout(() => { window.location.href = '/learn/dashboard'; }, 1000);
+        setTimeout(() => { window.location.href = '/dashboard'; }, 1000);
       } else {
         status.style.color = 'var(--danger)';
         status.textContent = json.error || 'Signup failed';

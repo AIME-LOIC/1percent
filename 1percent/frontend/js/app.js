@@ -24,7 +24,7 @@ const App = {
    * Initialize the application
    */
   async init() {
-    console.log('🚀 1% Digital Solutions — Loading...');
+    console.log('🚀 1percent Rwanda — Loading...');
 
     // Initialize modules
     Modal.init();

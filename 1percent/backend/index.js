@@ -131,6 +131,23 @@ app.use('/api/docs', docsRoutes);
 app.use('/api', courseRoutes);  // /api/roadmap, /api/courses (has /:slug)
 
 /* ============================================================
+   SUBDOMAIN DETECTION — learn.1percent.rw serves learn at /
+   ============================================================ */
+app.use((req, res, next) => {
+  const host = (req.headers.host || '').split(':')[0];
+  if (host === 'learn.1percent.rw' || host === 'www.learn.1percent.rw') {
+    req.isLearnSubdomain = true;
+    // Rewrite /learn/* paths to /* for the learn subdomain
+    if (req.path.startsWith('/learn/')) {
+      req.url = req.url.replace('/learn/', '/');
+    } else if (req.path === '/learn') {
+      req.url = '/';
+    }
+  }
+  next();
+});
+
+/* ============================================================
    SPA ROUTES — serve specific HTML files for app pages
    ============================================================ */
 const frontendDir = path.join(__dirname, '..', 'frontend');
@@ -149,26 +166,44 @@ const htmlRoutes = {
   '/docs': 'docs.html',
 };
 
+// Learn subdomain routes — same pages, no /learn prefix
+const learnSubdomainRoutes = {
+  '/': 'learn/index.html',
+  '/dashboard': 'dashboard.html',
+  '/playground': 'playground.html',
+  '/lab': 'lab.html',
+  '/admin': 'admin.html',
+  '/admin/': 'admin.html',
+  '/payment': 'payment.html',
+  '/sign': 'sign.html',
+  '/certificate': 'certificate-view.html',
+  '/course': 'course.html',
+};
+
 app.get('*', (req, res) => {
   if (!req.accepts('html') || req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'Not found' });
   }
 
+  const routes = req.isLearnSubdomain ? learnSubdomainRoutes : htmlRoutes;
+
   // Check for exact route match
-  if (htmlRoutes[req.path]) {
-    return res.sendFile(path.join(frontendDir, htmlRoutes[req.path]));
+  if (routes[req.path]) {
+    return res.sendFile(path.join(frontendDir, routes[req.path]));
   }
 
-  // Course detail page: /learn/course/:slug
-  if (req.path.startsWith('/learn/course/')) {
+  // Course detail page: /learn/course/:slug (or /course/:slug on subdomain)
+  if (req.path.startsWith('/learn/course/') || (req.isLearnSubdomain && req.path.startsWith('/course/'))) {
     return res.sendFile(path.join(frontendDir, 'course.html'));
   }
 
-  // Legacy redirects — old paths redirect to new /learn/* paths
-  if (req.path === '/dashboard') return res.redirect(301, '/learn/dashboard');
-  if (req.path === '/playground') return res.redirect(301, '/learn/playground');
-  if (req.path === '/lab') return res.redirect(301, '/learn/lab');
-  if (req.path.startsWith('/course/')) return res.redirect(301, '/learn' + req.path);
+  // Legacy redirects — old paths redirect to new /learn/* paths (main site only)
+  if (!req.isLearnSubdomain) {
+    if (req.path === '/dashboard') return res.redirect(301, '/learn/dashboard');
+    if (req.path === '/playground') return res.redirect(301, '/learn/playground');
+    if (req.path === '/lab') return res.redirect(301, '/learn/lab');
+    if (req.path.startsWith('/course/')) return res.redirect(301, '/learn' + req.path);
+  }
 
   // 401 for unauthorized API attempts
   if (req.path.startsWith('/api/')) {
