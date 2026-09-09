@@ -73,7 +73,32 @@ body{font-family:'Inter',sans-serif;background:var(--c-bg);color:var(--c-text);o
 .lesson-lock-icon{font-size:11px;color:var(--c-muted);margin-left:auto;flex-shrink:0;}
 
 /* ── Layout ──────────────────────────────────────── */
-.layout{display:grid;grid-template-columns:380px 1fr;height:calc(100vh - 48px);}
+.layout{display:grid;grid-template-columns:380px 1fr 260px;height:calc(100vh - 48px);}
+
+/* ── Leaderboard Panel ───────────────────────────── */
+.leaderboard-panel{background:#fff;border-left:1px solid var(--c-border);display:flex;flex-direction:column;overflow:hidden;}
+.lb-head{padding:14px 16px;border-bottom:1px solid var(--c-border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.lb-head h3{font-size:13px;font-weight:700;}
+.lb-tabs{display:flex;gap:4px;}
+.lb-tab{padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--c-border);background:#fff;color:var(--c-muted);transition:all .12s;}
+.lb-tab.active{background:var(--c-accent);color:#fff;border-color:var(--c-accent);}
+.lb-list{flex:1;overflow-y:auto;padding:8px 0;}
+.lb-item{display:flex;align-items:center;gap:10px;padding:8px 14px;transition:background .1s;}
+.lb-item:hover{background:#f9fafb;}
+.lb-item.me{background:#ecfdf5;}
+.lb-rank{width:22px;font-size:11px;font-weight:800;color:var(--c-muted);text-align:center;flex-shrink:0;}
+.lb-rank.gold{color:#f59e0b;}
+.lb-rank.silver{color:#9ca3af;}
+.lb-rank.bronze{color:#b45309;}
+.lb-avatar{width:28px;height:28px;border-radius:50%;background:var(--c-accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;overflow:hidden;}
+.lb-avatar img{width:100%;height:100%;object-fit:cover;}
+.lb-info{flex:1;min-width:0;}
+.lb-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lb-score{font-size:11px;color:var(--c-muted);}
+.lb-you{font-size:9px;font-weight:700;color:var(--c-accent);background:#ecfdf5;padding:1px 5px;border-radius:100px;flex-shrink:0;}
+.lb-footer{padding:10px 14px;border-top:1px solid var(--c-border);font-size:11px;color:var(--c-muted);text-align:center;flex-shrink:0;}
+@media(max-width:1100px){.leaderboard-panel{display:none;}}
+@media(max-width:900px){.layout{grid-template-columns:1fr;}}
 
 /* ── Sidebar ─────────────────────────────────────── */
 .sidebar{background:#fff;border-right:1px solid var(--c-border);display:flex;flex-direction:column;overflow:hidden;}
@@ -351,6 +376,22 @@ body{font-family:'Inter',sans-serif;background:var(--c-bg);color:var(--c-text);o
     </div>
     <div id="content-render" style="display:none;"></div>
   </div>
+
+  <!-- Leaderboard -->
+  <div class="leaderboard-panel">
+    <div class="lb-head">
+      <h3>🏆 Leaderboard</h3>
+      <div class="lb-tabs">
+        <button class="lb-tab active" onclick="switchLbTab('coins',this)">Coins</button>
+        <button class="lb-tab" onclick="switchLbTab('streak',this)">Streak</button>
+      </div>
+    </div>
+    <div class="lb-list" id="lb-list">
+      <div style="padding:20px;text-align:center;color:var(--c-muted);font-size:12px;">Loading...</div>
+    </div>
+    <div class="lb-footer" id="lb-footer"></div>
+  </div>
+
 </div>
 
 <script>
@@ -917,7 +958,43 @@ if(window.innerWidth<=900){
   showMobileSidebar();
 }
 
+// ── Leaderboard ────────────────────────────────
+let lbType='coins';
+async function loadLeaderboard(){
+  try{
+    const res=await fetch(`/api/streak/leaderboard?type=${lbType}&limit=15`);
+    const json=await res.json();
+    if(!json.success)return;
+    const list=document.getElementById('lb-list');
+    const footer=document.getElementById('lb-footer');
+    if(!json.leaderboard.length){list.innerHTML='<div style="padding:20px;text-align:center;color:var(--c-muted);font-size:12px;">No data yet</div>';return;}
+    const rankClass=r=>r===1?'gold':r===2?'silver':r===3?'bronze':'';
+    const rankIcon=r=>r===1?'🥇':r===2?'🥈':r===3?'🥉':r;
+    list.innerHTML=json.leaderboard.map(u=>{
+      const initials=(u.name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+      const score=lbType==='coins'?`${u.coins} coins`:`🔥 ${u.streak} day streak`;
+      return`<div class="lb-item${u.isCurrentUser?' me':''}">
+        <div class="lb-rank ${rankClass(u.rank)}">${rankIcon(u.rank)}</div>
+        <div class="lb-avatar">${u.avatar?`<img src="${u.avatar}" alt="">`:`${initials}`}</div>
+        <div class="lb-info"><div class="lb-name">${escapeHTML(u.name)}</div><div class="lb-score">${score}</div></div>
+        ${u.isCurrentUser?'<span class="lb-you">YOU</span>':''}
+      </div>`;
+    }).join('');
+    if(json.currentUserRank)footer.textContent=`Your rank: #${json.currentUserRank}`;
+    else footer.textContent='';
+  }catch{}
+}
+
+function switchLbTab(type,btn){
+  lbType=type;
+  document.querySelectorAll('.lb-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  loadLeaderboard();
+}
+
 init();
+loadLeaderboard();
+setInterval(loadLeaderboard, 60000); // refresh every minute
 </script>
 </body>
 </html>
