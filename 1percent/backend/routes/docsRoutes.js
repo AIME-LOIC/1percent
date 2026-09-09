@@ -16,12 +16,12 @@ const router = Router();
 router.get('/readme', (req, res) => {
   res.json({
     project: {
-      name: '1% Digital Solutions',
+      name: '1percent Rwanda',
       tagline: "Building Rwanda's Next Tech Experts",
       description: 'A full-stack learning platform with courses, labs, challenges, and certifications. Built with Node.js, Express, and Supabase.',
       version: '1.0.0',
       license: 'UNLICENSED',
-      author: '1% Digital Solutions',
+      author: '1percent Rwanda',
       website: 'https://1percentrwanda.com',
       learn_platform: 'https://learn.1percent.rw',
       repository: 'https://github.com/1percent-digital/1percent'

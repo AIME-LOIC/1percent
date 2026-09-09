@@ -71,7 +71,7 @@ class PdfService {
         margin: 60,
         info: {
           Title: type === 'lesson' ? data.lesson.title : data.course.title,
-          Author: '1% Digital Solutions',
+          Author: '1percent Rwanda',
           Subject: 'Course Material',
           Keywords: 'education, programming, 1percent'
         }
@@ -94,7 +94,7 @@ class PdfService {
   _buildLessonPdf(doc, lesson, course) {
     // Header
     doc.fontSize(10).fillColor('#888')
-      .text(`${course.title}  ·  1% Digital Solutions`, { align: 'left' });
+      .text(`${course.title}  ·  1percent Rwanda`, { align: 'left' });
     doc.moveDown(0.3);
 
     // Divider
@@ -139,7 +139,7 @@ class PdfService {
   _buildCoursePdf(doc, course, lessons) {
     // Cover page
     doc.fontSize(10).fillColor('#888')
-      .text('1% Digital Solutions  ·  Kigali, Rwanda', { align: 'center' });
+      .text('1percent Rwanda  ·  Kigali, Rwanda', { align: 'center' });
     doc.moveDown(4);
 
     doc.fontSize(28).fillColor('#111').font('Helvetica-Bold')
@@ -413,7 +413,7 @@ class PdfService {
     const pageHeight = doc.page.height;
     doc.fontSize(8).fillColor('#bbb')
       .text(
-        '1% Digital Solutions  ·  Premium Content  ·  Do not redistribute',
+        '1percent Rwanda  ·  Premium Content  ·  Do not redistribute',
         60, pageHeight - 40,
         { align: 'center', width: 490 }
       );
@@ -446,7 +446,7 @@ class PdfService {
         margin: 0,
         info: {
           Title: `Certificate - ${cert.certificate_number}`,
-          Author: '1% Digital Solutions',
+          Author: '1percent Rwanda',
           Subject: 'Course Completion Certificate'
         }
       });
@@ -623,7 +623,7 @@ class PdfService {
 
       // ── Footer ────────────────────────────────────────
       doc.fontSize(7).fillColor('#c4c8cf').font('Helvetica')
-        .text('Verify at: 1percentrwanda.com/learn  |  1% Digital Solutions  |  Kigali, Rwanda', 0, h - 32, { align: 'center', width: w, characterSpacing: 1 });
+        .text('Verify at: 1percentrwanda.com/learn  |  1percent Rwanda  |  Kigali, Rwanda', 0, h - 32, { align: 'center', width: w, characterSpacing: 1 });
 
       doc.end();
     });
