@@ -539,6 +539,26 @@
     transform: rotate(180deg);
   }
 
+  /* ---- Download CTA Button ---- */
+  .btn-download {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent-green);
+    color: #ffffff;
+    padding: 12px 24px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+    margin: 16px 0;
+  }
+
+  .btn-download:hover {
+    background: #047857;
+    transform: translateY(-1px);
+  }
+
   /* ---- Footer ---- */
   .footer {
     border-top: 1px solid var(--border);
@@ -769,19 +789,20 @@ onepercent download -f "databases" -l 1 -o ./my-notes</pre>
     <h2 class="section-title"><i data-lucide="plug"></i> VS Code Extension</h2>
     <p class="section-subtitle">Solve coding challenges directly in your code editor.</p>
 
+    <div style="margin-bottom: 30px;">
+      <a href="https://github.com/AIME-LOIC/1percent/releases/download/v1.0.0/onepercent-learn-vscode-1.0.0.vsix" class="btn-download" download>
+        <i data-lucide="download"></i> Download Extension (.vsix v1.0.0)
+      </a>
+    </div>
+
     <ol class="steps">
       <li>
-        <h4>Install the extension</h4>
-        <p>From VSIX file or build from source:</p>
+        <h4>Download and Install the VSIX</h4>
+        <p>Click the button above to download <code>onepercent-learn-vscode-1.0.0.vsix</code>, then install it directly from your terminal or VS Code:</p>
         <div class="code-block">
           <span class="lang-tag">bash</span>
           <button class="copy-btn" onclick="copyCode(this)"><i data-lucide="copy"></i> Copy</button>
-          <pre># From source
-cd 1percent/vscode-extension
-npm install
-npm run compile
-npx vsce package
-code --install-extension 1percent-learn-1.0.0.vsix</pre>
+          <pre>code --install-extension onepercent-learn-vscode-1.0.0.vsix</pre>
         </div>
       </li>
       <li>
