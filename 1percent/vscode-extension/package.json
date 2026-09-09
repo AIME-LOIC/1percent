@@ -1,0 +1,94 @@
+{
+  "name": "onepercent-learn-vscode",
+  "displayName": "1% Learn — Coding Challenges",
+  "description": "View and solve coding challenges from 1% Learn directly in VS Code",
+  "version": "1.0.4",
+  "publisher": "aimeloic",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "icon": "images/icon.png",
+  "categories": ["Programming", "Education"],
+  "keywords": ["learn", "coding", "challenges", "1percent", "education", "vscode", "extension"],
+  "author": "Aimé Loïc <aimeloic@users.noreply.github.com>",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/1percent-digital/1percent.git",
+    "directory": "1percent/vscode-extension"
+  },
+  "homepage": "https://1percent.rw/learn",
+  "bugs": {
+    "url": "https://github.com/1percent-digital/1percent/issues"
+  },
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      { "command": "1percent.login", "title": "1% Learn: Login" },
+      { "command": "1percent.challenges", "title": "1% Learn: Refresh Challenges" },
+      { "command": "1percent.submit", "title": "1% Learn: Submit Solution", "icon": "$(cloud-upload)" },
+      { "command": "1percent.sync", "title": "1% Learn: Sync File to Lab", "icon": "$(sync)" },
+      { "command": "1percent.logout", "title": "1% Learn: Logout" },
+      { "command": "1percent.openChallenge", "title": "1% Learn: Open in Lab" },
+      { "command": "1percent.openCourse", "title": "1% Learn: Open Course" },
+      { "command": "1percent.runInTerminal", "title": "1% Learn: Run File", "icon": "$(play)" },
+      { "command": "1percent.openTerminal", "title": "1% Learn: Open Terminal" },
+      { "command": "1percent.analyzeFile", "title": "1% Learn: Analyze File", "icon": "$(search)" },
+      { "command": "1percent.setChallenge", "title": "1% Learn: Set Active Challenge" }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "onepercent-sidebar",
+          "title": "1% Learn",
+          "icon": "images/activity-icon.png"
+        }
+      ]
+    },
+    "views": {
+      "onepercent-sidebar": [
+        { "id": "onepercent-challenges", "name": "Challenges" },
+        { "id": "onepercent-courses", "name": "Courses" }
+      ]
+    },
+    "configuration": {
+      "title": "1% Learn",
+      "properties": {
+        "onepercent.apiUrl": {
+          "type": "string",
+          "default": "https://learn.1percent.rw",
+          "description": "API server URL"
+        },
+        "onepercent.autoSync": {
+          "type": "boolean",
+          "default": true,
+          "description": "Auto-sync files to 1% Learn lab on save"
+        }
+      }
+    },
+    "menus": {
+      "editor/title": [
+        { "command": "1percent.runInTerminal", "group": "navigation", "when": "editorTextFocus" },
+        { "command": "1percent.submit", "group": "navigation", "when": "editorTextFocus" }
+      ]
+    },
+    "keybindings": [
+      { "command": "1percent.submit", "key": "ctrl+shift+enter", "mac": "cmd+shift+enter", "when": "editorTextFocus" },
+      { "command": "1percent.runInTerminal", "key": "ctrl+shift+r", "mac": "cmd+shift+r", "when": "editorTextFocus" }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.0",
+    "@vscode/vsce": "^2.22.0"
+  },
+  "dependencies": {}
+}

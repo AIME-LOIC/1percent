@@ -23,7 +23,7 @@ router.get('/readme', (req, res) => {
       license: 'UNLICENSED',
       author: '1% Digital Solutions',
       website: 'https://1percentrwanda.com',
-      learn_platform: 'https://learn-1percent-rwanda.onrender.com',
+      learn_platform: 'https://learn.1percent.rw',
       repository: 'https://github.com/1percent-digital/1percent'
     },
     stack: {
