@@ -148,6 +148,7 @@ const Dashboard = {
     await this._loadAllCourses();
     await this._loadChallenges();
     await this._loadRoadmap();
+    this._initLeaderboard();
   },
 
   async _loadStreak() {
@@ -435,6 +436,48 @@ const Dashboard = {
       if (!isPro) upgradeBtn.onmouseenter = () => upgradeBtn.style.opacity = '0.9';
       header.appendChild(upgradeBtn);
     } catch {}
+  },
+
+  _initLeaderboard() {
+    const list = document.getElementById('dash-lb-list');
+    const footer = document.getElementById('dash-lb-footer');
+    const tabs = document.querySelectorAll('.dash-lb-tab');
+    if (!list) return;
+    let lbType = 'coins';
+
+    const load = async () => {
+      try {
+        const res = await fetch(`/api/streak/leaderboard?type=${lbType}&limit=15`);
+        const json = await res.json();
+        if (!json.success || !json.leaderboard.length) {
+          list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px;">No data yet</div>';
+          return;
+        }
+        const rankClass = r => r === 1 ? 'gold' : r === 2 ? 'silver' : r === 3 ? 'bronze' : '';
+        const rankIcon = r => r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : r;
+        list.innerHTML = json.leaderboard.map(u => {
+          const initials = (u.name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+          const score = lbType === 'coins' ? `${u.coins} coins` : `🔥 ${u.streak}d`;
+          return `<div class="dash-lb-item${u.isCurrentUser ? ' me' : ''}">
+            <div class="dash-lb-rank ${rankClass(u.rank)}">${rankIcon(u.rank)}</div>
+            <div class="dash-lb-avatar">${u.avatar ? `<img src="${u.avatar}" alt="">` : initials}</div>
+            <div class="dash-lb-info"><div class="dash-lb-name">${escapeHTML(u.name)}</div><div class="dash-lb-score">${score}</div></div>
+            ${u.isCurrentUser ? '<span class="dash-lb-you">YOU</span>' : ''}
+          </div>`;
+        }).join('');
+        if (footer) footer.textContent = json.currentUserRank ? `Your rank: #${json.currentUserRank}` : '';
+      } catch { list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px;">Could not load</div>'; }
+    };
+
+    tabs.forEach(tab => tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      lbType = tab.dataset.type;
+      load();
+    }));
+
+    load();
+    setInterval(load, 60000);
   },
 
   async _fetchCourses() {

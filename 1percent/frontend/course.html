@@ -801,7 +801,6 @@ async function checkCertificate(){
   if(json.success&&json.certificate)renderCertificate(json.certificate);
 }
 
-let premiumStatus=null;
 async function loadPremium(){
   if(!currentUser)return;
   try{
