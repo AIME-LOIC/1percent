@@ -7,27 +7,28 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <meta name="description" content="Learn how to use 1% Learn CLI and VS Code extension to upload, download, and solve coding challenges.">
 
-<!-- Fonts -->
+<!-- Fonts & Lucide Icons -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
 
 <style>
   :root {
-    --bg-primary: #0a0f1a;
-    --bg-secondary: #111827;
-    --bg-card: #1a2332;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --bg-card: #ffffff;
     --bg-code: #0d1117;
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
     --text-muted: #64748b;
-    --accent-green: #10b981;
-    --accent-green-dim: rgba(16,185,129,0.15);
-    --accent-amber: #f59e0b;
-    --accent-blue: #3b82f6;
-    --accent-purple: #8b5cf6;
-    --border: rgba(148,163,184,0.1);
-    --border-green: rgba(16,185,129,0.3);
+    --accent-green: #059669;
+    --accent-green-dim: rgba(5, 150, 105, 0.08);
+    --accent-amber: #d97706;
+    --accent-blue: #2563eb;
+    --accent-purple: #7c3aed;
+    --border: #e2e8f0;
+    --border-green: rgba(5, 150, 105, 0.4);
     --radius: 12px;
     --radius-sm: 8px;
   }
@@ -53,7 +54,7 @@
     left: 0;
     right: 0;
     z-index: 100;
-    background: rgba(10,15,26,0.85);
+    background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border);
     padding: 0 24px;
@@ -113,7 +114,7 @@
     width: 800px;
     height: 800px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(5, 150, 105, 0.05) 0%, transparent 70%);
     pointer-events: none;
   }
 
@@ -127,7 +128,7 @@
   }
 
   .hero h1 span {
-    background: linear-gradient(135deg, var(--accent-green), #34d399);
+    background: linear-gradient(135deg, var(--accent-green), #10b981);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -163,18 +164,23 @@
     transition: all 0.3s;
   }
 
+  .badge i {
+    width: 18px;
+    height: 18px;
+  }
+
   .badge-primary {
     background: var(--accent-green);
-    color: #000;
+    color: #ffffff;
   }
 
   .badge-primary:hover {
-    background: #34d399;
+    background: #047857;
     transform: translateY(-2px);
   }
 
   .badge-outline {
-    background: transparent;
+    background: #ffffff;
     color: var(--text-primary);
     border: 1px solid var(--border);
   }
@@ -199,6 +205,15 @@
     font-size: 32px;
     font-weight: 700;
     margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-title i {
+    width: 32px;
+    height: 32px;
+    color: var(--accent-green);
   }
 
   .section-subtitle {
@@ -211,7 +226,7 @@
   .tabs {
     display: flex;
     gap: 4px;
-    background: var(--bg-card);
+    background: var(--bg-secondary);
     padding: 4px;
     border-radius: var(--radius);
     margin-bottom: 40px;
@@ -234,11 +249,11 @@
 
   .tab.active {
     background: var(--accent-green);
-    color: #000;
+    color: #ffffff;
   }
 
   .tab:hover:not(.active) {
-    background: rgba(255,255,255,0.05);
+    background: rgba(0, 0, 0, 0.05);
     color: var(--text-primary);
   }
 
@@ -265,28 +280,36 @@
     font-family: 'JetBrains Mono', monospace;
     font-size: 13px;
     line-height: 1.6;
-    color: var(--text-primary);
+    color: #f1f5f9;
     margin: 0;
   }
 
   .code-block .copy-btn {
     position: absolute;
     top: 12px;
-    right: 12px;
+    right: 80px;
     background: rgba(255,255,255,0.1);
     border: none;
-    color: var(--text-secondary);
+    color: #94a3b8;
     padding: 6px 12px;
     border-radius: 6px;
     font-size: 12px;
     cursor: pointer;
     font-family: inherit;
     transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .code-block .copy-btn i {
+    width: 14px;
+    height: 14px;
   }
 
   .code-block .copy-btn:hover {
     background: rgba(255,255,255,0.2);
-    color: var(--text-primary);
+    color: #ffffff;
   }
 
   .code-block .lang-tag {
@@ -294,7 +317,7 @@
     top: 12px;
     right: 12px;
     background: rgba(16,185,129,0.15);
-    color: var(--accent-green);
+    color: #34d399;
     padding: 4px 10px;
     border-radius: 6px;
     font-size: 11px;
@@ -303,13 +326,9 @@
     font-family: 'JetBrains Mono', monospace;
   }
 
-  .code-block .copy-btn {
-    right: 80px;
-  }
-
   code {
     font-family: 'JetBrains Mono', monospace;
-    background: rgba(16,185,129,0.1);
+    background: var(--accent-green-dim);
     color: var(--accent-green);
     padding: 2px 8px;
     border-radius: 4px;
@@ -330,16 +349,23 @@
     border-radius: var(--radius);
     padding: 28px;
     transition: all 0.3s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
   }
 
   .card:hover {
     border-color: var(--border-green);
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
   }
 
   .card-icon {
-    font-size: 32px;
     margin-bottom: 16px;
+    color: var(--accent-green);
+  }
+
+  .card-icon i {
+    width: 32px;
+    height: 32px;
   }
 
   .card h3 {
@@ -387,7 +413,7 @@
   }
 
   .cmd-table tr:hover td {
-    background: rgba(255,255,255,0.02);
+    background: var(--bg-secondary);
   }
 
   /* ---- Steps ---- */
@@ -416,7 +442,7 @@
     width: 28px;
     height: 28px;
     background: var(--accent-green);
-    color: #000;
+    color: #ffffff;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -447,22 +473,70 @@
     align-items: flex-start;
   }
 
+  .alert i {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
   .alert-info {
-    background: rgba(59,130,246,0.1);
-    border: 1px solid rgba(59,130,246,0.3);
-    color: #93c5fd;
+    background: rgba(37, 99, 235, 0.06);
+    border: 1px solid rgba(37, 99, 235, 0.2);
+    color: #1e40af;
   }
 
   .alert-success {
-    background: rgba(16,185,129,0.1);
-    border: 1px solid rgba(16,185,129,0.3);
-    color: #6ee7b7;
+    background: rgba(5, 150, 105, 0.06);
+    border: 1px solid rgba(5, 150, 105, 0.2);
+    color: #065f46;
   }
 
   .alert-warning {
-    background: rgba(245,158,11,0.1);
-    border: 1px solid rgba(245,158,11,0.3);
-    color: #fcd34d;
+    background: rgba(217, 119, 6, 0.06);
+    border: 1px solid rgba(217, 119, 6, 0.2);
+    color: #92400e;
+  }
+
+  /* ---- FAQ Details ---- */
+  details {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    padding: 20px;
+    transition: border-color 0.2s;
+  }
+
+  details:hover {
+    border-color: var(--border-green);
+  }
+
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 16px;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  summary::after {
+    content: '';
+    width: 18px;
+    height: 18px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%20475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+    transition: transform 0.2s;
+  }
+
+  details[open] summary::after {
+    transform: rotate(180deg);
   }
 
   /* ---- Footer ---- */
@@ -472,6 +546,7 @@
     text-align: center;
     color: var(--text-muted);
     font-size: 14px;
+    background: var(--bg-secondary);
   }
 
   .footer a {
@@ -508,9 +583,9 @@
   <h1>Learn Tools <span>Documentation</span></h1>
   <p>Everything you need to use the 1% Learn CLI and VS Code extension. Upload files, download lessons, and solve challenges from your terminal.</p>
   <div class="hero-badges">
-    <a href="#cli" class="badge badge-primary">📦 Get Started with CLI</a>
-    <a href="#vscode" class="badge badge-outline">🔌 VS Code Extension</a>
-    <a href="/api/docs/readme" class="badge badge-outline">📄 API Documentation</a>
+    <a href="#cli" class="badge badge-primary"><i data-lucide="package"></i> Get Started with CLI</a>
+    <a href="#vscode" class="badge badge-outline"><i data-lucide="plug"></i> VS Code Extension</a>
+    <a href="/api/docs/readme" class="badge badge-outline"><i data-lucide="file-text"></i> API Documentation</a>
   </div>
 </section>
 
@@ -524,17 +599,17 @@
 
     <div class="card-grid">
       <div class="card">
-        <div class="card-icon">📦</div>
+        <div class="card-icon"><i data-lucide="package"></i></div>
         <h3>1% Learn CLI</h3>
         <p>Upload files, download lessons, and manage your lab from the command line. Works on macOS, Linux, and Windows.</p>
       </div>
       <div class="card">
-        <div class="card-icon">🔌</div>
+        <div class="card-icon"><i data-lucide="plug"></i></div>
         <h3>VS Code Extension</h3>
         <p>View challenges in your editor, submit solutions with one keystroke, and track your progress — all without leaving VS Code.</p>
       </div>
       <div class="card">
-        <div class="card-icon">🌐</div>
+        <div class="card-icon"><i data-lucide="globe"></i></div>
         <h3>Web Lab</h3>
         <p>Use the online lab at <a href="/lab" style="color: var(--accent-green);">1percent.rw/learn/lab</a> to code directly in your browser.</p>
       </div>
@@ -543,7 +618,7 @@
 
   <!-- CLI Section -->
   <section class="section" id="cli">
-    <h2 class="section-title">📦 1% Learn CLI</h2>
+    <h2 class="section-title"><i data-lucide="package"></i> 1% Learn CLI</h2>
     <p class="section-subtitle">A powerful command-line tool for managing your learning files and courses.</p>
 
     <!-- Tabs -->
@@ -564,7 +639,7 @@
           <p>Install the CLI globally on your system:</p>
           <div class="code-block">
             <span class="lang-tag">bash</span>
-            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <button class="copy-btn" onclick="copyCode(this)"><i data-lucide="copy"></i> Copy</button>
             <pre>npm install -g @1percent/learn-cli</pre>
           </div>
         </li>
@@ -573,7 +648,7 @@
           <p>Check that the CLI is installed correctly:</p>
           <div class="code-block">
             <span class="lang-tag">bash</span>
-            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <button class="copy-btn" onclick="copyCode(this)"><i data-lucide="copy"></i> Copy</button>
             <pre>onepercent --version</pre>
           </div>
         </li>
@@ -582,14 +657,14 @@
           <p>Authenticate with your 1% Learn credentials:</p>
           <div class="code-block">
             <span class="lang-tag">bash</span>
-            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <button class="copy-btn" onclick="copyCode(this)"><i data-lucide="copy"></i> Copy</button>
             <pre>onepercent login</pre>
           </div>
         </li>
       </ol>
 
       <div class="alert alert-info">
-        <span>💡</span>
+        <i data-lucide="lightbulb"></i>
         <span>You can also set a custom API URL: <code>onepercent login --api https://localhost:3000</code></span>
       </div>
     </div>
@@ -602,7 +677,7 @@
 
       <div class="code-block">
         <span class="lang-tag">bash</span>
-        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <button class="copy-btn" onclick="copyCode(this)"><i data-lucide="copy"></i> Copy</button>
         <pre># Login with email and password
 onepercent login
 
@@ -617,7 +692,7 @@ onepercent logout</pre>
       </div>
 
       <div class="alert alert-warning">
-        <span>⚠️</span>
+        <i data-lucide="triangle-alert"></i>
         <span>Your token is stored in <code>~/.config/1percent-learn-cli/</code>. Never share this file.</span>
       </div>
     </div>
@@ -630,7 +705,7 @@ onepercent logout</pre>
 
       <div class="code-block">
         <span class="lang-tag">bash</span>
-        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <button class="copy-btn" onclick="copyCode(this)"><i data-lucide="copy"></i> Copy</button>
         <pre># Upload a file to your lab
 onepercent upload app.js
 onepercent upload main.py
@@ -652,7 +727,7 @@ onepercent rm old-file.js -y  # skip confirmation</pre>
       </div>
 
       <div class="alert alert-success">
-        <span>✅</span>
+        <i data-lucide="check-circle-2"></i>
         <span>Supported file types: <code>.js</code> <code>.py</code> <code>.html</code> <code>.css</code> <code>.json</code> <code>.md</code> <code>.ts</code> <code>.sh</code></span>
       </div>
     </div>
@@ -665,7 +740,7 @@ onepercent rm old-file.js -y  # skip confirmation</pre>
 
       <div class="code-block">
         <span class="lang-tag">bash</span>
-        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <button class="copy-btn" onclick="copyCode(this)"><i data-lucide="copy"></i> Copy</button>
         <pre># Download a specific lesson
 onepercent download -f "programming-fundamentals" -l 1
 
@@ -683,7 +758,7 @@ onepercent download -f "databases" -l 1 -o ./my-notes</pre>
       </div>
 
       <div class="alert alert-info">
-        <span>💡</span>
+        <i data-lucide="lightbulb"></i>
         <span>Free users can download 1 lesson per day. Upgrade for full course downloads.</span>
       </div>
     </div>
@@ -691,7 +766,7 @@ onepercent download -f "databases" -l 1 -o ./my-notes</pre>
 
   <!-- VS Code Section -->
   <section class="section" id="vscode">
-    <h2 class="section-title">🔌 VS Code Extension</h2>
+    <h2 class="section-title"><i data-lucide="plug"></i> VS Code Extension</h2>
     <p class="section-subtitle">Solve coding challenges directly in your code editor.</p>
 
     <ol class="steps">
@@ -700,7 +775,7 @@ onepercent download -f "databases" -l 1 -o ./my-notes</pre>
         <p>From VSIX file or build from source:</p>
         <div class="code-block">
           <span class="lang-tag">bash</span>
-          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <button class="copy-btn" onclick="copyCode(this)"><i data-lucide="copy"></i> Copy</button>
           <pre># From source
 cd 1percent/vscode-extension
 npm install
@@ -746,7 +821,7 @@ code --install-extension 1percent-learn-1.0.0.vsix</pre>
 
   <!-- Commands Reference -->
   <section class="section" id="commands">
-    <h2 class="section-title">📋 Commands Reference</h2>
+    <h2 class="section-title"><i data-lucide="clipboard-list"></i> Commands Reference</h2>
     <p class="section-subtitle">Complete list of all CLI commands.</p>
 
     <table class="cmd-table">
@@ -815,31 +890,31 @@ code --install-extension 1percent-learn-1.0.0.vsix</pre>
 
   <!-- FAQ -->
   <section class="section" id="faq">
-    <h2 class="section-title">❓ FAQ</h2>
+    <h2 class="section-title"><i data-lucide="help-circle"></i> FAQ</h2>
 
     <div style="margin-top: 30px;">
-      <details style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; padding: 20px;">
-        <summary style="cursor: pointer; font-weight: 600; font-size: 16px;">What file types are supported?</summary>
+      <details>
+        <summary>What file types are supported?</summary>
         <p style="color: var(--text-secondary); margin-top: 12px; font-size: 14px;">Free users can upload <code>.js</code>, <code>.py</code>, <code>.html</code>, <code>.css</code>, <code>.json</code>, <code>.md</code>, <code>.txt</code>, and <code>.sh</code> files. Premium users get access to TypeScript, JSX/TSX, YAML, SQL, and more.</p>
       </details>
 
-      <details style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; padding: 20px;">
-        <summary style="cursor: pointer; font-weight: 600; font-size: 16px;">How many files can I store?</summary>
+      <details>
+        <summary>How many files can I store?</summary>
         <p style="color: var(--text-secondary); margin-top: 12px; font-size: 14px;">Free tier: 5 files (2MB). Starter: 5 files (2MB). Pro: 10 files (5MB). Unlimited: 999 files (20MB).</p>
       </details>
 
-      <details style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; padding: 20px;">
-        <summary style="cursor: pointer; font-weight: 600; font-size: 16px;">Can I use the CLI with a local development server?</summary>
+      <details>
+        <summary>Can I use the CLI with a local development server?</summary>
         <p style="color: var(--text-secondary); margin-top: 12px; font-size: 14px;">Yes! Use <code>onepercent login --api http://localhost:3000</code> to connect to a local server.</p>
       </details>
 
-      <details style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; padding: 20px;">
-        <summary style="cursor: pointer; font-weight: 600; font-size: 16px;">How do I reset my password?</summary>
+      <details>
+        <summary>How do I reset my password?</summary>
         <p style="color: var(--text-secondary); margin-top: 12px; font-size: 14px;">Visit <a href="/reset-password" style="color: var(--accent-green);">1percent.rw/reset-password</a> or use the "Forgot Password" link on the login page.</p>
       </details>
 
-      <details style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; padding: 20px;">
-        <summary style="cursor: pointer; font-weight: 600; font-size: 16px;">Is the VS Code extension free?</summary>
+      <details>
+        <summary>Is the VS Code extension free?</summary>
         <p style="color: var(--text-secondary); margin-top: 12px; font-size: 14px;">Yes! The extension is completely free. You just need a 1% Learn account (free tier works).</p>
       </details>
     </div>
@@ -849,7 +924,7 @@ code --install-extension 1percent-learn-1.0.0.vsix</pre>
 
 <!-- Footer -->
 <footer class="footer">
-  <p>Built with ❤️ by <a href="https://1percentrwanda.com">1percent Rwanda</a> — Kigali, Rwanda</p>
+  <p>Built with <i data-lucide="heart" style="width:14px; height:14px; display:inline; vertical-align:middle; color: var(--accent-green);"></i> by <a href="https://1percentrwanda.com">1percent Rwanda</a> — Kigali, Rwanda</p>
   <p style="margin-top: 8px;">
     <a href="/">Home</a> ·
     <a href="/">Learn</a> ·
@@ -859,6 +934,9 @@ code --install-extension 1percent-learn-1.0.0.vsix</pre>
 </footer>
 
 <script>
+  // Initialize Lucide icons
+  lucide.createIcons();
+
   // Tab switching
   function showTab(name) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -871,8 +949,12 @@ code --install-extension 1percent-learn-1.0.0.vsix</pre>
   function copyCode(btn) {
     const code = btn.parentElement.querySelector('pre').textContent;
     navigator.clipboard.writeText(code).then(() => {
-      btn.textContent = 'Copied!';
-      setTimeout(() => btn.textContent = 'Copy', 2000);
+      btn.innerHTML = '<i data-lucide="check"></i> Copied!';
+      lucide.createIcons();
+      setTimeout(() => {
+        btn.innerHTML = '<i data-lucide="copy"></i> Copy';
+        lucide.createIcons();
+      }, 2000);
     });
   }
 
