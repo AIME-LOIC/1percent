@@ -29,7 +29,7 @@ class CertificateController {
         quiz_passed: result.quiz_passed ?? true
       });
     } catch (err) {
-      console.error('[CERT] Issue error:', err.message);
+      console.error('[CERT] Issue error:', err.message);   
       res.status(500).json({ error: 'Failed to issue certificate.' });
     }
   }

@@ -12,15 +12,18 @@ class AuthService {
    * Register a new user
    */
   async signup(email, password, metadata = {}) {
-    const { data, error } = await adminClient.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: {
-        full_name: metadata.full_name || '',
-        ...metadata
-      }
-    });
+    const { data, error } = await Promise.race([
+      adminClient.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          full_name: metadata.full_name || '',
+          ...metadata
+        }
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase connection timed out')), 10000))
+    ]);
 
     if (error) throw error;
 
@@ -47,10 +50,10 @@ class AuthService {
    * Sign in with email and password
    */
   async login(email, password) {
-    const { data, error } = await anonClient.auth.signInWithPassword({
-      email,
-      password
-    });
+    const { data, error } = await Promise.race([
+      anonClient.auth.signInWithPassword({ email, password }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase connection timed out')), 10000))
+    ]);
 
     if (error) throw error;
 

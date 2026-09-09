@@ -1,4 +1,6 @@
 const { adminClient } = require('../config/database');
+const { Worker } = require('worker_threads');
+const path = require('path');
 
 class CoinsService {
   async getBalance(userId) {
@@ -194,8 +196,8 @@ class CoinsService {
       .select('id').eq('user_id', userId).eq('challenge_id', challengeId).eq('passed', true).single();
     if (existing) return { passed: true, already: true, coins: 0 };
 
-    // Simple test: check if code contains expected patterns
-    const passed = this._evaluateCode(code, challenge);
+    // Evaluate code — may be async for JavaScript type with test_cases
+    const passed = await this._evaluateCode(code, challenge);
 
     // Save submission
     await adminClient.from('challenge_submissions').upsert({
@@ -218,7 +220,7 @@ class CoinsService {
     return { passed, coins: coinsAwarded, total: await this.getBalance(userId), is_daily: isDaily };
   }
 
-  _evaluateCode(code, challenge) {
+  async _evaluateCode(code, challenge) {
     const lower = (code || '').toLowerCase();
     const title = challenge.title.toLowerCase();
     const type = challenge.challenge_type || 'javascript';
@@ -238,7 +240,19 @@ class CoinsService {
       return code.length > 30;
     }
 
-    // JavaScript / programming challenges — keyword matching
+    // JavaScript / programming challenges
+    // If the challenge has test_cases, run real code execution
+    let testCases = challenge.test_cases;
+    // Supabase may return jsonb as a string — parse it
+    if (typeof testCases === 'string') {
+      try { testCases = JSON.parse(testCases); } catch { testCases = []; }
+    }
+    if (!Array.isArray(testCases)) testCases = [];
+    if (type === 'javascript' && testCases.length > 0) {
+      return await this._evaluateJavaScript(code, challenge, testCases);
+    }
+
+    // JavaScript keyword-matching fallback (no test_cases defined)
     if (title.includes('hello world')) {
       return lower.includes('hello') || lower.includes('print') || lower.includes('console.log');
     }
@@ -278,6 +292,64 @@ class CoinsService {
 
     // Default: substantial code
     return code.length > 30;
+  }
+
+  /**
+   * Run submitted JavaScript in a worker thread with a JSDOM document.
+   * The worker is terminated after vm_timeout_ms (default 2000 ms),
+   * so even infinite loops are killed reliably.
+   *
+   * test_case shape:
+   *   { selector, property, expected, description? }
+   *
+   *   selector   — CSS selector string passed to document.querySelector()
+   *   property   — dot-path on the result of querySelector (e.g. "children.length")
+   *   expected   — the value to compare against (loose equality ==)
+   */
+  _evaluateJavaScript(code, challenge, testCases) {
+    return new Promise((resolve) => {
+      const timeout = challenge.vm_timeout_ms || 2000;
+      const workerPath = path.join(__dirname, '..', 'workers', 'challenge-evaluator.js');
+
+      const worker = new Worker(workerPath, {
+        workerData: null
+      });
+
+      let settled = false;
+
+      const timer = setTimeout(() => {
+        if (!settled) {
+          settled = true;
+          console.warn(`[VM] Worker terminated after ${timeout}ms (timeout)`);
+          worker.terminate();
+          resolve(false);
+        }
+      }, timeout);
+
+      worker.on('message', (msg) => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timer);
+          if (msg.reason) console.warn(`[VM] ${msg.reason}`);
+          resolve(!!msg.passed);
+        }
+      });
+
+      worker.on('error', (err) => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timer);
+          console.warn(`[VM] Worker error: ${err.message}`);
+          resolve(false);
+        }
+      });
+
+      worker.postMessage({
+        code,
+        starterHtml: challenge.starter_html || '',
+        testCases
+      });
+    });
   }
 
   _evaluateTerminal(code, challenge) {
