@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>1percent Rwanda — Expert Programme | Learn to Build Production Software</title>
-<link rel="icon" href="https://learn.1percent.rw/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <meta name="description" content="1percent Rwanda's Expert Programme turns junior developers into world-class engineers. Hands-on training in full-stack development, AI, cybersecurity, and DevOps from Kigali, Rwanda.">
 <meta property="og:title" content="1percent Rwanda — Expert Programme">
 <meta property="og:description" content="Rigorous, hands-on developer training from Kigali. Master full-stack engineering, AI, cybersecurity, and ship real projects.">
@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<link rel="stylesheet" href="https://learn.1percent.rw/css/main.css">
+<link rel="stylesheet" href="/css/main.css">
 <style>
   /* Hero */
   .learn-hero{padding:140px 0 80px;background:linear-gradient(170deg,#0a0f1a 0%,#111827 50%,#0f172a 100%);color:#fff;overflow:hidden;position:relative;}
@@ -112,13 +112,13 @@
     .learn-cta{padding:48px 24px;}
   }
 </style>
-<script src="https://learn.1percent.rw/js/icons.js"></script>
+<script src="/js/icons.js"></script>
 </head>
 <body>
 
 <header id="header">
   <div class="container">
-    <a href="https://learn.1percent.rw" class="logo">
+    <a href="/" class="logo">
       <div class="logo-text">
         <span class="name">1percent Rwanda</span>
         <span class="tagline">Learn. Build. Ship.</span>
@@ -133,7 +133,7 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         Business Site
       </a>
-      <a href="https://learn.1percent.rw/dashboard" class="btn btn-outline btn-sm nav-cta" id="nav-dashboard-link" style="display:none;">Dashboard</a>
+      <a href="/dashboard" class="btn btn-outline btn-sm nav-cta" id="nav-dashboard-link" style="display:none;">Dashboard</a>
       <a href="#" class="btn btn-primary btn-sm nav-cta" id="open-auth">Student Login</a>
     </nav>
   </div>
@@ -352,10 +352,10 @@
       <div class="footer-col">
         <h4>Platform</h4>
         <ul>
-          <li><a href="https://learn.1percent.rw/dashboard">Student Dashboard</a></li>
-          <li><a href="https://learn.1percent.rw/playground">Challenges</a></li>
-          <li><a href="https://learn.1percent.rw/lab">Code Lab</a></li>
-          <li><a href="https://learn.1percent.rw/payment">Pricing</a></li>
+          <li><a href="/dashboard">Student Dashboard</a></li>
+          <li><a href="/playground">Challenges</a></li>
+          <li><a href="/lab">Code Lab</a></li>
+          <li><a href="/payment">Pricing</a></li>
         </ul>
       </div>
       <div class="footer-col">
@@ -470,8 +470,8 @@
   </div>
 </div>
 
-<script src="https://learn.1percent.rw/js/modal.js"></script>
-<script src="https://learn.1percent.rw/js/cookie.js"></script>
+<script src="/js/modal.js"></script>
+<script src="/js/cookie.js"></script>
 <script>Modal.init();</script>
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
@@ -566,9 +566,10 @@ document.addEventListener('DOMContentLoaded', async () => {
           sessionStorage.setItem('sb-refresh-token', json.session.refresh_token);
         }
         // Detect role from login response (fast, no extra API call)
-        let redirectTo = '/dashboard';
+        const _isLearn = location.hostname === 'learn.1percent.rw';
+        let redirectTo = _isLearn ? '/dashboard' : '/learn/dashboard';
         if (json.user?.role === 'admin') {
-          redirectTo = '/admin';
+          redirectTo = _isLearn ? '/admin' : '/learn/admin';
         }
         status.style.color = 'var(--success)';
         status.textContent = 'Login successful! Redirecting...';
@@ -605,7 +606,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (supabaseClient && json.session) {
           await supabaseClient.auth.setSession({ access_token: json.session.access_token, refresh_token: json.session.refresh_token });
         }
-        setTimeout(() => { window.location.href = 'https://learn.1percent.rw/dashboard'; }, 1000);
+        const _isLearn2 = location.hostname === 'learn.1percent.rw';
+        setTimeout(() => { window.location.href = _isLearn2 ? '/dashboard' : '/learn/dashboard'; }, 1000);
       } else {
         status.style.color = 'var(--danger)';
         status.textContent = json.error || 'Signup failed';

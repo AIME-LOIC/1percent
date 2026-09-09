@@ -46,8 +46,8 @@ canvas#draw-canvas{width:100%;height:150px;border:2px dashed #d1d5db;border-radi
 </head>
 <body>
 <div class="topbar">
-  <a href="/learn" class="topbar-logo"><div class="mark">1%</div> Expert Programme</a>
-  <div class="topbar-actions"><a href="/learn/dashboard" class="topbar-btn">Dashboard</a></div>
+  <a href="/" class="topbar-logo"><div class="mark">1%</div> Expert Programme</a>
+  <div class="topbar-actions"><a href="/dashboard" class="topbar-btn">Dashboard</a></div>
 </div>
 <div class="main">
   <div class="card">
@@ -115,7 +115,7 @@ const ctx = canvas.getContext('2d');
       const { data: { session: s } } = await supabaseClient.auth.getSession();
       session = s;
       user = s?.user || null;
-      if (!user) { window.location.href = '/learn'; return; }
+      if (!user) { window.location.href = (location.hostname==='learn.1percent.rw'?'/':'/learn'); return; }
       await loadExisting();
     }
   } catch (e) { console.warn('[SIGN] Auth failed:', e.message); }
@@ -187,7 +187,7 @@ function clearCanvas() {
 }
 
 async function saveSignature() {
-  if (!user || !session) { window.location.href = '/learn'; return; }
+  if (!user || !session) { window.location.href = (location.hostname==='learn.1percent.rw'?'/':'/learn'); return; }
   
   // Get signature from current tab
   if (currentTab === 'type') {

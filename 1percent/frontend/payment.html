@@ -159,12 +159,12 @@
 
   <!-- NAV -->
   <nav class="nav">
-    <a href="/learn" class="nav-logo">1% Expert</a>
+    <a href="/" class="nav-logo">1% Expert</a>
     <div class="nav-links">
-      <a href="/learn/dashboard">Dashboard</a>
-      <a href="/learn">Courses</a>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/">Courses</a>
       <span id="nav-user-name" style="color:#0d6e3f;font-size:13px;font-weight:600;display:none;"></span>
-      <a href="/learn" class="btn-sm" id="nav-auth-btn">Login</a>
+      <a href="/" class="btn-sm" id="nav-auth-btn">Login</a>
     </div>
   </nav>
 
@@ -267,7 +267,7 @@
 
   <footer class="footer">
     <p>1percent Rwanda — Kigali, Rwanda</p>
-    <p><a href="/">Business</a> · <a href="/learn">Learning</a> · <a href="mailto:1percentrwanda@gmail.com">Contact</a></p>
+    <p><a href="/">Business</a> · <a href="/">Learning</a> · <a href="mailto:1percentrwanda@gmail.com">Contact</a></p>
   </footer>
 
   <div class="toast" id="toast"></div>
@@ -302,19 +302,19 @@
       const userName = document.getElementById('nav-user-name');
       if (user) {
         authBtn.textContent = 'Dashboard';
-        authBtn.href = '/learn/dashboard';
+        authBtn.href = (location.hostname==='learn.1percent.rw'?'/dashboard':'/learn/dashboard');
         userName.textContent = user.user_metadata?.full_name || user.email;
         userName.style.display = 'inline';
       } else {
         authBtn.textContent = 'Login';
-        authBtn.href = '/learn';
+        authBtn.href = (location.hostname==='learn.1prefix.rw'?'/':'/learn');
       }
     }
 
     function requireAuth() {
       if (!user) {
         showToast('Please log in first', 'error');
-        setTimeout(() => window.location.href = '/learn', 1000);
+        setTimeout(() => window.location.href = (location.hostname==='learn.1percent.rw'?'/':'/learn'), 1000);
         return false;
       }
       return true;
@@ -330,7 +330,7 @@
         const data = await res.json();
         if (data.success) {
           showToast(data.message || 'Free trial activated!', 'success');
-          setTimeout(() => window.location.href = '/learn/dashboard', 1500);
+          setTimeout(() => window.location.href = (location.hostname==='learn.1percent.rw'?'/dashboard':'/learn/dashboard'), 1500);
         } else {
           showToast(data.error || 'Failed to activate trial', 'error');
         }
@@ -348,7 +348,7 @@
         const data = await res.json();
         if (data.success) {
           showToast(data.message || `Subscribed to ${tier}!`, 'success');
-          setTimeout(() => window.location.href = '/learn/dashboard', 1500);
+          setTimeout(() => window.location.href = (location.hostname==='learn.1percent.rw'?'/dashboard':'/learn/dashboard'), 1500);
         } else {
           showToast(data.error || 'Subscription failed', 'error');
         }
