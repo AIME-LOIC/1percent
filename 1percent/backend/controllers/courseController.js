@@ -175,6 +175,21 @@ class CourseController {
   }
 
   /**
+   * GET /api/courses/lessons/:lessonId/content
+   * Fetch lesson content_md on demand
+   */
+  async getLessonContent(req, res) {
+    try {
+      const lesson = await courseService.getLessonContent(req.params.lessonId);
+      if (!lesson) return res.status(404).json({ error: 'Lesson not found.' });
+      res.json({ success: true, content_md: lesson.content_md || lesson.description || '' });
+    } catch (err) {
+      console.error('[COURSE] Lesson content error:', err.message);
+      res.status(500).json({ error: 'Failed to load lesson content.' });
+    }
+  }
+
+  /**
    * POST /api/courses/:courseId/certificate
    * Request certificate (delegated to certificateController)
    */

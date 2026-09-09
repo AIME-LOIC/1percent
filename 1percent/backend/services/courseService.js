@@ -52,15 +52,25 @@ class CourseService {
     if (!courses || courses.length === 0) return null;
     const course = courses[0];
 
-    // Fetch lessons — include is_free_preview if column exists
+    // Fetch lesson metadata only — no content_md (loaded on demand)
     const { data: lessons } = await adminClient
       .from('lessons')
-      .select('id, title, description, content_md, lesson_type, duration_min, sort_order, is_free_preview')
+      .select('id, title, description, lesson_type, duration_min, sort_order, is_free_preview')
       .eq('course_id', course.id)
       .eq('is_published', true)
       .order('sort_order', { ascending: true });
 
     return { ...course, lessons: lessons || [] };
+  }
+
+  async getLessonContent(lessonId) {
+    const { data, error } = await adminClient
+      .from('lessons')
+      .select('id, content_md, description')
+      .eq('id', lessonId)
+      .single();
+    if (error) throw error;
+    return data;
   }
 
   /* ----------------------------------------------------------
@@ -181,22 +191,25 @@ class CourseService {
     const enrollments = await this.getUserEnrollments(userId);
     let totalLessons = 0;
     let completedLessons = 0;
+    const courses = [];
 
-    for (const enrollment of enrollments) {
+    await Promise.all(enrollments.map(async (enrollment) => {
       try {
         const progress = await this.getCourseProgress(userId, enrollment.course_id);
         totalLessons += progress.total_lessons;
         completedLessons += progress.completed_lessons;
+        courses.push({ course_id: enrollment.course_id, percentage: progress.percentage });
       } catch {
-        // Skip courses where enrollment check fails
+        courses.push({ course_id: enrollment.course_id, percentage: 0 });
       }
-    }
+    }));
 
     return {
       total_courses: enrollments.length,
       total_lessons: totalLessons,
       completed_lessons: completedLessons,
-      percentage: totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0
+      percentage: totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0,
+      courses
     };
   }
 }

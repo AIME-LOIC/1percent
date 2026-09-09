@@ -40,6 +40,9 @@ router.get('/courses/:courseId/progress', authenticate, (req, res, next) => cour
 // Public — course detail by slug (AFTER named routes)
 router.get('/courses/:slug', rateLimit, (req, res, next) => courseController.getCourse(req, res, next));
 
+// Lesson content on demand
+router.get('/courses/lessons/:lessonId/content', rateLimit, (req, res, next) => courseController.getLessonContent(req, res, next));
+
 // Certificate
 router.post('/courses/:courseId/certificate', authenticate, (req, res, next) => certificateController.issue(req, res, next));
 

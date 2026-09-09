@@ -291,19 +291,11 @@ const Dashboard = {
         return;
       }
 
-      // Show first 12 on dashboard
-      const display = allChallenges.slice(0, 12);
+      const PAGE = 6;
+      let currentFilter = 'all';
+      let page = 1;
 
-      // Render filters
-      const diffs = [...new Set(allChallenges.map(c => c.difficulty))];
-      filtersEl.innerHTML = `<span class="dash-challenge-chip active" data-diff="all">All (${allChallenges.length})</span>
-        ${diffs.map(d => {
-          const count = allChallenges.filter(c => c.difficulty === d).length;
-          return `<span class="dash-challenge-chip" data-diff="${d}">${d} (${count})</span>`;
-        }).join('')}`;
-
-      // Render challenge cards
-      grid.innerHTML = display.map(c => `
+      const renderCards = (list) => list.map(c => `
         <a href="${_url('/playground?id=' + c.id)}" class="dash-challenge-card${passedSet.has(c.id) ? ' passed' : ''}">
           <div class="ch-top">
             <span class="ch-diff ${c.difficulty}">${c.difficulty}</span>
@@ -313,41 +305,39 @@ const Dashboard = {
           <p>${escapeHTML(c.description || '')}</p>
           <div class="ch-bottom">
             <span class="ch-coins">+${c.coins_reward} coins</span>
-            ${passedSet.has(c.id)
-              ? '<span class="ch-status">✓ Done</span>'
-              : `<span class="ch-start">Start →</span>`}
+            ${passedSet.has(c.id) ? '<span class="ch-status">✓ Done</span>' : '<span class="ch-start">Start →</span>'}
           </div>
           ${c.course_title ? `<div style="margin-top:6px;"><span class="ch-course">${escapeHTML(c.course_title)}</span></div>` : ''}
-        </a>
-      `).join('');
+        </a>`).join('');
 
-      // Filter click handlers
+      const renderGrid = () => {
+        const filtered = currentFilter === 'all' ? allChallenges : allChallenges.filter(c => c.difficulty === currentFilter);
+        const show = filtered.slice(0, page * PAGE);
+        const hasMore = show.length < filtered.length;
+        grid.innerHTML = renderCards(show) +
+          (hasMore ? `<div style="grid-column:1/-1;text-align:center;padding:8px 0;"><button onclick="window._loadMoreChallenges()" style="padding:8px 20px;border-radius:6px;border:1px solid var(--border);background:#fff;font-size:13px;font-weight:600;cursor:pointer;">Load more</button></div>` : '');
+      };
+
+      window._loadMoreChallenges = () => { page++; renderGrid(); };
+
+      const diffs = [...new Set(allChallenges.map(c => c.difficulty))];
+      filtersEl.innerHTML = `<span class="dash-challenge-chip active" data-diff="all">All (${allChallenges.length})</span>
+        ${diffs.map(d => {
+          const count = allChallenges.filter(c => c.difficulty === d).length;
+          return `<span class="dash-challenge-chip" data-diff="${d}">${d} (${count})</span>`;
+        }).join('')}`;
+
       filtersEl.addEventListener('click', (e) => {
         const chip = e.target.closest('.dash-challenge-chip');
         if (!chip) return;
         filtersEl.querySelectorAll('.dash-challenge-chip').forEach(c => c.classList.remove('active'));
         chip.classList.add('active');
-        const val = chip.dataset.diff;
-        const filtered = val === 'all' ? allChallenges : allChallenges.filter(c => c.difficulty === val);
-        const show = filtered.slice(0, 12);
-        grid.innerHTML = show.map(c => `
-          <a href="/playground?id=${c.id}" class="dash-challenge-card${passedSet.has(c.id) ? ' passed' : ''}">
-            <div class="ch-top">
-              <span class="ch-diff ${c.difficulty}">${c.difficulty}</span>
-              <span class="ch-type">${c.challenge_type || 'javascript'}</span>
-            </div>
-            <h4>${escapeHTML(c.title)}</h4>
-            <p>${escapeHTML(c.description || '')}</p>
-            <div class="ch-bottom">
-              <span class="ch-coins">+${c.coins_reward} coins</span>
-              ${passedSet.has(c.id)
-                ? '<span class="ch-status">Done</span>'
-                : `<span class="ch-start">Start &rarr;</span>`}
-            </div>
-            ${c.course_title ? `<div style="margin-top:6px;"><span class="ch-course">${escapeHTML(c.course_title)}</span></div>` : ''}
-          </a>
-        `).join('');
+        currentFilter = chip.dataset.diff;
+        page = 1;
+        renderGrid();
       });
+
+      renderGrid();
     } catch {
       grid.innerHTML = '<div class="dash-empty">Could not load challenges.</div>';
     }
@@ -452,37 +442,29 @@ const Dashboard = {
       const token = (await this.supabase.auth.getSession()).data.session?.access_token;
       if (!token) return [];
 
-      const enrollRes = await fetch('/api/courses/enrollments', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const [enrollRes, progRes] = await Promise.all([
+        fetch('/api/courses/enrollments', { headers: { Authorization: `Bearer ${token}` } }),
+        fetch('/api/courses/progress/overall', { headers: { Authorization: `Bearer ${token}` } })
+      ]);
       const enrollJson = await enrollRes.json();
       if (!enrollJson.success) return [];
 
-      const enrollments = enrollJson.enrollments || [];
-      const courses = [];
+      const progJson = await progRes.json();
+      const progMap = {};
+      (progJson.progress?.courses || []).forEach(c => { progMap[c.course_id] = c.percentage || 0; });
 
-      for (const e of enrollments) {
+      return (enrollJson.enrollments || []).map(e => {
         const course = e.courses || {};
-        let progress = 0;
-        try {
-          const progRes = await fetch(`/api/courses/${e.course_id}/progress`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          const progJson = await progRes.json();
-          progress = progJson.progress?.percentage || 0;
-        } catch { /* use 0 */ }
-
-        courses.push({
+        return {
           title: course.title || 'Course',
           slug: course.slug || '',
           icon: course.icon || 'book-open',
           color: course.level === 'advanced' ? '#ede9fe,#ddd6fe' : course.level === 'intermediate' ? '#dbeafe,#bfdbfe' : '#d1fae5,#a7f3d0',
           level: course.level || '',
-          progress,
+          progress: progMap[e.course_id] || 0,
           enrolled: true
-        });
-      }
-      return courses;
+        };
+      });
     } catch { return []; }
   }
 };
