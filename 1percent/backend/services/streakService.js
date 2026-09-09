@@ -33,7 +33,8 @@ class StreakService {
     const lastActive = data.last_active_date;
     const diff = lastActive ? this._dayDiff(lastActive, today) : null;
 
-    // Streak is alive if active today (diff=0) or yesterday (diff=1)
+    // Streak is alive only if the user was active today or yesterday.
+    // Anything older than that should not keep a live streak count.
     const isAlive = diff !== null && diff <= 1;
     const streak = isAlive ? (data.streak_count || 0) : 0;
 
@@ -54,53 +55,46 @@ class StreakService {
   async updateStreak(userId) {
     const today = this._today();
 
-    const { data: profile } = await adminClient
+    const { data: profile, error } = await adminClient
       .from('profiles')
       .select('streak_count, last_active_date')
       .eq('id', userId)
       .single();
 
-    if (!profile) return;
+    if (error || !profile) return;
 
-    // Already active today — nothing to do
+    // Ignore duplicate activity in the same day.
     if (profile.last_active_date === today) return;
 
     const coinsService = require('./coinsService');
     const lastActive = profile.last_active_date;
     const diff = lastActive ? this._dayDiff(lastActive, today) : null;
 
-    let newStreak;
-
     if (diff === 1) {
-      // Continued streak
-      newStreak = (profile.streak_count || 0) + 1;
+      const newStreak = (profile.streak_count || 0) + 1;
       await adminClient.from('profiles')
         .update({ streak_count: newStreak, last_active_date: today })
         .eq('id', userId);
 
-      // Award 4 coins for streak day
       await coinsService.addCoins(userId, 4, `🔥 Streak day ${newStreak}`).catch(() => {});
-
-    } else if (diff === null || diff > 1) {
-      // Streak broken — reset to 1
-      newStreak = 1;
-      const missedDays = diff ? Math.min(diff - 1, 3) : 0; // cap penalty at 3 missed days
-      const penalty = missedDays * 3;
-
-      await adminClient.from('profiles')
-        .update({ streak_count: newStreak, last_active_date: today })
-        .eq('id', userId);
-
-      // Deduct 3 coins per missed day (max -9)
-      if (penalty > 0) {
-        await coinsService.addCoins(userId, -penalty,
-          `💔 Streak broken — missed ${missedDays} day${missedDays > 1 ? 's' : ''}`
-        ).catch(() => {});
-      }
-
-      // Still award 4 coins for today's activity
-      await coinsService.addCoins(userId, 4, `🔥 Streak day 1 (restarted)`).catch(() => {});
+      return;
     }
+
+    const newStreak = 1;
+    const missedDays = diff === null ? 0 : Math.max(0, diff - 1);
+    const penalty = Math.min(missedDays, 3) * 3;
+
+    await adminClient.from('profiles')
+      .update({ streak_count: newStreak, last_active_date: today })
+      .eq('id', userId);
+
+    if (penalty > 0) {
+      await coinsService.addCoins(userId, -penalty,
+        `💔 Streak broken — missed ${Math.min(missedDays, 3)} day${Math.min(missedDays, 3) > 1 ? 's' : ''}`
+      ).catch(() => {});
+    }
+
+    await coinsService.addCoins(userId, 4, '🔥 Streak day 1 (restarted)').catch(() => {});
   }
 
   /**

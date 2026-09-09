@@ -253,6 +253,25 @@
 .dash-lb-you{font-size:9px;font-weight:700;color:#0d6e3f;background:#ecfdf5;padding:1px 5px;border-radius:100px;flex-shrink:0;}
 .dash-lb-footer{padding:8px 12px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted);text-align:center;}
 
+.dash-lb-section{padding:12px 12px 10px;border-top:1px solid var(--border);}
+.dash-lb-section-head{display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:10px;}
+.dash-new-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 6px;border-radius:999px;background:#d1fae5;color:#065f46;font-size:10px;font-weight:700;}
+.dash-weekdays{display:grid;grid-template-columns:repeat(6, minmax(0,1fr));gap:6px;margin-bottom:10px;}
+.dash-weekday{padding:6px 2px;border-radius:8px;border:1px solid var(--border);background:var(--surface);font-size:10px;font-weight:700;color:var(--text-muted);text-align:center;transition:all .15s;}
+.dash-weekday.done{background:#ecfdf5;color:#065f46;border-color:#a7f3d0;}
+.dash-weekday.today{outline:2px solid rgba(13,110,63,.18);}
+.dash-goal-bar{height:8px;border-radius:999px;background:var(--surface);overflow:hidden;border:1px solid var(--border);}
+.dash-goal-bar span{display:block;height:100%;width:0;background:linear-gradient(90deg,#0d6e3f,#34d399);border-radius:inherit;transition:width .25s ease;}
+.dash-notify-list{display:flex;flex-direction:column;gap:8px;}
+.dash-notify-item{display:flex;gap:8px;padding:8px 8px;border:1px solid var(--border);border-radius:10px;background:#fff;}
+.dash-notify-item .dot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex-shrink:0;}
+.dash-notify-item.success .dot{background:#10b981;}
+.dash-notify-item.info .dot{background:#3b82f6;}
+.dash-notify-item.warning .dot{background:#f59e0b;}
+.dash-notify-copy{flex:1;min-width:0;}
+.dash-notify-copy strong{display:block;font-size:11px;color:var(--text);line-height:1.4;}
+.dash-notify-copy span{font-size:10px;color:var(--text-muted);}
+
 /* ── Responsive ──────────────────────────────────────── */
 @media(max-width:1100px){.dash-layout{grid-template-columns:1fr;}.dash-lb{display:none;}}
 @media(max-width:900px){

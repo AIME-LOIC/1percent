@@ -167,6 +167,7 @@ const Dashboard = {
     } catch { /* streak is optional */ }
     // Show upgrade button
     this._renderUpgradeButton();
+    this._renderSidebarExtras();
   },
 
   async _loadCertificates() {
@@ -436,6 +437,48 @@ const Dashboard = {
       if (!isPro) upgradeBtn.onmouseenter = () => upgradeBtn.style.opacity = '0.9';
       header.appendChild(upgradeBtn);
     } catch {}
+  },
+
+  _renderSidebarExtras() {
+    const goalDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayIndex = new Date().getDay();
+    const currentDayIndex = dayIndex === 0 ? 5 : Math.min(5, (dayIndex + 6) % 7);
+    const completed = Math.min(goalDays.length, Math.max(0, currentDayIndex + 1));
+    const goalWrap = document.getElementById('weekly-goal-days');
+    const goalProgress = document.getElementById('weekly-goal-progress');
+    const goalFill = document.getElementById('weekly-goal-fill');
+
+    if (goalWrap) {
+      goalWrap.innerHTML = goalDays.map((day, index) => {
+        const isDone = index <= currentDayIndex;
+        const isToday = index === currentDayIndex;
+        return `<div class="dash-weekday ${isDone ? 'done' : ''} ${isToday ? 'today' : ''}">${day}</div>`;
+      }).join('');
+    }
+
+    if (goalProgress) goalProgress.textContent = `${completed}/${goalDays.length}`;
+    if (goalFill) goalFill.style.width = `${(completed / goalDays.length) * 100}%`;
+
+    const notifications = [
+      { type: 'success', title: 'Weekly target is on track', time: '2h ago' },
+      { type: 'info', title: 'Two lessons left to keep your streak', time: 'Today' },
+      { type: 'warning', title: 'Challenge review due tomorrow', time: 'Tomorrow' }
+    ];
+    const notifyList = document.getElementById('dash-notify-list');
+    if (notifyList) {
+      notifyList.innerHTML = notifications.map(n => `
+        <div class="dash-notify-item ${n.type}">
+          <span class="dot"></span>
+          <div class="dash-notify-copy">
+            <strong>${escapeHTML(n.title)}</strong>
+            <span>${escapeHTML(n.time)}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    const badge = document.getElementById('dash-new-badge');
+    if (badge) badge.textContent = String(notifications.length);
   },
 
   _initLeaderboard() {
