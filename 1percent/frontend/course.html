@@ -615,10 +615,24 @@ function doOpenLesson(lessonId){
       </div>
     </div>`;
 
-  const md=lesson.content_md||lesson.description;
+  const md=lesson.content_md;
   const body=document.getElementById('lesson-content-body');
-  if(md){body.innerHTML=renderMarkdown(md);}
-  else{body.innerHTML='<p style="color:var(--c-muted);font-size:14px;">Content will be available soon.</p>';}
+  if(md){
+    body.innerHTML=renderMarkdown(md);
+  } else {
+    body.innerHTML='<p style="color:var(--c-muted);font-size:13px;">Loading content…</p>';
+    fetch(`/api/courses/lessons/${lessonId}/content`)
+      .then(r=>r.json())
+      .then(j=>{
+        lesson.content_md=j.content_md||'';
+        const b=document.getElementById('lesson-content-body');
+        if(b)b.innerHTML=lesson.content_md?renderMarkdown(lesson.content_md):'<p style="color:var(--c-muted);font-size:14px;">Content will be available soon.</p>';
+      })
+      .catch(()=>{
+        const b=document.getElementById('lesson-content-body');
+        if(b)b.innerHTML='<p style="color:var(--c-red);font-size:13px;">Failed to load content.</p>';
+      });
+  }
 
   document.getElementById('main-area').scrollTop=0;
 }
