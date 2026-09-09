@@ -14,9 +14,9 @@
 .dashboard-guest p{margin-bottom:24px;color:var(--text-secondary);}
 
 /* ── Shell ───────────────────────────────────────────── */
-.dashboard-shell{padding:80px 24px 96px;}
-.dash-layout{display:grid;grid-template-columns:1fr 260px;gap:24px;align-items:start;}
-.dash-main{min-width:0;}
+.dashboard-shell{padding:80px 0 96px;}
+.dash-layout{display:grid;grid-template-columns:1fr 280px;gap:0;align-items:start;max-width:1400px;margin:0 auto;padding:0 24px;}
+.dash-main{min-width:0;padding-right:24px;}
 
 /* ── Header ──────────────────────────────────────────── */
 .dash-header{

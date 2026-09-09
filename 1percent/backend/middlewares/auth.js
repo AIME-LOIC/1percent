@@ -20,7 +20,10 @@ async function authenticate(req, res, next) {
   const token = authHeader.split(' ')[1];
 
   try {
-    const { data: { user }, error } = await adminClient.auth.getUser(token);
+    const { data: { user }, error } = await Promise.race([
+      adminClient.auth.getUser(token),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Token verification timed out')), 8000))
+    ]);
 
     if (error || !user) {
       return res.status(401).json({

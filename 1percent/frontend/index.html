@@ -417,6 +417,68 @@
   .contact-form textarea { resize: vertical; min-height: 100px; }
   .contact-form .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
+  /* Reviews */
+  .reviews-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+  }
+  .review-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px 24px;
+    box-shadow: 0 8px 26px rgba(15, 23, 42, 0.04);
+  }
+  .review-stars {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #fbbf24;
+    font-size: 18px;
+    margin-bottom: 18px;
+  }
+  .review-stars .empty { color: rgba(148, 163, 184, 0.6); }
+  .review-card p {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+  }
+  .review-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-light);
+  }
+  .review-user {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .review-user strong {
+    font-size: 14px;
+    color: var(--text);
+  }
+  .review-user span {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .review-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 48px;
+    height: 28px;
+    border-radius: 999px;
+    background: rgba(13,110,63,0.1);
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
   /* Responsive */
   @media (max-width: 900px) {
     .biz-hero .container { grid-template-columns: 1fr; gap: 40px; }
@@ -430,6 +492,7 @@
     .biz-hero { padding: 120px 0 60px; }
     .biz-hero-stats { gap: 24px; flex-wrap: wrap; }
     .process-grid { grid-template-columns: 1fr; }
+    .reviews-grid { grid-template-columns: 1fr; }
     .contact-form .form-row { grid-template-columns: 1fr; }
     .footer-grid { grid-template-columns: 1fr; }
     .biz-cta { padding: 48px 24px; }
@@ -648,6 +711,20 @@
         <span class="role">Cybersecurity Lead</span>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     USER REVIEWS
+     ============================================================ -->
+<section class="section">
+  <div class="container">
+    <div class="text-center" style="margin-bottom:56px;">
+      <span class="eyebrow">User Reviews</span>
+      <h2 class="section-title">People rate our work highly</h2>
+      <p class="section-subtitle">A few recent reviews from students, clients, and partners who trust the 1percent experience.</p>
+    </div>
+    <div class="reviews-grid" id="review-grid"></div>
   </div>
 </section>
 
@@ -936,6 +1013,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  renderRandomReviews();
+
   // Load services
   loadServices();
 
@@ -977,6 +1056,44 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+const userReviews = [
+  { name: 'Nadia M.', role: 'Startup founder', rating: 5, text: 'The team understood our app idea quickly and turned it into a polished product we could trust from day one.', badge: '5.0' },
+  { name: 'Jean P.', role: 'Student', rating: 5, text: 'The learning structure is clear, practical, and motivating. I actually built projects and felt confident afterward.', badge: '5.0' },
+  { name: 'Aline T.', role: 'Product manager', rating: 4, text: 'The process felt organized and collaborative. We got a strong MVP and a roadmap for the next phase.', badge: '4.8' },
+  { name: 'Eric K.', role: 'Business owner', rating: 5, text: 'We needed a real digital solution, and the team delivered a quality product with great communication.', badge: '5.0' },
+  { name: 'Merveille R.', role: 'Frontend learner', rating: 5, text: 'The coaching and project-based lessons made even complex topics feel achievable and exciting.', badge: '5.0' },
+  { name: 'Samuel N.', role: 'Client', rating: 4, text: 'Professional, responsive, and focused on results. The project quality exceeded what we expected.', badge: '4.9' }
+];
+
+function renderRandomReviews() {
+  const grid = document.getElementById('review-grid');
+  if (!grid) return;
+
+  const shuffled = [...userReviews].sort(() => Math.random() - 0.5).slice(0, 3);
+
+  grid.innerHTML = shuffled.map(review => {
+    const stars = Array.from({ length: 5 }, (_, index) => {
+      const filled = index < review.rating ? '★' : '★';
+      const classes = index < review.rating ? 'filled' : 'empty';
+      return `<span class="${classes}">${filled}</span>`;
+    }).join('');
+
+    return `
+      <article class="review-card">
+        <div class="review-stars" aria-label="${review.rating} out of 5 stars">${stars}</div>
+        <p>“${escapeHTML(review.text)}”</p>
+        <div class="review-meta">
+          <div class="review-user">
+            <strong>${escapeHTML(review.name)}</strong>
+            <span>${escapeHTML(review.role)}</span>
+          </div>
+          <span class="review-badge">${escapeHTML(review.badge)}</span>
+        </div>
+      </article>
+    `;
+  }).join('');
+}
 
 async function loadServices() {
   const grid = document.getElementById('services-grid');
