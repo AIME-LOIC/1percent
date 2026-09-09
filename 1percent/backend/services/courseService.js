@@ -46,17 +46,16 @@ class CourseService {
     const { data: courses, error: cError } = await adminClient
       .from('courses')
       .select('*')
-      .eq('slug', slug)
-      .eq('is_published', true);
+      .eq('slug', slug);
 
     if (cError) throw cError;
     if (!courses || courses.length === 0) return null;
     const course = courses[0];
 
-    // Fetch lessons for this course
+    // Fetch lessons — include is_free_preview if column exists
     const { data: lessons } = await adminClient
       .from('lessons')
-      .select('id, title, description, content_md, lesson_type, duration_min, sort_order')
+      .select('id, title, description, content_md, lesson_type, duration_min, sort_order, is_free_preview')
       .eq('course_id', course.id)
       .eq('is_published', true)
       .order('sort_order', { ascending: true });
