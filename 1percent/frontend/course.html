@@ -50,6 +50,27 @@ body{font-family:'Inter',sans-serif;background:var(--c-bg);color:var(--c-text);o
 .topbar-btn{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--c-border);background:#fff;color:var(--c-muted);transition:all .15s;text-decoration:none;}
 .topbar-btn:hover{border-color:var(--c-muted);color:var(--c-text);}
 .topbar-btn.primary{background:var(--c-accent);color:#fff;border-color:var(--c-accent);}
+/* Membership badge */
+.membership-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:100px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+.membership-badge.free{background:#f3f4f6;color:var(--c-muted);border:1px solid var(--c-border);}
+.membership-badge.starter{background:#eff6ff;color:var(--c-blue);border:1px solid #bfdbfe;}
+.membership-badge.pro{background:#f5f3ff;color:var(--c-purple);border:1px solid #ddd6fe;}
+.membership-badge.unlimited{background:#fffbeb;color:var(--c-yellow);border:1px solid #fde68a;}
+/* Premium lock wall */
+.premium-wall{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 32px;text-align:center;gap:16px;background:#fff;min-height:400px;}
+.premium-wall .lock-icon{width:56px;height:56px;background:#f5f3ff;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.premium-wall h2{font-size:22px;font-weight:800;}
+.premium-wall p{font-size:14px;color:var(--c-muted);max-width:380px;line-height:1.7;}
+.premium-wall .plans{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:8px;}
+.plan-card{border:1px solid var(--c-border);border-radius:10px;padding:16px 20px;min-width:160px;text-align:center;background:#fafafa;}
+.plan-card.highlight{border-color:var(--c-accent);background:#f0fdf4;}
+.plan-card .plan-name{font-size:13px;font-weight:700;margin-bottom:4px;}
+.plan-card .plan-price{font-size:20px;font-weight:800;color:var(--c-accent);}
+.plan-card .plan-price span{font-size:12px;font-weight:400;color:var(--c-muted);}
+/* Lesson lock indicator */
+.lesson-item.locked .lesson-num{background:#f3f4f6;color:var(--c-muted);}
+.lesson-item.locked .lesson-info h4{color:var(--c-muted);}
+.lesson-lock-icon{font-size:11px;color:var(--c-muted);margin-left:auto;flex-shrink:0;}
 
 /* ── Layout ──────────────────────────────────────── */
 .layout{display:grid;grid-template-columns:380px 1fr;height:calc(100vh - 48px);}
@@ -247,6 +268,7 @@ body{font-family:'Inter',sans-serif;background:var(--c-bg);color:var(--c-text);o
     <span class="topbar-course" id="topbar-course">Loading...</span>
   </div>
   <div class="topbar-right">
+    <span id="membership-badge" class="membership-badge free" style="display:none;"></span>
     <a href="/dashboard" class="topbar-btn">Dashboard</a>
     <a href="/playground" class="topbar-btn">Challenges</a>
     <a href="/" id="logout-btn" class="topbar-btn">Logout</a>
@@ -332,7 +354,7 @@ body{font-family:'Inter',sans-serif;background:var(--c-bg);color:var(--c-text);o
 </div>
 
 <script>
-let supabaseClient=null,currentUser=null,courseData=null,slug='',activeLessonId=null,completedIds=new Set();
+let supabaseClient=null,currentUser=null,courseData=null,slug='',activeLessonId=null,completedIds=new Set(),premiumStatus=null,isPremiumUser=false;
 
 function escapeHTML(s){if(s==null)return'';return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
@@ -395,6 +417,7 @@ async function loadCourse(){
   }
 
   await loadProgress();
+  await loadPremium();
   const dlBtn=document.getElementById('download-course-btn');
   if(dlBtn){dlBtn.style.display='inline-flex';dlBtn.onclick=()=>downloadCoursePdf(courseData.id);}
   renderLessons();
@@ -456,15 +479,19 @@ function updateQuizButton(){
 function renderLessons(){
   const list=document.getElementById('lesson-list');
   const lessons=courseData.lessons||[];
+  const isPremium=courseData.is_premium;
   list.innerHTML=lessons.map((l,i)=>{
     const done=completedIds.has(l.id);
     const active=activeLessonId===l.id;
-    return `<div class="lesson-item${active?' active':''}${done?' completed':''}" data-lesson-id="${l.id}" onclick="openLesson('${l.id}')">
+    // A lesson is locked if: course is premium AND user is not premium AND it's not the free preview
+    const isLocked=isPremium&&!isPremiumUser&&!l.is_free_preview&&i>0;
+    return `<div class="lesson-item${active?' active':''}${done?' completed':''}${isLocked?' locked':''}" data-lesson-id="${l.id}" onclick="openLesson('${l.id}')">
       <div class="lesson-num">${done?'&#10003;':i+1}</div>
       <div class="lesson-info">
         <h4>${escapeHTML(l.title)}</h4>
         <div class="lesson-meta"><span class="lesson-type ${l.lesson_type}">${l.lesson_type}</span><span>${l.duration_min} min</span></div>
       </div>
+      ${isLocked?'<span class="lesson-lock-icon">&#128274;</span>':''}
     </div>`;
   }).join('');
   if(!lessons.length)list.innerHTML='<div style="text-align:center;padding:30px;color:var(--c-muted);font-size:13px;">No lessons yet</div>';
@@ -479,7 +506,14 @@ function openLesson(lessonId){
   const lesson=(courseData.lessons||[]).find(l=>l.id===lessonId);
   if(!lesson)return;
   const idx=(courseData.lessons||[]).findIndex(l=>l.id===lessonId);
-  if(idx>=3&&!completedIds.has(lessonId)){
+
+  // Premium wall: course is premium, user is not premium, lesson is not free preview
+  if(courseData.is_premium&&!isPremiumUser&&!lesson.is_free_preview&&idx>0){
+    showPremiumWall();
+    return;
+  }
+
+  if(idx>=3&&!completedIds.has(lessonId)&&!courseData.is_premium){
     checkLessonLock(lessonId,idx).then(locked=>{if(!locked)doOpenLesson(lessonId);});
     return;
   }
@@ -525,7 +559,12 @@ function doOpenLesson(lessonId){
     <div class="content-footer">
       <div class="footer-actions">
         ${prev?`<button class="footer-btn outline" onclick="openLesson('${prev.id}')">&#8592; Previous</button>`:''}
-        ${next?`<button class="footer-btn outline" onclick="openLesson('${next.id}')">Next &#8594;</button>`:''}
+        ${next?(()=>{
+          const nextLocked=courseData.is_premium&&!isPremiumUser&&!next.is_free_preview;
+          return nextLocked
+            ?`<button class="footer-btn outline" onclick="showPremiumWall()" title="Premium required">Next &#8594; &#128274;</button>`
+            :`<button class="footer-btn outline" onclick="openLesson('${next.id}')">Next &#8594;</button>`;
+        })():''}
       </div>
       <div class="footer-actions">
         ${isCompleted
@@ -710,7 +749,58 @@ async function checkCertificate(){
 let premiumStatus=null;
 async function loadPremium(){
   if(!currentUser)return;
-  try{const res=await apiFetch('/api/premium/status');const json=await res.json();if(json.success)premiumStatus=json;}catch{}
+  try{
+    const res=await apiFetch('/api/premium/status');const json=await res.json();
+    if(json.success){premiumStatus=json;
+      const slug=json.tier?.slug||'free';
+      const name=json.tier?.name||'Free';
+      isPremiumUser=slug!=='free';
+      const badge=document.getElementById('membership-badge');
+      if(badge){
+        badge.textContent=name;
+        badge.className='membership-badge '+slug;
+        badge.style.display='inline-flex';
+        badge.title='Your current plan';
+        badge.onclick=()=>window.location.href='/payment';
+        badge.style.cursor='pointer';
+      }
+    }
+  }catch{}
+}
+
+function showPremiumWall(){
+  document.getElementById('content-placeholder').style.display='none';
+  const render=document.getElementById('content-render');
+  render.style.display='block';
+  const tierName=premiumStatus?.tier?.name||'Free';
+  render.innerHTML=`
+    <div class="premium-wall">
+      <div class="lock-icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--c-purple)" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <h2>Premium Course</h2>
+      <p>You're on the <strong>${escapeHTML(tierName)}</strong> plan. Lesson 1 is free — upgrade to unlock all ${courseData.lessons?.length||0} lessons.</p>
+      <div class="plans">
+        <div class="plan-card">
+          <div class="plan-name">Starter</div>
+          <div class="plan-price">$5<span>/mo</span></div>
+          <div style="font-size:11px;color:var(--c-muted);margin-top:4px;">All premium courses</div>
+        </div>
+        <div class="plan-card highlight">
+          <div class="plan-name">Pro</div>
+          <div class="plan-price">$12<span>/mo</span></div>
+          <div style="font-size:11px;color:var(--c-muted);margin-top:4px;">Courses + downloads</div>
+        </div>
+        <div class="plan-card">
+          <div class="plan-name">Unlimited</div>
+          <div class="plan-price">$25<span>/mo</span></div>
+          <div style="font-size:11px;color:var(--c-muted);margin-top:4px;">Everything</div>
+        </div>
+      </div>
+      <a href="/payment" class="footer-btn primary" style="margin-top:8px;padding:10px 28px;font-size:14px;">Upgrade Now</a>
+      <p style="font-size:12px;color:var(--c-muted);">Already subscribed? <a href="/" style="color:var(--c-accent);">Log out and back in</a> to refresh.</p>
+    </div>`;
+  document.getElementById('main-area').scrollTop=0;
 }
 
 function showModal(html){
