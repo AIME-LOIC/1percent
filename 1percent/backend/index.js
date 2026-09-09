@@ -80,14 +80,41 @@ app.use(express.urlencoded({ extended: false, limit: '5mb' }));
 app.disable('x-powered-by');
 
 /* ============================================================
+   SUBDOMAIN DETECTION — learn.1percent.rw serves learn at /
+   Must run BEFORE static files so we can intercept root requests.
+   ============================================================ */
+app.use((req, res, next) => {
+  const host = (req.headers.host || '').split(':')[0];
+  if (host === 'learn.1percent.rw' || host === 'www.learn.1percent.rw') {
+    req.isLearnSubdomain = true;
+    // Rewrite /learn/* paths to /* for the learn subdomain
+    if (req.path.startsWith('/learn/')) {
+      req.url = req.url.replace('/learn/', '/');
+    } else if (req.path === '/learn') {
+      req.url = '/';
+    }
+  }
+  next();
+});
+
+/* ============================================================
    STATIC FILES — Frontend
    ============================================================ */
-app.use(express.static(path.join(__dirname, '..', 'frontend'), {
+const frontendDir = path.join(__dirname, '..', 'frontend');
+app.use(express.static(frontendDir, {
   etag: true,
   lastModified: true,
   maxAge: process.env.NODE_ENV === 'production' ? '1d' : 0,
-  index: ['index.html']
+  index: false  // We handle index.html manually for subdomain support
 }));
+
+/* Handle root path — learn subdomain gets learn/index.html, main site gets index.html */
+app.get('/', (req, res) => {
+  if (req.isLearnSubdomain) {
+    return res.sendFile(path.join(frontendDir, 'learn', 'index.html'));
+  }
+  res.sendFile(path.join(frontendDir, 'index.html'));
+});
 
 /* ============================================================
    API ROUTES
@@ -131,26 +158,8 @@ app.use('/api/docs', docsRoutes);
 app.use('/api', courseRoutes);  // /api/roadmap, /api/courses (has /:slug)
 
 /* ============================================================
-   SUBDOMAIN DETECTION — learn.1percent.rw serves learn at /
-   ============================================================ */
-app.use((req, res, next) => {
-  const host = (req.headers.host || '').split(':')[0];
-  if (host === 'learn.1percent.rw' || host === 'www.learn.1percent.rw') {
-    req.isLearnSubdomain = true;
-    // Rewrite /learn/* paths to /* for the learn subdomain
-    if (req.path.startsWith('/learn/')) {
-      req.url = req.url.replace('/learn/', '/');
-    } else if (req.path === '/learn') {
-      req.url = '/';
-    }
-  }
-  next();
-});
-
-/* ============================================================
    SPA ROUTES — serve specific HTML files for app pages
    ============================================================ */
-const frontendDir = path.join(__dirname, '..', 'frontend');
 const htmlRoutes = {
   '/learn': 'learn/index.html',
   '/learn/dashboard': 'dashboard.html',
