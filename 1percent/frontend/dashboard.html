@@ -89,69 +89,89 @@
       </span>
     </div>
 
-    <!-- Stats (skeletons replaced by JS) -->
+    <!-- Stats -->
     <div class="dash-stats" id="dash-stats">
       <div class="dash-stat skel-stat skeleton"></div>
       <div class="dash-stat skel-stat skeleton"></div>
       <div class="dash-stat skel-stat skeleton"></div>
     </div>
 
-    <!-- Enrolled courses -->
-    <div class="dash-section">
-      <h2>Your Courses</h2>
-      <span class="count dash-enrolled-count">Loading...</span>
-    </div>
-    <div class="dash-enrolled" id="dash-enrolled">
-      <div class="skel-enrolled skeleton"></div>
-      <div class="skel-enrolled skeleton"></div>
-      <div class="skel-enrolled skeleton"></div>
-    </div>
+    <!-- Two-column layout: main + leaderboard -->
+    <div class="dash-layout">
+      <div class="dash-main">
+        <!-- Enrolled courses -->
+        <div class="dash-section">
+          <h2>Your Courses</h2>
+          <span class="count dash-enrolled-count">Loading...</span>
+        </div>
+        <div class="dash-enrolled" id="dash-enrolled">
+          <div class="skel-enrolled skeleton"></div>
+          <div class="skel-enrolled skeleton"></div>
+          <div class="skel-enrolled skeleton"></div>
+        </div>
 
-    <!-- Challenges -->
-    <div class="dash-section">
-      <h2>Challenges</h2>
-      <a href="/playground" style="font-size:12px;color:var(--primary);font-weight:600;text-decoration:none;">View All &rarr;</a>
-    </div>
-    <div class="dash-challenges" id="dash-challenges">
-      <div class="dash-challenge-filters" id="challenge-filters"></div>
-      <div class="dash-challenge-grid" id="challenge-grid">
-        <div class="skel-course skeleton"></div>
-        <div class="skel-course skeleton"></div>
-        <div class="skel-course skeleton"></div>
+        <!-- Challenges -->
+        <div class="dash-section">
+          <h2>Challenges</h2>
+          <a href="/playground" style="font-size:12px;color:var(--primary);font-weight:600;text-decoration:none;">View All &rarr;</a>
+        </div>
+        <div class="dash-challenges" id="dash-challenges">
+          <div class="dash-challenge-filters" id="challenge-filters"></div>
+          <div class="dash-challenge-grid" id="challenge-grid">
+            <div class="skel-course skeleton"></div>
+            <div class="skel-course skeleton"></div>
+            <div class="skel-course skeleton"></div>
+          </div>
+        </div>
+
+        <!-- All courses -->
+        <div class="dash-section">
+          <h2>Browse All Courses</h2>
+          <span class="count dash-courses-count">Loading...</span>
+        </div>
+        <div class="dash-courses" id="dash-all-courses">
+          <div class="skel-course skeleton"></div>
+          <div class="skel-course skeleton"></div>
+          <div class="skel-course skeleton"></div>
+          <div class="skel-course skeleton"></div>
+          <div class="skel-course skeleton"></div>
+          <div class="skel-course skeleton"></div>
+        </div>
+
+        <!-- Certificates -->
+        <div class="dash-section">
+          <h2>Certificates</h2>
+          <span class="count dash-certs-count">Loading...</span>
+        </div>
+        <div class="dash-certificates" id="dash-certificates">
+          <div class="dash-empty">Complete a course and pass the quiz to earn certificates.</div>
+        </div>
+
+        <!-- Roadmap -->
+        <div class="dash-section">
+          <h2>Learning Roadmap</h2>
+        </div>
+        <div class="dash-roadmap" id="roadmap-container">
+          <div class="skel-roadmap skeleton"></div>
+          <div class="skel-roadmap skeleton"></div>
+          <div class="skel-roadmap skeleton"></div>
+        </div>
       </div>
-    </div>
 
-    <!-- All courses -->
-    <div class="dash-section">
-      <h2>Browse All Courses</h2>
-      <span class="count dash-courses-count">Loading...</span>
-    </div>
-    <div class="dash-courses" id="dash-all-courses">
-      <div class="skel-course skeleton"></div>
-      <div class="skel-course skeleton"></div>
-      <div class="skel-course skeleton"></div>
-      <div class="skel-course skeleton"></div>
-      <div class="skel-course skeleton"></div>
-      <div class="skel-course skeleton"></div>
-    </div>
-
-    <!-- Certificates -->
-    <div class="dash-section">
-      <h2>Certificates</h2>
-      <span class="count dash-certs-count">Loading...</span>
-    </div>
-    <div class="dash-certificates" id="dash-certificates">
-      <div class="dash-empty">Complete a course and pass the quiz to earn certificates.</div>
-    </div>
-
-    <!-- Roadmap -->
-    <div class="dash-section">
-      <h2>Learning Roadmap</h2>
-    </div>
-    <div class="dash-roadmap" id="roadmap-container">
-      <div class="skel-roadmap skeleton"></div>
-      <div class="skel-roadmap skeleton"></div>
-      <div class="skel-roadmap skeleton"></div>
+      <!-- Leaderboard sidebar -->
+      <div class="dash-lb">
+        <div class="dash-lb-head">
+          <h3>🏆 Leaderboard</h3>
+          <div class="dash-lb-tabs">
+            <button class="dash-lb-tab active" data-type="coins">Coins</button>
+            <button class="dash-lb-tab" data-type="streak">Streak</button>
+          </div>
+        </div>
+        <div class="dash-lb-list" id="dash-lb-list">
+          <div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px;">Loading...</div>
+        </div>
+        <div class="dash-lb-footer" id="dash-lb-footer"></div>
+      </div>
     </div>
   </div>
 </template>
