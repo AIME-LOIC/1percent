@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Install — 1% Expert Programme</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: #f8f9fa;
+      color: #111827;
+      line-height: 1.6;
+    }
+
+    /* ---- NAV ---- */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; height: 56px;
+      background: rgba(255,255,255,0.95); backdrop-filter: blur(12px);
+      border-bottom: 1px solid #e5e7eb; display: flex; align-items: center;
+      justify-content: space-between; padding: 0 24px; z-index: 100;
+    }
+    .nav-logo { font-size: 18px; font-weight: 700; color: #0d6e3f; text-decoration: none; }
+    .nav-links { display: flex; gap: 16px; align-items: center; }
+    .nav-links a { color: #6b7280; text-decoration: none; font-size: 14px; transition: color 0.2s; }
+    .nav-links a:hover { color: #111827; }
+    .nav-links .btn-sm {
+      background: #0d6e3f; color: #fff; padding: 6px 14px; border-radius: 6px;
+      font-weight: 600; font-size: 13px; border: none; cursor: pointer; text-decoration: none;
+    }
+
+    /* ---- MAIN ---- */
+    .main {
+      max-width: 800px; margin: 0 auto; padding: 100px 24px 60px;
+    }
+
+    /* ---- HERO ---- */
+    .hero {
+      text-align: center; margin-bottom: 48px;
+    }
+    .hero-badge {
+      display: inline-block; background: #ecfdf5; color: #059669;
+      padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 600;
+      margin-bottom: 16px; border: 1px solid #a7f3d0;
+    }
+    .hero h1 { font-size: 36px; font-weight: 800; margin-bottom: 12px; }
+    .hero p { font-size: 16px; color: #6b7280; max-width: 500px; margin: 0 auto; }
+
+    /* ---- VERSION CHECK ---- */
+    .version-card {
+      background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+      padding: 24px; margin-bottom: 32px; display: flex;
+      align-items: center; gap: 20px;
+    }
+    .version-icon {
+      width: 56px; height: 56px; border-radius: 12px; background: #0d6e3f;
+      display: flex; align-items: center; justify-content: center; color: #fff;
+      font-size: 24px; flex-shrink: 0;
+    }
+    .version-info { flex: 1; }
+    .version-label { font-size: 13px; color: #6b7280; }
+    .version-number { font-size: 24px; font-weight: 800; color: #111827; }
+    .version-status { font-size: 12px; color: #059669; font-weight: 600; margin-top: 4px; }
+    .version-status.outdated { color: #f59e0b; }
+    .version-btn {
+      padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600;
+      cursor: pointer; border: none; transition: all 0.2s;
+    }
+    .version-btn.primary { background: #0d6e3f; color: #fff; }
+    .version-btn.primary:hover { opacity: 0.85; }
+    .version-btn.secondary { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
+
+    /* ---- RELEASES ---- */
+    .releases-section {
+      margin-bottom: 40px;
+    }
+    .releases-section h2 {
+      font-size: 20px; font-weight: 700; margin-bottom: 16px;
+    }
+    .release-card {
+      background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+      padding: 20px; margin-bottom: 12px; transition: border-color 0.2s;
+    }
+    .release-card:hover { border-color: #0d6e3f; }
+    .release-card .release-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .release-card .release-tag {
+      font-size: 16px; font-weight: 700; color: #111827;
+    }
+    .release-card .release-date {
+      font-size: 12px; color: #9ca3af;
+    }
+    .release-card .release-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 4px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+    }
+    .release-card .release-badge.latest { background: #dcfce7; color: #166534; }
+    .release-card .release-badge.stable { background: #dbeafe; color: #1e40af; }
+    .release-card .release-notes {
+      font-size: 14px; color: #6b7280; line-height: 1.6;
+    }
+    .release-card .release-notes ul {
+      padding-left: 20px; margin-top: 8px;
+    }
+    .release-card .release-notes li {
+      margin: 4px 0;
+    }
+
+    /* ---- INSTALL STEPS ---- */
+    .install-section {
+      margin-bottom: 40px;
+    }
+    .install-section h2 {
+      font-size: 20px; font-weight: 700; margin-bottom: 16px;
+    }
+    .install-step {
+      background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+      padding: 20px; margin-bottom: 12px; display: flex; gap: 16px;
+    }
+    .step-number {
+      width: 32px; height: 32px; border-radius: 50%; background: #0d6e3f;
+      color: #fff; display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px; flex-shrink: 0;
+    }
+    .step-content { flex: 1; }
+    .step-content h4 {
+      font-size: 15px; font-weight: 600; margin-bottom: 4px;
+    }
+    .step-content p {
+      font-size: 14px; color: #6b7280; margin-bottom: 12px;
+    }
+
+    /* ---- CODE BLOCK ---- */
+    .code-block {
+      background: #1f2937; color: #e5e7eb; padding: 16px 20px;
+      border-radius: 8px; font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; overflow-x: auto; position: relative;
+    }
+    .code-block .copy-btn {
+      position: absolute; top: 8px; right: 8px; background: #374151;
+      color: #9ca3af; border: none; padding: 4px 8px; border-radius: 4px;
+      font-size: 11px; cursor: pointer; transition: all 0.2s;
+    }
+    .code-block .copy-btn:hover { background: #4b5563; color: #fff; }
+    .code-block code { display: block; white-space: pre; }
+
+    /* ---- DOCS ---- */
+    .docs-section {
+      background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+      padding: 32px; margin-bottom: 32px;
+    }
+    .docs-section h2 {
+      font-size: 20px; font-weight: 700; margin-bottom: 20px;
+    }
+    .docs-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .docs-card {
+      border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px;
+      text-decoration: none; color: inherit; transition: all 0.2s;
+    }
+    .docs-card:hover { border-color: #0d6e3f; transform: translateY(-2px); }
+    .docs-card .docs-icon {
+      font-size: 24px; margin-bottom: 8px;
+    }
+    .docs-card h4 {
+      font-size: 14px; font-weight: 600; margin-bottom: 4px;
+    }
+    .docs-card p {
+      font-size: 12px; color: #6b7280;
+    }
+
+    /* ---- FOOTER ---- */
+    .footer {
+      border-top: 1px solid #e5e7eb; padding: 32px 24px; text-align: center;
+      color: #6b7280; font-size: 13px;
+    }
+    .footer a { color: #0d6e3f; text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 28px; }
+      .version-card { flex-direction: column; text-align: center; }
+      .docs-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <a href="/" class="nav-logo">1% Expert</a>
+    <div class="nav-links">
+      <a href="/">Courses</a>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/docs">Docs</a>
+    </div>
+  </nav>
+
+  <div class="main">
+    <div class="hero">
+      <div class="hero-badge">📥 Installation</div>
+      <h1>Get Started with 1% Expert</h1>
+      <p>Follow the steps below to install and set up the platform on your system.</p>
+    </div>
+
+    <!-- Version Check -->
+    <div class="version-card" id="version-card">
+      <div class="version-icon">📦</div>
+      <div class="version-info">
+        <div class="version-label">Current Version</div>
+        <div class="version-number" id="current-version">Loading...</div>
+        <div class="version-status" id="version-status">Checking for updates...</div>
+      </div>
+      <button class="version-btn primary" id="update-btn" onclick="checkForUpdates()" style="display:none;">Check Update</button>
+    </div>
+
+    <!-- Releases -->
+    <div class="releases-section">
+      <h2>📋 Release Notes</h2>
+      <div id="releases-list">
+        <div style="text-align:center;padding:40px;color:#6b7280;">Loading releases...</div>
+      </div>
+    </div>
+
+    <!-- Installation Steps -->
+    <div class="install-section">
+      <h2>🚀 Installation Steps</h2>
+      
+      <div class="install-step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <h4>Clone the Repository</h4>
+          <p>Download the source code from GitHub</p>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <code>git clone https://github.com/AIME-LOIC/1percent.git
+cd 1percent</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="install-step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <h4>Install Dependencies</h4>
+          <p>Install all required Node.js packages</p>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <code>npm install</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="install-step">
+        <div class="step-number">3</div>
+        <div class="step-content">
+          <h4>Configure Environment</h4>
+          <p>Create a <code>.env</code> file with your configuration</p>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <code># Copy the example file
+cp .env.example .env
+
+# Then edit .env with your settings:
+# - SUPABASE_URL
+# - SUPABASE_ANON_KEY
+# - SUPABASE_SERVICE_ROLE_KEY
+# - PORT (optional, default 3000)</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="install-step">
+        <div class="step-number">4</div>
+        <div class="step-content">
+          <h4>Set Up Database</h4>
+          <p>Run the Supabase migrations to create tables</p>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <code># Import the database schema
+# Run the SQL files in your Supabase dashboard:
+# 1. supabase_schema.sql
+# 2. migrations/add_notifications_and_ratings.sql</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="install-step">
+        <div class="step-number">5</div>
+        <div class="step-content">
+          <h4>Start the Server</h4>
+          <p>Launch the development server</p>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <code># Development mode
+npm run dev
+
+# Or production mode
+NODE_ENV=production npm start</code>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Documentation -->
+    <div class="docs-section">
+      <h2>📚 Documentation</h2>
+      <div class="docs-grid">
+        <a href="/docs" class="docs-card">
+          <div class="docs-icon">📖</div>
+          <h4>API Documentation</h4>
+          <p>Complete API reference and endpoints</p>
+        </a>
+        <a href="/docs" class="docs-card">
+          <div class="docs-icon">🔧</div>
+          <h4>Configuration</h4>
+          <p>Environment variables and settings</p>
+        </a>
+        <a href="/docs" class="docs-card">
+          <div class="docs-icon">🗄️</div>
+          <h4>Database Schema</h4>
+          <p>Table structures and relationships</p>
+        </a>
+        <a href="/docs" class="docs-card">
+          <div class="docs-icon">🔐</div>
+          <h4>Authentication</h4>
+          <p>Supabase auth setup and JWT handling</p>
+        </a>
+      </div>
+    </div>
+
+    <!-- System Requirements -->
+    <div class="docs-section">
+      <h2>💻 System Requirements</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;">
+        <div style="padding:16px;background:#f9fafb;border-radius:8px;">
+          <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">Node.js</div>
+          <div style="font-size:16px;font-weight:700;">v18.0.0+</div>
+        </div>
+        <div style="padding:16px;background:#f9fafb;border-radius:8px;">
+          <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">npm</div>
+          <div style="font-size:16px;font-weight:700;">v9.0.0+</div>
+        </div>
+        <div style="padding:16px;background:#f9fafb;border-radius:8px;">
+          <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">Database</div>
+          <div style="font-size:16px;font-weight:700;">Supabase</div>
+        </div>
+        <div style="padding:16px;background:#f9fafb;border-radius:8px;">
+          <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">Storage</div>
+          <div style="font-size:16px;font-weight:700;">500MB+</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>1percent Rwanda — Kigali, Rwanda</p>
+    <p><a href="/">Business</a> · <a href="/docs">Docs</a> · <a href="mailto:1percentrwanda@gmail.com">Contact</a></p>
+  </footer>
+
+  <script>
+    const GITHUB_REPO = 'AIME-LOIC/1percent';
+    let currentVersion = '1.0.0';
+
+    // Fetch current version from package.json (simulated)
+    async function loadCurrentVersion() {
+      try {
+        const res = await fetch('/api/config');
+        const config = await res.json();
+        // In production, this would come from an API endpoint
+        currentVersion = '1.0.0';
+        document.getElementById('current-version').textContent = 'v' + currentVersion;
+      } catch (e) {
+        document.getElementById('current-version').textContent = 'v1.0.0';
+      }
+    }
+
+    // Fetch releases from GitHub
+    async function loadReleases() {
+      try {
+        const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases`);
+        if (!res.ok) throw new Error('Failed to fetch releases');
+        
+        const releases = await res.json();
+        const container = document.getElementById('releases-list');
+
+        if (!releases || releases.length === 0) {
+          container.innerHTML = `
+            <div class="release-card">
+              <div class="release-header">
+                <span class="release-tag">v1.0.0</span>
+                <span class="release-badge latest">Latest</span>
+              </div>
+              <div class="release-date">Initial release</div>
+              <div class="release-notes">
+                <p>First stable release of the 1% Expert Programme platform.</p>
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = releases.slice(0, 10).map((release, i) => `
+          <div class="release-card">
+            <div class="release-header">
+              <span class="release-tag">${escapeHTML(release.tag_name)}</span>
+              ${i === 0 ? '<span class="release-badge latest">Latest</span>' : '<span class="release-badge stable">Stable</span>'}
+            </div>
+            <div class="release-date">${new Date(release.published_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+            <div class="release-notes">${formatReleaseNotes(release.body || 'No release notes.')}</div>
+          </div>
+        `).join('');
+
+        // Check if update is available
+        if (releases.length > 0) {
+          const latestVersion = releases[0].tag_name.replace('v', '');
+          if (compareVersions(latestVersion, currentVersion) > 0) {
+            document.getElementById('version-status').textContent = `Update available: v${latestVersion}`;
+            document.getElementById('version-status').className = 'version-status outdated';
+            document.getElementById('update-btn').style.display = 'inline-block';
+          } else {
+            document.getElementById('version-status').textContent = 'You\'re up to date!';
+            document.getElementById('version-status').className = 'version-status';
+          }
+        }
+      } catch (e) {
+        console.warn('Could not load releases:', e);
+        document.getElementById('releases-list').innerHTML = `
+          <div class="release-card">
+            <div class="release-header">
+              <span class="release-tag">v1.0.0</span>
+              <span class="release-badge latest">Latest</span>
+            </div>
+            <div class="release-date">Initial release</div>
+            <div class="release-notes">
+              <p>First stable release of the 1% Expert Programme platform.</p>
+            </div>
+          </div>
+        `;
+        document.getElementById('version-status').textContent = 'You\'re up to date!';
+      }
+    }
+
+    function formatReleaseNotes(body) {
+      // Convert markdown-like notes to HTML
+      let html = escapeHTML(body);
+      // Convert bullet points
+      html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+      html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+      // Convert headers
+      html = html.replace(/^### (.+)$/gm, '<strong>$1</strong>');
+      html = html.replace(/^## (.+)$/gm, '<strong>$1</strong>');
+      // Convert newlines
+      html = html.replace(/\n/g, '<br>');
+      return html;
+    }
+
+    function compareVersions(a, b) {
+      const pa = a.split('.').map(Number);
+      const pb = b.split('.').map(Number);
+      for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+        const na = pa[i] || 0;
+        const nb = pb[i] || 0;
+        if (na > nb) return 1;
+        if (na < nb) return -1;
+      }
+      return 0;
+    }
+
+    function escapeHTML(str) {
+      if (!str) return '';
+      return str.replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+
+    function copyCode(btn) {
+      const code = btn.parentElement.querySelector('code').textContent;
+      navigator.clipboard.writeText(code).then(() => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 2000);
+      });
+    }
+
+    function checkForUpdates() {
+      window.open(`https://github.com/${GITHUB_REPO}/releases`, '_blank');
+    }
+
+    // Initialize
+    loadCurrentVersion();
+    loadReleases();
+  </script>
+</body>
+</html>

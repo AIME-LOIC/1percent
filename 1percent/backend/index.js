@@ -176,11 +176,13 @@ const htmlRoutes = {
   '/learn/admin': 'admin.html',
   '/learn/admin/': 'admin.html',
   '/learn/payment': 'payment.html',
+  '/learn/payment-details': 'payment-details.html',
   '/learn/sign': 'sign.html',
   '/learn/certificate': 'certificate-view.html',
   '/admin': 'admin.html',
   '/admin/': 'admin.html',
   '/docs': 'docs.html',
+  '/install': 'install.html',
 };
 
 // Learn subdomain routes — same pages, no /learn prefix
@@ -192,9 +194,11 @@ const learnSubdomainRoutes = {
   '/admin': 'admin.html',
   '/admin/': 'admin.html',
   '/payment': 'payment.html',
+  '/payment-details': 'payment-details.html',
   '/sign': 'sign.html',
   '/certificate': 'certificate-view.html',
   '/course': 'course.html',
+  '/install': 'install.html',
 };
 
 app.get('*', (req, res) => {
