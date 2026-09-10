@@ -262,15 +262,67 @@
 .dash-weekday.today{outline:2px solid rgba(13,110,63,.18);}
 .dash-goal-bar{height:8px;border-radius:999px;background:var(--surface);overflow:hidden;border:1px solid var(--border);}
 .dash-goal-bar span{display:block;height:100%;width:0;background:linear-gradient(90deg,#0d6e3f,#34d399);border-radius:inherit;transition:width .25s ease;}
-.dash-notify-list{display:flex;flex-direction:column;gap:8px;}
-.dash-notify-item{display:flex;gap:8px;padding:8px 8px;border:1px solid var(--border);border-radius:10px;background:#fff;}
+/* ── Notifications ────────────────────────────────────── */
+.dash-notify-actions{display:flex;align-items:center;gap:6px;}
+.dash-mark-all-read{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:24px;height:24px;border-radius:6px;border:1px solid var(--border);
+  background:#fff;color:var(--text-muted);cursor:pointer;transition:all .15s;
+}
+.dash-mark-all-read:hover{background:var(--surface);color:var(--primary);border-color:var(--primary);}
+.dash-notify-list{display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;}
+.dash-notify-item{display:flex;gap:8px;padding:10px;border:1px solid var(--border);border-radius:10px;background:#fff;transition:all .2s;position:relative;}
+.dash-notify-item:hover{border-color:var(--primary);}
+.dash-notify-item.read{opacity:0.6;}
+.dash-notify-item.dismissing{opacity:0;transform:translateX(20px);pointer-events:none;}
 .dash-notify-item .dot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex-shrink:0;}
 .dash-notify-item.success .dot{background:#10b981;}
 .dash-notify-item.info .dot{background:#3b82f6;}
 .dash-notify-item.warning .dot{background:#f59e0b;}
+.dash-notify-item.error .dot{background:#ef4444;}
 .dash-notify-copy{flex:1;min-width:0;}
-.dash-notify-copy strong{display:block;font-size:11px;color:var(--text);line-height:1.4;}
-.dash-notify-copy span{font-size:10px;color:var(--text-muted);}
+.dash-notify-copy strong{display:block;font-size:11px;color:var(--text);line-height:1.4;margin-bottom:2px;}
+.dash-notify-copy span{font-size:10px;color:var(--text-muted);display:block;}
+.dash-notify-time{font-size:9px;color:var(--text-muted);margin-top:4px;}
+.dash-notify-dismiss{
+  position:absolute;top:6px;right:6px;
+  width:20px;height:20px;border-radius:50%;border:none;
+  background:transparent;color:var(--text-muted);cursor:pointer;
+  font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;
+  transition:all .15s;opacity:0;
+}
+.dash-notify-item:hover .dash-notify-dismiss{opacity:1;}
+.dash-notify-dismiss:hover{background:#fee2e2;color:#dc2626;}
+
+/* ── Rating Widget ────────────────────────────────────── */
+.dash-lb-rating{border-top:1px solid var(--border);}
+.dash-rating-widget{padding:4px 0;}
+.dash-rating-stars{display:flex;gap:4px;margin-bottom:8px;}
+.dash-star{
+  background:none;border:none;cursor:pointer;
+  font-size:24px;color:#d1d5db;transition:all .15s;padding:0;
+}
+.dash-star:hover,.dash-star.hover{color:#fbbf24;transform:scale(1.1);}
+.dash-star.active{color:#f59e0b;}
+.dash-rating-text{font-size:11px;color:var(--text-muted);margin-bottom:8px;min-height:16px;}
+.dash-rating-feedback{
+  width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;
+  font-size:11px;font-family:inherit;resize:none;margin-bottom:8px;
+  transition:border-color .15s;
+}
+.dash-rating-feedback:focus{outline:none;border-color:var(--primary);}
+.dash-rating-submit{
+  width:100%;padding:8px;border-radius:8px;border:none;
+  background:var(--primary);color:#fff;font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .15s;
+}
+.dash-rating-submit:hover{opacity:0.9;transform:translateY(-1px);}
+.dash-rating-avg{
+  margin-top:10px;padding-top:10px;border-top:1px solid var(--border);
+  font-size:11px;color:var(--text-muted);text-align:center;
+}
+.dash-rating-avg .avg-stars{color:#f59e0b;letter-spacing:2px;}
+.dash-rating-avg .avg-text{margin-left:4px;}
 
 /* ── Responsive ──────────────────────────────────────── */
 @media(max-width:1100px){.dash-layout{grid-template-columns:1fr;}.dash-lb{display:none;}}

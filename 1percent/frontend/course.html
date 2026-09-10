@@ -11,6 +11,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/js/icons.js"></script>
 <script src="/js/toast.js"></script>
+<link rel="stylesheet" href="/css/notification-popup.css">
+<script src="/js/notification-popup.js" defer></script>
 <style>
 :root{--c-bg:#f8f9fa;--c-surface:#ffffff;--c-card:#ffffff;--c-border:#e5e7eb;--c-text:#111827;--c-muted:#6b7280;--c-green:#059669;--c-blue:#2563eb;--c-yellow:#d97706;--c-red:#dc2626;--c-purple:#7c3aed;--c-accent:#0d6e3f;}
 
@@ -408,6 +410,11 @@ async function init(){
       supabaseClient=supabase.createClient(config.supabaseUrl,config.supabaseAnonKey);
       const{data:{session}}=await supabaseClient.auth.getSession();
       currentUser=session?.user||null;
+      
+      // Initialize notification popup if user is logged in
+      if(currentUser && typeof NotificationPopup !== 'undefined'){
+        await NotificationPopup.init(supabaseClient);
+      }
     }
   }catch(e){console.warn('[COURSE] Config init error:',e.message);}
   try{await loadCourse();}catch(e){console.error('[COURSE] Load error:',e);document.getElementById('topbar-course').textContent='Error loading course';}

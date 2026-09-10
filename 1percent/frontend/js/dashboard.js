@@ -34,6 +34,9 @@ const Dashboard = {
       if (!session?.user) { this._showGuest(); return; }
       this._renderHeaderMenu(session.user);
       await this._renderDashboard(session.user);
+      
+      // Initialize notification popup system
+      await NotificationPopup.init(this.supabase);
     } catch (err) {
       console.error('Dashboard init error:', err);
       this._showGuest();
@@ -149,6 +152,10 @@ const Dashboard = {
     await this._loadChallenges();
     await this._loadRoadmap();
     this._initLeaderboard();
+    
+    // Initialize notification and rating handlers
+    this._initNotificationHandlers();
+    this._initRatingHandlers();
   },
 
   async _loadStreak() {
@@ -459,26 +466,11 @@ const Dashboard = {
     if (goalProgress) goalProgress.textContent = `${completed}/${goalDays.length}`;
     if (goalFill) goalFill.style.width = `${(completed / goalDays.length) * 100}%`;
 
-    const notifications = [
-      { type: 'success', title: 'Weekly target is on track', time: '2h ago' },
-      { type: 'info', title: 'Two lessons left to keep your streak', time: 'Today' },
-      { type: 'warning', title: 'Challenge review due tomorrow', time: 'Tomorrow' }
-    ];
-    const notifyList = document.getElementById('dash-notify-list');
-    if (notifyList) {
-      notifyList.innerHTML = notifications.map(n => `
-        <div class="dash-notify-item ${n.type}">
-          <span class="dot"></span>
-          <div class="dash-notify-copy">
-            <strong>${escapeHTML(n.title)}</strong>
-            <span>${escapeHTML(n.time)}</span>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    const badge = document.getElementById('dash-new-badge');
-    if (badge) badge.textContent = String(notifications.length);
+    // Load real notifications from API
+    this._loadNotifications();
+    
+    // Load rating widget
+    this._loadRatingWidget();
   },
 
   _initLeaderboard() {
@@ -552,6 +544,254 @@ const Dashboard = {
         };
       });
     } catch { return []; }
+  },
+
+  // ============================================================
+  // Notification Methods
+  // ============================================================
+
+  async _loadNotifications() {
+    try {
+      const token = (await this.supabase.auth.getSession()).data.session?.access_token;
+      if (!token) return;
+
+      const res = await fetch('/api/notifications?limit=10', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const json = await res.json();
+
+      if (!json.success) return;
+
+      const { notifications, unreadCount } = json;
+      const notifyList = document.getElementById('dash-notify-list');
+      const badge = document.getElementById('dash-new-badge');
+      const markAllBtn = document.getElementById('dash-mark-all-read');
+
+      if (badge) {
+        if (unreadCount > 0) {
+          badge.textContent = String(unreadCount);
+          badge.style.display = 'inline-flex';
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+
+      if (markAllBtn) {
+        markAllBtn.style.display = unreadCount > 0 ? 'inline-flex' : 'none';
+      }
+
+      if (notifyList) {
+        if (!notifications || notifications.length === 0) {
+          notifyList.innerHTML = '<div class="dash-empty" style="padding:12px;font-size:12px;">No notifications yet</div>';
+          return;
+        }
+
+        notifyList.innerHTML = notifications.map(n => {
+          const timeAgo = this._getTimeAgo(n.created_at);
+          return `
+            <div class="dash-notify-item ${n.type} ${n.is_read ? 'read' : ''}" data-id="${n.id}">
+              <span class="dot"></span>
+              <div class="dash-notify-copy">
+                <strong>${escapeHTML(n.title)}</strong>
+                <span>${escapeHTML(n.message || '')}</span>
+                <span class="dash-notify-time">${timeAgo}</span>
+              </div>
+              <button class="dash-notify-dismiss" title="Dismiss" onclick="Dashboard._dismissNotification('${n.id}')">×</button>
+            </div>
+          `;
+        }).join('');
+      }
+    } catch (err) {
+      console.error('Failed to load notifications:', err);
+    }
+  },
+
+  _getTimeAgo(dateString) {
+    const now = new Date();
+    const date = new Date(dateString);
+    const seconds = Math.floor((now - date) / 1000);
+
+    if (seconds < 60) return 'Just now';
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+    return date.toLocaleDateString();
+  },
+
+  async _dismissNotification(id) {
+    try {
+      const token = (await this.supabase.auth.getSession()).data.session?.access_token;
+      if (!token) return;
+
+      await fetch(`/api/notifications/${id}/read`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // Remove the notification from UI
+      const item = document.querySelector(`.dash-notify-item[data-id="${id}"]`);
+      if (item) {
+        item.classList.add('dismissing');
+        setTimeout(() => item.remove(), 300);
+      }
+
+      // Reload notifications to update badge
+      this._loadNotifications();
+    } catch (err) {
+      console.error('Failed to dismiss notification:', err);
+    }
+  },
+
+  _initNotificationHandlers() {
+    const markAllBtn = document.getElementById('dash-mark-all-read');
+    if (markAllBtn) {
+      markAllBtn.addEventListener('click', async () => {
+        try {
+          const token = (await this.supabase.auth.getSession()).data.session?.access_token;
+          if (!token) return;
+
+          await fetch('/api/notifications/read-all', {
+            method: 'PUT',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+
+          // Reload notifications
+          this._loadNotifications();
+        } catch (err) {
+          console.error('Failed to mark all as read:', err);
+        }
+      });
+    }
+  },
+
+  // ============================================================
+  // Rating Methods
+  // ============================================================
+
+  async _loadRatingWidget() {
+    try {
+      const token = (await this.supabase.auth.getSession()).data.session?.access_token;
+      if (!token) return;
+
+      // Load user's existing rating
+      const res = await fetch('/api/ratings/mine/general', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const json = await res.json();
+
+      if (json.success && json.rating) {
+        this._setRatingDisplay(json.rating.rating);
+        const feedback = document.getElementById('dash-rating-feedback');
+        if (feedback && json.rating.feedback) {
+          feedback.value = json.rating.feedback;
+        }
+      }
+
+      // Load average rating
+      const statsRes = await fetch('/api/ratings/stats?category=general');
+      const statsJson = await statsRes.json();
+
+      if (statsJson.success && statsJson.stats) {
+        const { average, count } = statsJson.stats;
+        const avgEl = document.getElementById('dash-rating-avg');
+        if (avgEl && count > 0) {
+          avgEl.innerHTML = `<span class="avg-stars">${'★'.repeat(Math.round(average))}${'☆'.repeat(5 - Math.round(average))}</span> <span class="avg-text">${average}/5 (${count} rating${count !== 1 ? 's' : ''})</span>`;
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load rating widget:', err);
+    }
+  },
+
+  _setRatingDisplay(value) {
+    const stars = document.querySelectorAll('#dash-rating-stars .dash-star');
+    const text = document.getElementById('dash-rating-text');
+    const labels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
+
+    stars.forEach((star, index) => {
+      if (index < value) {
+        star.classList.add('active');
+      } else {
+        star.classList.remove('active');
+      }
+    });
+
+    if (text) {
+      text.textContent = value ? labels[value] : 'Select a rating';
+    }
+
+    this._selectedRating = value;
+  },
+
+  _initRatingHandlers() {
+    const starsContainer = document.getElementById('dash-rating-stars');
+    const submitBtn = document.getElementById('dash-rating-submit');
+
+    if (starsContainer) {
+      starsContainer.addEventListener('click', (e) => {
+        const star = e.target.closest('.dash-star');
+        if (!star) return;
+        const value = parseInt(star.dataset.value);
+        this._setRatingDisplay(value);
+      });
+
+      // Hover effect
+      starsContainer.addEventListener('mouseover', (e) => {
+        const star = e.target.closest('.dash-star');
+        if (!star) return;
+        const value = parseInt(star.dataset.value);
+        const stars = starsContainer.querySelectorAll('.dash-star');
+        stars.forEach((s, i) => {
+          s.classList.toggle('hover', i < value);
+        });
+      });
+
+      starsContainer.addEventListener('mouseout', () => {
+        const stars = starsContainer.querySelectorAll('.dash-star');
+        stars.forEach(s => s.classList.remove('hover'));
+      });
+    }
+
+    if (submitBtn) {
+      submitBtn.addEventListener('click', async () => {
+        if (!this._selectedRating) {
+          Modal.show({ title: 'Rating', body: 'Please select a rating first.' });
+          return;
+        }
+
+        try {
+          const token = (await this.supabase.auth.getSession()).data.session?.access_token;
+          if (!token) return;
+
+          const feedback = document.getElementById('dash-rating-feedback')?.value || '';
+
+          const res = await fetch('/api/ratings', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              rating: this._selectedRating,
+              feedback,
+              category: 'general'
+            })
+          });
+
+          const json = await res.json();
+
+          if (json.success) {
+            Modal.show({ title: 'Thank You!', body: 'Your rating has been submitted.' });
+            this._loadRatingWidget();
+          } else {
+            Modal.show({ title: 'Error', body: 'Failed to submit rating. Please try again.' });
+          }
+        } catch (err) {
+          console.error('Failed to submit rating:', err);
+          Modal.show({ title: 'Error', body: 'Failed to submit rating. Please try again.' });
+        }
+      });
+    }
   }
 };
 
