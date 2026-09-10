@@ -29,4 +29,10 @@ router.delete('/lessons/:lessonId', (req, res, next) => adminController.deleteLe
 // Enrollments
 router.get('/enrollments', (req, res, next) => adminController.getAllEnrollments(req, res, next));
 
+// Users
+router.get('/users', (req, res, next) => adminController.getAllUsers(req, res, next));
+
+// Notifications (admin view)
+router.get('/notifications', (req, res, next) => adminController.getAllNotifications(req, res, next));
+
 module.exports = router;
