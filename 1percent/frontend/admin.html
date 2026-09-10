@@ -291,9 +291,17 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
           </div>
           <div class="form-group" id="notif-users-group" style="display:none;">
             <label>Select Users</label>
-            <div id="notif-users-list" style="max-height:200px;overflow-y:auto;border:1px solid var(--admin-border);border-radius:6px;padding:8px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+              <input id="notif-users-search" placeholder="Search by name or email…" oninput="filterUsersList()" style="flex:1;padding:7px 10px;border:1px solid var(--admin-border);border-radius:6px;font-size:12px;font-family:'Inter',sans-serif;outline:none;">
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--admin-muted);white-space:nowrap;cursor:pointer;">
+                <input type="checkbox" id="notif-users-select-all" onchange="toggleSelectAllUsers(this.checked)" style="width:15px;height:15px;margin:0;accent-color:var(--admin-accent);">
+                Select all
+              </label>
+            </div>
+            <div id="notif-users-list" style="max-height:220px;overflow-y:auto;border:1px solid var(--admin-border);border-radius:6px;">
               <!-- Users will be loaded here -->
             </div>
+            <div id="notif-users-count" style="font-size:11px;color:var(--admin-muted);margin-top:6px;">0 selected</div>
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -855,19 +863,61 @@ async function loadUsersForNotifications() {
   }
 }
 
+const notifSelectedUserIds = new Set();
+
 function renderUsersList() {
   const container = document.getElementById('notif-users-list');
   if (!container) return;
 
-  container.innerHTML = allUsers.length
-    ? allUsers.map(u => `
-        <label style="display:flex;align-items:center;gap:8px;padding:6px;border-radius:4px;cursor:pointer;">
-          <input type="checkbox" value="${u.id}" class="notif-user-checkbox">
-          <span style="font-size:13px;">${esc(u.name)}</span>
-          <span style="font-size:11px;color:var(--admin-muted);">${esc(u.email)}</span>
-        </label>
-      `).join('')
-    : '<div style="text-align:center;padding:16px;color:var(--admin-muted);">No users found</div>';
+  const q = (document.getElementById('notif-users-search')?.value || '').trim().toLowerCase();
+  const visible = q
+    ? allUsers.filter(u => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q))
+    : allUsers;
+
+  if (!allUsers.length) {
+    container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--admin-muted);font-size:13px;">No users found</div>';
+  } else if (!visible.length) {
+    container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--admin-muted);font-size:13px;">No users match your search</div>';
+  } else {
+    container.innerHTML = visible.map((u, i) => `
+      <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;${i < visible.length - 1 ? 'border-bottom:1px solid #f3f4f6;' : ''}" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background=''">
+        <input type="checkbox" value="${u.id}" class="notif-user-checkbox" ${notifSelectedUserIds.has(u.id) ? 'checked' : ''} onchange="onNotifUserToggle('${u.id}', this.checked)" style="flex-shrink:0;width:15px;height:15px;margin:0;accent-color:var(--admin-accent);">
+        <span style="min-width:0;flex:1;display:flex;flex-direction:column;gap:1px;">
+          <span style="font-size:13px;font-weight:500;color:var(--admin-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(u.name)}</span>
+          <span style="font-size:11px;color:var(--admin-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(u.email)}</span>
+        </span>
+        ${u.role && u.role !== 'user' ? `<span class="badge badge-blue" style="flex-shrink:0;">${esc(u.role)}</span>` : ''}
+      </label>
+    `).join('');
+  }
+  updateUsersSelectedCount();
+}
+
+function onNotifUserToggle(id, checked) {
+  if (checked) notifSelectedUserIds.add(id); else notifSelectedUserIds.delete(id);
+  updateUsersSelectedCount();
+}
+
+function filterUsersList() {
+  renderUsersList();
+}
+
+function toggleSelectAllUsers(checked) {
+  const q = (document.getElementById('notif-users-search')?.value || '').trim().toLowerCase();
+  const visible = q
+    ? allUsers.filter(u => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q))
+    : allUsers;
+  visible.forEach(u => checked ? notifSelectedUserIds.add(u.id) : notifSelectedUserIds.delete(u.id));
+  renderUsersList();
+}
+
+function updateUsersSelectedCount() {
+  const countEl = document.getElementById('notif-users-count');
+  if (countEl) countEl.textContent = `${notifSelectedUserIds.size} selected`;
+  const boxesVisible = document.querySelectorAll('.notif-user-checkbox').length;
+  const checkedVisible = document.querySelectorAll('.notif-user-checkbox:checked').length;
+  const selectAll = document.getElementById('notif-users-select-all');
+  if (selectAll) selectAll.checked = boxesVisible > 0 && checkedVisible === boxesVisible;
 }
 
 // Toggle users list visibility
@@ -894,8 +944,7 @@ async function sendNotification() {
   let body = { title, message, type };
 
   if (recipient === 'specific') {
-    const checkboxes = document.querySelectorAll('.notif-user-checkbox:checked');
-    const userIds = Array.from(checkboxes).map(cb => cb.value);
+    const userIds = Array.from(notifSelectedUserIds);
 
     if (userIds.length === 0) {
       toast('Please select at least one user', 'error');
@@ -933,6 +982,10 @@ function clearNotifForm() {
   document.getElementById('notif-type').value = 'info';
   document.getElementById('notif-recipient').value = 'all';
   document.getElementById('notif-users-group').style.display = 'none';
+  const searchEl = document.getElementById('notif-users-search');
+  if (searchEl) searchEl.value = '';
+  notifSelectedUserIds.clear();
+  renderUsersList();
 }
 
 async function loadNotificationHistory() {
