@@ -161,7 +161,7 @@ class AdminController {
     try {
       const { data, error } = await adminClient
         .from('enrollments')
-        .select('*, profiles(full_name), courses(title, slug)')
+        .select('*, profiles(full_name, email), courses(title, slug)')
         .order('enrolled_at', { ascending: false })
         .limit(100);
       if (error) throw error;
@@ -169,6 +169,39 @@ class AdminController {
     } catch (err) {
       console.error('[ADMIN] Enrollments error:', err.message);
       res.status(500).json({ error: 'Failed to load enrollments.' });
+    }
+  }
+
+  /* ---- USERS ---- */
+
+  async getAllUsers(req, res) {
+    try {
+      const { data, error } = await adminClient
+        .from('profiles')
+        .select('id, full_name, email, role, created_at')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      res.json({ success: true, users: data || [] });
+    } catch (err) {
+      console.error('[ADMIN] Users error:', err.message);
+      res.status(500).json({ error: 'Failed to load users.' });
+    }
+  }
+
+  /* ---- NOTIFICATIONS (admin view) ---- */
+
+  async getAllNotifications(req, res) {
+    try {
+      const { data, error } = await adminClient
+        .from('notifications')
+        .select('*, profiles(full_name, email)')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      res.json({ success: true, notifications: data || [] });
+    } catch (err) {
+      console.error('[ADMIN] Notifications error:', err.message);
+      res.status(500).json({ error: 'Failed to load notifications.' });
     }
   }
 }

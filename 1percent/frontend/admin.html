@@ -776,26 +776,38 @@ let allUsers = [];
 
 async function loadUsersForNotifications() {
   try {
-    const res = await apiFetch('/api/admin/enrollments');
+    const res = await apiFetch('/api/admin/users');
     const json = await res.json();
     if (!json.success) return;
 
-    // Extract unique users from enrollments
-    const userMap = new Map();
-    (json.enrollments || []).forEach(e => {
-      if (e.profiles && e.profiles.id) {
-        userMap.set(e.profiles.id, {
-          id: e.profiles.id,
-          name: e.profiles.full_name || 'Unknown',
-          email: e.profiles.email || ''
-        });
-      }
-    });
-
-    allUsers = Array.from(userMap.values());
+    allUsers = (json.users || []).map(u => ({
+      id: u.id,
+      name: u.full_name || u.email || 'Unknown',
+      email: u.email || '',
+      role: u.role || 'user'
+    }));
     renderUsersList();
   } catch (err) {
     console.error('Failed to load users:', err);
+    // Fallback: try to extract from enrollments
+    try {
+      const res2 = await apiFetch('/api/admin/enrollments');
+      const json2 = await res2.json();
+      if (!json2.success) return;
+      const userMap = new Map();
+      (json2.enrollments || []).forEach(e => {
+        if (e.profiles) {
+          const id = e.user_id || e.profiles.id;
+          if (id) userMap.set(id, {
+            id,
+            name: e.profiles.full_name || 'Unknown',
+            email: e.profiles.email || ''
+          });
+        }
+      });
+      allUsers = Array.from(userMap.values());
+      renderUsersList();
+    } catch (e2) { console.error('Fallback load also failed:', e2); }
   }
 }
 
@@ -883,9 +895,32 @@ async function loadNotificationHistory() {
   const tbody = document.getElementById('notif-history-tbody');
   if (!tbody) return;
 
-  // Note: This would require an admin endpoint to view all notifications
-  // For now, show a placeholder
-  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--admin-muted);padding:20px;">Notification history will be available after deployment.</td></tr>';
+  try {
+    const res = await apiFetch('/api/admin/notifications');
+    const json = await res.json();
+    if (!json.success) throw new Error(json.error || 'Failed');
+
+    const notifs = json.notifications || [];
+    if (!notifs.length) {
+      tbody.innerHTML = '<tr><td colspan="4" class="empty">No notifications sent yet.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = notifs.map(n => {
+      const typeColors = { info: 'badge-blue', success: 'badge-green', warning: 'badge-yellow', error: 'badge-red' };
+      const userName = n.profiles?.full_name || n.profiles?.email || (n.user_id ? n.user_id.slice(0,8)+'...' : 'All users');
+      const date = new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      return `<tr>
+        <td><strong>${esc(n.title)}</strong></td>
+        <td><span class="badge ${typeColors[n.type] || 'badge-blue'}">${n.type}</span></td>
+        <td>${esc(userName)}</td>
+        <td>${date}</td>
+      </tr>`;
+    }).join('');
+  } catch (err) {
+    console.error('Load notification history error:', err);
+    tbody.innerHTML = '<tr><td colspan="4" class="empty">Failed to load history.</td></tr>';
+  }
 }
 
 // Load notification data when notifications panel is shown
@@ -894,6 +929,7 @@ window.showPanel = function(name) {
   originalShowPanel(name);
   if (name === 'notifications') {
     loadNotificationHistory();
+    loadUsersForNotifications();
   }
 };
 
