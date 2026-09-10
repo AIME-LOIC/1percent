@@ -188,7 +188,7 @@
         const data = await res.json();
 
         if (!data.success || !data.request) {
-          renderInvalid();
+          renderInvalid(data.detail || '');
           return;
         }
 
@@ -409,13 +409,14 @@
       `;
     }
 
-    function renderInvalid() {
+    function renderInvalid(detail) {
       document.getElementById('main-content').innerHTML = `
         <div class="card">
           <div class="expired-state">
             <div class="expired-icon">❓</div>
             <h2 style="font-size:20px;font-weight:700;color:#991b1b;margin-bottom:8px;">Invalid Link</h2>
             <p style="font-size:14px;color:#6b7280;">This payment link is invalid. Please check the link and try again.</p>
+            ${detail ? `<div style="margin-top:16px;padding:12px 16px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:13px;color:#92400e;">${esc(detail)}</div>` : ''}
             <div style="margin-top:24px;">
               <a href="/" class="btn primary" style="text-decoration:none;text-align:center;">Back to Home</a>
             </div>
