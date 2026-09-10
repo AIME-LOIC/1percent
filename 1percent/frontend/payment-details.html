@@ -299,6 +299,24 @@
         <button class="btn secondary" onclick="window.location.href='/payment'">Back</button>
         <button class="btn primary" id="pay-btn" onclick="processPayment()">Pay Now</button>
       </div>
+
+      <!-- Share with Parent -->
+      <div style="margin-top:20px;padding-top:20px;border-top:1px solid #e5e7eb;text-align:center;">
+        <p style="font-size:13px;color:#6b7280;margin-bottom:12px;">Can't pay right now? Ask a parent to pay for you.</p>
+        <button class="btn secondary" id="share-parent-btn" onclick="shareWithParent()" style="background:#eff6ff;border-color:#bfdbfe;color:#1e40af;">
+          📤 Share Payment Link with Parent
+        </button>
+        <div id="share-link-box" style="display:none;margin-top:12px;background:#f0fdf4;border:1px solid #a7f3d0;border-radius:8px;padding:12px 16px;">
+          <div style="font-size:12px;color:#065f46;font-weight:600;margin-bottom:8px;">Share this link with your parent:</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="text" id="share-link-input" readonly style="flex:1;padding:8px 12px;border:1px solid #a7f3d0;border-radius:6px;font-size:13px;font-family:monospace;background:#fff;">
+            <button onclick="copyShareLink()" style="padding:8px 16px;border:none;background:#059669;color:#fff;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">Copy</button>
+          </div>
+          <div style="margin-top:8px;display:flex;gap:8px;justify-content:center;">
+            <a id="whatsapp-link" href="#" target="blank" style="font-size:12px;color:#25d366;text-decoration:none;font-weight:600;">📱 Share on WhatsApp</a>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Loading State -->
@@ -441,6 +459,64 @@
       t.textContent = msg;
       t.className = 'toast ' + type + ' show';
       setTimeout(() => t.classList.remove('show'), 3500);
+    }
+
+    // ── Share with Parent ──────────────────────────
+    let shareUrl = '';
+
+    async function shareWithParent() {
+      if (!user || !session) {
+        showToast('Please log in first', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('share-parent-btn');
+      btn.disabled = true;
+      btn.textContent = 'Creating link...';
+
+      try {
+        const res = await fetch('/api/parent-payments/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({ plan_slug: planSlug })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          const host = location.hostname;
+          const protocol = location.protocol;
+          shareUrl = `${protocol}//${host}${data.share_url}`;
+
+          document.getElementById('share-link-input').value = shareUrl;
+          document.getElementById('whatsapp-link').href = `https://wa.me/?text=${encodeURIComponent('Please pay for my ' + plans[planSlug].name + ' subscription at 1% Expert Programme: ' + shareUrl)}`;
+          document.getElementById('share-link-box').style.display = 'block';
+          btn.textContent = '📤 Share Another Link';
+          btn.disabled = false;
+        } else {
+          showToast(data.error || 'Failed to create link', 'error');
+          btn.disabled = false;
+          btn.textContent = '📤 Share Payment Link with Parent';
+        }
+      } catch (e) {
+        showToast('Failed to create link', 'error');
+        btn.disabled = false;
+        btn.textContent = '📤 Share Payment Link with Parent';
+      }
+    }
+
+    function copyShareLink() {
+      const input = document.getElementById('share-link-input');
+      input.select();
+      navigator.clipboard.writeText(input.value).then(() => {
+        showToast('Link copied!', 'success');
+      }).catch(() => {
+        document.execCommand('copy');
+        showToast('Link copied!', 'success');
+      });
     }
   </script>
 </body>
