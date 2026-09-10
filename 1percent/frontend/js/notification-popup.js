@@ -36,10 +36,11 @@ const NotificationPopup = {
    * Create the popup container in DOM
    */
   _createPopupContainer() {
-    // Main overlay
+    // Main overlay - hidden by default
     const overlay = document.createElement('div');
     overlay.id = 'notification-popup-overlay';
     overlay.className = 'notif-popup-overlay';
+    overlay.style.cssText = 'display:none;';
     overlay.innerHTML = `
       <div class="notif-popup-modal" id="notif-popup-modal">
         <div class="notif-popup-header">
@@ -187,6 +188,12 @@ const NotificationPopup = {
   _showNext() {
     if (this._pendingNotifications.length === 0) {
       this._isShowing = false;
+      // Hide overlay completely when no more notifications
+      const overlay = document.getElementById('notification-popup-overlay');
+      if (overlay) {
+        overlay.classList.remove('show');
+        overlay.style.display = 'none';
+      }
       return;
     }
 
@@ -214,6 +221,9 @@ const NotificationPopup = {
 
     // Show overlay
     const overlay = document.getElementById('notification-popup-overlay');
+    overlay.style.display = 'flex';
+    // Force reflow to ensure animation plays
+    overlay.offsetHeight;
     overlay.classList.add('show');
 
     // Play sound
@@ -240,7 +250,7 @@ const NotificationPopup = {
     
     const overlay = document.getElementById('notification-popup-overlay');
     overlay.classList.remove('show');
-
+    
     // Show next notification after a short delay
     setTimeout(() => this._showNext(), 300);
   },
