@@ -27,6 +27,10 @@ const docsRoutes = require('./routes/docsRoutes');
 const signatureRoutes = require('./routes/signatureRoutes');
 const fileRoutes = require('./routes/fileRoutes');
 const challengesRoutes = require('./routes/challengesRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const { adminNotificationRoutes } = require('./routes/notificationRoutes');
+const ratingRoutes = require('./routes/ratingRoutes');
+const { adminRatingRoutes } = require('./routes/ratingRoutes');
 
 const app = express();
 
@@ -154,6 +158,10 @@ app.use('/api/lab', labRoutes);
 app.use('/api/sign', signatureRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/challenges', challengesRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/admin/notifications', adminNotificationRoutes);
+app.use('/api/ratings', ratingRoutes);
+app.use('/api/admin/ratings', adminRatingRoutes);
 app.use('/api/docs', docsRoutes);
 app.use('/api', courseRoutes);  // /api/roadmap, /api/courses (has /:slug)
 

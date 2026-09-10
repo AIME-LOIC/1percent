@@ -13,9 +13,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/main.css">
 <link rel="stylesheet" href="/css/dashboard.css">
+<link rel="stylesheet" href="/css/notification-popup.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
 <script src="/js/icons.js" defer></script>
 <script src="/js/modal.js" defer></script>
+<script src="/js/notification-popup.js" defer></script>
 <script src="/js/dashboard.js" defer></script>
 <script>
 // Subdomain-aware link rewriting: strip /learn prefix on learn.1percent.rw
@@ -162,12 +164,40 @@
           <div class="dash-goal-bar"><span id="weekly-goal-fill"></span></div>
         </div>
 
+        <!-- Notifications Section (moved to bottom) -->
         <div class="dash-lb-section dash-lb-notifications">
           <div class="dash-lb-section-head">
-            <span>Notifications</span>
-            <span class="dash-new-badge" id="dash-new-badge">3</span>
+            <span>📢 Notifications</span>
+            <div class="dash-notify-actions">
+              <span class="dash-new-badge" id="dash-new-badge" style="display:none;">0</span>
+              <button class="dash-mark-all-read" id="dash-mark-all-read" title="Mark all as read" style="display:none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              </button>
+            </div>
           </div>
-          <div class="dash-notify-list" id="dash-notify-list"></div>
+          <div class="dash-notify-list" id="dash-notify-list">
+            <div class="dash-empty" style="padding:12px;font-size:12px;">No notifications yet</div>
+          </div>
+        </div>
+
+        <!-- Rating Section -->
+        <div class="dash-lb-section dash-lb-rating">
+          <div class="dash-lb-section-head">
+            <span>⭐ Rate Us</span>
+          </div>
+          <div class="dash-rating-widget" id="dash-rating-widget">
+            <div class="dash-rating-stars" id="dash-rating-stars">
+              <button class="dash-star" data-value="1">★</button>
+              <button class="dash-star" data-value="2">★</button>
+              <button class="dash-star" data-value="3">★</button>
+              <button class="dash-star" data-value="4">★</button>
+              <button class="dash-star" data-value="5">★</button>
+            </div>
+            <div class="dash-rating-text" id="dash-rating-text">Select a rating</div>
+            <textarea class="dash-rating-feedback" id="dash-rating-feedback" placeholder="Share your feedback (optional)" rows="2"></textarea>
+            <button class="dash-rating-submit" id="dash-rating-submit">Submit Rating</button>
+            <div class="dash-rating-avg" id="dash-rating-avg"></div>
+          </div>
         </div>
 
         <div class="dash-lb-footer" id="dash-lb-footer"></div>

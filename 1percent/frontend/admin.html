@@ -169,6 +169,10 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
         <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
         Enrollments
       </a>
+      <a class="sidebar-item" data-panel="notifications" onclick="showPanel('notifications')">
+        <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
+        Notifications
+      </a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-label">Tools</div>
@@ -258,6 +262,78 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
       <div class="card">
         <div class="card-header"><h2>All Enrollments</h2></div>
         <table class="data-table"><thead><tr><th>Student</th><th>Email</th><th>Course</th><th>Enrolled</th><th>Completed</th></tr></thead><tbody id="enrollments-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- Notifications Panel -->
+    <div class="panel" id="panel-notifications">
+      <h1>Notifications</h1>
+      <p class="subtitle">Send notifications to users.</p>
+      
+      <!-- Send Notification Form -->
+      <div class="card">
+        <div class="card-header">
+          <h2>Send Notification</h2>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label>Recipient</label>
+            <select id="notif-recipient">
+              <option value="all">All Users</option>
+              <option value="specific">Specific User(s)</option>
+            </select>
+          </div>
+          <div class="form-group" id="notif-users-group" style="display:none;">
+            <label>Select Users</label>
+            <div id="notif-users-list" style="max-height:200px;overflow-y:auto;border:1px solid var(--admin-border);border-radius:6px;padding:8px;">
+              <!-- Users will be loaded here -->
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Notification Type</label>
+              <select id="notif-type">
+                <option value="info">Info</option>
+                <option value="success">Success</option>
+                <option value="warning">Warning</option>
+                <option value="error">Error</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Title</label>
+            <input id="notif-title" placeholder="Notification title">
+          </div>
+          <div class="form-group">
+            <label>Message</label>
+            <textarea id="notif-message" placeholder="Notification message..." rows="3"></textarea>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-admin primary" onclick="sendNotification()">Send Notification</button>
+            <button class="btn-admin outline" onclick="clearNotifForm()">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notification History -->
+      <div class="card">
+        <div class="card-header">
+          <h2>Recent Notifications</h2>
+          <button class="btn-admin outline" onclick="loadNotificationHistory()">Refresh</button>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Type</th>
+              <th>Sent To</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="notif-history-tbody">
+            <tr><td colspan="4" class="empty">Loading notifications...</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </main>
@@ -693,7 +769,133 @@ function renderEnrollments(enrollments){
 // ── Logout ─────────────────────────────────────────
 async function doLogout(){if(supabaseClient)await supabaseClient.auth.signOut();window.location.href='/';}
 
-function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
+// ── Notifications Panel ─────────────────────────────
+let allUsers = [];
+
+async function loadUsersForNotifications() {
+  try {
+    const res = await apiFetch('/api/admin/enrollments');
+    const json = await res.json();
+    if (!json.success) return;
+
+    // Extract unique users from enrollments
+    const userMap = new Map();
+    (json.enrollments || []).forEach(e => {
+      if (e.profiles && e.profiles.id) {
+        userMap.set(e.profiles.id, {
+          id: e.profiles.id,
+          name: e.profiles.full_name || 'Unknown',
+          email: e.profiles.email || ''
+        });
+      }
+    });
+
+    allUsers = Array.from(userMap.values());
+    renderUsersList();
+  } catch (err) {
+    console.error('Failed to load users:', err);
+  }
+}
+
+function renderUsersList() {
+  const container = document.getElementById('notif-users-list');
+  if (!container) return;
+
+  container.innerHTML = allUsers.length
+    ? allUsers.map(u => `
+        <label style="display:flex;align-items:center;gap:8px;padding:6px;border-radius:4px;cursor:pointer;">
+          <input type="checkbox" value="${u.id}" class="notif-user-checkbox">
+          <span style="font-size:13px;">${esc(u.name)}</span>
+          <span style="font-size:11px;color:var(--admin-muted);">${esc(u.email)}</span>
+        </label>
+      `).join('')
+    : '<div style="text-align:center;padding:16px;color:var(--admin-muted);">No users found</div>';
+}
+
+// Toggle users list visibility
+document.getElementById('notif-recipient')?.addEventListener('change', function() {
+  const usersGroup = document.getElementById('notif-users-group');
+  usersGroup.style.display = this.value === 'specific' ? 'block' : 'none';
+  if (this.value === 'specific' && allUsers.length === 0) {
+    loadUsersForNotifications();
+  }
+});
+
+async function sendNotification() {
+  const recipient = document.getElementById('notif-recipient').value;
+  const type = document.getElementById('notif-type').value;
+  const title = document.getElementById('notif-title').value.trim();
+  const message = document.getElementById('notif-message').value.trim();
+
+  if (!title || !message) {
+    toast('Please fill in title and message', 'error');
+    return;
+  }
+
+  let endpoint = '/api/admin/notifications/broadcast';
+  let body = { title, message, type };
+
+  if (recipient === 'specific') {
+    const checkboxes = document.querySelectorAll('.notif-user-checkbox:checked');
+    const userIds = Array.from(checkboxes).map(cb => cb.value);
+
+    if (userIds.length === 0) {
+      toast('Please select at least one user', 'error');
+      return;
+    }
+
+    endpoint = '/api/admin/notifications/bulk';
+    body.user_ids = userIds;
+  }
+
+  try {
+    const res = await apiFetch(endpoint, {
+      method: 'POST',
+      body: JSON.stringify(body)
+    });
+
+    const json = await res.json();
+
+    if (json.success) {
+      toast(`Notification sent to ${json.count || 'all'} users!`);
+      clearNotifForm();
+      loadNotificationHistory();
+    } else {
+      toast('Failed to send: ' + (json.error || 'Unknown error'), 'error');
+    }
+  } catch (err) {
+    toast('Failed to send notification', 'error');
+    console.error('Send notification error:', err);
+  }
+}
+
+function clearNotifForm() {
+  document.getElementById('notif-title').value = '';
+  document.getElementById('notif-message').value = '';
+  document.getElementById('notif-type').value = 'info';
+  document.getElementById('notif-recipient').value = 'all';
+  document.getElementById('notif-users-group').style.display = 'none';
+}
+
+async function loadNotificationHistory() {
+  const tbody = document.getElementById('notif-history-tbody');
+  if (!tbody) return;
+
+  // Note: This would require an admin endpoint to view all notifications
+  // For now, show a placeholder
+  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--admin-muted);padding:20px;">Notification history will be available after deployment.</td></tr>';
+}
+
+// Load notification data when notifications panel is shown
+const originalShowPanel = window.showPanel;
+window.showPanel = function(name) {
+  originalShowPanel(name);
+  if (name === 'notifications') {
+    loadNotificationHistory();
+  }
+};ce(/"/g,'&quot;');}
 
 document.addEventListener('DOMContentLoaded', init);
 if(document.readyState!=='loading') init();
