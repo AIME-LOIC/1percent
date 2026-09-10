@@ -161,7 +161,6 @@
   <nav class="nav">
     <a href="/" class="nav-logo">1% Expert</a>
     <div class="nav-links">
-      <a href="/dashboard">Dashboard</a>
       <a href="/">Courses</a>
       <span id="nav-user-name" style="color:#0d6e3f;font-size:13px;font-weight:600;display:none;"></span>
       <a href="/" class="btn-sm" id="nav-auth-btn">Login</a>
@@ -205,7 +204,7 @@
         <li><span class="icon-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></span> Completion certificates</li>
         <li><span class="icon-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></span> 50 bonus coins</li>
       </ul>
-      <button class="plan-btn primary" onclick="subscribePlan('pro')">Subscribe to Pro</button>
+      <a href="/payment-details?plan=pro" class="plan-btn primary" style="display:block;text-align:center;text-decoration:none;">Subscribe to Pro</a>
     </div>
 
     <div class="plan">
@@ -221,7 +220,7 @@
         <li><span class="icon-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></span> 100 bonus coins</li>
         <li><span class="icon-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></span> Job placement support</li>
       </ul>
-      <button class="plan-btn primary" onclick="subscribePlan('unlimited')">Subscribe to Unlimited</button>
+      <a href="/payment-details?plan=unlimited" class="plan-btn primary" style="display:block;text-align:center;text-decoration:none;">Subscribe to Unlimited</a>
     </div>
   </section>
 
@@ -305,10 +304,27 @@
         authBtn.href = (location.hostname==='learn.1percent.rw'?'/dashboard':'/learn/dashboard');
         userName.textContent = user.user_metadata?.full_name || user.email;
         userName.style.display = 'inline';
+        // Show current tier badge
+        showCurrentTier();
       } else {
         authBtn.textContent = 'Login';
-        authBtn.href = (location.hostname==='learn.1prefix.rw'?'/':'/learn');
+        authBtn.href = (location.hostname==='learn.1percent.rw'?'/':'/learn');
       }
+    }
+
+    async function showCurrentTier() {
+      try {
+        const res = await fetch('/api/premium/status', {
+          headers: { 'Authorization': `Bearer ${session.access_token}` }
+        });
+        const data = await res.json();
+        if (data.success && data.tier) {
+          const tierBadge = document.createElement('div');
+          tierBadge.style.cssText = 'background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:16px 20px;margin-bottom:24px;text-align:center;';
+          tierBadge.innerHTML = `<div style="font-size:13px;color:#6b7280;margin-bottom:4px;">Your Current Plan</div><div style="font-size:18px;font-weight:700;color:#059669;text-transform:capitalize;">${data.tier.name || data.tier.slug || 'Free'}</div><div style="font-size:12px;color:#9ca3af;margin-top:4px;">Since ${data.tier.started_at ? new Date(data.tier.started_at).toLocaleDateString() : 'N/A'}</div>`;
+          document.querySelector('.hero').after(tierBadge);
+        }
+      } catch (e) { console.warn('Could not load tier:', e); }
     }
 
     function requireAuth() {
