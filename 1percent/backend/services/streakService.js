@@ -33,9 +33,9 @@ class StreakService {
     const lastActive = data.last_active_date;
     const diff = lastActive ? this._dayDiff(lastActive, today) : null;
 
-    // Streak is alive only if the user was active today or yesterday.
-    // Anything older than that should not keep a live streak count.
-    const isAlive = diff !== null && diff <= 1;
+    // Streak is alive if user was active today, yesterday, or 2 days ago
+    // (allows missing up to 2 days without breaking streak)
+    const isAlive = diff !== null && diff <= 2;
     const streak = isAlive ? (data.streak_count || 0) : 0;
 
     return {
@@ -49,8 +49,8 @@ class StreakService {
   /**
    * Called when user completes a lesson.
    * - If already active today: no-op
-   * - If active yesterday: increment streak, award 4 coins
-   * - If missed 1+ days: reset streak to 1, deduct 3 coins per missed day (max 9)
+   * - If active today or within 2 days: increment streak, award 4 coins
+   * - If missed 3+ days: reset streak to 1, deduct coins
    */
   async updateStreak(userId) {
     const today = this._today();
@@ -70,7 +70,8 @@ class StreakService {
     const lastActive = profile.last_active_date;
     const diff = lastActive ? this._dayDiff(lastActive, today) : null;
 
-    if (diff === 1) {
+    // If active within last 2 days, continue the streak
+    if (diff !== null && diff <= 2) {
       const newStreak = (profile.streak_count || 0) + 1;
       await adminClient.from('profiles')
         .update({ streak_count: newStreak, last_active_date: today })
@@ -80,8 +81,9 @@ class StreakService {
       return;
     }
 
+    // Missed 3+ days — reset streak
     const newStreak = 1;
-    const missedDays = diff === null ? 0 : Math.max(0, diff - 1);
+    const missedDays = diff === null ? 0 : Math.max(0, diff - 2);
     const penalty = Math.min(missedDays, 3) * 3;
 
     await adminClient.from('profiles')
