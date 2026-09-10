@@ -9,17 +9,15 @@
   z-index: 10000;
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(4px);
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
+  transition: opacity 0.3s ease;
 }
 
 .notif-popup-overlay.show {
   opacity: 1;
-  visibility: visible;
 }
 
 /* Modal */
