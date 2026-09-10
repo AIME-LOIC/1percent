@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pay for Student — 1% Expert Programme</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: #f8f9fa;
+      color: #111827;
+      min-height: 100vh;
+    }
+
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; height: 56px;
+      background: rgba(255,255,255,0.95); backdrop-filter: blur(12px);
+      border-bottom: 1px solid #e5e7eb; display: flex; align-items: center;
+      justify-content: space-between; padding: 0 24px; z-index: 100;
+    }
+    .nav-logo { font-size: 18px; font-weight: 700; color: #0d6e3f; text-decoration: none; }
+    .nav-subtitle { font-size: 13px; color: #6b7280; }
+
+    .main { max-width: 600px; margin: 0 auto; padding: 100px 24px 60px; }
+
+    .breadcrumb { display: flex; align-items: center; gap: 8px; margin-bottom: 24px; font-size: 13px; color: #6b7280; }
+
+    .card {
+      background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+      padding: 32px; margin-bottom: 24px;
+    }
+    .card h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .card .subtitle { font-size: 14px; color: #6b7280; margin-bottom: 24px; }
+
+    /* Student info */
+    .student-info {
+      background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px;
+      padding: 20px; margin-bottom: 24px; display: flex; align-items: center; gap: 16px;
+    }
+    .student-avatar {
+      width: 48px; height: 48px; border-radius: 50%; background: #2563eb;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 20px; font-weight: 700;
+    }
+    .student-name { font-size: 16px; font-weight: 700; color: #1e40af; }
+    .student-email { font-size: 13px; color: #3b82f6; }
+    .student-label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+
+    /* Plan summary */
+    .plan-summary {
+      background: #f0fdf4; border: 1px solid #a7f3d0; border-radius: 10px;
+      padding: 20px; margin-bottom: 24px;
+    }
+    .plan-name { font-size: 16px; font-weight: 700; color: #065f46; margin-bottom: 4px; }
+    .plan-price { font-size: 28px; font-weight: 800; color: #059669; }
+    .plan-period { font-size: 13px; color: #047857; }
+    .plan-features { margin-top: 16px; padding-top: 16px; border-top: 1px solid #a7f3d0; }
+    .plan-features li {
+      list-style: none; padding: 4px 0; font-size: 13px; color: #065f46;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .plan-features li::before { content: '✓'; color: #059669; font-weight: 700; }
+
+    /* Payment methods */
+    .payment-methods {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;
+    }
+    .payment-method {
+      border: 2px solid #e5e7eb; border-radius: 10px; padding: 20px;
+      cursor: pointer; transition: all 0.2s; text-align: center;
+    }
+    .payment-method:hover { border-color: #0d6e3f; }
+    .payment-method.active { border-color: #0d6e3f; background: #f0fdf4; }
+    .payment-method .method-icon { font-size: 32px; margin-bottom: 8px; }
+    .payment-method .method-name { font-size: 14px; font-weight: 600; color: #111827; }
+    .payment-method .method-desc { font-size: 12px; color: #6b7280; margin-top: 4px; }
+
+    .form-group { margin-bottom: 20px; }
+    .form-group label {
+      display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px;
+    }
+    .form-group input, .form-group select {
+      width: 100%; padding: 12px 16px; border: 1px solid #e5e7eb;
+      border-radius: 8px; font-size: 15px; font-family: inherit; transition: border-color 0.2s;
+    }
+    .form-group input:focus, .form-group select:focus {
+      outline: none; border-color: #0d6e3f; box-shadow: 0 0 0 3px rgba(13,110,63,0.1);
+    }
+    .form-group .helper { font-size: 12px; color: #9ca3af; margin-top: 4px; }
+
+    .payment-instructions {
+      background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px;
+      padding: 20px; margin-bottom: 20px;
+    }
+    .payment-instructions h4 { font-size: 14px; font-weight: 700; color: #92400e; margin-bottom: 12px; }
+    .payment-instructions ol { padding-left: 20px; font-size: 14px; color: #78350f; line-height: 1.8; }
+    .payment-instructions .amount {
+      font-size: 20px; font-weight: 800; color: #d97706; margin: 12px 0;
+    }
+
+    .btn {
+      display: block; width: 100%; padding: 14px; border: none; border-radius: 8px;
+      font-size: 16px; font-weight: 600; cursor: pointer; text-align: center; transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn.primary { background: #0d6e3f; color: #fff; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .security-note { text-align: center; padding: 20px; font-size: 12px; color: #9ca3af; }
+
+    /* Success state */
+    .success-state { text-align: center; padding: 40px 20px; }
+    .success-icon {
+      width: 80px; height: 80px; border-radius: 50%; background: #f0fdf4;
+      border: 3px solid #059669; display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px; font-size: 36px;
+    }
+    .success-state h2 { font-size: 24px; font-weight: 800; color: #065f46; margin-bottom: 8px; }
+    .success-state p { font-size: 14px; color: #6b7280; line-height: 1.6; }
+
+    /* Expired/already paid */
+    .expired-state { text-align: center; padding: 40px 20px; }
+    .expired-icon {
+      width: 80px; height: 80px; border-radius: 50%; background: #fef2f2;
+      border: 3px solid #dc2626; display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px; font-size: 36px;
+    }
+
+    /* Loading */
+    .loading { text-align: center; padding: 60px 20px; }
+    .loading .spinner {
+      width: 40px; height: 40px; border: 3px solid #e5e7eb; border-top-color: #0d6e3f;
+      border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; background: #fff;
+      border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 20px;
+      font-size: 14px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transform: translateY(100px); opacity: 0; transition: all 0.3s;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-color: #059669; color: #065f46; }
+    .toast.error { border-color: #dc2626; color: #991b1b; }
+
+    @media (max-width: 600px) {
+      .payment-methods { grid-template-columns: 1fr; }
+      .card { padding: 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <a href="/" class="nav-logo">1% Expert</a>
+    <span class="nav-subtitle">Parent Payment</span>
+  </nav>
+
+  <div class="main" id="main-content">
+    <!-- Loading -->
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p style="color:#6b7280;">Loading payment details...</p>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const token = window.location.pathname.split('/').pop();
+    let paymentData = null;
+    let selectedMethod = 'momo';
+
+    (async function init() {
+      if (!token || token === 'parent-payment') {
+        renderInvalid();
+        return;
+      }
+      await loadPaymentRequest();
+    })();
+
+    async function loadPaymentRequest() {
+      try {
+        const res = await fetch(`/api/parent-payments/${token}`);
+        const data = await res.json();
+
+        if (!data.success || !data.request) {
+          renderInvalid();
+          return;
+        }
+
+        paymentData = data.request;
+
+        if (paymentData.status === 'paid') {
+          renderPaid();
+        } else if (paymentData.status === 'expired' || paymentData.status === 'cancelled') {
+          renderExpired();
+        } else {
+          renderPaymentForm();
+        }
+      } catch (e) {
+        renderInvalid();
+      }
+    }
+
+    function renderPaymentForm() {
+      const student = paymentData.profiles || {};
+      const planNames = { pro: 'Pro', unlimited: 'Unlimited' };
+      const planFeatures = {
+        pro: ['Full course access', 'All labs & projects', 'Certificates', '50 bonus coins'],
+        unlimited: ['Everything in Pro', 'Priority support', '100 bonus coins', 'Job placement support']
+      };
+
+      document.getElementById('main-content').innerHTML = `
+        <div class="breadcrumb">
+          <a href="/">Home</a>
+          <span>→</span>
+          <span>Pay for Student</span>
+        </div>
+
+        <div class="student-info">
+          <div class="student-avatar">${(student.full_name || 'S')[0].toUpperCase()}</div>
+          <div>
+            <div class="student-label">Student</div>
+            <div class="student-name">${esc(student.full_name || 'Student')}</div>
+            <div class="student-email">${esc(student.email || '')}</div>
+          </div>
+        </div>
+
+        <div class="plan-summary">
+          <div class="plan-name">${planNames[paymentData.plan_slug] || 'Pro'} Plan</div>
+          <div class="plan-price">RWF ${paymentData.amount.toLocaleString()}</div>
+          <div class="plan-period">Monthly subscription</div>
+          <ul class="plan-features">
+            ${(planFeatures[paymentData.plan_slug] || planFeatures.pro).map(f => `<li>${f}</li>`).join('')}
+          </ul>
+        </div>
+
+        ${paymentData.notes ? `<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:16px;margin-bottom:24px;"><div style="font-size:12px;color:#3b82f6;font-weight:600;margin-bottom:4px;">Message from student</div><div style="font-size:14px;color:#1e40af;">${esc(paymentData.notes)}</div></div>` : ''}
+
+        <div class="card">
+          <h2>Complete Payment</h2>
+          <p class="subtitle">Select your payment method and pay for the student's subscription.</p>
+
+          <div class="payment-methods">
+            <div class="payment-method active" data-method="momo" onclick="selectMethod('momo')">
+              <div class="method-icon">📱</div>
+              <div class="method-name">Mobile Money</div>
+              <div class="method-desc">MTN MoMo / Airtel Money</div>
+            </div>
+            <div class="payment-method" data-method="card" onclick="selectMethod('card')">
+              <div class="method-icon">💳</div>
+              <div class="method-name">Credit/Debit Card</div>
+              <div class="method-desc">Visa / Mastercard</div>
+            </div>
+          </div>
+
+          <div id="momo-form">
+            <div class="form-group">
+              <label>Your Phone Number</label>
+              <input type="tel" id="phone" placeholder="078XXXXXXX" maxlength="10">
+              <div class="helper">Mobile money phone number</div>
+            </div>
+            <div class="form-group">
+              <label>Provider</label>
+              <select id="provider">
+                <option value="mtn">MTN Mobile Money</option>
+                <option value="airtel">Airtel Money</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="card-form" style="display:none;">
+            <div class="form-group">
+              <label>Card Number</label>
+              <input type="text" id="card-number" placeholder="4242 4242 4242 4242" maxlength="19">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+              <div class="form-group">
+                <label>Expiry</label>
+                <input type="text" id="card-expiry" placeholder="MM/YY" maxlength="5">
+              </div>
+              <div class="form-group">
+                <label>CVV</label>
+                <input type="text" id="card-cvv" placeholder="123" maxlength="4">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Cardholder Name</label>
+              <input type="text" id="card-name" placeholder="Your full name">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Your Name (optional)</label>
+            <input type="text" id="parent-name" placeholder="Your name" value="${esc(paymentData.parent_name || '')}">
+          </div>
+          <div class="form-group">
+            <label>Your Email (optional)</label>
+            <input type="email" id="parent-email" placeholder="your@email.com" value="${esc(paymentData.parent_email || '')}">
+          </div>
+
+          <div class="payment-instructions" id="momo-instructions">
+            <h4>📱 Mobile Money Payment</h4>
+            <ol>
+              <li>Dial <strong>*182#</strong> on your phone</li>
+              <li>Select <strong>Payments</strong></li>
+              <li>Enter Merchant Code: <strong>1PERCENT</strong></li>
+              <li>Enter Amount: <strong>${paymentData.amount.toLocaleString()}</strong> RWF</li>
+              <li>Confirm with your PIN</li>
+            </ol>
+            <div class="amount">RWF ${paymentData.amount.toLocaleString()}</div>
+            <p style="font-size:12px;color:#92400e;margin-top:8px;">Payment will be verified automatically.</p>
+          </div>
+
+          <button class="btn primary" id="pay-btn" onclick="processPayment()">
+            Pay RWF ${paymentData.amount.toLocaleString()}
+          </button>
+        </div>
+
+        <div class="security-note">🔒 Your payment is secure and encrypted.</div>
+      `;
+    }
+
+    function selectMethod(method) {
+      selectedMethod = method;
+      document.querySelectorAll('.payment-method').forEach(el => el.classList.remove('active'));
+      document.querySelector(`[data-method="${method}"]`).classList.add('active');
+      document.getElementById('momo-form').style.display = method === 'momo' ? 'block' : 'none';
+      document.getElementById('card-form').style.display = method === 'card' ? 'block' : 'none';
+      document.getElementById('momo-instructions').style.display = method === 'momo' ? 'block' : 'none';
+    }
+
+    async function processPayment() {
+      const btn = document.getElementById('pay-btn');
+      btn.disabled = true;
+      btn.textContent = 'Processing...';
+
+      try {
+        // Simulate payment processing
+        await new Promise(r => setTimeout(r, 2000));
+
+        const res = await fetch(`/api/parent-payments/${token}/pay`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            payment_method: selectedMethod,
+            parent_name: document.getElementById('parent-name')?.value || '',
+            parent_email: document.getElementById('parent-email')?.value || '',
+            parent_phone: document.getElementById('phone')?.value || ''
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          renderSuccess();
+        } else {
+          showToast(data.error || 'Payment failed', 'error');
+          btn.disabled = false;
+          btn.textContent = `Pay RWF ${paymentData.amount.toLocaleString()}`;
+        }
+      } catch (e) {
+        showToast('Network error. Please try again.', 'error');
+        btn.disabled = false;
+        btn.textContent = `Pay RWF ${paymentData.amount.toLocaleString()}`;
+      }
+    }
+
+    function renderSuccess() {
+      document.getElementById('main-content').innerHTML = `
+        <div class="card">
+          <div class="success-state">
+            <div class="success-icon">✅</div>
+            <h2>Payment Successful!</h2>
+            <p>Thank you! The student's account has been upgraded.<br>The subscription is now active.</p>
+            <div style="margin-top:24px;">
+              <a href="/" class="btn primary" style="text-decoration:none;text-align:center;">Back to Home</a>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderPaid() {
+      document.getElementById('main-content').innerHTML = `
+        <div class="card">
+          <div class="success-state">
+            <div class="success-icon">✅</div>
+            <h2>Already Paid</h2>
+            <p>This payment link has already been used. The student's account is active.</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderExpired() {
+      document.getElementById('main-content').innerHTML = `
+        <div class="card">
+          <div class="expired-state">
+            <div class="expired-icon">⏰</div>
+            <h2 style="font-size:20px;font-weight:700;color:#991b1b;margin-bottom:8px;">Link Expired</h2>
+            <p style="font-size:14px;color:#6b7280;">This payment link has expired or been cancelled.<br>Please ask the student to send a new link.</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderInvalid() {
+      document.getElementById('main-content').innerHTML = `
+        <div class="card">
+          <div class="expired-state">
+            <div class="expired-icon">❓</div>
+            <h2 style="font-size:20px;font-weight:700;color:#991b1b;margin-bottom:8px;">Invalid Link</h2>
+            <p style="font-size:14px;color:#6b7280;">This payment link is invalid. Please check the link and try again.</p>
+            <div style="margin-top:24px;">
+              <a href="/" class="btn primary" style="text-decoration:none;text-align:center;">Back to Home</a>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function esc(s) {
+      if (s == null) return '';
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function showToast(msg, type) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast ' + type + ' show';
+      setTimeout(() => t.classList.remove('show'), 3500);
+    }
+  </script>
+</body>
+</html>

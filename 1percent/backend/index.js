@@ -27,6 +27,7 @@ const docsRoutes = require('./routes/docsRoutes');
 const signatureRoutes = require('./routes/signatureRoutes');
 const fileRoutes = require('./routes/fileRoutes');
 const challengesRoutes = require('./routes/challengesRoutes');
+const parentPaymentRoutes = require('./routes/parentPaymentRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const { adminNotificationRoutes } = require('./routes/notificationRoutes');
 const ratingRoutes = require('./routes/ratingRoutes');
@@ -158,6 +159,7 @@ app.use('/api/lab', labRoutes);
 app.use('/api/sign', signatureRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/challenges', challengesRoutes);
+app.use('/api/parent-payments', parentPaymentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin/notifications', adminNotificationRoutes);
 app.use('/api/ratings', ratingRoutes);
@@ -177,6 +179,7 @@ const htmlRoutes = {
   '/learn/admin/': 'admin.html',
   '/learn/payment': 'payment.html',
   '/learn/payment-details': 'payment-details.html',
+  '/learn/parent-payment': 'parent-payment.html',
   '/learn/sign': 'sign.html',
   '/learn/certificate': 'certificate-view.html',
   '/admin': 'admin.html',
@@ -199,6 +202,7 @@ const learnSubdomainRoutes = {
   '/certificate': 'certificate-view.html',
   '/course': 'course.html',
   '/install': 'install.html',
+  '/parent-payment': 'parent-payment.html',
 };
 
 app.get('*', (req, res) => {

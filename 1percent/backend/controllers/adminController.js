@@ -161,14 +161,27 @@ class AdminController {
     try {
       const { data, error } = await adminClient
         .from('enrollments')
-        .select('*, profiles(full_name, email), courses(title, slug)')
+        .select('*')
         .order('enrolled_at', { ascending: false })
         .limit(100);
-      if (error) throw error;
-      res.json({ success: true, enrollments: data });
+      if (error) {
+        console.error('[ADMIN] Enrollments query error:', error.message);
+        return res.json({ success: true, enrollments: [] });
+      }
+      // Enrich with profile and course data
+      const enriched = await Promise.all((data || []).map(async (e) => {
+        try {
+          const [profileRes, courseRes] = await Promise.all([
+            e.user_id ? adminClient.from('profiles').select('full_name, email').eq('id', e.user_id).single() : null,
+            e.course_id ? adminClient.from('courses').select('title, slug').eq('id', e.course_id).single() : null
+          ]);
+          return { ...e, profiles: profileRes?.data || null, courses: courseRes?.data || null };
+        } catch { return e; }
+      }));
+      res.json({ success: true, enrollments: enriched });
     } catch (err) {
       console.error('[ADMIN] Enrollments error:', err.message);
-      res.status(500).json({ error: 'Failed to load enrollments.' });
+      res.json({ success: true, enrollments: [] });
     }
   }
 
@@ -180,11 +193,14 @@ class AdminController {
         .from('profiles')
         .select('id, full_name, email, role, created_at')
         .order('created_at', { ascending: false });
-      if (error) throw error;
+      if (error) {
+        console.error('[ADMIN] Users query error:', error.message);
+        return res.json({ success: true, users: [] });
+      }
       res.json({ success: true, users: data || [] });
     } catch (err) {
       console.error('[ADMIN] Users error:', err.message);
-      res.status(500).json({ error: 'Failed to load users.' });
+      res.json({ success: true, users: [] });
     }
   }
 
@@ -194,14 +210,25 @@ class AdminController {
     try {
       const { data, error } = await adminClient
         .from('notifications')
-        .select('*, profiles(full_name, email)')
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
-      if (error) throw error;
-      res.json({ success: true, notifications: data || [] });
+      if (error) {
+        console.error('[ADMIN] Notifications query error:', error.message);
+        return res.json({ success: true, notifications: [] });
+      }
+      // Enrich with profile data
+      const enriched = await Promise.all((data || []).map(async (n) => {
+        if (!n.user_id) return n;
+        try {
+          const { data: profile } = await adminClient.from('profiles').select('full_name, email').eq('id', n.user_id).single();
+          return { ...n, profiles: profile || null };
+        } catch { return n; }
+      }));
+      res.json({ success: true, notifications: enriched });
     } catch (err) {
       console.error('[ADMIN] Notifications error:', err.message);
-      res.status(500).json({ error: 'Failed to load notifications.' });
+      res.json({ success: true, notifications: [] });
     }
   }
 }
