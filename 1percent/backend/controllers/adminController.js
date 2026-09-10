@@ -159,16 +159,29 @@ class AdminController {
 
   async getAllEnrollments(req, res) {
     try {
-      const { data, error } = await adminClient
+      // Try with foreign key joins first
+      let { data, error } = await adminClient
         .from('enrollments')
-        .select('*')
+        .select('*, profiles(full_name, email), courses(title, slug)')
         .order('enrolled_at', { ascending: false })
         .limit(100);
+
+      // If join fails (FK doesn't exist), fall back to plain select
       if (error) {
-        console.error('[ADMIN] Enrollments query error:', error.message);
-        return res.json({ success: true, enrollments: [] });
+        console.warn('[ADMIN] Enrollments join failed, trying plain select:', error.message);
+        const fallback = await adminClient
+          .from('enrollments')
+          .select('*')
+          .order('enrolled_at', { ascending: false })
+          .limit(100);
+        if (fallback.error) {
+          console.error('[ADMIN] Enrollments query error:', fallback.error.message);
+          return res.json({ success: true, enrollments: [], error: fallback.error.message });
+        }
+        data = fallback.data;
       }
-      // Enrich with profile and course data
+
+      // Enrich with profile and course data via individual lookups
       const enriched = await Promise.all((data || []).map(async (e) => {
         try {
           const [profileRes, courseRes] = await Promise.all([
@@ -178,10 +191,11 @@ class AdminController {
           return { ...e, profiles: profileRes?.data || null, courses: courseRes?.data || null };
         } catch { return e; }
       }));
-      res.json({ success: true, enrollments: enriched });
+
+      res.json({ success: true, enrollments: enriched || [] });
     } catch (err) {
       console.error('[ADMIN] Enrollments error:', err.message);
-      res.json({ success: true, enrollments: [] });
+      res.json({ success: true, enrollments: [], error: err.message });
     }
   }
 
@@ -189,18 +203,30 @@ class AdminController {
 
   async getAllUsers(req, res) {
     try {
-      const { data, error } = await adminClient
+      // First try with all columns
+      let { data, error } = await adminClient
         .from('profiles')
-        .select('id, full_name, email, role, created_at')
+        .select('*')
         .order('created_at', { ascending: false });
+
       if (error) {
         console.error('[ADMIN] Users query error:', error.message);
-        return res.json({ success: true, users: [] });
+        return res.json({ success: true, users: [], error: error.message });
       }
-      res.json({ success: true, users: data || [] });
+
+      // Map to safe shape
+      const users = (data || []).map(u => ({
+        id: u.id,
+        full_name: u.full_name || u.name || '',
+        email: u.email || '',
+        role: u.role || 'user',
+        created_at: u.created_at
+      }));
+
+      res.json({ success: true, users });
     } catch (err) {
       console.error('[ADMIN] Users error:', err.message);
-      res.json({ success: true, users: [] });
+      res.json({ success: true, users: [], error: err.message });
     }
   }
 

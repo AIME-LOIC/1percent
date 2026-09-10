@@ -134,6 +134,22 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Diagnostics — check which tables exist
+const { adminClient: diagClient } = require('./config/database');
+app.get('/api/admin/diagnostics', async (req, res) => {
+  const tables = ['profiles', 'courses', 'lessons', 'enrollments', 'quizzes', 'challenges', 'notifications', 'ratings', 'parent_payments', 'premium_subscriptions', 'streaks', 'user_coins'];
+  const results = {};
+  for (const t of tables) {
+    try {
+      const { count, error } = await diagClient.from(t).select('*', { count: 'exact', head: true });
+      results[t] = error ? { exists: false, error: error.message } : { exists: true, count: count || 0 };
+    } catch (e) {
+      results[t] = { exists: false, error: e.message };
+    }
+  }
+  res.json({ success: true, tables: results });
+});
+
 // Config — serve public env vars to the frontend (MUST be before /api/:slug)
 app.get('/api/config', (req, res) => {
   res.json({
