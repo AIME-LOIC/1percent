@@ -69,7 +69,12 @@ class ParentPaymentController {
       res.json({ success: true, request });
     } catch (err) {
       console.error('[PARENT-PAY] Get by token error:', err.message);
-      res.status(404).json({ error: 'Payment link not found' });
+      // Check if it's a missing table error
+      const isTableMissing = err.message.includes('table missing') || err.message.includes('does not exist');
+      res.status(404).json({
+        error: 'Payment link not found',
+        detail: isTableMissing ? 'The parent_payments table has not been created yet. Please run the migration in Supabase SQL Editor.' : undefined
+      });
     }
   }
 

@@ -39,13 +39,32 @@ class ParentPaymentService {
    * Get payment request by reference token (public — no auth needed)
    */
   async getByToken(token) {
-    const { data, error } = await adminClient
+    // Try with FK join first
+    let { data, error } = await adminClient
       .from('parent_payments')
-      .select('*, profiles!parent_payments_student_id_fkey(full_name, email)')
+      .select('*')
       .eq('reference_token', token)
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('[PARENT-PAY] getByToken error:', error.message);
+      throw new Error('Payment link not found or table missing. Please run the parent_payments migration.');
+    }
+
+    // Enrich with student profile
+    if (data && data.student_id) {
+      try {
+        const { data: profile } = await adminClient
+          .from('profiles')
+          .select('full_name, email')
+          .eq('id', data.student_id)
+          .single();
+        data.profiles = profile || null;
+      } catch {
+        data.profiles = null;
+      }
+    }
+
     return data;
   }
 
