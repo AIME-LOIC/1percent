@@ -222,6 +222,11 @@ app.get('*', (req, res) => {
     return res.sendFile(path.join(frontendDir, 'course.html'));
   }
 
+  // Parent payment page: /parent-payment/:token (or /learn/parent-payment/:token)
+  if (req.path.startsWith('/learn/parent-payment/') || (req.isLearnSubdomain && req.path.startsWith('/parent-payment/'))) {
+    return res.sendFile(path.join(frontendDir, 'parent-payment.html'));
+  }
+
   // Legacy redirects — old paths redirect to new /learn/* paths (main site only)
   if (!req.isLearnSubdomain) {
     if (req.path === '/dashboard') return res.redirect(301, '/learn/dashboard');
