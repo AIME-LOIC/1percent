@@ -18,91 +18,121 @@
 <script src="/js/nav.js" defer></script>
 <script src="/js/notification-popup.js" defer></script>
 <style>
-/* ── Settings Page ─────────────────────────────────── */
-.settings-page{max-width:720px;margin:0 auto;padding:100px 24px 80px;}
-.settings-header{margin-bottom:36px;}
-.settings-header h1{font-size:28px;font-weight:800;margin:0 0 6px;letter-spacing:-.5px;}
-.settings-header p{font-size:14px;color:var(--text-muted);margin:0;}
+/* ── Settings Layout ───────────────────────────────── */
+.settings-page{max-width:960px;margin:0 auto;padding:100px 24px 80px;}
+.settings-grid{display:grid;grid-template-columns:260px 1fr;gap:32px;align-items:start;}
 
+/* ── Sidebar ───────────────────────────────────────── */
+.settings-sidebar{position:sticky;top:80px;}
+.settings-profile-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;text-align:center;margin-bottom:16px;}
+.settings-avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--primary) 0%,#0a5c34 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;margin:0 auto 14px;box-shadow:0 4px 12px rgba(13,110,63,.2);position:relative;}
+.settings-avatar-edit{position:absolute;bottom:0;right:0;width:24px;height:24px;border-radius:50%;background:#fff;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;}
+.settings-avatar-edit:hover{border-color:var(--primary);background:var(--surface);}
+.settings-profile-name{font-size:16px;font-weight:700;margin:0 0 2px;color:var(--text);}
+.settings-profile-email{font-size:12px;color:var(--text-muted);margin:0 0 12px;word-break:break-all;}
+.settings-profile-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:10px;font-weight:600;background:#d1fae5;color:#065f46;}
+
+.settings-nav{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+.settings-nav-item{display:flex;align-items:center;gap:10px;padding:11px 16px;font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer;transition:all .12s;border-left:3px solid transparent;text-decoration:none;}
+.settings-nav-item:hover{background:var(--surface);color:var(--text);}
+.settings-nav-item.active{background:var(--surface);color:var(--primary);font-weight:600;border-left-color:var(--primary);}
+.settings-nav-item svg{flex-shrink:0;}
+
+/* ── Main Content ──────────────────────────────────── */
+.settings-main{min-width:0;}
 .settings-section{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:20px;overflow:hidden;}
-.settings-section-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
-.settings-section-head h2{font-size:15px;font-weight:700;margin:0;}
-.settings-section-head .icon{color:var(--text-muted);}
+.settings-section-header{padding:20px 24px 16px;}
+.settings-section-header h2{font-size:18px;font-weight:700;margin:0 0 4px;color:var(--text);}
+.settings-section-header p{font-size:13px;color:var(--text-muted);margin:0;}
 
-.settings-row{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border-light);transition:background .1s;}
-.settings-row:last-child{border-bottom:none;}
-.settings-row:hover{background:var(--surface);}
-.settings-row-info{flex:1;}
-.settings-row-label{font-size:13px;font-weight:600;color:var(--text);}
-.settings-row-desc{font-size:12px;color:var(--text-muted);margin-top:2px;}
-.settings-row-action{flex-shrink:0;margin-left:16px;}
+.settings-field{padding:14px 24px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between;gap:16px;}
+.settings-field:last-child{border-bottom:none;}
+.settings-field:hover{background:rgba(0,0,0,.01);}
+.settings-field-label{font-size:13px;font-weight:600;color:var(--text);}
+.settings-field-desc{font-size:11px;color:var(--text-muted);margin-top:1px;}
+.settings-field-action{flex-shrink:0;}
 
-.settings-input{padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;width:240px;transition:border-color .15s;}
-.settings-input:focus{outline:none;border-color:var(--primary);}
+.settings-input{padding:9px 14px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;width:260px;transition:all .15s;background:var(--bg);}
+.settings-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(13,110,63,.08);}
+.settings-input:disabled{opacity:.5;cursor:not-allowed;background:var(--surface);}
 
-.settings-btn{padding:7px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .15s;}
-.settings-btn.primary{background:var(--primary);color:#fff;}.settings-btn.primary:hover{opacity:.9;}
+.settings-btn{padding:8px 18px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:6px;}
+.settings-btn.primary{background:var(--primary);color:#fff;}.settings-btn.primary:hover{background:#0a5c34;transform:translateY(-1px);box-shadow:0 2px 8px rgba(13,110,63,.25);}
 .settings-btn.outline{background:#fff;color:var(--text-muted);border:1px solid var(--border);}.settings-btn.outline:hover{border-color:var(--text-muted);color:var(--text);}
 .settings-btn.danger{background:#fef2f2;color:#dc2626;border:1px solid #fecaca;}.settings-btn.danger:hover{background:#fee2e2;}
-
-.settings-divider{height:1px;background:var(--border);margin:0;}
-
-.settings-links{display:flex;flex-direction:column;}
-.settings-link{display:flex;align-items:center;gap:10px;padding:14px 20px;text-decoration:none;color:var(--text);border-bottom:1px solid var(--border-light);transition:background .1s;}
-.settings-link:last-child{border-bottom:none;}
-.settings-link:hover{background:var(--surface);}
-.settings-link .link-icon{width:36px;height:36px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.settings-link .link-icon.green{background:#d1fae5;color:#059669;}
-.settings-link .link-icon.blue{background:#dbeafe;color:#2563eb;}
-.settings-link .link-icon.purple{background:#ede9fe;color:#7c3aed;}
-.settings-link .link-icon.yellow{background:#fef3c7;color:#d97706;}
-.settings-link .link-info{flex:1;}
-.settings-link .link-title{font-size:13px;font-weight:600;}
-.settings-link .link-desc{font-size:11px;color:var(--text-muted);margin-top:1px;}
-.settings-link .link-arrow{color:var(--text-muted);}
+.settings-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none;}
 
 /* ── Toggle Switch ─────────────────────────────────── */
-.toggle{position:relative;width:40px;height:22px;flex-shrink:0;}
+.toggle{position:relative;width:42px;height:24px;flex-shrink:0;}
 .toggle input{opacity:0;width:0;height:0;}
-.toggle-slider{position:absolute;inset:0;background:var(--border);border-radius:999px;cursor:pointer;transition:all .2s;}
-.toggle-slider:before{content:'';position:absolute;width:16px;height:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.15);}
-.toggle input:checked+.toggle-slider{background:var(--primary);}
-.toggle input:checked+.toggle-slider:before{transform:translateX(18px);}
+.toggle-track{position:absolute;inset:0;background:#d1d5db;border-radius:999px;cursor:pointer;transition:all .2s;}
+.toggle-track:before{content:'';position:absolute;width:18px;height:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.15);}
+.toggle input:checked+.toggle-track{background:var(--primary);}
+.toggle input:checked+.toggle-track:before{transform:translateX(18px);}
 
 /* ── 2FA ───────────────────────────────────────────── */
-.mfa-status{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:100px;font-size:11px;font-weight:600;}
+.mfa-status{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:100px;font-size:11px;font-weight:600;}
 .mfa-status.enabled{background:#d1fae5;color:#065f46;}
 .mfa-status.disabled{background:#f3f4f6;color:#6b7280;}
-.mfa-qr{display:flex;flex-direction:column;align-items:center;gap:12px;padding:20px;background:#f9fafb;border:1px solid var(--border);border-radius:10px;margin-top:12px;}
-.mfa-qr img{width:200px;height:200px;border-radius:8px;border:1px solid var(--border);}
-.mfa-qr .mfa-code{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);word-break:break-all;text-align:center;max-width:280px;}
-.mfa-verify{display:flex;gap:8px;align-items:center;margin-top:8px;}
-.mfa-verify input{width:180px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:16px;letter-spacing:4px;padding:10px;border:1px solid var(--border);border-radius:8px;}
-.mfa-verify input:focus{outline:none;border-color:var(--primary);}
+.mfa-status-dot{width:6px;height:6px;border-radius:50%;}
+.mfa-status.enabled .mfa-status-dot{background:#059669;}
+.mfa-status.disabled .mfa-status-dot{background:#9ca3af;}
+
+.mfa-enroll-card{margin:0 24px 20px;padding:24px;background:linear-gradient(135deg,#f0fdf4 0%,#ecfdf5 100%);border:1px solid #a7f3d0;border-radius:12px;text-align:center;}
+.mfa-enroll-card h3{font-size:15px;font-weight:700;margin:0 0 4px;color:#065f46;}
+.mfa-enroll-card p{font-size:12px;color:#059669;margin:0 0 16px;}
+.mfa-qr-wrap{display:inline-block;padding:12px;background:#fff;border-radius:10px;border:1px solid #a7f3d0;margin-bottom:12px;}
+.mfa-qr-wrap img{width:180px;height:180px;display:block;border-radius:4px;}
+.mfa-secret{font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b7280;margin:8px 0 16px;word-break:break-all;background:#f9fafb;padding:8px 12px;border-radius:6px;border:1px solid var(--border);}
+.mfa-verify-row{display:flex;gap:8px;justify-content:center;align-items:center;}
+.mfa-verify-input{width:160px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:18px;letter-spacing:6px;padding:12px;border:2px solid #a7f3d0;border-radius:8px;background:#fff;}
+.mfa-verify-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(13,110,63,.1);}
+
+.mfa-active-card{margin:0 24px 20px;padding:16px 20px;background:linear-gradient(135deg,#f0fdf4 0%,#ecfdf5 100%);border:1px solid #a7f3d0;border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.mfa-active-info h4{font-size:13px;font-weight:600;color:#065f46;margin:0;}
+.mfa-active-info p{font-size:11px;color:#059669;margin:2px 0 0;}
 
 /* ── Notification Prefs ────────────────────────────── */
-.pref-item{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border-light);}
-.pref-item:last-child{border-bottom:none;}
-.pref-item:hover{background:var(--surface);}
-.pref-info{flex:1;}
+.pref-row{padding:14px 24px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between;gap:16px;}
+.pref-row:last-child{border-bottom:none;}
+.pref-row:hover{background:rgba(0,0,0,.01);}
 .pref-label{font-size:13px;font-weight:600;color:var(--text);}
 .pref-desc{font-size:11px;color:var(--text-muted);margin-top:1px;}
 
+/* ── Legal Links ───────────────────────────────────── */
+.legal-link{display:flex;align-items:center;gap:12px;padding:14px 24px;text-decoration:none;color:var(--text);border-bottom:1px solid var(--border-light);transition:background .1s;}
+.legal-link:last-child{border-bottom:none;}
+.legal-link:hover{background:var(--surface);}
+.legal-icon{width:36px;height:36px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.legal-icon.blue{background:#dbeafe;color:#2563eb;}
+.legal-icon.purple{background:#ede9fe;color:#7c3aed;}
+.legal-link-info{flex:1;}
+.legal-link-title{font-size:13px;font-weight:600;}
+.legal-link-desc{font-size:11px;color:var(--text-muted);margin-top:1px;}
+.legal-arrow{color:var(--text-muted);flex-shrink:0;}
+
+/* ── Danger Zone ───────────────────────────────────── */
+.settings-danger-zone{border-color:#fecaca;}
+.settings-danger-zone .settings-section-header h2{color:#dc2626;}
+
 /* ── Responsive ────────────────────────────────────── */
-@media(max-width:600px){
-  .settings-page{padding:80px 16px 60px;}
-  .settings-row{flex-direction:column;align-items:flex-start;gap:10px;}
-  .settings-row-action{margin-left:0;}
+@media(max-width:768px){
+  .settings-grid{grid-template-columns:1fr;}
+  .settings-sidebar{position:static;display:flex;flex-direction:column;gap:16px;}
+  .settings-profile-card{margin-bottom:0;}
+  .settings-nav{display:flex;overflow-x:auto;padding:4px;gap:0;}
+  .settings-nav-item{white-space:nowrap;border-left:none;border-bottom:3px solid transparent;padding:10px 14px;font-size:12px;}
+  .settings-nav-item.active{border-bottom-color:var(--primary);border-left-color:transparent;}
   .settings-input{width:100%;}
-  .mfa-verify{flex-direction:column;}
-  .mfa-verify input{width:100%;}
+  .settings-field{flex-direction:column;align-items:flex-start;}
+  .settings-field-action{margin-left:0;}
 }
 </style>
 </head>
 <body>
 
 <header id="header" class="scrolled">
-  <div class="container">
+  <div class="container" style="display:flex;align-items:center;justify-content:space-between;">
     <a href="/" class="logo">
       <div class="logo-text">
         <span class="name">1% Expert Programme</span>
@@ -113,200 +143,267 @@
   </div>
 </header>
 
-<main class="settings-page" id="settings-app">
-  <div class="settings-header">
-    <h1>Settings</h1>
-    <p>Manage your account, profile, and preferences.</p>
-  </div>
+<main class="settings-page">
+  <div class="settings-grid">
 
-  <!-- Profile Section -->
-  <div class="settings-section">
-    <div class="settings-section-head">
-      <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      <h2>Profile</h2>
-    </div>
-    <div class="settings-row">
-      <div class="settings-row-info">
-        <div class="settings-row-label">Full Name</div>
-        <div class="settings-row-desc">Your display name across the platform</div>
+    <!-- Sidebar -->
+    <div class="settings-sidebar">
+      <div class="settings-profile-card">
+        <div class="settings-avatar" id="settings-avatar">
+          <span id="settings-avatar-text">?</span>
+          <div class="settings-avatar-edit" title="Edit profile">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+          </div>
+        </div>
+        <h3 class="settings-profile-name" id="settings-display-name">Loading...</h3>
+        <p class="settings-profile-email" id="settings-display-email"></p>
+        <span class="settings-profile-badge" id="settings-membership-badge">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Free Plan
+        </span>
       </div>
-      <div class="settings-row-action">
-        <input type="text" class="settings-input" id="settings-name" placeholder="Your name">
-      </div>
-    </div>
-    <div class="settings-row">
-      <div class="settings-row-info">
-        <div class="settings-row-label">Email</div>
-        <div class="settings-row-desc">Your login email address</div>
-      </div>
-      <div class="settings-row-action">
-        <input type="email" class="settings-input" id="settings-email" placeholder="email@example.com" disabled style="opacity:.6;cursor:not-allowed;">
-      </div>
-    </div>
-    <div class="settings-row">
-      <div class="settings-row-info">
-        <div class="settings-row-label">Save Changes</div>
-      </div>
-      <div class="settings-row-action">
-        <button class="settings-btn primary" id="settings-save-profile">Save</button>
-      </div>
-    </div>
-  </div>
 
-  <!-- Account Section -->
-  <div class="settings-section">
-    <div class="settings-section-head">
-      <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      <h2>Account</h2>
-    </div>
-    <div class="settings-row">
-      <div class="settings-row-info">
-        <div class="settings-row-label">Change Password</div>
-        <div class="settings-row-desc">Update your account password</div>
-      </div>
-      <div class="settings-row-action">
-        <button class="settings-btn outline" id="settings-change-pw">Change</button>
-      </div>
-    </div>
-    <div class="settings-divider"></div>
-    <div class="settings-row">
-      <div class="settings-row-info">
-        <div class="settings-row-label" style="color:#dc2626;">Delete Account</div>
-        <div class="settings-row-desc">Permanently delete your account and all data</div>
-      </div>
-      <div class="settings-row-action">
-        <button class="settings-btn danger" id="settings-delete-account">Delete</button>
+      <div class="settings-nav" id="settings-nav">
+        <a class="settings-nav-item active" data-tab="profile" href="#profile">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Profile
+        </a>
+        <a class="settings-nav-item" data-tab="security" href="#security">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Security
+        </a>
+        <a class="settings-nav-item" data-tab="notifications" href="#notifications">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          Notifications
+        </a>
+        <a class="settings-nav-item" data-tab="legal" href="#legal">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>
+          Legal
+        </a>
       </div>
     </div>
-  </div>
 
-  <!-- Two-Factor Authentication -->
-  <div class="settings-section">
-    <div class="settings-section-head">
-      <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      <h2>Two-Factor Authentication</h2>
-      <span class="mfa-status disabled" id="mfa-status-badge" style="margin-left:auto;">Disabled</span>
-    </div>
-    <div class="settings-row">
-      <div class="settings-row-info">
-        <div class="settings-row-label">Authenticator App (TOTP)</div>
-        <div class="settings-row-desc">Use an authenticator app like Google Authenticator or Authy to generate login codes</div>
-      </div>
-      <div class="settings-row-action" id="mfa-action-area">
-        <button class="settings-btn primary" id="mfa-enable-btn">Enable</button>
-      </div>
-    </div>
-    <div id="mfa-enrollment" style="display:none;padding:0 20px 16px;">
-      <div class="mfa-qr" id="mfa-qr-area">
-        <p style="font-size:13px;font-weight:600;margin:0;">Scan this QR code with your authenticator app</p>
-        <img id="mfa-qr-img" src="" alt="MFA QR Code">
-        <div class="mfa-code" id="mfa-secret-code"></div>
-        <div class="mfa-verify">
-          <input type="text" id="mfa-verify-input" placeholder="000000" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
-          <button class="settings-btn primary" id="mfa-verify-btn">Verify & Activate</button>
-        </div>
-        <button class="settings-btn outline" id="mfa-cancel-btn" style="margin-top:4px;">Cancel</button>
-      </div>
-    </div>
-    <div id="mfa-active-area" style="display:none;padding:0 20px 16px;">
-      <div style="padding:12px;background:#f0fdf4;border:1px solid #a7f3d0;border-radius:8px;display:flex;align-items:center;justify-content:space-between;">
-        <div>
-          <div style="font-size:13px;font-weight:600;color:#065f46;">Two-factor authentication is active</div>
-          <div style="font-size:11px;color:#059669;margin-top:2px;">Your account is protected with an authenticator app</div>
-        </div>
-        <button class="settings-btn danger" id="mfa-disable-btn">Disable</button>
-      </div>
-    </div>
-  </div>
+    <!-- Main Content -->
+    <div class="settings-main">
 
-  <!-- Notification Preferences -->
-  <div class="settings-section">
-    <div class="settings-section-head">
-      <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-      <h2>Notifications</h2>
-    </div>
-    <div class="pref-item">
-      <div class="pref-info">
-        <div class="pref-label">Course Updates</div>
-        <div class="pref-desc">New lessons, content changes, and course announcements</div>
+      <!-- Profile Tab -->
+      <div class="settings-tab" id="tab-profile">
+        <div class="settings-section">
+          <div class="settings-section-header">
+            <h2>Profile</h2>
+            <p>Your personal information and display name</p>
+          </div>
+          <div class="settings-field">
+            <div>
+              <div class="settings-field-label">Full Name</div>
+              <div class="settings-field-desc">Displayed on your profile and certificates</div>
+            </div>
+            <div class="settings-field-action">
+              <input type="text" class="settings-input" id="settings-name" placeholder="Your name">
+            </div>
+          </div>
+          <div class="settings-field">
+            <div>
+              <div class="settings-field-label">Email Address</div>
+              <div class="settings-field-desc">Used for login and notifications</div>
+            </div>
+            <div class="settings-field-action">
+              <input type="email" class="settings-input" id="settings-email" disabled>
+            </div>
+          </div>
+          <div class="settings-field" style="border-bottom:none;padding-top:8px;">
+            <div></div>
+            <div class="settings-field-action">
+              <button class="settings-btn primary" id="settings-save-profile">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-      <label class="toggle"><input type="checkbox" id="pref-course-updates" checked><span class="toggle-slider"></span></label>
-    </div>
-    <div class="pref-item">
-      <div class="pref-info">
-        <div class="pref-label">Streak Reminders</div>
-        <div class="pref-desc">Reminders when your streak is about to break</div>
-      </div>
-      <label class="toggle"><input type="checkbox" id="pref-streak-reminders" checked><span class="toggle-slider"></span></label>
-    </div>
-    <div class="pref-item">
-      <div class="pref-info">
-        <div class="pref-label">Achievements</div>
-        <div class="pref-desc">Certificates earned, milestones reached, and badges</div>
-      </div>
-      <label class="toggle"><input type="checkbox" id="pref-achievements" checked><span class="toggle-slider"></span></label>
-    </div>
-    <div class="pref-item">
-      <div class="pref-info">
-        <div class="pref-label">System Announcements</div>
-        <div class="pref-desc">Platform updates, maintenance windows, and new features</div>
-      </div>
-      <label class="toggle"><input type="checkbox" id="pref-system" checked><span class="toggle-slider"></span></label>
-    </div>
-    <div class="settings-row" style="border-top:1px solid var(--border);">
-      <div class="settings-row-info">
-        <div class="settings-row-label">Save Preferences</div>
-      </div>
-      <div class="settings-row-action">
-        <button class="settings-btn primary" id="settings-save-prefs">Save</button>
-      </div>
-    </div>
-  </div>
 
-  <!-- Legal Section -->
-  <div class="settings-section">
-    <div class="settings-section-head">
-      <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
-      <h2>Legal</h2>
-    </div>
-    <div class="settings-links">
-      <a href="/terms" class="settings-link">
-        <div class="link-icon blue">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+      <!-- Security Tab -->
+      <div class="settings-tab" id="tab-security" style="display:none;">
+        <div class="settings-section">
+          <div class="settings-section-header">
+            <h2>Password</h2>
+            <p>Manage your account password</p>
+          </div>
+          <div class="settings-field">
+            <div>
+              <div class="settings-field-label">Change Password</div>
+              <div class="settings-field-desc">We'll send a reset link to your email</div>
+            </div>
+            <div class="settings-field-action">
+              <button class="settings-btn outline" id="settings-change-pw">Send Reset Link</button>
+            </div>
+          </div>
         </div>
-        <div class="link-info">
-          <div class="link-title">Terms of Service</div>
-          <div class="link-desc">Review the terms governing your use of the platform</div>
-        </div>
-        <svg class="link-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-      </a>
-      <a href="/privacy" class="settings-link">
-        <div class="link-icon purple">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
-        </div>
-        <div class="link-info">
-          <div class="link-title">Privacy Policy</div>
-          <div class="link-desc">How we collect, use, and protect your data</div>
-        </div>
-        <svg class="link-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-      </a>
-    </div>
-  </div>
 
-  <!-- Session Section -->
-  <div class="settings-section">
-    <div class="settings-section-head">
-      <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-      <h2>Session</h2>
-    </div>
-    <div class="settings-row">
-      <div class="settings-row-info">
-        <div class="settings-row-label">Log Out</div>
-        <div class="settings-row-desc">Sign out of your account on this device</div>
+        <div class="settings-section">
+          <div class="settings-section-header" style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <h2>Two-Factor Authentication</h2>
+              <p>Add an extra layer of security to your account</p>
+            </div>
+            <span class="mfa-status disabled" id="mfa-status-badge">
+              <span class="mfa-status-dot"></span>
+              Disabled
+            </span>
+          </div>
+          <div class="settings-field" id="mfa-toggle-row">
+            <div>
+              <div class="settings-field-label">Authenticator App</div>
+              <div class="settings-field-desc">Use Google Authenticator, Authy, or similar app to generate codes</div>
+            </div>
+            <div class="settings-field-action" id="mfa-action-area">
+              <button class="settings-btn primary" id="mfa-enable-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Enable
+              </button>
+            </div>
+          </div>
+          <div id="mfa-enrollment" style="display:none;">
+            <div class="mfa-enroll-card">
+              <h3>Set Up Authenticator</h3>
+              <p>Scan this QR code with your authenticator app</p>
+              <div class="mfa-qr-wrap">
+                <img id="mfa-qr-img" src="" alt="MFA QR Code">
+              </div>
+              <div class="mfa-secret" id="mfa-secret-code"></div>
+              <p style="font-size:11px;color:#6b7280;margin:0 0 12px;">Enter the 6-digit code from your app</p>
+              <div class="mfa-verify-row">
+                <input type="text" class="mfa-verify-input" id="mfa-verify-input" placeholder="000000" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+                <button class="settings-btn primary" id="mfa-verify-btn">Verify</button>
+              </div>
+              <button class="settings-btn outline" id="mfa-cancel-btn" style="margin-top:12px;">Cancel</button>
+            </div>
+          </div>
+          <div id="mfa-active-area" style="display:none;">
+            <div class="mfa-active-card">
+              <div class="mfa-active-info">
+                <h4>Two-factor authentication is active</h4>
+                <p>Your account is protected with an authenticator app</p>
+              </div>
+              <button class="settings-btn danger" id="mfa-disable-btn">Disable</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section settings-danger-zone">
+          <div class="settings-section-header">
+            <h2>Danger Zone</h2>
+            <p>Irreversible actions</p>
+          </div>
+          <div class="settings-field">
+            <div>
+              <div class="settings-field-label" style="color:#dc2626;">Delete Account</div>
+              <div class="settings-field-desc">Permanently delete your account and all associated data</div>
+            </div>
+            <div class="settings-field-action">
+              <button class="settings-btn danger" id="settings-delete-account">Delete Account</button>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="settings-row-action">
-        <button class="settings-btn danger" id="settings-logout">Log Out</button>
+
+      <!-- Notifications Tab -->
+      <div class="settings-tab" id="tab-notifications" style="display:none;">
+        <div class="settings-section">
+          <div class="settings-section-header">
+            <h2>Notification Preferences</h2>
+            <p>Choose which notifications you'd like to receive</p>
+          </div>
+          <div class="pref-row">
+            <div>
+              <div class="pref-label">Course Updates</div>
+              <div class="pref-desc">New lessons, content changes, and course announcements</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="pref-course-updates" checked><span class="toggle-track"></span></label>
+          </div>
+          <div class="pref-row">
+            <div>
+              <div class="pref-label">Streak Reminders</div>
+              <div class="pref-desc">Alerts when your learning streak is about to break</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="pref-streak-reminders" checked><span class="toggle-track"></span></label>
+          </div>
+          <div class="pref-row">
+            <div>
+              <div class="pref-label">Achievements</div>
+              <div class="pref-desc">Certificates earned, milestones reached, and badges</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="pref-achievements" checked><span class="toggle-track"></span></label>
+          </div>
+          <div class="pref-row">
+            <div>
+              <div class="pref-label">System Announcements</div>
+              <div class="pref-desc">Platform updates, maintenance windows, and new features</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="pref-system" checked><span class="toggle-track"></span></label>
+          </div>
+          <div class="settings-field" style="border-top:1px solid var(--border);border-bottom:none;">
+            <div></div>
+            <div class="settings-field-action">
+              <button class="settings-btn primary" id="settings-save-prefs">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Save Preferences
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
+
+      <!-- Legal Tab -->
+      <div class="settings-tab" id="tab-legal" style="display:none;">
+        <div class="settings-section">
+          <div class="settings-section-header">
+            <h2>Legal Documents</h2>
+            <p>Review our terms, policies, and legal agreements</p>
+          </div>
+          <a href="/terms" class="legal-link">
+            <div class="legal-icon blue">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+            </div>
+            <div class="legal-link-info">
+              <div class="legal-link-title">Terms of Service</div>
+              <div class="legal-link-desc">Rules and guidelines for using the platform</div>
+            </div>
+            <svg class="legal-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </a>
+          <a href="/privacy" class="legal-link">
+            <div class="legal-icon purple">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+            </div>
+            <div class="legal-link-info">
+              <div class="legal-link-title">Privacy Policy</div>
+              <div class="legal-link-desc">How we collect, use, and protect your data</div>
+            </div>
+            <svg class="legal-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </a>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-header">
+            <h2>Session</h2>
+            <p>Manage your current session</p>
+          </div>
+          <div class="settings-field">
+            <div>
+              <div class="settings-field-label">Log Out</div>
+              <div class="settings-field-desc">Sign out of your account on this device</div>
+            </div>
+            <div class="settings-field-action">
+              <button class="settings-btn danger" id="settings-logout">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Log Out
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </main>
@@ -314,6 +411,20 @@
 <script>
 let supabaseClient = null, currentUser = null;
 
+// ── Tab switching ────────────────────────────────────
+document.querySelectorAll('.settings-nav-item').forEach(item => {
+  item.addEventListener('click', (e) => {
+    e.preventDefault();
+    const tab = item.dataset.tab;
+    document.querySelectorAll('.settings-nav-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+    document.querySelectorAll('.settings-tab').forEach(t => t.style.display = 'none');
+    const target = document.getElementById('tab-' + tab);
+    if (target) target.style.display = '';
+  });
+});
+
+// ── Init ─────────────────────────────────────────────
 async function initSettings() {
   try {
     const res = await fetch('/api/config');
@@ -321,34 +432,28 @@ async function initSettings() {
     if (config.supabaseUrl && config.supabaseAnonKey) {
       supabaseClient = supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
       const { data: { session } } = await supabaseClient.auth.getSession();
-      if (!session?.user) {
-        window.location.href = '/';
-        return;
-      }
+      if (!session?.user) { window.location.href = '/'; return; }
       currentUser = session.user;
       loadProfile();
-      if(typeof Nav!=='undefined')Nav.init();
-      // Init notifications
-      if (typeof NotificationPopup !== 'undefined') {
-        await NotificationPopup.init(supabaseClient);
-      }
+      if (typeof Nav !== 'undefined') Nav.init();
+      if (typeof NotificationPopup !== 'undefined') await NotificationPopup.init(supabaseClient);
+      checkMfaStatus();
+      loadPreferences();
     }
-  } catch (e) {
-    console.error('[SETTINGS] Init error:', e);
-  }
+  } catch (e) { console.error('[SETTINGS] Init error:', e); }
 }
 
 function loadProfile() {
   if (!currentUser) return;
   const name = currentUser.user_metadata?.full_name || '';
-  document.getElementById('settings-name').value = name;
-  document.getElementById('settings-email').value = currentUser.email || '';
-}
+  const email = currentUser.email || '';
+  const initials = name.trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase() || '?';
 
-async function apiFetch(url, opts = {}) {
-  if (!supabaseClient) return fetch(url, opts);
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  return fetch(url, { ...opts, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}`, ...opts.headers } });
+  document.getElementById('settings-name').value = name;
+  document.getElementById('settings-email').value = email;
+  document.getElementById('settings-avatar-text').textContent = initials;
+  document.getElementById('settings-display-name').textContent = name || 'Student';
+  document.getElementById('settings-display-email').textContent = email;
 }
 
 function escapeHTML(str) {
@@ -356,147 +461,122 @@ function escapeHTML(str) {
   return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-// Save profile
+// ── Save profile ─────────────────────────────────────
 document.getElementById('settings-save-profile')?.addEventListener('click', async () => {
   const name = document.getElementById('settings-name').value.trim();
   if (!name) { Toast.error('Name cannot be empty'); return; }
+  const btn = document.getElementById('settings-save-profile');
+  btn.disabled = true;
   try {
     const { error } = await supabaseClient.auth.updateUser({ data: { full_name: name } });
     if (error) throw error;
     Toast.success('Profile updated');
     currentUser.user_metadata.full_name = name;
-    // Re-render menu with new name
+    document.getElementById('settings-display-name').textContent = name;
+    const initials = name.trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase();
+    document.getElementById('settings-avatar-text').textContent = initials;
     document.getElementById('user-menu')?.remove();
-    if(typeof Nav!=='undefined'){Nav.user=currentUser;Nav.render();}
-  } catch (e) {
-    Toast.error('Failed to update profile: ' + e.message);
-  }
+    if (typeof Nav !== 'undefined') { Nav.user = currentUser; Nav.render(); }
+  } catch (e) { Toast.error('Failed: ' + e.message); }
+  finally { btn.disabled = false; }
 });
 
-// Change password
+// ── Change password ──────────────────────────────────
 document.getElementById('settings-change-pw')?.addEventListener('click', async () => {
   if (!currentUser?.email) return;
   try {
-    await supabaseClient.auth.resetPasswordForEmail(currentUser.email, {
-      redirectTo: window.location.origin + '/reset-password.html'
-    });
+    await supabaseClient.auth.resetPasswordForEmail(currentUser.email, { redirectTo: window.location.origin + '/reset-password.html' });
     Toast.success('Password reset link sent — check your email');
-  } catch (e) {
-    Toast.error('Failed: ' + e.message);
-  }
+  } catch (e) { Toast.error('Failed: ' + e.message); }
 });
 
-// Delete account
+// ── Delete account ───────────────────────────────────
 document.getElementById('settings-delete-account')?.addEventListener('click', async () => {
   if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) return;
   try {
     const res = await apiFetch('/api/auth/delete-account', { method: 'DELETE' });
     const json = await res.json();
-    if (json.success) {
-      Toast.success('Account deleted');
-      await supabaseClient.auth.signOut();
-      setTimeout(() => { window.location.href = '/'; }, 1500);
-    } else {
-      Toast.error(json.error || 'Failed to delete account');
-    }
-  } catch (e) {
-    Toast.error('Failed: ' + e.message);
-  }
+    if (json.success) { Toast.success('Account deleted'); await supabaseClient.auth.signOut(); setTimeout(() => { window.location.href = '/'; }, 1500); }
+    else Toast.error(json.error || 'Failed');
+  } catch (e) { Toast.error('Failed: ' + e.message); }
 });
 
-// Logout
+// ── Logout ───────────────────────────────────────────
 document.getElementById('settings-logout')?.addEventListener('click', async () => {
   await supabaseClient.auth.signOut();
   window.location.href = '/';
 });
 
-// ============================================================
-// Two-Factor Authentication (TOTP via Supabase MFA)
-// ============================================================
+// ── Avatar edit → profile tab ────────────────────────
+document.querySelector('.settings-avatar-edit')?.addEventListener('click', () => {
+  document.querySelector('[data-tab="profile"]').click();
+  setTimeout(() => document.getElementById('settings-name')?.focus(), 100);
+});
+
+async function apiFetch(url, opts = {}) {
+  if (!supabaseClient) return fetch(url, opts);
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  return fetch(url, { ...opts, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}`, ...opts.headers } });
+}
+
+// ── 2FA (TOTP via Supabase MFA) ─────────────────────
 let mfaFactorId = null;
 
 async function checkMfaStatus() {
   try {
     const { data, error } = await supabaseClient.auth.mfa.getAuthenticatorAssuranceLevel();
     if (error) throw error;
-    const currentLevel = data?.currentLevel;
-    const verifiedLevel = data?.nextLevel;
     const isEnrolled = data?.factors?.length > 0;
-
     const badge = document.getElementById('mfa-status-badge');
     const enableBtn = document.getElementById('mfa-enable-btn');
+    const toggleRow = document.getElementById('mfa-toggle-row');
     const activeArea = document.getElementById('mfa-active-area');
 
-    if (isEnrolled && verifiedLevel === 'aal2') {
-      badge.textContent = 'Enabled';
+    if (isEnrolled && data?.nextLevel === 'aal2') {
+      badge.innerHTML = '<span class="mfa-status-dot"></span> Enabled';
       badge.className = 'mfa-status enabled';
-      enableBtn.parentElement.parentElement.style.display = 'none';
-      activeArea.style.display = 'block';
+      toggleRow.style.display = 'none';
+      activeArea.style.display = '';
       mfaFactorId = data.factors.find(f => f.factor_type === 'totp')?.id;
-    } else if (isEnrolled) {
-      badge.textContent = 'Pending';
-      badge.className = 'mfa-status disabled';
     } else {
-      badge.textContent = 'Disabled';
+      badge.innerHTML = '<span class="mfa-status-dot"></span> Disabled';
       badge.className = 'mfa-status disabled';
+      toggleRow.style.display = '';
+      activeArea.style.display = 'none';
     }
-  } catch (e) {
-    console.warn('[MFA] Status check failed:', e.message);
-  }
+  } catch (e) { console.warn('[MFA] Status check failed:', e.message); }
 }
 
-// Start MFA enrollment
 document.getElementById('mfa-enable-btn')?.addEventListener('click', async () => {
   const btn = document.getElementById('mfa-enable-btn');
   btn.disabled = true;
   btn.textContent = 'Setting up...';
   try {
-    const { data, error } = await supabaseClient.auth.mfa.enroll({
-      factorType: 'totp',
-      friendlyName: '1% Expert Programme'
-    });
+    const { data, error } = await supabaseClient.auth.mfa.enroll({ factorType: 'totp', friendlyName: '1% Expert Programme' });
     if (error) throw error;
-
     mfaFactorId = data.id;
-
-    // Show QR code
-    document.getElementById('mfa-enrollment').style.display = 'block';
+    document.getElementById('mfa-enrollment').style.display = '';
     document.getElementById('mfa-qr-img').src = data.totp.qr_code;
-    document.getElementById('mfa-secret-code').textContent = 'Secret: ' + data.totp.secret;
-
-    btn.style.display = 'none';
+    document.getElementById('mfa-secret-code').textContent = data.totp.secret;
+    document.getElementById('mfa-toggle-row').style.display = 'none';
   } catch (e) {
     Toast.error('Failed to start 2FA setup: ' + e.message);
     btn.disabled = false;
-    btn.textContent = 'Enable';
+    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Enable';
   }
 });
 
-// Verify TOTP code
 document.getElementById('mfa-verify-btn')?.addEventListener('click', async () => {
   const code = document.getElementById('mfa-verify-input').value.trim();
-  if (!code || code.length !== 6) {
-    Toast.error('Enter the 6-digit code from your authenticator app');
-    return;
-  }
-
+  if (!code || code.length !== 6) { Toast.error('Enter the 6-digit code'); return; }
   const btn = document.getElementById('mfa-verify-btn');
   btn.disabled = true;
   btn.textContent = 'Verifying...';
-
   try {
-    // First, create a challenge
-    const { data: challengeData, error: challengeError } = await supabaseClient.auth.mfa.challenge({ factorId: mfaFactorId });
-    if (challengeError) throw challengeError;
-
-    // Then verify the code
-    const { error } = await supabaseClient.auth.mfa.verify({
-      factorId: mfaFactorId,
-      challengeId: challengeData.id,
-      code
-    });
+    const { data: ch, err: chErr } = await supabaseClient.auth.mfa.challenge({ factorId: mfaFactorId });
+    if (chErr) throw chErr;
+    const { error } = await supabaseClient.auth.mfa.verify({ factorId: mfaFactorId, challengeId: ch.id, code });
     if (error) throw error;
-
     Toast.success('Two-factor authentication enabled!');
     document.getElementById('mfa-enrollment').style.display = 'none';
     await checkMfaStatus();
@@ -506,87 +586,58 @@ document.getElementById('mfa-verify-btn')?.addEventListener('click', async () =>
     document.getElementById('mfa-verify-input').focus();
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Verify & Activate';
+    btn.textContent = 'Verify';
   }
 });
 
-// Cancel enrollment
 document.getElementById('mfa-cancel-btn')?.addEventListener('click', () => {
   document.getElementById('mfa-enrollment').style.display = 'none';
-  document.getElementById('mfa-enable-btn').style.display = '';
-  document.getElementById('mfa-enable-btn').disabled = false;
-  document.getElementById('mfa-enable-btn').textContent = 'Enable';
+  document.getElementById('mfa-toggle-row').style.display = '';
+  const btn = document.getElementById('mfa-enable-btn');
+  btn.disabled = false;
+  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Enable';
   mfaFactorId = null;
 });
 
-// Disable MFA
 document.getElementById('mfa-disable-btn')?.addEventListener('click', async () => {
   if (!mfaFactorId) return;
-  if (!confirm('Disable two-factor authentication? Your account will be less secure.')) return;
-
+  if (!confirm('Disable two-factor authentication?')) return;
   try {
     const { error } = await supabaseClient.auth.mfa.unenroll({ factorId: mfaFactorId });
     if (error) throw error;
-    Toast.success('Two-factor authentication disabled');
+    Toast.success('2FA disabled');
     mfaFactorId = null;
     await checkMfaStatus();
-  } catch (e) {
-    Toast.error('Failed to disable 2FA: ' + e.message);
-  }
+  } catch (e) { Toast.error('Failed: ' + e.message); }
 });
 
-// Allow only digits in MFA input
 document.getElementById('mfa-verify-input')?.addEventListener('input', (e) => {
   e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6);
 });
 
-// ============================================================
-// Notification Preferences
-// ============================================================
+// ── Notification Preferences ─────────────────────────
 const PREF_KEYS = ['course_updates', 'streak_reminders', 'achievements', 'system'];
-const PREF_IDS = {
-  course_updates: 'pref-course-updates',
-  streak_reminders: 'pref-streak-reminders',
-  achievements: 'pref-achievements',
-  system: 'pref-system'
-};
+const PREF_IDS = { course_updates: 'pref-course-updates', streak_reminders: 'pref-streak-reminders', achievements: 'pref-achievements', system: 'pref-system' };
 
 function loadPreferences() {
   if (!currentUser) return;
   const prefs = currentUser.user_metadata?.notification_prefs || {};
   PREF_KEYS.forEach(key => {
     const el = document.getElementById(PREF_IDS[key]);
-    if (el) el.checked = prefs[key] !== false; // default true
+    if (el) el.checked = prefs[key] !== false;
   });
 }
 
 document.getElementById('settings-save-prefs')?.addEventListener('click', async () => {
   const prefs = {};
-  PREF_KEYS.forEach(key => {
-    const el = document.getElementById(PREF_IDS[key]);
-    if (el) prefs[key] = el.checked;
-  });
-
+  PREF_KEYS.forEach(key => { const el = document.getElementById(PREF_IDS[key]); if (el) prefs[key] = el.checked; });
   try {
-    const { error } = await supabaseClient.auth.updateUser({
-      data: { notification_prefs: prefs }
-    });
+    const { error } = await supabaseClient.auth.updateUser({ data: { notification_prefs: prefs } });
     if (error) throw error;
-    Toast.success('Notification preferences saved');
+    Toast.success('Preferences saved');
     currentUser.user_metadata.notification_prefs = prefs;
-  } catch (e) {
-    Toast.error('Failed to save preferences: ' + e.message);
-  }
+  } catch (e) { Toast.error('Failed: ' + e.message); }
 });
-
-// Load prefs on init
-function loadPreferencesOnInit() {
-  loadPreferences();
-}
-
-// Run on load
-checkMfaStatus();
-loadPreferencesOnInit();
 
 initSettings();
 </script>
