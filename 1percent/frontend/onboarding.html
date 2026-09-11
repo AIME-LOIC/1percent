@@ -209,21 +209,8 @@ async function initOnboard(){
 
     currentUser=session.user;
 
-    // Existing students with enrollments should not be sent through onboarding again
-    if(!currentUser.user_metadata?.onboarding_completed){
-      try{
-        const eRes=await fetch('/api/courses/enrollments',{
-          headers:{Authorization:`Bearer ${session.access_token}`}
-        });
-        const eJson=await eRes.json();
-        if(eJson.success&&Array.isArray(eJson.enrollments)&&eJson.enrollments.length>0){
-          await supabaseClient.auth.updateUser({data:{onboarding_completed:true}});
-          window.location.href=AuthHelpers.appPath('/dashboard');
-          return;
-        }
-      }catch(e){console.warn('[ONBOARD] Enrollment check failed:',e.message);}
-    }
-
+    // Existing students who have not completed onboarding must stay on onboarding until they finish it.
+    // We should not silently mark them complete or bounce them back to the dashboard.
     if(currentUser.user_metadata?.onboarding_completed){
       window.location.href=AuthHelpers.appPath('/dashboard');
       return;

@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/main.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/icons.js"></script>
@@ -280,12 +281,12 @@ body{font-family:'Inter',sans-serif;background:var(--c-bg);color:var(--c-text);o
 .mobile-lesson-list-btn:hover{border-color:var(--c-muted);color:var(--c-text);}
 
 /* Mobile bottom nav */
-.mobile-bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;background:#fff;border-top:1px solid var(--c-border);padding:6px 16px;padding-bottom:max(6px,env(safe-area-inset-bottom));justify-content:space-around;align-items:center;}
-.mobile-bottom-nav a{display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;font-size:10px;font-weight:600;color:var(--c-muted);padding:4px 8px;border-radius:6px;transition:all .15s;}
+.mobile-bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;background:#fff;border-top:1px solid var(--c-border);padding:6px 12px;padding-bottom:max(6px,env(safe-area-inset-bottom));justify-content:space-between;align-items:center;gap:4px;}
+.mobile-bottom-nav a{display:flex;flex:1;min-width:0;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;font-size:10px;font-weight:600;color:var(--c-muted);padding:4px 6px;border-radius:6px;transition:all .15s;}
 .mobile-bottom-nav a.active{color:var(--c-accent);}
 .mobile-bottom-nav a:hover{color:var(--c-accent);}
 .mobile-bottom-nav svg{width:20px;height:20px;}
-.mobile-profile-nav{min-width:56px;}
+.mobile-profile-nav{flex:1.2;min-width:56px;}
 .mobile-profile-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--c-accent),#0a5c34);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;box-shadow:0 4px 10px rgba(13,110,63,.18);}
 </style>
 </head>
@@ -538,8 +539,8 @@ function renderLessons(){
   list.innerHTML=lessons.map((l,i)=>{
     const done=completedIds.has(l.id);
     const active=activeLessonId===l.id;
-    // A lesson is locked if: course is premium AND user is not premium AND it's not the free preview
-    const isLocked=isPremium&&!isPremiumUser&&!l.is_free_preview&&i>0;
+    // Only preview lessons remain visible for free users. Any locked premium lesson should stay blocked.
+    const isLocked=isPremium&&!isPremiumUser&&!l.is_free_preview;
     return `<div class="lesson-item${active?' active':''}${done?' completed':''}${isLocked?' locked':''}" data-lesson-id="${l.id}" onclick="openLesson('${l.id}')">
       <div class="lesson-num">${done?'&#10003;':i+1}</div>
       <div class="lesson-info">
@@ -562,8 +563,8 @@ function openLesson(lessonId){
   if(!lesson)return;
   const idx=(courseData.lessons||[]).findIndex(l=>l.id===lessonId);
 
-  // Premium wall: course is premium, user is not premium, lesson is not free preview
-  if(courseData.is_premium&&!isPremiumUser&&!lesson.is_free_preview&&idx>0){
+  // Premium wall: course is premium, user is not premium, and the lesson is not a free preview
+  if(courseData.is_premium&&!isPremiumUser&&!lesson.is_free_preview){
     showPremiumWall();
     return;
   }
