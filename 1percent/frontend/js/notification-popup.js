@@ -12,6 +12,8 @@ const NotificationPopup = {
   _isShowing: false,
   _supabase: null,
   _audioEnabled: true,
+  _socket: null,
+  _socketConnected: false,
 
   /**
    * Initialize the notification popup system
@@ -23,11 +25,14 @@ const NotificationPopup = {
     // Create popup container
     this._createPopupContainer();
     
-    // Start polling for new notifications
-    this._startPolling();
-    
     // Load audio notification
     this._loadAudio();
+
+    // Start polling for new notifications (fallback — skipped while socket is live)
+    this._startPolling();
+
+    // Connect WebSocket for real-time push
+    this._connectSocket();
     
     console.log('[NotificationPopup] Initialized');
   },
@@ -44,7 +49,7 @@ const NotificationPopup = {
     overlay.innerHTML = `
       <div class="notif-popup-modal" id="notif-popup-modal">
         <div class="notif-popup-header">
-          <div class="notif-popup-icon" id="notif-popup-icon">📢</div>
+          <div class="notif-popup-icon" id="notif-popup-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></div>
           <button class="notif-popup-close" id="notif-popup-close" title="Close">&times;</button>
         </div>
         <div class="notif-popup-body">
@@ -54,9 +59,10 @@ const NotificationPopup = {
         </div>
         <div class="notif-popup-footer">
           <button class="notif-popup-btn secondary" id="notif-popup-dismiss">Dismiss</button>
+          <button class="notif-popup-btn secondary" id="notif-popup-copy-link" style="display:none;">Copy Link</button>
           <button class="notif-popup-btn primary" id="notif-popup-mark-read">Mark as Read</button>
         </div>
-        <div class="notif-popup-progress">
+        <div class="notif-popup-progress" style="display:none;">
           <div class="notif-popup-progress-bar" id="notif-popup-progress-bar"></div>
         </div>
       </div>
@@ -67,6 +73,7 @@ const NotificationPopup = {
     document.getElementById('notif-popup-close').addEventListener('click', () => this.dismiss());
     document.getElementById('notif-popup-dismiss').addEventListener('click', () => this.dismiss());
     document.getElementById('notif-popup-mark-read').addEventListener('click', () => this.markAsRead());
+    document.getElementById('notif-popup-copy-link').addEventListener('click', () => this.copyLink());
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) this.dismiss();
     });
@@ -122,12 +129,46 @@ const NotificationPopup = {
   },
 
   /**
-   * Start polling for new notifications
+   * Connect Socket.IO for real-time notification push.
+   * Skips polling while the socket is connected; falls back to
+   * polling if the socket disconnects.
+   */
+  _connectSocket() {
+    if (typeof io === 'undefined') return; // Socket.IO client not loaded
+    this._supabase.auth.getSession().then(({data:{session}}) => {
+      if (!session?.access_token) return;
+      this._socket = io({ auth: { token: session.access_token } });
+      this._socket.on('connect', () => {
+        this._socketConnected = true;
+        console.log('[NotificationPopup] Socket connected — polling paused');
+        this.stopPolling();
+      });
+      this._socket.on('disconnect', () => {
+        this._socketConnected = false;
+        console.log('[NotificationPopup] Socket disconnected — falling back to polling');
+        this._startPolling();
+      });
+      this._socket.on('notification', (notification) => {
+        console.log('[NotificationPopup] Received real-time notification:', notification.title);
+        this._pendingNotifications.unshift(notification);
+        if (!this._isShowing) this._showNext();
+      });
+      this._socket.on('connect_error', () => {
+        this._socketConnected = false;
+        this._socket = null;
+      });
+    });
+  },
+
+  /**
+   * Start polling for new notifications (HTTP fallback)
    */
   _startPolling() {
+    if (this._pollInterval) return; // already running
     // Check every 30 seconds
-    this._pollInterval = setInterval(() => this._checkForNewNotifications(), 30000);
-    
+    this._pollInterval = setInterval(() => {
+      if (!this._socketConnected) this._checkForNewNotifications();
+    }, 30000);
     // Also check immediately
     this._checkForNewNotifications();
   },
@@ -207,13 +248,24 @@ const NotificationPopup = {
     document.getElementById('notif-popup-time').textContent = this._getTimeAgo(notification.created_at);
 
     // Set icon based on type
-    const iconMap = {
-      info: '📢',
-      success: '✅',
-      warning: '⚠️',
-      error: '❌'
+    const svgIcons = {
+      info: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>',
+      success: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>',
+      warning: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
+      error: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>'
     };
-    document.getElementById('notif-popup-icon').textContent = iconMap[notification.type] || '📢';
+    document.getElementById('notif-popup-icon').innerHTML = svgIcons[notification.type] || svgIcons.info;
+
+    // Show the copy-link button only when THIS notification carries a link.
+    // Copies just this notification's link — never the full pending queue.
+    const copyBtn = document.getElementById('notif-popup-copy-link');
+    if (notification.link) {
+      copyBtn.style.display = '';
+      copyBtn.textContent = 'Copy Link';
+      copyBtn.disabled = false;
+    } else {
+      copyBtn.style.display = 'none';
+    }
 
     // Set type class
     const modal = document.getElementById('notif-popup-modal');
@@ -228,31 +280,39 @@ const NotificationPopup = {
 
     // Play sound
     this._playSound();
-
-    // Auto-dismiss after 8 seconds
-    this._autoDismissTimer = setTimeout(() => this.dismiss(), 8000);
-
-    // Animate progress bar
-    const progressBar = document.getElementById('notif-popup-progress-bar');
-    progressBar.style.transition = 'none';
-    progressBar.style.width = '100%';
-    setTimeout(() => {
-      progressBar.style.transition = 'width 8s linear';
-      progressBar.style.width = '0%';
-    }, 50);
   },
 
   /**
    * Dismiss the current notification
    */
   dismiss() {
-    clearTimeout(this._autoDismissTimer);
-    
     const overlay = document.getElementById('notification-popup-overlay');
     overlay.classList.remove('show');
     
     // Show next notification after a short delay
     setTimeout(() => this._showNext(), 300);
+  },
+
+  /**
+   * Copy the link for the currently displayed notification only.
+   * Does not touch or expose any other pending notification.
+   */
+  async copyLink() {
+    const link = this._currentNotification?.link;
+    if (!link) return;
+
+    const copyBtn = document.getElementById('notif-popup-copy-link');
+    try {
+      await navigator.clipboard.writeText(link);
+      copyBtn.textContent = 'Copied!';
+      copyBtn.disabled = true;
+      setTimeout(() => {
+        copyBtn.textContent = 'Copy Link';
+        copyBtn.disabled = false;
+      }, 1500);
+    } catch (err) {
+      console.error('[NotificationPopup] Copy link failed:', err);
+    }
   },
 
   /**

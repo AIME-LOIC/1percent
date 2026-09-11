@@ -205,7 +205,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 
       <!-- Database Diagnostics -->
       <div class="card" id="diagnostics-card" style="display:none;">
-        <div class="card-header"><h2>⚠️ Database Status</h2><button class="btn-admin outline" onclick="loadDiagnostics()">Refresh</button></div>
+        <div class="card-header"><h2><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Database Status</h2><button class="btn-admin outline" onclick="loadDiagnostics()">Refresh</button></div>
         <div class="card-body" id="diagnostics-body"></div>
       </div>
     </div>
@@ -322,6 +322,10 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
             <label>Message</label>
             <textarea id="notif-message" placeholder="Notification message..." rows="3"></textarea>
           </div>
+          <div class="form-group">
+            <label>Link (optional)</label>
+            <input id="notif-link" placeholder="https://example.com/…">
+          </div>
           <div style="display:flex;gap:8px;">
             <button class="btn-admin primary" onclick="sendNotification()">Send Notification</button>
             <button class="btn-admin outline" onclick="clearNotifForm()">Clear</button>
@@ -341,11 +345,12 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
               <th>Title</th>
               <th>Type</th>
               <th>Sent To</th>
+              <th>Link</th>
               <th>Date</th>
             </tr>
           </thead>
           <tbody id="notif-history-tbody">
-            <tr><td colspan="4" class="empty">Loading notifications...</td></tr>
+            <tr><td colspan="5" class="empty">Loading notifications...</td></tr>
           </tbody>
         </table>
       </div>
@@ -511,7 +516,7 @@ async function loadDiagnostics(){
     const tables=json.tables||{};
     const missing=Object.entries(tables).filter(([k,v])=>!v.exists);
     if(!missing.length){
-      body.innerHTML='<div style="padding:8px 0;font-size:13px;color:#059669;font-weight:600;">✅ All tables exist and are accessible.</div>';
+      body.innerHTML='<div style="padding:8px 0;font-size:13px;color:#059669;font-weight:600;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg> All tables exist and are accessible.</div>';
       return;
     }
     body.innerHTML=`
@@ -519,7 +524,7 @@ async function loadDiagnostics(){
       <div style="display:grid;gap:8px;">
         ${Object.entries(tables).map(([name, info])=>`
           <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;background:${info.exists?'#f0fdf4':'#fef2f2'};border:1px solid ${info.exists?'#a7f3d0':'#fecaca'};">
-            <span style="font-size:14px;">${info.exists?'✅':'❌'}</span>
+            <span style="font-size:14px;">${info.exists?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>':'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>'}</span>
             <span style="font-size:13px;font-weight:600;${info.exists?'':'color:#dc2626;'}">${name}</span>
             <span style="font-size:12px;color:#6b7280;margin-left:auto;">${info.exists?(info.count+' rows'):(info.error||'missing')}</span>
           </div>
@@ -934,6 +939,7 @@ async function sendNotification() {
   const type = document.getElementById('notif-type').value;
   const title = document.getElementById('notif-title').value.trim();
   const message = document.getElementById('notif-message').value.trim();
+  const link = document.getElementById('notif-link').value.trim();
 
   if (!title || !message) {
     toast('Please fill in title and message', 'error');
@@ -942,6 +948,7 @@ async function sendNotification() {
 
   let endpoint = '/api/admin/notifications/broadcast';
   let body = { title, message, type };
+  if (link) body.link = link;
 
   if (recipient === 'specific') {
     const userIds = Array.from(notifSelectedUserIds);
@@ -979,6 +986,7 @@ async function sendNotification() {
 function clearNotifForm() {
   document.getElementById('notif-title').value = '';
   document.getElementById('notif-message').value = '';
+  document.getElementById('notif-link').value = '';
   document.getElementById('notif-type').value = 'info';
   document.getElementById('notif-recipient').value = 'all';
   document.getElementById('notif-users-group').style.display = 'none';
@@ -999,7 +1007,7 @@ async function loadNotificationHistory() {
 
     const notifs = json.notifications || [];
     if (!notifs.length) {
-      tbody.innerHTML = '<tr><td colspan="4" class="empty">No notifications sent yet.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="empty">No notifications sent yet.</td></tr>';
       return;
     }
 
@@ -1007,16 +1015,34 @@ async function loadNotificationHistory() {
       const typeColors = { info: 'badge-blue', success: 'badge-green', warning: 'badge-yellow', error: 'badge-red' };
       const userName = n.profiles?.full_name || n.profiles?.email || (n.user_id ? n.user_id.slice(0,8)+'...' : 'All users');
       const date = new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      const linkCell = n.link
+        ? `<button class="btn-admin outline" style="padding:4px 10px;font-size:11px;" onclick="copyNotifLink(this, '${esc(n.link).replace(/'/g, "\\'")}')">Copy link</button>`
+        : `<span style="color:var(--admin-muted);font-size:12px;">—</span>`;
       return `<tr>
         <td><strong>${esc(n.title)}</strong></td>
         <td><span class="badge ${typeColors[n.type] || 'badge-blue'}">${n.type}</span></td>
         <td>${esc(userName)}</td>
+        <td>${linkCell}</td>
         <td>${date}</td>
       </tr>`;
     }).join('');
   } catch (err) {
     console.error('Load notification history error:', err);
-    tbody.innerHTML = '<tr><td colspan="4" class="empty">Failed to load history.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="empty">Failed to load history.</td></tr>';
+  }
+}
+
+// Copies only the link for the specific notification row that was clicked —
+// never the whole notification list.
+async function copyNotifLink(btn, link) {
+  try {
+    await navigator.clipboard.writeText(link);
+    const original = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = original; }, 1500);
+  } catch (err) {
+    toast('Could not copy link', 'error');
+    console.error('Copy link error:', err);
   }
 }
 
