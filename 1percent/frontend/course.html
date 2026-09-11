@@ -12,6 +12,7 @@
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/icons.js"></script>
 <script src="/js/toast.js"></script>
+<script src="/js/nav.js" defer></script>
 <link rel="stylesheet" href="/css/notification-popup.css">
 <script src="/js/notification-popup.js" defer></script>
 <style>
@@ -288,21 +289,18 @@ body{font-family:'Inter',sans-serif;background:var(--c-bg);color:var(--c-text);o
 </head>
 <body>
 
-<!-- Top Bar -->
-<div class="topbar">
-  <div class="topbar-left">
-    <a href="/" class="topbar-logo"><div class="mark">1%</div></a>
-    <div class="topbar-sep"></div>
-    <span class="topbar-course" id="topbar-course">Loading...</span>
+<!-- Header -->
+<header id="header" class="scrolled">
+  <div class="container" style="display:flex;align-items:center;justify-content:space-between;">
+    <a href="/" class="logo">
+      <div class="logo-text">
+        <span class="name">1% Expert Programme</span>
+        <span class="tagline" id="topbar-course">Loading...</span>
+      </div>
+    </a>
+    <nav id="main-nav" aria-label="Primary"></nav>
   </div>
-  <div class="topbar-right">
-    <span id="membership-badge" class="membership-badge free" style="display:none;"></span>
-    <a href="/dashboard" class="topbar-btn">Dashboard</a>
-    <a href="/playground" class="topbar-btn">Challenges</a>
-    <a href="/settings" class="topbar-btn">Settings</a>
-    <a href="/" id="logout-btn" class="topbar-btn">Logout</a>
-  </div>
-</div>
+</header>
 
 <!-- Mobile bottom nav -->
 <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
@@ -318,7 +316,7 @@ body{font-family:'Inter',sans-serif;background:var(--c-bg);color:var(--c-text);o
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
     Challenges
   </a>
-  <a href="/" id="mobile-nav-logout">
+  <a href="/" onclick="if(supabaseClient)supabaseClient.auth.signOut();">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
     Logout
   </a>
@@ -941,14 +939,10 @@ async function unlockLesson(lessonId){
   if(j.success){document.getElementById('modal-overlay')?.remove();Toast.success(`Unlocked! -${j.cost} coins`);openLesson(lessonId);}else Toast.error(j.error);}catch(e){Toast.error(e.message);}
 }
 
-document.getElementById('logout-btn')?.addEventListener('click',async e=>{
-  e.preventDefault();if(supabaseClient)await supabaseClient.auth.signOut();window.location.href='/';
-});
+// Initialize shared nav
+if(typeof Nav!=='undefined')Nav.init();
 
-// Mobile nav logout
-document.getElementById('mobile-nav-logout')?.addEventListener('click',async e=>{
-  e.preventDefault();if(supabaseClient)await supabaseClient.auth.signOut();window.location.href='/';
-});
+
 
 // ── Mobile sidebar toggle ───────────────────────
 function showMobileSidebar(){
