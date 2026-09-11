@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings — 1% Expert Programme</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/main.css">
+<link rel="stylesheet" href="/css/notification-popup.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/icons.js"></script>
+<script src="/js/toast.js"></script>
+<script src="/js/notification-popup.js" defer></script>
+<style>
+/* ── Settings Page ─────────────────────────────────── */
+.settings-page{max-width:720px;margin:0 auto;padding:100px 24px 80px;}
+.settings-header{margin-bottom:36px;}
+.settings-header h1{font-size:28px;font-weight:800;margin:0 0 6px;letter-spacing:-.5px;}
+.settings-header p{font-size:14px;color:var(--text-muted);margin:0;}
+
+.settings-section{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:20px;overflow:hidden;}
+.settings-section-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.settings-section-head h2{font-size:15px;font-weight:700;margin:0;}
+.settings-section-head .icon{color:var(--text-muted);}
+
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border-light);transition:background .1s;}
+.settings-row:last-child{border-bottom:none;}
+.settings-row:hover{background:var(--surface);}
+.settings-row-info{flex:1;}
+.settings-row-label{font-size:13px;font-weight:600;color:var(--text);}
+.settings-row-desc{font-size:12px;color:var(--text-muted);margin-top:2px;}
+.settings-row-action{flex-shrink:0;margin-left:16px;}
+
+.settings-input{padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;width:240px;transition:border-color .15s;}
+.settings-input:focus{outline:none;border-color:var(--primary);}
+
+.settings-btn{padding:7px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .15s;}
+.settings-btn.primary{background:var(--primary);color:#fff;}.settings-btn.primary:hover{opacity:.9;}
+.settings-btn.outline{background:#fff;color:var(--text-muted);border:1px solid var(--border);}.settings-btn.outline:hover{border-color:var(--text-muted);color:var(--text);}
+.settings-btn.danger{background:#fef2f2;color:#dc2626;border:1px solid #fecaca;}.settings-btn.danger:hover{background:#fee2e2;}
+
+.settings-divider{height:1px;background:var(--border);margin:0;}
+
+.settings-links{display:flex;flex-direction:column;}
+.settings-link{display:flex;align-items:center;gap:10px;padding:14px 20px;text-decoration:none;color:var(--text);border-bottom:1px solid var(--border-light);transition:background .1s;}
+.settings-link:last-child{border-bottom:none;}
+.settings-link:hover{background:var(--surface);}
+.settings-link .link-icon{width:36px;height:36px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.settings-link .link-icon.green{background:#d1fae5;color:#059669;}
+.settings-link .link-icon.blue{background:#dbeafe;color:#2563eb;}
+.settings-link .link-icon.purple{background:#ede9fe;color:#7c3aed;}
+.settings-link .link-icon.yellow{background:#fef3c7;color:#d97706;}
+.settings-link .link-info{flex:1;}
+.settings-link .link-title{font-size:13px;font-weight:600;}
+.settings-link .link-desc{font-size:11px;color:var(--text-muted);margin-top:1px;}
+.settings-link .link-arrow{color:var(--text-muted);}
+
+/* ── Responsive ────────────────────────────────────── */
+@media(max-width:600px){
+  .settings-page{padding:80px 16px 60px;}
+  .settings-row{flex-direction:column;align-items:flex-start;gap:10px;}
+  .settings-row-action{margin-left:0;}
+  .settings-input{width:100%;}
+}
+</style>
+</head>
+<body>
+
+<header id="header" class="scrolled">
+  <div class="container">
+    <a href="/" class="logo">
+      <div class="logo-text">
+        <span class="name">1% Expert Programme</span>
+        <span class="tagline">Settings</span>
+      </div>
+    </a>
+    <nav id="main-nav" aria-label="Primary"></nav>
+  </div>
+</header>
+
+<main class="settings-page" id="settings-app">
+  <div class="settings-header">
+    <h1>Settings</h1>
+    <p>Manage your account, profile, and preferences.</p>
+  </div>
+
+  <!-- Profile Section -->
+  <div class="settings-section">
+    <div class="settings-section-head">
+      <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <h2>Profile</h2>
+    </div>
+    <div class="settings-row">
+      <div class="settings-row-info">
+        <div class="settings-row-label">Full Name</div>
+        <div class="settings-row-desc">Your display name across the platform</div>
+      </div>
+      <div class="settings-row-action">
+        <input type="text" class="settings-input" id="settings-name" placeholder="Your name">
+      </div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-row-info">
+        <div class="settings-row-label">Email</div>
+        <div class="settings-row-desc">Your login email address</div>
+      </div>
+      <div class="settings-row-action">
+        <input type="email" class="settings-input" id="settings-email" placeholder="email@example.com" disabled style="opacity:.6;cursor:not-allowed;">
+      </div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-row-info">
+        <div class="settings-row-label">Save Changes</div>
+      </div>
+      <div class="settings-row-action">
+        <button class="settings-btn primary" id="settings-save-profile">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Account Section -->
+  <div class="settings-section">
+    <div class="settings-section-head">
+      <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <h2>Account</h2>
+    </div>
+    <div class="settings-row">
+      <div class="settings-row-info">
+        <div class="settings-row-label">Change Password</div>
+        <div class="settings-row-desc">Update your account password</div>
+      </div>
+      <div class="settings-row-action">
+        <button class="settings-btn outline" id="settings-change-pw">Change</button>
+      </div>
+    </div>
+    <div class="settings-divider"></div>
+    <div class="settings-row">
+      <div class="settings-row-info">
+        <div class="settings-row-label" style="color:#dc2626;">Delete Account</div>
+        <div class="settings-row-desc">Permanently delete your account and all data</div>
+      </div>
+      <div class="settings-row-action">
+        <button class="settings-btn danger" id="settings-delete-account">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Legal Section -->
+  <div class="settings-section">
+    <div class="settings-section-head">
+      <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+      <h2>Legal</h2>
+    </div>
+    <div class="settings-links">
+      <a href="/terms" class="settings-link">
+        <div class="link-icon blue">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+        </div>
+        <div class="link-info">
+          <div class="link-title">Terms of Service</div>
+          <div class="link-desc">Review the terms governing your use of the platform</div>
+        </div>
+        <svg class="link-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </a>
+      <a href="/privacy" class="settings-link">
+        <div class="link-icon purple">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+        </div>
+        <div class="link-info">
+          <div class="link-title">Privacy Policy</div>
+          <div class="link-desc">How we collect, use, and protect your data</div>
+        </div>
+        <svg class="link-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </a>
+    </div>
+  </div>
+
+  <!-- Session Section -->
+  <div class="settings-section">
+    <div class="settings-section-head">
+      <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <h2>Session</h2>
+    </div>
+    <div class="settings-row">
+      <div class="settings-row-info">
+        <div class="settings-row-label">Log Out</div>
+        <div class="settings-row-desc">Sign out of your account on this device</div>
+      </div>
+      <div class="settings-row-action">
+        <button class="settings-btn danger" id="settings-logout">Log Out</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+let supabaseClient = null, currentUser = null;
+
+async function initSettings() {
+  try {
+    const res = await fetch('/api/config');
+    const config = await res.json();
+    if (config.supabaseUrl && config.supabaseAnonKey) {
+      supabaseClient = supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session?.user) {
+        window.location.href = '/';
+        return;
+      }
+      currentUser = session.user;
+      loadProfile();
+      renderUserMenu();
+      // Init notifications
+      if (typeof NotificationPopup !== 'undefined') {
+        await NotificationPopup.init(supabaseClient);
+      }
+    }
+  } catch (e) {
+    console.error('[SETTINGS] Init error:', e);
+  }
+}
+
+function loadProfile() {
+  if (!currentUser) return;
+  const name = currentUser.user_metadata?.full_name || '';
+  document.getElementById('settings-name').value = name;
+  document.getElementById('settings-email').value = currentUser.email || '';
+}
+
+async function apiFetch(url, opts = {}) {
+  if (!supabaseClient) return fetch(url, opts);
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  return fetch(url, { ...opts, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}`, ...opts.headers } });
+}
+
+function renderUserMenu() {
+  const nav = document.getElementById('main-nav');
+  if (!nav || !currentUser) return;
+  const name = currentUser.user_metadata?.full_name || currentUser.email || 'Student';
+  const initials = name.trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase();
+  const menu = document.createElement('div');
+  menu.id = 'user-menu';
+  menu.className = 'user-menu';
+  menu.innerHTML = `
+    <button class="user-menu-trigger" id="user-menu-trigger" aria-haspopup="true" aria-expanded="false">
+      <span class="user-avatar">${escapeHTML(initials)}</span>
+    </button>
+    <div class="user-menu-dropdown" id="user-menu-dropdown">
+      <div class="user-menu-info">
+        <b>${escapeHTML(name)}</b>
+        <span>${escapeHTML(currentUser.email || '')}</span>
+      </div>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/settings">Settings</a>
+      <button type="button" id="user-menu-logout">Log Out</button>
+    </div>
+  `;
+  nav.appendChild(menu);
+  const trigger = menu.querySelector('#user-menu-trigger');
+  const dropdown = menu.querySelector('#user-menu-dropdown');
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdown.classList.toggle('open');
+  });
+  document.addEventListener('click', () => dropdown.classList.remove('open'));
+  menu.querySelector('#user-menu-logout').addEventListener('click', async () => {
+    await supabaseClient.auth.signOut();
+    window.location.href = '/';
+  });
+}
+
+function escapeHTML(str) {
+  if (str == null) return '';
+  return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// Save profile
+document.getElementById('settings-save-profile')?.addEventListener('click', async () => {
+  const name = document.getElementById('settings-name').value.trim();
+  if (!name) { Toast.error('Name cannot be empty'); return; }
+  try {
+    const { error } = await supabaseClient.auth.updateUser({ data: { full_name: name } });
+    if (error) throw error;
+    Toast.success('Profile updated');
+    currentUser.user_metadata.full_name = name;
+    // Re-render menu with new name
+    document.getElementById('user-menu')?.remove();
+    renderUserMenu();
+  } catch (e) {
+    Toast.error('Failed to update profile: ' + e.message);
+  }
+});
+
+// Change password
+document.getElementById('settings-change-pw')?.addEventListener('click', async () => {
+  if (!currentUser?.email) return;
+  try {
+    await supabaseClient.auth.resetPasswordForEmail(currentUser.email, {
+      redirectTo: window.location.origin + '/reset-password.html'
+    });
+    Toast.success('Password reset link sent — check your email');
+  } catch (e) {
+    Toast.error('Failed: ' + e.message);
+  }
+});
+
+// Delete account
+document.getElementById('settings-delete-account')?.addEventListener('click', async () => {
+  if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) return;
+  try {
+    const res = await apiFetch('/api/auth/delete-account', { method: 'DELETE' });
+    const json = await res.json();
+    if (json.success) {
+      Toast.success('Account deleted');
+      await supabaseClient.auth.signOut();
+      setTimeout(() => { window.location.href = '/'; }, 1500);
+    } else {
+      Toast.error(json.error || 'Failed to delete account');
+    }
+  } catch (e) {
+    Toast.error('Failed: ' + e.message);
+  }
+});
+
+// Logout
+document.getElementById('settings-logout')?.addEventListener('click', async () => {
+  await supabaseClient.auth.signOut();
+  window.location.href = '/';
+});
+
+initSettings();
+</script>
+</body>
+</html>

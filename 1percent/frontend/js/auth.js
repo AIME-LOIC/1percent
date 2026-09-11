@@ -148,11 +148,16 @@ const Auth = {
    * Bind form and button events
    */
   _bindEvents() {
-    // Login button in header
+    // Login button in header — if already logged in, redirect to dashboard
     const openAuthBtn = document.getElementById('open-auth');
     if (openAuthBtn) {
       openAuthBtn.addEventListener('click', (e) => {
         e.preventDefault();
+        if (this.currentUser) {
+          const _isLearn = location.hostname === 'learn.1percent.rw';
+          window.location.href = _isLearn ? '/dashboard' : '/learn/dashboard';
+          return;
+        }
         Modal.open('auth-modal');
       });
     }
@@ -365,7 +370,8 @@ const Auth = {
           <b>${escapeHTML(name)}</b>
           <span>${escapeHTML(user.email || '')}</span>
         </div>
-        <a href="/dashboard.html">Dashboard</a>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/settings">Settings</a>
         <button type="button" id="user-menu-logout">Log Out</button>
       </div>
     `;

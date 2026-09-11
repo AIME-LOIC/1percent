@@ -73,6 +73,7 @@ const Dashboard = {
           <span>${escapeHTML(user.email || '')}</span>
         </div>
         <a href="${_url('/')}">Homepage</a>
+        <a href="${_url('/settings')}">Settings</a>
         <button type="button" id="user-menu-logout">Log Out</button>
       </div>`;
     nav.appendChild(menu);
