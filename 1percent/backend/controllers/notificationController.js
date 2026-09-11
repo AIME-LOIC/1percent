@@ -104,7 +104,7 @@ class NotificationController {
    */
   async createNotification(req, res) {
     try {
-      const { user_id, title, message, type } = req.body;
+      const { user_id, title, message, type, link } = req.body;
 
       if (!user_id || !title || !message) {
         return res.status(400).json({ error: 'user_id, title, and message are required' });
@@ -114,7 +114,8 @@ class NotificationController {
         user_id,
         title,
         message,
-        type
+        type,
+        link
       });
 
       res.status(201).json({ success: true, notification });
@@ -130,7 +131,7 @@ class NotificationController {
    */
   async createBulkNotifications(req, res) {
     try {
-      const { user_ids, title, message, type } = req.body;
+      const { user_ids, title, message, type, link } = req.body;
 
       if (!user_ids || !Array.isArray(user_ids) || !title || !message) {
         return res.status(400).json({ error: 'user_ids (array), title, and message are required' });
@@ -139,7 +140,8 @@ class NotificationController {
       const result = await notificationService.createBulkNotifications(user_ids, {
         title,
         message,
-        type
+        type,
+        link
       });
 
       res.status(201).json(result);
@@ -155,7 +157,7 @@ class NotificationController {
    */
   async broadcastNotification(req, res) {
     try {
-      const { title, message, type } = req.body;
+      const { title, message, type, link } = req.body;
 
       if (!title || !message) {
         return res.status(400).json({ error: 'title and message are required' });
@@ -164,7 +166,8 @@ class NotificationController {
       const result = await notificationService.createNotificationForAllUsers({
         title,
         message,
-        type
+        type,
+        link
       });
 
       res.status(201).json(result);

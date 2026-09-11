@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "test": "node Streakservice.test.js"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -28,6 +29,8 @@
     "express": "^4.21.0",
     "helmet": "^8.0.0",
     "jsdom": "^30.0.1",
-    "pdfkit": "^0.20.1"
+    "node-cron": "^4.6.0",
+    "pdfkit": "^0.20.1",
+    "socket.io": "^4.8.3"
   }
 }

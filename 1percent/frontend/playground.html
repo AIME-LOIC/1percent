@@ -592,7 +592,7 @@ function challengeToFileName(ch) {
 
 function buildFilesFromChallenges() {
   FILES = {
-    welcome: { name: 'welcome.md', ext: 'md', lang: 'markdown', code: '# Welcome to 1% Playground\n\nSelect a challenge from the **Challenges** sidebar (checkmark icon) to get started.\n\n## How it works\n\n1. Pick a challenge from the sidebar\n2. Read the challenge description\n3. Write your solution in the editor\n4. Press **Ctrl+Enter** or click **Run & Submit**\n\nHappy coding! 🚀', type: 'welcome' }
+    welcome: { name: 'welcome.md', ext: 'md', lang: 'markdown', code: '# Welcome to 1% Playground\n\nSelect a challenge from the **Challenges** sidebar (checkmark icon) to get started.\n\n## How it works\n\n1. Pick a challenge from the sidebar\n2. Read the challenge description\n3. Write your solution in the editor\n4. Press **Ctrl+Enter** or click **Run & Submit**\n\nHappy coding!', type: 'welcome' }
   };
   allChallenges.forEach(ch => {
     const fname = challengeToFileName(ch);
@@ -644,7 +644,7 @@ function buildChallengeMarkdown(ch) {
   }
 
   if (isPassed) {
-    md += `---\n\n> ✅ **Challenge Completed**\n`;
+    md += `---\n\n> **Challenge Completed**\n`;
   }
 
   return md;
@@ -721,7 +721,7 @@ function renderDailyBanner() {
   banner.innerHTML = `
     <div style="padding:10px 12px;background:linear-gradient(135deg,rgba(249,226,175,0.1),rgba(250,183,135,0.08));border-bottom:1px solid rgba(249,226,175,0.15);cursor:pointer;" onclick="selectChallenge(allChallenges.find(c=>c.id==='${ch.id}')||{id:'${ch.id}',title:'${esc(ch.title)}',description:'${esc(ch.description)}',difficulty:'${ch.difficulty}',coins_reward:${ch.coins_reward},challenge_type:'${ch.challenge_type||'javascript'}',expected_output:'${esc(ch.expected_output||'')}',course_title:'${esc(ch.course_title||'')}'})">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-        <span style="font-size:14px;">🔥</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f9e2af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
         <span style="font-size:11px;font-weight:700;color:#f9e2af;text-transform:uppercase;letter-spacing:.5px;">Daily Challenge</span>
         ${dailyCompleted ? '<span style="font-size:10px;color:#a6e3a1;margin-left:auto;">✓ Done</span>' : ''}
       </div>
@@ -1083,7 +1083,7 @@ async function submitChallenge() {
       passedChallenges.add(currentChallenge.id);
       coinsBalance = json.total || coinsBalance;
       renderCoins();
-      output.innerHTML = `<span class="success">✅ Challenge passed!</span>\n<span class="output">+${json.coins} coins earned${isDaily ? ' (includes daily bonus!)' : ''}</span>\n<span class="output">Total: ${coinsBalance} coins</span>`;
+      output.innerHTML = `<span class="success"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg> Challenge passed!</span>\n<span class="output">+${json.coins} coins earned${isDaily ? ' (includes daily bonus!)' : ''}</span>\n<span class="output">Total: ${coinsBalance} coins</span>`;
       // Refresh the "✓ Completed" badge in the info panel — keep the user's
       // own code in the editor as-is, don't replace it with the description doc.
       renderChallengeInfoPanel(currentChallenge);
@@ -1092,7 +1092,7 @@ async function submitChallenge() {
       updateProgress();
     } else {
       Toast.error('Challenge not passed. Check your solution and try again.');
-      output.innerHTML = `<span class="error">❌ Challenge not passed</span>\n<span class="output">Check your solution and try again.</span>`;
+      output.innerHTML = `<span class="error"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg> Challenge not passed</span>\n<span class="output">Check your solution and try again.</span>`;
     }
   } catch (e) {
     Toast.error('Failed to submit: ' + e.message);
@@ -1353,7 +1353,7 @@ function processCommand(cmd) {
     case 'true': return '';
     case 'false': return '<span class="error">(exit 1)</span>';
     case 'help': return cmdHelp();
-    case 'version': case '--version': return `<span class="output">1% Playground Terminal v2.0.0\nBuilt with ❤️ by 1percent Rwanda</span>`;
+    case 'version': case '--version': return `<span class="output">1% Playground Terminal v2.0.0\nBuilt with care by 1percent Rwanda</span>`;
     case 'exit': return `<span class="output">logout\nConnection to 1percent-server closed.</span>`;
     case 'reboot': return `<span class="warning">System going down for reboot NOW!</span>`;
     case 'shutdown': return `<span class="warning">System is going down for poweroff immediately!</span>`;
@@ -1629,21 +1629,21 @@ function cmdHelp() {
   1% Playground — Available Commands (${new Date().toISOString().slice(0,10)})
 ═══════════════════════════════════════════════════════════</span>
 <span class="output">
-<span class="success">📁 Navigation:</span>  ls [-la], cd, pwd, tree, realpath
-<span class="success">📄 Files:</span>  cat, head, tail, less, touch, mkdir, rmdir, rm, cp, mv, ln, chmod, chown, chgrp, file, stat, basename, dirname, readlink
-<span class="success">🔍 Search:</span>  grep, find, locate, which, whereis, type
-<span class="success">✏️  Text:</span>  echo, printf, sed, awk, tr, cut, sort, uniq, wc, diff, nl, rev, strings, xxd, tee, xargs
-<span class="success">💻 System:</span>  ps, top, htop, df, free, du, mount, uptime, whoami, hostname, id, groups, who, w, last, uname, date, cal, lscpu, lsmem, lsblk, lsusb, lspci, lsmod
-<span class="success">🌐 Network:</span>  ping, curl, wget, netstat, ss, ifconfig, ip, traceroute, dig, nslookup, nmap, iptables, ufw, nc
-<span class="success">📦 Archive:</span>  tar, gzip, gunzip, zip, unzip, bzip2, xz
-<span class="success">👥 Users:</span>  su, sudo, passwd, adduser, userdel, usermod, groups, visudo
-<span class="success">⏰ Cron:</span>  crontab, at, systemctl, service
-<span class="success">🐳 Docker:</span>  docker ps, docker images, docker logs, docker run, docker build, docker exec, docker network, docker volume, docker system
-<span class="success">🔧 System:</span>  ps, lsof, strace, ltrace, ldd, iostat, iotop, nice, nohup, kill, pkill
-<span class="success">🔐 Permissions:</span>  umask, getfacl, setfacl, lsattr
-<span class="success">🎉 Fun:</span>  fortune, cowsay, figlet, bc, expr, seq, factor
-<span class="success">🔧 Other:</span>  env, printenv, alias, history, clear, help, version, exit
-<span class="success">⚡ Git:</span>  git init/add/commit/status/log/branch/checkout/merge/diff/stash/remote/clone/push/pull/rebase
+<span class="success">Navigation:</span>  ls [-la], cd, pwd, tree, realpath
+<span class="success">Files:</span>  cat, head, tail, less, touch, mkdir, rmdir, rm, cp, mv, ln, chmod, chown, chgrp, file, stat, basename, dirname, readlink
+<span class="success">Search:</span>  grep, find, locate, which, whereis, type
+<span class="success">Text:</span>  echo, printf, sed, awk, tr, cut, sort, uniq, wc, diff, nl, rev, strings, xxd, tee, xargs
+<span class="success">System:</span>  ps, top, htop, df, free, du, mount, uptime, whoami, hostname, id, groups, who, w, last, uname, date, cal, lscpu, lsmem, lsblk, lsusb, lspci, lsmod
+<span class="success">Network:</span>  ping, curl, wget, netstat, ss, ifconfig, ip, traceroute, dig, nslookup, nmap, iptables, ufw, nc
+<span class="success">Archive:</span>  tar, gzip, gunzip, zip, unzip, bzip2, xz
+<span class="success">Users:</span>  su, sudo, passwd, adduser, userdel, usermod, groups, visudo
+<span class="success">Cron:</span>  crontab, at, systemctl, service
+<span class="success">Docker:</span>  docker ps, docker images, docker logs, docker run, docker build, docker exec, docker network, docker volume, docker system
+<span class="success">Processes:</span>  ps, lsof, strace, ltrace, ldd, iostat, iotop, nice, nohup, kill, pkill
+<span class="success">Permissions:</span>  umask, getfacl, setfacl, lsattr
+<span class="success">Fun:</span>  fortune, cowsay, figlet, bc, expr, seq, factor
+<span class="success">Other:</span>  env, printenv, alias, history, clear, help, version, exit
+<span class="success">Git:</span>  git init/add/commit/status/log/branch/checkout/merge/diff/stash/remote/clone/push/pull/rebase
 </span>`;
 }
 

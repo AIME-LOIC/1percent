@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
 <script src="/js/icons.js"></script>
 <script src="/js/toast.js"></script>
 <link rel="stylesheet" href="/css/notification-popup.css">
@@ -388,6 +389,20 @@ let supabaseClient=null,currentUser=null,courseData=null,slug='',activeLessonId=
 
 function escapeHTML(s){if(s==null)return'';return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
+/**
+ * Return the ID of the first lesson the user hasn't completed yet.
+ * Falls back to the last lesson if everything's done, first lesson if nothing's started.
+ */
+function getNextLesson(){
+  const lessons=courseData.lessons||[];
+  if(!lessons.length)return null;
+  // First incomplete lesson
+  const firstIncomplete=lessons.find(l=>!completedIds.has(l.id));
+  if(firstIncomplete)return firstIncomplete.id;
+  // All done — open the last lesson
+  return lessons[lessons.length-1].id;
+}
+
 async function init(){
   slug=window.location.pathname.split('/course/')[1];
   if(!slug){window.location.href='/dashboard';return;}
@@ -456,7 +471,8 @@ async function loadCourse(){
   const dlBtn=document.getElementById('download-course-btn');
   if(dlBtn){dlBtn.style.display='inline-flex';dlBtn.onclick=()=>downloadCoursePdf(courseData.id);}
   renderLessons();
-  if(courseData.lessons?.length)doOpenLesson(courseData.lessons[0].id);
+  const nextId=getNextLesson();
+  if(nextId)doOpenLesson(nextId);
   await loadQuizInfo();
   await checkExistingCertificate();
 }
@@ -464,7 +480,7 @@ async function loadCourse(){
 async function doEnroll(){
   const res=await apiFetch(`/api/courses/${courseData.id}/enroll`,{method:'POST'});
   const json=await res.json();
-  if(json.success){await loadProgress();renderLessons();if(courseData.lessons?.length)doOpenLesson(courseData.lessons[0].id);}
+  if(json.success){await loadProgress();renderLessons();const nextId=getNextLesson();if(nextId)doOpenLesson(nextId);}
   else Toast.error(json.error||'Failed to enroll');
 }
 
@@ -481,11 +497,10 @@ async function loadProgress(){
   completedIds.clear();
   (p.lessons||[]).forEach(l=>{
     if(l.completed)completedIds.add(l.id);
-    const el=document.querySelector(`[data-lesson-id="${l.id}"]`);
-    if(el&&l.completed)el.classList.add('completed');
   });
+  renderLessons();
   updateQuizButton();
-  if(activeLessonId)openLesson(activeLessonId);
+  if(activeLessonId)doOpenLesson(activeLessonId);
   if(p.percentage===100)await checkCertificate();
   else await checkExistingCertificate();
 }
@@ -526,7 +541,7 @@ function renderLessons(){
         <h4>${escapeHTML(l.title)}</h4>
         <div class="lesson-meta"><span class="lesson-type ${l.lesson_type}">${l.lesson_type}</span><span>${l.duration_min} min</span></div>
       </div>
-      ${isLocked?'<span class="lesson-lock-icon">&#128274;</span>':''}
+      ${isLocked?'<span class="lesson-lock-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>':''}
     </div>`;
   }).join('');
   if(!lessons.length)list.innerHTML='<div style="text-align:center;padding:30px;color:var(--c-muted);font-size:13px;">No lessons yet</div>';
@@ -597,7 +612,7 @@ function doOpenLesson(lessonId){
         ${next?(()=>{
           const nextLocked=courseData.is_premium&&!isPremiumUser&&!next.is_free_preview;
           return nextLocked
-            ?`<button class="footer-btn outline" onclick="showPremiumWall()" title="Premium required">Next &#8594; &#128274;</button>`
+            ?`<button class="footer-btn outline" onclick="showPremiumWall()" title="Premium required">Next &#8594; <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></button>`
             :`<button class="footer-btn outline" onclick="openLesson('${next.id}')">Next &#8594;</button>`;
         })():''}
       </div>
@@ -659,9 +674,13 @@ function renderMarkdown(md){
 
 async function markLessonComplete(lessonId){
   if(!currentUser)return;
-  const res=await apiFetch(`/api/courses/progress/${lessonId}/complete`,{method:'POST'});
-  const json=await res.json();
-  if(json.success){await loadProgress();openLesson(lessonId);}
+  const btn=document.querySelector(`.footer-btn.primary[onclick*="markLessonComplete"]`);
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  try{
+    const res=await apiFetch(`/api/courses/progress/${lessonId}/complete`,{method:'POST'});
+    const json=await res.json();
+    if(json.success){await loadProgress();}else{Toast.error(json.error||'Failed to save');if(btn){btn.disabled=false;btn.textContent='Mark Complete';}}
+  }catch(e){Toast.error('Failed to save');if(btn){btn.disabled=false;btn.textContent='Mark Complete';}}
 }
 
 let currentQuizData=null;
@@ -976,10 +995,11 @@ async function loadLeaderboard(){
     const footer=document.getElementById('lb-footer');
     if(!json.leaderboard.length){list.innerHTML='<div style="padding:20px;text-align:center;color:var(--c-muted);font-size:12px;">No data yet</div>';return;}
     const rankClass=r=>r===1?'gold':r===2?'silver':r===3?'bronze':'';
-    const rankIcon=r=>r===1?'🥇':r===2?'🥈':r===3?'🥉':r;
+    const medalSvg=(c)=>`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15"/><path d="M11 12 5.12 2.2"/><path d="m13 12 5.88-9.8"/><path d="M8 7h8"/><circle cx="12" cy="17" r="5"/><path d="M12 18v-2h-.5"/></svg>`;
+    const rankIcon=r=>r===1?medalSvg('#f59e0b'):r===2?medalSvg('#9ca3af'):r===3?medalSvg('#b45309'):`<span style="font-size:11px;font-weight:800;color:var(--c-muted);">${r}</span>`;
     list.innerHTML=json.leaderboard.map(u=>{
       const initials=(u.name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-      const score=lbType==='coins'?`${u.coins} coins`:`🔥 ${u.streak} day streak`;
+      const score=lbType==='coins'?`${u.coins} coins`:`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> ${u.streak} day streak`;
       return`<div class="lb-item${u.isCurrentUser?' me':''}">
         <div class="lb-rank ${rankClass(u.rank)}">${rankIcon(u.rank)}</div>
         <div class="lb-avatar">${u.avatar?`<img src="${u.avatar}" alt="">`:`${initials}`}</div>
@@ -1002,6 +1022,28 @@ function switchLbTab(type,btn){
 init();
 loadLeaderboard();
 setInterval(loadLeaderboard, 60000); // refresh every minute
+
+// ── WebSocket real-time sync ───────────────────────
+let courseSocket=null;
+function connectCourseSocket(){
+  if(!currentUser||!supabaseClient||typeof io==='undefined')return;
+  supabaseClient.auth.getSession().then(({data:{session}})=>{
+    if(!session?.access_token)return;
+    courseSocket=io({auth:{token:session.access_token}});
+    courseSocket.on('connect',()=>console.log('[COURSE-WS] Connected'));
+    courseSocket.on('disconnect',()=>console.log('[COURSE-WS] Disconnected'));
+    courseSocket.on('lesson-completed',(data)=>{
+      console.log('[COURSE-WS] lesson-completed',data.lessonId);
+      // Re-fetch progress and re-render sidebar — no full-page flash
+      loadProgress();
+    });
+    courseSocket.on('connect_error',(err)=>{
+      console.warn('[COURSE-WS] Connection error:',err.message);
+      courseSocket=null;
+    });
+  });
+}
+connectCourseSocket();
 </script>
 </body>
 </html>

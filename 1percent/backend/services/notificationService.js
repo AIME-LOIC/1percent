@@ -121,7 +121,7 @@ class NotificationService {
    * @returns {Object} Created notification
    */
   async createNotification(notificationData) {
-    const { user_id, title, message, type = 'info' } = notificationData;
+    const { user_id, title, message, type = 'info', link = null } = notificationData;
 
     const { data, error } = await adminClient
       .from('notifications')
@@ -129,12 +129,25 @@ class NotificationService {
         user_id,
         title,
         message,
-        type
+        type,
+        link
       })
       .select()
       .single();
 
     if (error) throw error;
+
+    // Emit WebSocket event so the user's other tabs/devices get it instantly
+    try {
+      const { getIo } = require('../config/socket');
+      const io = getIo();
+      if (io) {
+        io.to(user_id).emit('notification', data);
+      }
+    } catch (e) {
+      // Socket not initialized (e.g. during tests) — ignore
+    }
+
     return data;
   }
 
@@ -145,13 +158,14 @@ class NotificationService {
    * @returns {Object} Created notifications count
    */
   async createBulkNotifications(userIds, notificationData) {
-    const { title, message, type = 'info' } = notificationData;
+    const { title, message, type = 'info', link = null } = notificationData;
 
     const notifications = userIds.map(user_id => ({
       user_id,
       title,
       message,
-      type
+      type,
+      link
     }));
 
     const { data, error } = await adminClient
@@ -160,6 +174,20 @@ class NotificationService {
       .select();
 
     if (error) throw error;
+
+    // Emit WebSocket events for each notification created
+    try {
+      const { getIo } = require('../config/socket');
+      const io = getIo();
+      if (io && data) {
+        for (const n of data) {
+          io.to(n.user_id).emit('notification', n);
+        }
+      }
+    } catch (e) {
+      // Socket not initialized — ignore
+    }
+
     return { success: true, count: data?.length || 0 };
   }
 

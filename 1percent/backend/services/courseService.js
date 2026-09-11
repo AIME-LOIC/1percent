@@ -145,6 +145,20 @@ class CourseService {
       console.warn('[COINS] Could not award coins:', e.message);
     }
 
+    // Emit WebSocket event so other tabs/devices update live
+    try {
+      const { getIo } = require('../config/socket');
+      const io = getIo();
+      if (io) {
+        io.to(userId).emit('lesson-completed', {
+          lessonId,
+          completed_at: data.completed_at
+        });
+      }
+    } catch (e) {
+      // Socket not initialized (e.g. during tests) — ignore
+    }
+
     return data;
   }
 
