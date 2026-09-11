@@ -202,6 +202,9 @@ const htmlRoutes = {
   '/admin/': 'admin.html',
   '/docs': 'docs.html',
   '/install': 'install.html',
+  '/settings': 'settings.html',
+  '/terms': 'terms.html',
+  '/privacy': 'privacy.html',
 };
 
 // Learn subdomain routes — same pages, no /learn prefix
@@ -219,6 +222,9 @@ const learnSubdomainRoutes = {
   '/course': 'course.html',
   '/install': 'install.html',
   '/parent-payment': 'parent-payment.html',
+  '/settings': 'settings.html',
+  '/terms': 'terms.html',
+  '/privacy': 'privacy.html',
 };
 
 app.get('*', (req, res) => {
@@ -249,6 +255,9 @@ app.get('*', (req, res) => {
     if (req.path === '/playground') return res.redirect(301, '/learn/playground');
     if (req.path === '/lab') return res.redirect(301, '/learn/lab');
     if (req.path.startsWith('/course/')) return res.redirect(301, '/learn' + req.path);
+    if (req.path === '/settings') return res.sendFile(path.join(frontendDir, 'settings.html'));
+    if (req.path === '/terms') return res.sendFile(path.join(frontendDir, 'terms.html'));
+    if (req.path === '/privacy') return res.sendFile(path.join(frontendDir, 'privacy.html'));
   }
 
   // 401 for unauthorized API attempts
