@@ -507,14 +507,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function onLoggedIn() {
     const loginBtn = document.getElementById('open-auth');
-    // Check role to set correct destination        let dashUrl = '/dashboard';
+    let dashUrl = '/dashboard';
     try {
       const { data: { session } } = await supabaseClient.auth.getSession();
-      const meRes = await fetch('/api/auth/me', {
-        headers: { 'Authorization': `Bearer ${session?.access_token}` }
-      });
-      const meJson = await meRes.json();
-      if (meJson.success && meJson.user?.role === 'admin') dashUrl = '/admin';
+      const user = session?.user;
+      // New users who haven't completed onboarding go there first
+      if (user && !user.user_metadata?.onboarding_completed) {
+        dashUrl = '/onboarding';
+      } else {
+        const meRes = await fetch('/api/auth/me', {
+          headers: { 'Authorization': `Bearer ${session?.access_token}` }
+        });
+        const meJson = await meRes.json();
+        if (meJson.success && meJson.user?.role === 'admin') dashUrl = '/admin';
+      }
     } catch {}
     loginBtn.textContent = 'Dashboard';
     loginBtn.href = dashUrl;

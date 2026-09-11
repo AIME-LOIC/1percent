@@ -261,7 +261,13 @@ const Auth = {
       setTimeout(() => {
         Modal.close('auth-modal');
         const _isLearn = location.hostname === 'learn.1percent.rw';
-        window.location.href = _isLearn ? '/dashboard' : '/learn/dashboard';
+        // Check if user needs onboarding
+        const user = this.currentUser;
+        if (user && !user.user_metadata?.onboarding_completed) {
+          window.location.href = _isLearn ? '/onboarding' : '/learn/onboarding';
+        } else {
+          window.location.href = _isLearn ? '/dashboard' : '/learn/dashboard';
+        }
       }, 1200);
     } catch (err) {
       status.className = 'form-status error';
