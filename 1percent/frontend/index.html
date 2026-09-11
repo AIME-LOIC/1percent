@@ -571,10 +571,14 @@ document.addEventListener('DOMContentLoaded', async () => {
           sessionStorage.setItem('sb-refresh-token', json.session.refresh_token);
         }
         // Detect role from login response (fast, no extra API call)
-        const _isLearn = location.hostname === 'learn.1percent.rw';
+        const _isLearn = location.hostname === 'learn.1percent.rw' || location.hostname === 'www.learn.1percent.rw';
+        const isAdmin = json.user?.role === 'admin';
+        const needsOnboarding = !isAdmin && !(json.user?.user_metadata && json.user.user_metadata.onboarding_completed === true);
         let redirectTo = _isLearn ? '/dashboard' : '/learn/dashboard';
-        if (json.user?.role === 'admin') {
+        if (isAdmin) {
           redirectTo = _isLearn ? '/admin' : '/learn/admin';
+        } else if (needsOnboarding) {
+          redirectTo = _isLearn ? '/onboarding' : '/learn/onboarding';
         }
         status.style.color = 'var(--success)';
         status.textContent = 'Login successful! Redirecting...';

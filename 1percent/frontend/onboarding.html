@@ -10,6 +10,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/main.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/js/auth-helpers.js"></script>
+<script src="/js/toast.js"></script>
 <style>
 .onboard-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 24px;background:linear-gradient(135deg,#f0fdf4 0%,#ecfdf5 50%,#f8f9fa 100%);}
 .onboard-card{width:100%;max-width:560px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:0 4px 24px rgba(0,0,0,.06);overflow:hidden;}
@@ -174,23 +177,63 @@
 let supabaseClient=null,currentUser=null,currentStep=0;
 
 async function initOnboard(){
+  if(AuthHelpers.redirectAuthHashIfNeeded())return;
   try{
     const res=await fetch('/api/config');const config=await res.json();
-    if(config.supabaseUrl&&config.supabaseAnonKey){
-      supabaseClient=supabase.createClient(config.supabaseUrl,config.supabaseAnonKey);
-      const{data:{session}}=await supabaseClient.auth.getSession();
-      if(!session?.user){window.location.href='/';return;}
-      currentUser=session.user;
-      // Check if already completed onboarding
-      if(currentUser.user_metadata?.onboarding_completed){
-        window.location.href='/dashboard';return;
-      }
-      document.getElementById('onboard-email').textContent=currentUser.email||'';
-      // Pre-fill name
-      const name=currentUser.user_metadata?.full_name||'';
-      document.getElementById('onboard-name').value=name;
+    if(!config.supabaseUrl||!config.supabaseAnonKey||typeof supabase==='undefined'){
+      console.error('[ONBOARD] Supabase not configured');
+      return;
     }
-  }catch(e){console.error('[ONBOARD] Init error:',e);window.location.href='/';}
+    supabaseClient=supabase.createClient(config.supabaseUrl,config.supabaseAnonKey);
+
+    let { data: { session } } = await supabaseClient.auth.getSession();
+
+    // Restore session from login redirect backup if localStorage is not ready yet
+    if(!session?.user){
+      const backupAccess=sessionStorage.getItem('sb-access-token') || localStorage.getItem('sb-access-token');
+      const backupRefresh=sessionStorage.getItem('sb-refresh-token') || localStorage.getItem('sb-refresh-token');
+      if(backupAccess && backupRefresh){
+        const { data, error } = await supabaseClient.auth.setSession({
+          access_token: backupAccess,
+          refresh_token: backupRefresh
+        });
+        if(!error) session=data.session;
+      }
+    }
+
+    if(!session?.user){
+      const redirectPath = AuthHelpers.isLearn() ? '/' : '/learn';
+      window.location.href = redirectPath;
+      return;
+    }
+
+    currentUser=session.user;
+
+    // Existing students with enrollments should not be sent through onboarding again
+    if(!currentUser.user_metadata?.onboarding_completed){
+      try{
+        const eRes=await fetch('/api/courses/enrollments',{
+          headers:{Authorization:`Bearer ${session.access_token}`}
+        });
+        const eJson=await eRes.json();
+        if(eJson.success&&Array.isArray(eJson.enrollments)&&eJson.enrollments.length>0){
+          await supabaseClient.auth.updateUser({data:{onboarding_completed:true}});
+          window.location.href=AuthHelpers.appPath('/dashboard');
+          return;
+        }
+      }catch(e){console.warn('[ONBOARD] Enrollment check failed:',e.message);}
+    }
+
+    if(currentUser.user_metadata?.onboarding_completed){
+      window.location.href=AuthHelpers.appPath('/dashboard');
+      return;
+    }
+
+    document.getElementById('onboard-email').textContent=currentUser.email||'';
+    document.getElementById('onboard-name').value=currentUser.user_metadata?.full_name||'';
+  }catch(e){
+    console.error('[ONBOARD] Init error:',e);
+  }
 }
 
 // Chip selection (single-select for level/goal, multi-select for interests)
