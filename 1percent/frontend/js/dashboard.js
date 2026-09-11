@@ -32,7 +32,10 @@ const Dashboard = {
       this.supabase = supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
       const { data: { session } } = await this.supabase.auth.getSession();
       if (!session?.user) { this._showGuest(); return; }
-      this._renderHeaderMenu(session.user);
+      // Use shared nav component
+      Nav.supabase = this.supabase;
+      Nav.user = session.user;
+      Nav.init();
       await this._renderDashboard(session.user);
       
       // Initialize notification popup system

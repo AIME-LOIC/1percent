@@ -15,6 +15,7 @@
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/icons.js"></script>
 <script src="/js/toast.js"></script>
+<script src="/js/nav.js" defer></script>
 <script src="/js/notification-popup.js" defer></script>
 <style>
 /* ── Settings Page ─────────────────────────────────── */
@@ -326,7 +327,7 @@ async function initSettings() {
       }
       currentUser = session.user;
       loadProfile();
-      renderUserMenu();
+      if(typeof Nav!=='undefined')Nav.init();
       // Init notifications
       if (typeof NotificationPopup !== 'undefined') {
         await NotificationPopup.init(supabaseClient);
@@ -350,42 +351,6 @@ async function apiFetch(url, opts = {}) {
   return fetch(url, { ...opts, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}`, ...opts.headers } });
 }
 
-function renderUserMenu() {
-  const nav = document.getElementById('main-nav');
-  if (!nav || !currentUser) return;
-  const name = currentUser.user_metadata?.full_name || currentUser.email || 'Student';
-  const initials = name.trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase();
-  const menu = document.createElement('div');
-  menu.id = 'user-menu';
-  menu.className = 'user-menu';
-  menu.innerHTML = `
-    <button class="user-menu-trigger" id="user-menu-trigger" aria-haspopup="true" aria-expanded="false">
-      <span class="user-avatar">${escapeHTML(initials)}</span>
-    </button>
-    <div class="user-menu-dropdown" id="user-menu-dropdown">
-      <div class="user-menu-info">
-        <b>${escapeHTML(name)}</b>
-        <span>${escapeHTML(currentUser.email || '')}</span>
-      </div>
-      <a href="/dashboard">Dashboard</a>
-      <a href="/settings">Settings</a>
-      <button type="button" id="user-menu-logout">Log Out</button>
-    </div>
-  `;
-  nav.appendChild(menu);
-  const trigger = menu.querySelector('#user-menu-trigger');
-  const dropdown = menu.querySelector('#user-menu-dropdown');
-  trigger.addEventListener('click', (e) => {
-    e.stopPropagation();
-    dropdown.classList.toggle('open');
-  });
-  document.addEventListener('click', () => dropdown.classList.remove('open'));
-  menu.querySelector('#user-menu-logout').addEventListener('click', async () => {
-    await supabaseClient.auth.signOut();
-    window.location.href = '/';
-  });
-}
-
 function escapeHTML(str) {
   if (str == null) return '';
   return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -402,7 +367,7 @@ document.getElementById('settings-save-profile')?.addEventListener('click', asyn
     currentUser.user_metadata.full_name = name;
     // Re-render menu with new name
     document.getElementById('user-menu')?.remove();
-    renderUserMenu();
+    if(typeof Nav!=='undefined'){Nav.user=currentUser;Nav.render();}
   } catch (e) {
     Toast.error('Failed to update profile: ' + e.message);
   }

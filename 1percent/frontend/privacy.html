@@ -9,6 +9,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/main.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+<script src="/js/icons.js" defer></script>
+<script src="/js/nav.js" defer></script>
 <style>
 .legal-page{max-width:720px;margin:0 auto;padding:100px 24px 80px;}
 .legal-page h1{font-size:28px;font-weight:800;margin:0 0 8px;letter-spacing:-.5px;}
@@ -24,15 +27,17 @@
 </head>
 <body>
 <header id="header" class="scrolled">
-  <div class="container">
+  <div class="container" style="display:flex;align-items:center;justify-content:space-between;">
     <a href="/" class="logo">
       <div class="logo-text">
         <span class="name">1% Expert Programme</span>
-        <span class="tagline">Legal</span>
+        <span class="tagline">Privacy Policy</span>
       </div>
     </a>
+    <nav id="main-nav" aria-label="Primary"></nav>
   </div>
 </header>
+<script>if(typeof Nav!=='undefined')Nav.init();</script>
 
 <main class="legal-page">
   <a href="/" class="legal-back">
