@@ -22,6 +22,12 @@
 .settings-page{max-width:960px;margin:0 auto;padding:100px 24px 80px;}
 .settings-grid{display:grid;grid-template-columns:260px 1fr;gap:32px;align-items:start;}
 
+/* ── Header / nav ───────────────────────────────────── */
+.header-shell{display:flex;align-items:center;justify-content:space-between;gap:16px;}
+.header-tools{display:flex;align-items:center;gap:12px;}
+.header-notify-btn{width:42px;height:42px;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,0.8);display:flex;align-items:center;justify-content:center;color:var(--text);cursor:pointer;transition:all .15s;}
+.header-notify-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--surface);}
+
 /* ── Sidebar ───────────────────────────────────────── */
 .settings-sidebar{position:sticky;top:80px;}
 .settings-profile-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;text-align:center;margin-bottom:16px;}
@@ -115,6 +121,38 @@
 .settings-danger-zone{border-color:#fecaca;}
 .settings-danger-zone .settings-section-header h2{color:#dc2626;}
 
+/* ── Mobile bottom nav ─────────────────────────────── */
+.mobile-bottom-nav{
+  display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;
+  background:#fff;border-top:1px solid var(--border);
+  padding:6px 16px;padding-bottom:max(6px,env(safe-area-inset-bottom));
+  justify-content:space-around;align-items:center;
+}
+.mobile-bottom-nav a,
+.mobile-bottom-nav button{
+  appearance:none;border:none;background:transparent;display:flex;flex-direction:column;align-items:center;gap:2px;
+  text-decoration:none;font-size:10px;font-weight:600;color:var(--text-muted);padding:4px 8px;border-radius:6px;transition:all .15s;cursor:pointer;
+}
+.mobile-bottom-nav a.active,
+.mobile-bottom-nav button:hover{color:var(--primary);}
+.mobile-bottom-nav svg{width:20px;height:20px;}
+.mobile-profile-nav{min-width:56px;}
+.mobile-profile-avatar{
+  width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--primary) 0%,#0a5c34 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;box-shadow:0 4px 10px rgba(13,110,63,.18);
+}
+
+/* ── Rating widget ─────────────────────────────────── */
+.settings-rating-widget{padding:18px 24px 20px;display:flex;flex-direction:column;gap:10px;}
+.rating-stars{display:flex;align-items:center;gap:8px;}
+.rating-star{font-size:28px;background:none;border:none;color:#d1d5db;cursor:pointer;line-height:1;padding:0;transition:all .12s;}
+.rating-star.active,.rating-star.hover{color:#f59e0b;}
+.rating-text{font-size:12px;font-weight:600;color:var(--text-muted);}
+.rating-feedback{width:100%;min-height:90px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--bg);font:inherit;resize:vertical;}
+.rating-feedback:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(13,110,63,.08);}
+.rating-submit{align-self:flex-start;}
+.rating-average{font-size:12px;color:var(--text-muted);margin-top:2px;}
+.avg-stars{color:#f59e0b;letter-spacing:2px;}
+
 /* ── Responsive ────────────────────────────────────── */
 @media(max-width:768px){
   .settings-grid{grid-template-columns:1fr;}
@@ -132,14 +170,19 @@
 <body>
 
 <header id="header" class="scrolled">
-  <div class="container" style="display:flex;align-items:center;justify-content:space-between;">
+  <div class="container header-shell">
     <a href="/" class="logo">
       <div class="logo-text">
         <span class="name">1% Expert Programme</span>
         <span class="tagline">Settings</span>
       </div>
     </a>
-    <nav id="main-nav" aria-label="Primary"></nav>
+    <div class="header-tools">
+      <button class="header-notify-btn" id="header-notify-btn" type="button" aria-label="Open notifications">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+      </button>
+      <nav id="main-nav" aria-label="Primary"></nav>
+    </div>
   </div>
 </header>
 
@@ -291,6 +334,26 @@
           </div>
         </div>
 
+        <div class="settings-section">
+          <div class="settings-section-header">
+            <h2>Feedback & Rating</h2>
+            <p>Tell us how your learning experience is going</p>
+          </div>
+          <div class="settings-rating-widget">
+            <div class="rating-stars" id="settings-rating-stars">
+              <button class="rating-star" data-value="1" type="button">★</button>
+              <button class="rating-star" data-value="2" type="button">★</button>
+              <button class="rating-star" data-value="3" type="button">★</button>
+              <button class="rating-star" data-value="4" type="button">★</button>
+              <button class="rating-star" data-value="5" type="button">★</button>
+            </div>
+            <div class="rating-text" id="settings-rating-text">Select a rating</div>
+            <textarea class="rating-feedback" id="settings-rating-feedback" placeholder="Share your feedback (optional)"></textarea>
+            <button class="settings-btn primary rating-submit" id="settings-rating-submit" type="button">Submit Rating</button>
+            <div class="rating-average" id="settings-rating-average"></div>
+          </div>
+        </div>
+
         <div class="settings-section settings-danger-zone">
           <div class="settings-section-header">
             <h2>Danger Zone</h2>
@@ -408,8 +471,148 @@
   </div>
 </main>
 
+<nav class="mobile-bottom-nav" id="mobile-bottom-nav" style="display:none;">
+  <a href="/dashboard" class="active">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Dashboard
+  </a>
+  <a href="/dashboard#leaderboard" id="mobile-leaderboard-link">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+    Leaderboard
+  </a>
+  <a href="/lab">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
+    Lab
+  </a>
+  <a href="/playground">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+    Challenges
+  </a>
+  <a href="/settings" id="mobile-profile-tab" class="mobile-profile-nav" aria-label="Open settings">
+    <span class="mobile-profile-avatar" id="mobile-profile-avatar">U</span>
+    <span>Profile</span>
+  </a>
+</nav>
+
 <script>
 let supabaseClient = null, currentUser = null;
+let selectedRating = 0;
+
+function setRatingDisplay(value) {
+  selectedRating = value;
+  document.querySelectorAll('.rating-star').forEach((star, idx) => {
+    star.classList.toggle('active', idx < value);
+    star.style.color = idx < value ? '#f59e0b' : '#d1d5db';
+  });
+  const labels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
+  const text = document.getElementById('settings-rating-text');
+  if (text) text.textContent = value ? labels[value] : 'Select a rating';
+}
+
+async function loadRatingWidget() {
+  try {
+    const token = (await supabaseClient.auth.getSession()).data.session?.access_token;
+    if (!token) return;
+    const res = await fetch('/api/ratings/mine/general', { headers: { Authorization: `Bearer ${token}` } });
+    const json = await res.json();
+    if (json.success && json.rating) {
+      setRatingDisplay(json.rating.rating);
+      const feedback = document.getElementById('settings-rating-feedback');
+      if (feedback && json.rating.feedback) feedback.value = json.rating.feedback;
+    }
+
+    const statsRes = await fetch('/api/ratings/stats?category=general');
+    const statsJson = await statsRes.json();
+    const avgEl = document.getElementById('settings-rating-average');
+    if (avgEl && statsJson.success && statsJson.stats) {
+      const { average, count } = statsJson.stats;
+      if (count > 0) {
+        avgEl.innerHTML = `<span class="avg-stars">${'★'.repeat(Math.round(average))}${'☆'.repeat(5 - Math.round(average))}</span> <span>${average}/5 (${count} rating${count !== 1 ? 's' : ''})</span>`;
+      }
+    }
+  } catch (err) {
+    console.error('[SETTINGS] Failed to load rating widget:', err);
+  }
+}
+
+// ── Rating interactions ───────────────────────────────
+const ratingStars = document.querySelectorAll('.rating-star');
+ratingStars.forEach(star => {
+  star.addEventListener('click', () => setRatingDisplay(Number(star.dataset.value)));
+  star.addEventListener('mouseover', () => {
+    const value = Number(star.dataset.value);
+    ratingStars.forEach((s, idx) => {
+      s.classList.toggle('hover', idx < value);
+      s.style.color = idx < value ? '#f59e0b' : '#d1d5db';
+    });
+  });
+  star.addEventListener('mouseout', () => {
+    ratingStars.forEach((s, idx) => {
+      s.classList.remove('hover');
+      s.style.color = idx < selectedRating ? '#f59e0b' : '#d1d5db';
+    });
+  });
+});
+
+document.getElementById('settings-rating-submit')?.addEventListener('click', async () => {
+  if (!selectedRating) {
+    Toast.error('Please select a rating first.');
+    return;
+  }
+  try {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const token = session?.access_token;
+    if (!token) return;
+    const feedback = document.getElementById('settings-rating-feedback')?.value || '';
+    const res = await fetch('/api/ratings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ rating: selectedRating, feedback, category: 'general' })
+    });
+    const json = await res.json();
+    if (json.success) {
+      Toast.success('Thanks for your feedback!');
+      await loadRatingWidget();
+    } else {
+      Toast.error(json.error || 'Failed to submit rating.');
+    }
+  } catch (err) { Toast.error('Failed to submit rating. Please try again.'); }
+});
+
+const navEl = document.getElementById('mobile-bottom-nav');
+function checkMobileNav(){
+  if (window.innerWidth <= 900) navEl.style.display = 'flex';
+  else navEl.style.display = 'none';
+}
+window.addEventListener('resize', checkMobileNav);
+checkMobileNav();
+
+const mobileProfile = document.getElementById('mobile-profile-tab');
+if (mobileProfile) {
+  mobileProfile.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.location.href = '/settings';
+  });
+}
+
+const avatarEl = document.getElementById('mobile-profile-avatar');
+if (avatarEl) {
+  const name = currentUser?.user_metadata?.full_name || currentUser?.email || 'Student';
+  const initials = name.trim().split(/\s+/).map(part => part[0]).slice(0, 2).join('').toUpperCase() || 'U';
+  avatarEl.textContent = initials;
+}
+
+const headerBell = document.getElementById('header-notify-btn');
+headerBell?.addEventListener('click', async () => {
+  if (typeof NotificationPopup !== 'undefined') {
+    await NotificationPopup.checkNow();
+    if (NotificationPopup._pendingNotifications?.length) {
+      NotificationPopup._showNext();
+    } else {
+      NotificationPopup.showPopup('Notifications', 'You are all caught up.', 'info');
+    }
+  }
+});
 
 // ── Tab switching ────────────────────────────────────
 document.querySelectorAll('.settings-nav-item').forEach(item => {
@@ -454,6 +657,12 @@ function loadProfile() {
   document.getElementById('settings-avatar-text').textContent = initials;
   document.getElementById('settings-display-name').textContent = name || 'Student';
   document.getElementById('settings-display-email').textContent = email;
+
+  const mobileAvatar = document.getElementById('mobile-profile-avatar');
+  if (mobileAvatar) {
+    const mobileInitials = (name || email || 'Student').trim().split(/\s+/).map(part => part[0]).slice(0, 2).join('').toUpperCase() || 'U';
+    mobileAvatar.textContent = mobileInitials;
+  }
 }
 
 function escapeHTML(str) {

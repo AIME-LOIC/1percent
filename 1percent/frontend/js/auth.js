@@ -86,8 +86,14 @@ const Auth = {
         access_token: json.session.access_token,
         refresh_token: json.session.refresh_token
       });
-      sessionStorage.setItem('sb-access-token', json.session.access_token);
-      sessionStorage.setItem('sb-refresh-token', json.session.refresh_token);
+      const persist = (tokenKey, tokenValue) => {
+        if (tokenValue) {
+          sessionStorage.setItem(tokenKey, tokenValue);
+          localStorage.setItem(tokenKey, tokenValue);
+        }
+      };
+      persist('sb-access-token', json.session.access_token);
+      persist('sb-refresh-token', json.session.refresh_token);
     }
     this.currentUser = json.user || null;
     return { user: json.user, session: json.session };
@@ -124,8 +130,10 @@ const Auth = {
   async logout() {
     if (!this.supabase) return;
     await this.supabase.auth.signOut();
-    sessionStorage.removeItem('sb-access-token');
-    sessionStorage.removeItem('sb-refresh-token');
+    ['sb-access-token', 'sb-refresh-token'].forEach(key => {
+      sessionStorage.removeItem(key);
+      localStorage.removeItem(key);
+    });
     this.currentUser = null;
     const _isLearn = location.hostname === 'learn.1percent.rw' || location.hostname === 'www.learn.1percent.rw';
     window.location.href = _isLearn ? '/' : '/learn';
@@ -234,7 +242,11 @@ const Auth = {
       status.textContent = 'Password reset link sent — check your email.';
     } catch (err) {
       status.className = 'form-status error';
-      status.textContent = 'Could not send reset link. Please try again.';
+      const msg = err.message || 'Could not send reset link. Please try again.';
+      status.textContent = msg.includes('No account found') ? 'No account found for that email.' : msg;
+      if (typeof Toast !== 'undefined') {
+        Toast.error(msg.includes('No account found') ? 'No account found for that email.' : msg);
+      }
     }
   },
 

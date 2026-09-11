@@ -486,34 +486,48 @@ const Dashboard = {
 
   _initLeaderboard() {
     const list = document.getElementById('dash-lb-list');
+    const mobileList = document.getElementById('mobile-leaderboard-list');
     const footer = document.getElementById('dash-lb-footer');
     const tabs = document.querySelectorAll('.dash-lb-tab');
-    if (!list) return;
+    if (!list && !mobileList) return;
     let lbType = 'coins';
+
+    const renderList = (target, leaderboard, currentUserRank) => {
+      if (!target) return;
+      if (!leaderboard || !leaderboard.length) {
+        target.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px;">No data yet</div>';
+        return;
+      }
+      const rankClass = r => r === 1 ? 'gold' : r === 2 ? 'silver' : r === 3 ? 'bronze' : '';
+      const medalSvg = (color) => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15"/><path d="M11 12 5.12 2.2"/><path d="m13 12 5.88-9.8"/><path d="M8 7h8"/><circle cx="12" cy="17" r="5"/><path d="M12 18v-2h-.5"/></svg>`;
+      const rankIcon = r => r === 1 ? medalSvg('#f59e0b') : r === 2 ? medalSvg('#9ca3af') : r === 3 ? medalSvg('#b45309') : `<span style="font-size:11px;font-weight:800;color:var(--text-muted);">${r}</span>`;
+      target.innerHTML = leaderboard.map(u => {
+        const initials = (u.name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+        const score = lbType === 'coins' ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><circle cx="12" cy="12" r="8"/><path d="M12 8v8"/><path d="M9.5 10.5c0-1 1-1.5 2.5-1.5s2.5.5 2.5 1.5-1 1.5-2.5 1.5-2.5.5-2.5 1.5 1 1.5 2.5 1.5 2.5-.5 2.5-1.5"/></svg> ${u.coins} coins` : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> ${u.streak}d`;
+        return `<div class="dash-lb-item${u.isCurrentUser ? ' me' : ''}">
+          <div class="dash-lb-rank ${rankClass(u.rank)}">${rankIcon(u.rank)}</div>
+          <div class="dash-lb-avatar">${u.avatar ? `<img src="${u.avatar}" alt="">` : initials}</div>
+          <div class="dash-lb-info"><div class="dash-lb-name">${escapeHTML(u.name)}</div><div class="dash-lb-score">${score}</div></div>
+          ${u.isCurrentUser ? '<span class="dash-lb-you">YOU</span>' : ''}
+        </div>`;
+      }).join('');
+      if (target === list && footer) footer.textContent = currentUserRank ? `Your rank: #${currentUserRank}` : '';
+    };
 
     const load = async () => {
       try {
         const res = await fetch(`/api/streak/leaderboard?type=${lbType}&limit=15`);
         const json = await res.json();
         if (!json.success || !json.leaderboard.length) {
-          list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px;">No data yet</div>';
+          [list, mobileList].forEach(target => renderList(target, [], ''));
           return;
         }
-        const rankClass = r => r === 1 ? 'gold' : r === 2 ? 'silver' : r === 3 ? 'bronze' : '';
-        const medalSvg = (color) => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15"/><path d="M11 12 5.12 2.2"/><path d="m13 12 5.88-9.8"/><path d="M8 7h8"/><circle cx="12" cy="17" r="5"/><path d="M12 18v-2h-.5"/></svg>`;
-        const rankIcon = r => r === 1 ? medalSvg('#f59e0b') : r === 2 ? medalSvg('#9ca3af') : r === 3 ? medalSvg('#b45309') : `<span style="font-size:11px;font-weight:800;color:var(--text-muted);">${r}</span>`;
-        list.innerHTML = json.leaderboard.map(u => {
-          const initials = (u.name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-          const score = lbType === 'coins' ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><circle cx="12" cy="12" r="8"/><path d="M12 8v8"/><path d="M9.5 10.5c0-1 1-1.5 2.5-1.5s2.5.5 2.5 1.5-1 1.5-2.5 1.5-2.5.5-2.5 1.5 1 1.5 2.5 1.5 2.5-.5 2.5-1.5"/></svg> ${u.coins} coins` : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> ${u.streak}d`;
-          return `<div class="dash-lb-item${u.isCurrentUser ? ' me' : ''}">
-            <div class="dash-lb-rank ${rankClass(u.rank)}">${rankIcon(u.rank)}</div>
-            <div class="dash-lb-avatar">${u.avatar ? `<img src="${u.avatar}" alt="">` : initials}</div>
-            <div class="dash-lb-info"><div class="dash-lb-name">${escapeHTML(u.name)}</div><div class="dash-lb-score">${score}</div></div>
-            ${u.isCurrentUser ? '<span class="dash-lb-you">YOU</span>' : ''}
-          </div>`;
-        }).join('');
-        if (footer) footer.textContent = json.currentUserRank ? `Your rank: #${json.currentUserRank}` : '';
-      } catch { list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px;">Could not load</div>'; }
+        [list, mobileList].forEach(target => renderList(target, json.leaderboard, json.currentUserRank));
+      } catch {
+        [list, mobileList].forEach(target => {
+          if (target) target.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px;">Could not load</div>';
+        });
+      }
     };
 
     tabs.forEach(tab => tab.addEventListener('click', () => {

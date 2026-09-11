@@ -364,10 +364,10 @@ let supabaseClient=null, token='', allCourses=[], allChallenges=[];
 async function init(){
   try{
     // 1. Get token from sessionStorage (most reliable cross-page)
-    const backupToken=sessionStorage.getItem('sb-access-token');
+    const backupToken=sessionStorage.getItem('sb-access-token') || localStorage.getItem('sb-access-token');
     if(backupToken){
       token=backupToken;
-      console.log('[ADMIN] Token found from sessionStorage');
+      console.log('[ADMIN] Token found from persisted storage');
     }
 
     // 2. Also try Supabase client session
@@ -380,7 +380,9 @@ async function init(){
           if(session?.access_token){
             token=session.access_token;
             sessionStorage.setItem('sb-access-token',token);
+            localStorage.setItem('sb-access-token',token);
             sessionStorage.setItem('sb-refresh-token',session.refresh_token||'');
+            localStorage.setItem('sb-refresh-token',session.refresh_token||'');
             console.log('[ADMIN] Token found from Supabase client');
           }
         }
@@ -416,6 +418,7 @@ async function init(){
         if(refreshed?.access_token&&refreshed.access_token!==token){
           token=refreshed.access_token;
           sessionStorage.setItem('sb-access-token',token);
+          localStorage.setItem('sb-access-token',token);
           meRes=await apiFetch('/api/auth/me');
           console.log('[ADMIN] After refresh, status:',meRes.status);
         }
@@ -441,8 +444,11 @@ async function init(){
 }
 
 function showUnauthorized(msg){
-  document.getElementById('auth-loading').classList.add('hidden');
-  document.querySelector('.admin').innerHTML=`
+  const adminRoot=document.querySelector('.admin');
+  if(adminRoot){ adminRoot.style.display='block'; }
+  const loading=document.getElementById('auth-loading');
+  if(loading){ loading.classList.add('hidden'); }
+  if(adminRoot){ adminRoot.innerHTML=`
     <div style="grid-column:1/-1;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f8f9fa;">
       <div style="text-align:center;max-width:480px;padding:24px;">
         <div style="font-size:80px;font-weight:900;color:#e5e7eb;letter-spacing:-4px;margin-bottom:8px;">4<span style="color:#dc2626;">0</span>1</div>
@@ -457,6 +463,7 @@ function showUnauthorized(msg){
         </div>
       </div>
     </div>`;
+  }
 }
 
 async function apiFetch(url,opts={}){
@@ -468,6 +475,7 @@ async function apiFetch(url,opts={}){
       if(refreshed?.access_token&&refreshed.access_token!==token){
         token=refreshed.access_token;
         sessionStorage.setItem('sb-access-token',token);
+        localStorage.setItem('sb-access-token',token);
         return fetch(url,{...opts,headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`,...opts.headers}});
       }
     }catch{}
