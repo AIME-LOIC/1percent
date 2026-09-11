@@ -325,7 +325,11 @@
 .dash-rating-avg .avg-text{margin-left:4px;}
 
 /* ── Responsive ──────────────────────────────────────── */
-@media(max-width:1100px){.dash-layout{grid-template-columns:1fr;}.dash-lb{display:none;}}
+@media(max-width:1100px){
+  .dash-layout{grid-template-columns:1fr;}
+  .dash-lb{display:block;position:static;max-width:none;margin-top:16px;}
+  .dash-lb-list{max-height:300px;}
+}
 @media(max-width:900px){
   .dash-stats{grid-template-columns:repeat(2,1fr);}
   .dashboard-shell{padding-bottom:80px;}

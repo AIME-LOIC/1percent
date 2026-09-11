@@ -492,7 +492,15 @@ document.getElementById('settings-change-pw')?.addEventListener('click', async (
 
 // ── Delete account ───────────────────────────────────
 document.getElementById('settings-delete-account')?.addEventListener('click', async () => {
-  if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) return;
+  const confirmed = await Toast.confirm({
+    title: 'Delete account',
+    message: 'Are you sure you want to delete your account? This action cannot be undone.',
+    confirmText: 'Delete account',
+    confirmClass: 'danger'
+  });
+
+  if (!confirmed) return;
+
   try {
     const res = await apiFetch('/api/auth/delete-account', { method: 'DELETE' });
     const json = await res.json();
@@ -601,7 +609,15 @@ document.getElementById('mfa-cancel-btn')?.addEventListener('click', () => {
 
 document.getElementById('mfa-disable-btn')?.addEventListener('click', async () => {
   if (!mfaFactorId) return;
-  if (!confirm('Disable two-factor authentication?')) return;
+  const confirmed = await Toast.confirm({
+    title: 'Disable 2FA',
+    message: 'Disable two-factor authentication?',
+    confirmText: 'Disable',
+    confirmClass: 'danger'
+  });
+
+  if (!confirmed) return;
+
   try {
     const { error } = await supabaseClient.auth.mfa.unenroll({ factorId: mfaFactorId });
     if (error) throw error;

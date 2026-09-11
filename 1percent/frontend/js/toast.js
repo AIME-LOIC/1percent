@@ -19,6 +19,54 @@ const Toast = {
     document.body.appendChild(this.container);
   },
 
+  confirm({ title = 'Confirm', message = 'Are you sure?', confirmText = 'Confirm', cancelText = 'Cancel', onConfirm, onCancel, confirmClass = 'primary' } = {}) {
+    return new Promise((resolve) => {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.52);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:20000;';
+      overlay.innerHTML = `
+        <div style="width:min(92vw,420px);background:#fff;border:1px solid #e5e7eb;border-radius:16px;box-shadow:0 30px 70px rgba(15,23,42,.18);overflow:hidden;">
+          <div style="padding:20px 20px 8px;">
+            <div style="font-size:20px;font-weight:800;color:#111827;margin-bottom:8px;">${title}</div>
+            <div style="font-size:14px;line-height:1.6;color:#4b5563;white-space:pre-line;">${message}</div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:8px;padding:16px 20px 20px;">
+            <button type="button" class="toast-confirm-cancel" style="padding:10px 16px;border-radius:8px;border:1px solid #d1d5db;background:#fff;color:#374151;font-size:13px;font-weight:600;cursor:pointer;">${cancelText}</button>
+            <button type="button" class="toast-confirm-confirm" style="padding:10px 16px;border-radius:8px;border:none;background:${confirmClass === 'danger' ? '#dc2626' : '#0d6e3f'};color:#fff;font-size:13px;font-weight:700;cursor:pointer;">${confirmText}</button>
+          </div>
+        </div>
+      `;
+
+      const cancel = overlay.querySelector('.toast-confirm-cancel');
+      const ok = overlay.querySelector('.toast-confirm-confirm');
+
+      const close = (result) => {
+        document.body.style.overflow = '';
+        overlay.remove();
+        resolve(result);
+      };
+
+      cancel.addEventListener('click', () => {
+        onCancel?.();
+        close(false);
+      });
+
+      ok.addEventListener('click', () => {
+        onConfirm?.();
+        close(true);
+      });
+
+      overlay.addEventListener('click', (event) => {
+        if (event.target === overlay) {
+          onCancel?.();
+          close(false);
+        }
+      });
+
+      document.body.style.overflow = 'hidden';
+      document.body.appendChild(overlay);
+    });
+  },
+
   _show(message, type = 'info', duration = 3000) {
     this._init();
 

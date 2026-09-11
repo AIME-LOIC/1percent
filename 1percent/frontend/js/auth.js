@@ -135,11 +135,28 @@ const Auth = {
    * Send a password reset email
    */
   async resetPassword(email) {
-    if (!this.supabase) throw new Error('Auth not configured');
-    const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password.html`
-    });
-    if (error) throw error;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    let res;
+    try {
+      res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+        signal: controller.signal
+      });
+    } catch (err) {
+      if (err.name === 'AbortError') throw new Error('Connection timed out. Please check your internet connection and try again.');
+      throw new Error('Network error. Please check your connection and try again.');
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || !json.success) {
+      throw new Error(json.error || 'Could not send reset link. Please try again.');
+    }
+    return json;
   },
 
   /**

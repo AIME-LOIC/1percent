@@ -37,6 +37,14 @@ router.post('/logout', authenticate, (req, res, next) => authController.logout(r
 
 router.post('/refresh', (req, res, next) => authController.refresh(req, res, next));
 
+router.post('/reset-password',
+  authRateLimit,
+  sanitizeStrings(200),
+  requireFields('email'),
+  validateEmail,
+  (req, res, next) => authController.resetPassword(req, res, next)
+);
+
 // Protected routes
 router.get('/me', authenticate, (req, res, next) => authController.getMe(req, res, next));
 
