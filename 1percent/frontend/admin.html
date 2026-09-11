@@ -596,7 +596,11 @@ async function saveCourse(id){
 }
 
 function editCourse(id){const c=allCourses.find(x=>x.id===id);if(c)showCourseForm(c);}
-async function deleteCourse(id){if(!confirm('Delete this course?'))return;await apiFetch(`/api/admin/courses/${id}`,{method:'DELETE'});toast('Course deleted');await loadAll();}
+async function deleteCourse(id){
+  const confirmed = await Toast.confirm({ title: 'Delete course', message: 'Delete this course?', confirmText: 'Delete', confirmClass: 'danger' });
+  if(!confirmed)return;
+  await apiFetch(`/api/admin/courses/${id}`,{method:'DELETE'});toast('Course deleted');await loadAll();
+}
 
 // ── Lessons ────────────────────────────────────────
 const LESSON_ICONS={video:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>',lab:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16.5h10"/></svg>',project:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',reading:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',quiz:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>'};
@@ -744,7 +748,11 @@ async function saveLesson(id){
 }
 
 function editLesson(idx){const lesson=allLessons[idx];if(lesson)showLessonForm(lesson);}
-async function deleteLesson(id){if(!confirm('Delete this lesson?'))return;await apiFetch(`/api/admin/lessons/${id}`,{method:'DELETE'});toast('Lesson deleted');await loadLessons();}
+async function deleteLesson(id){
+  const confirmed = await Toast.confirm({ title: 'Delete lesson', message: 'Delete this lesson?', confirmText: 'Delete', confirmClass: 'danger' });
+  if(!confirmed)return;
+  await apiFetch(`/api/admin/lessons/${id}`,{method:'DELETE'});toast('Lesson deleted');await loadLessons();
+}
 
 // ── Quizzes ────────────────────────────────────────
 async function loadQuizzes(){
@@ -772,7 +780,11 @@ async function saveQuiz(){
   const res=await apiFetch('/api/admin/quizzes',{method:'POST',body:JSON.stringify({course_id:document.getElementById('qf-course').value,title:document.getElementById('qf-title').value,passing_score:parseInt(document.getElementById('qf-pass').value)})});
   document.getElementById('quiz-form-wrap').innerHTML='';toast('Quiz created!');await loadQuizzes();
 }
-async function deleteQuiz(id){if(!confirm('Delete this quiz?'))return;await apiFetch(`/api/admin/quizzes/${id}`,{method:'DELETE'});toast('Quiz deleted');await loadQuizzes();}
+async function deleteQuiz(id){
+  const confirmed = await Toast.confirm({ title: 'Delete quiz', message: 'Delete this quiz?', confirmText: 'Delete', confirmClass: 'danger' });
+  if(!confirmed)return;
+  await apiFetch(`/api/admin/quizzes/${id}`,{method:'DELETE'});toast('Quiz deleted');await loadQuizzes();
+}
 
 // ── Challenges ─────────────────────────────────────
 function renderChallengesTable(){
@@ -810,7 +822,11 @@ async function saveChallenge(){
   toast('Challenge creation requires admin API endpoint. Use Supabase dashboard for now.','error');
   document.getElementById('challenge-form-wrap').innerHTML='';
 }
-async function deleteChallenge(id){if(!confirm('Delete this challenge?'))return;toast('Delete requires admin API endpoint.','error');}
+async function deleteChallenge(id){
+  const confirmed = await Toast.confirm({ title: 'Delete challenge', message: 'Delete this challenge?', confirmText: 'Delete', confirmClass: 'danger' });
+  if(!confirmed)return;
+  toast('Delete requires admin API endpoint.','error');
+}
 
 // ── Enrollments ────────────────────────────────────
 function renderEnrollments(enrollments){

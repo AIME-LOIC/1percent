@@ -642,12 +642,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Forgot password
   document.getElementById('forgot-password-link')?.addEventListener('click', async (e) => {
     e.preventDefault();
-    const email = document.getElementById('login-email').value;
-    if (!email) { alert('Enter your email first, then click forgot password.'); return; }
+    const email = document.getElementById('login-email').value.trim();
+    if (!email) {
+      Toast.warning('Enter your email first, then click forgot password.');
+      return;
+    }
+
     try {
-      await fetch('/api/auth/reset-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
-      alert('Password reset email sent. Check your inbox.');
-    } catch { alert('Could not send reset email.'); }
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || 'Could not send reset email.');
+      Toast.success('Password reset email sent. Check your inbox.');
+    } catch (err) {
+      Toast.error(err.message || 'Could not send reset email.');
+    }
   });
 });
 </script>

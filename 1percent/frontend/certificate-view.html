@@ -414,7 +414,7 @@ async function downloadPdf() {
     a.click();
     URL.revokeObjectURL(url);
   } catch (e) {
-    alert('Download failed: ' + e.message);
+    Toast.error('Download failed: ' + e.message);
   }
 
   btn.disabled = false;

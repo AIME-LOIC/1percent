@@ -948,9 +948,10 @@ if(typeof Nav!=='undefined')Nav.init();
 function showMobileSidebar(){
   const sidebar=document.querySelector('.sidebar');
   const main=document.querySelector('.main');
-  if(sidebar)sidebar.classList.remove('hidden-mobile');
-  if(main)main.style.display='none';
-  // Update bottom nav active state
+  if(window.innerWidth <= 900){
+    if(sidebar)sidebar.classList.remove('hidden-mobile');
+    if(main)main.style.display='none';
+  }
   document.querySelectorAll('.mobile-bottom-nav a').forEach(a=>a.classList.remove('active'));
   const lessonsTab=document.getElementById('mobile-lessons-tab');
   if(lessonsTab)lessonsTab.classList.add('active');
@@ -961,7 +962,6 @@ function showMobileContent(){
   const main=document.querySelector('.main');
   if(sidebar)sidebar.classList.add('hidden-mobile');
   if(main)main.style.display='';
-  // Update bottom nav active state
   document.querySelectorAll('.mobile-bottom-nav a').forEach(a=>a.classList.remove('active'));
 }
 

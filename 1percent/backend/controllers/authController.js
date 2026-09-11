@@ -99,6 +99,26 @@ class AuthController {
   }
 
   /**
+   * POST /api/auth/reset-password
+   */
+  async resetPassword(req, res) {
+    try {
+      const email = String(req.body.email || '').trim().toLowerCase();
+      const exists = await authService.userExistsByEmail(email);
+
+      if (!exists) {
+        return res.status(404).json({ success: false, error: 'No account found for that email.' });
+      }
+
+      await authService.requestPasswordReset(email);
+      res.json({ success: true, message: 'Password reset email sent.' });
+    } catch (err) {
+      console.error('[AUTH] Reset password error:', err.message);
+      res.status(500).json({ success: false, error: 'Could not send reset email. Please try again.' });
+    }
+  }
+
+  /**
    * GET /api/auth/me
    */
   async getMe(req, res) {

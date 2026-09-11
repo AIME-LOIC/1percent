@@ -86,6 +86,32 @@ class AuthService {
   }
 
   /**
+   * Check whether a user exists for the supplied email.
+   */
+  async userExistsByEmail(email) {
+    if (!email) return false;
+    try {
+      const { data, error } = await adminClient.auth.admin.getUserByEmail(email);
+      if (error) return false;
+      return !!data?.user;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Send a password reset link only for existing accounts.
+   */
+  async requestPasswordReset(email) {
+    const { error } = await adminClient.auth.admin.generateLink({
+      type: 'recovery',
+      email
+    });
+    if (error) throw error;
+    return true;
+  }
+
+  /**
    * Get user from token
    */
   async getUser(token) {
