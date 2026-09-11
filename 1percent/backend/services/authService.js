@@ -41,7 +41,8 @@ class AuthService {
       user: {
         id: data.user.id,
         email: data.user.email,
-        full_name: data.user.user_metadata?.full_name || ''
+        full_name: data.user.user_metadata?.full_name || '',
+        user_metadata: data.user.user_metadata || {}
       }
     };
   }
@@ -73,7 +74,8 @@ class AuthService {
         id: data.user.id,
         email: data.user.email,
         full_name: data.user.user_metadata?.full_name || '',
-        role
+        role,
+        user_metadata: data.user.user_metadata || {}
       },
       session: {
         access_token: data.session.access_token,

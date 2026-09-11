@@ -86,7 +86,10 @@ const Auth = {
         access_token: json.session.access_token,
         refresh_token: json.session.refresh_token
       });
+      sessionStorage.setItem('sb-access-token', json.session.access_token);
+      sessionStorage.setItem('sb-refresh-token', json.session.refresh_token);
     }
+    this.currentUser = json.user || null;
     return { user: json.user, session: json.session };
   },
 
@@ -121,8 +124,10 @@ const Auth = {
   async logout() {
     if (!this.supabase) return;
     await this.supabase.auth.signOut();
+    sessionStorage.removeItem('sb-access-token');
+    sessionStorage.removeItem('sb-refresh-token');
     this.currentUser = null;
-    const _isLearn = location.hostname === 'learn.1percent.rw';
+    const _isLearn = location.hostname === 'learn.1percent.rw' || location.hostname === 'www.learn.1percent.rw';
     window.location.href = _isLearn ? '/' : '/learn';
   },
 
@@ -260,13 +265,14 @@ const Auth = {
       status.textContent = 'Welcome back! Redirecting...';
       setTimeout(() => {
         Modal.close('auth-modal');
-        const _isLearn = location.hostname === 'learn.1percent.rw';
-        // Check if user needs onboarding
-        const user = this.currentUser;
-        if (user && !user.user_metadata?.onboarding_completed) {
+        const _isLearn = location.hostname === 'learn.1percent.rw' || location.hostname === 'www.learn.1percent.rw';
+        const user = this.currentUser || {};
+        const isAdmin = user.role === 'admin';
+        const needsOnboarding = !isAdmin && !(user.user_metadata && user.user_metadata.onboarding_completed === true);
+        if (needsOnboarding) {
           window.location.href = _isLearn ? '/onboarding' : '/learn/onboarding';
         } else {
-          window.location.href = _isLearn ? '/dashboard' : '/learn/dashboard';
+          window.location.href = _isLearn ? (isAdmin ? '/admin' : '/dashboard') : (isAdmin ? '/learn/admin' : '/learn/dashboard');
         }
       }, 1200);
     } catch (err) {
