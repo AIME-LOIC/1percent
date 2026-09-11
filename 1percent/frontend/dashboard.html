@@ -226,6 +226,10 @@
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
     Lab
   </a>
+  <a href="/settings" id="mobile-profile-tab" class="mobile-profile-nav" aria-label="Open settings">
+    <span class="mobile-profile-avatar" id="mobile-profile-avatar">U</span>
+    <span>Profile</span>
+  </a>
 </nav>
 
 <script>
@@ -239,6 +243,22 @@
   }
   check();
   window.addEventListener('resize',check);
+
+  const profileLink=document.getElementById('mobile-profile-tab');
+  if(profileLink){
+    profileLink.addEventListener('click', (e)=>{
+      e.preventDefault();
+      window.location.href='/settings';
+    });
+  }
+
+  const avatarEl=document.getElementById('mobile-profile-avatar');
+  const user = (window.Nav && window.Nav.user) || null;
+  if (avatarEl) {
+    const name = user?.user_metadata?.full_name || user?.email || 'Student';
+    const initials = name.trim().split(/\s+/).map(part => part[0]).slice(0,2).join('').toUpperCase() || 'U';
+    avatarEl.textContent = initials;
+  }
 })();
 </script>
 
