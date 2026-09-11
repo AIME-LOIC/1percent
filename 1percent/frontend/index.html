@@ -566,9 +566,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             access_token: json.session.access_token,
             refresh_token: json.session.refresh_token
           });
-          // Store in sessionStorage as backup for cross-page navigation
-          sessionStorage.setItem('sb-access-token', json.session.access_token);
-          sessionStorage.setItem('sb-refresh-token', json.session.refresh_token);
+          ['sb-access-token', 'sb-refresh-token'].forEach((key, index) => {
+            const value = index === 0 ? json.session.access_token : json.session.refresh_token;
+            if (value) {
+              sessionStorage.setItem(key, value);
+              localStorage.setItem(key, value);
+            }
+          });
         }
         // Detect role from login response (fast, no extra API call)
         const _isLearn = location.hostname === 'learn.1percent.rw' || location.hostname === 'www.learn.1percent.rw';
