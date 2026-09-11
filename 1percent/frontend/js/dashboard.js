@@ -32,6 +32,13 @@ const Dashboard = {
       this.supabase = supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
       const { data: { session } } = await this.supabase.auth.getSession();
       if (!session?.user) { this._showGuest(); return; }
+      // Redirect new users to onboarding
+      if (!session.user.user_metadata?.onboarding_completed) {
+        const host = location.hostname;
+        const isLearn = host === 'learn.1percent.rw' || host === 'www.learn.1percent.rw';
+        window.location.href = isLearn ? '/onboarding' : '/learn/onboarding';
+        return;
+      }
       // Use shared nav component
       Nav.supabase = this.supabase;
       Nav.user = session.user;

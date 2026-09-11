@@ -35,4 +35,16 @@ router.get('/users', (req, res, next) => adminController.getAllUsers(req, res, n
 // Notifications (admin view)
 router.get('/notifications', (req, res, next) => adminController.getAllNotifications(req, res, next));
 
+// Onboarding notification
+router.post('/send-onboarding-notifications', async (req, res) => {
+  try {
+    const { notifyIncompleteOnboarding } = require('../workers/onboardingNotify');
+    const result = await notifyIncompleteOnboarding();
+    res.json({ success: true, ...result });
+  } catch (err) {
+    console.error('[ADMIN] Onboarding notify error:', err.message);
+    res.status(500).json({ error: 'Failed to send notifications' });
+  }
+});
+
 module.exports = router;

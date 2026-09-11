@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome — 1% Expert Programme</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/main.css">
+<style>
+.onboard-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 24px;background:linear-gradient(135deg,#f0fdf4 0%,#ecfdf5 50%,#f8f9fa 100%);}
+.onboard-card{width:100%;max-width:560px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:0 4px 24px rgba(0,0,0,.06);overflow:hidden;}
+.onboard-header{padding:32px 32px 0;text-align:center;}
+.onboard-header .onboard-icon{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--primary) 0%,#0a5c34 100%);color:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 4px 12px rgba(13,110,63,.25);}
+.onboard-header h1{font-size:24px;font-weight:800;margin:0 0 6px;letter-spacing:-.5px;}
+.onboard-header p{font-size:14px;color:var(--text-muted);margin:0 0 4px;}
+.onboard-header .onboard-sub{font-size:12px;color:var(--text-muted);margin:0;}
+
+.onboard-body{padding:28px 32px 32px;}
+.onboard-step{display:none;}
+.onboard-step.active{display:block;}
+
+.onboard-field{margin-bottom:20px;}
+.onboard-field label{display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px;}
+.onboard-field .field-hint{font-size:11px;color:var(--text-muted);margin-bottom:6px;}
+.onboard-field input,.onboard-field textarea,.onboard-field select{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;transition:all .15s;background:var(--bg);}
+.onboard-field input:focus,.onboard-field textarea:focus,.onboard-field select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(13,110,63,.08);}
+.onboard-field textarea{resize:vertical;min-height:80px;}
+
+.onboard-chips{display:flex;flex-wrap:wrap;gap:8px;}
+.onboard-chip{padding:8px 16px;border-radius:100px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--bg);color:var(--text-muted);cursor:pointer;transition:all .15s;user-select:none;}
+.onboard-chip:hover{border-color:var(--primary);color:var(--primary);}
+.onboard-chip.selected{background:var(--primary);color:#fff;border-color:var(--primary);}
+
+.onboard-progress{display:flex;gap:6px;justify-content:center;margin-bottom:24px;}
+.onboard-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:all .2s;}
+.onboard-dot.active{background:var(--primary);width:24px;border-radius:100px;}
+.onboard-dot.done{background:var(--primary);}
+
+.onboard-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;padding-top:20px;border-top:1px solid var(--border-light);}
+.onboard-btn{padding:10px 24px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;}
+.onboard-btn.primary{background:var(--primary);color:#fff;}.onboard-btn.primary:hover{background:#0a5c34;box-shadow:0 2px 8px rgba(13,110,63,.25);}
+.onboard-btn.outline{background:#fff;color:var(--text-muted);border:1px solid var(--border);}.onboard-btn.outline:hover{border-color:var(--text-muted);color:var(--text);}
+.onboard-btn:disabled{opacity:.5;cursor:not-allowed;}
+
+.onboard-welcome{text-align:center;padding:20px 0;}
+.onboard-welcome h2{font-size:20px;font-weight:800;margin:0 0 8px;}
+.onboard-welcome p{font-size:14px;color:var(--text-muted);margin:0;line-height:1.6;}
+.onboard-welcome .skip{font-size:12px;color:var(--text-muted);margin-top:16px;cursor:pointer;}.onboard-welcome .skip:hover{color:var(--text);}
+
+@media(max-width:600px){
+  .onboard-card{border-radius:12px;margin:8px;}
+  .onboard-header{padding:24px 20px 0;}
+  .onboard-body{padding:20px;}
+}
+</style>
+</head>
+<body>
+
+<div class="onboard-page">
+  <div class="onboard-card">
+    <div class="onboard-header">
+      <div class="onboard-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <h1>Welcome to 1%!</h1>
+      <p>Let's set up your profile so we can personalize your learning experience.</p>
+      <p class="onboard-sub" id="onboard-email"></p>
+    </div>
+
+    <div class="onboard-body">
+      <!-- Progress -->
+      <div class="onboard-progress" id="onboard-progress">
+        <div class="onboard-dot active" data-step="0"></div>
+        <div class="onboard-dot" data-step="1"></div>
+        <div class="onboard-dot" data-step="2"></div>
+      </div>
+
+      <!-- Step 0: Name + Bio -->
+      <div class="onboard-step active" id="onboard-step-0">
+        <div class="onboard-field">
+          <label for="onboard-name">What should we call you?</label>
+          <input type="text" id="onboard-name" placeholder="Your full name" autofocus>
+        </div>
+        <div class="onboard-field">
+          <label for="onboard-bio">Tell us a bit about yourself</label>
+          <div class="field-hint">Optional — a short bio helps instructors know you better</div>
+          <textarea id="onboard-bio" placeholder="e.g. I'm a university student interested in web development..."></textarea>
+        </div>
+        <div class="onboard-actions">
+          <button class="onboard-btn primary" id="onboard-next-0">Continue</button>
+        </div>
+      </div>
+
+      <!-- Step 1: Experience + Interests -->
+      <div class="onboard-step" id="onboard-step-1">
+        <div class="onboard-field">
+          <label>What's your experience level?</label>
+          <div class="field-hint">This helps us recommend the right courses</div>
+          <div class="onboard-chips" id="onboard-level">
+            <div class="onboard-chip" data-value="beginner">Beginner</div>
+            <div class="onboard-chip" data-value="intermediate">Intermediate</div>
+            <div class="onboard-chip" data-value="advanced">Advanced</div>
+          </div>
+        </div>
+        <div class="onboard-field">
+          <label>What interests you?</label>
+          <div class="field-hint">Select all that apply</div>
+          <div class="onboard-chips" id="onboard-interests">
+            <div class="onboard-chip" data-value="web">Web Development</div>
+            <div class="onboard-chip" data-value="mobile">Mobile Apps</div>
+            <div class="onboard-chip" data-value="ai">AI & Automation</div>
+            <div class="onboard-chip" data-value="cyber">Cybersecurity</div>
+            <div class="onboard-chip" data-value="iot">IoT & Embedded</div>
+            <div class="onboard-chip" data-value="design">UI/UX Design</div>
+            <div class="onboard-chip" data-value="data">Data Science</div>
+            <div class="onboard-chip" data-value="devops">DevOps & Cloud</div>
+          </div>
+        </div>
+        <div class="onboard-actions">
+          <button class="onboard-btn outline" id="onboard-back-1">Back</button>
+          <button class="onboard-btn primary" id="onboard-next-1">Continue</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Goals -->
+      <div class="onboard-step" id="onboard-step-2">
+        <div class="onboard-field">
+          <label>What's your main goal?</label>
+          <div class="field-hint">This helps us track your progress toward what matters to you</div>
+          <div class="onboard-chips" id="onboard-goal" style="flex-direction:column;">
+            <div class="onboard-chip" data-value="career" style="text-align:left;">Switch careers into tech</div>
+            <div class="onboard-chip" data-value="freelance" style="text-align:left;">Start freelancing / build a business</div>
+            <div class="onboard-chip" data-value="skills" style="text-align:left;">Level up existing skills</div>
+            <div class="onboard-chip" data-value="explore" style="text-align:left;">Explore and find my path</div>
+            <div class="onboard-chip" data-value="cert" style="text-align:left;">Earn certificates</div>
+          </div>
+        </div>
+        <div class="onboard-field">
+          <label for="onboard-location">Where are you based?</label>
+          <div class="field-hint">Optional — helps us connect you with local opportunities</div>
+          <input type="text" id="onboard-location" placeholder="e.g. Kigali, Rwanda">
+        </div>
+        <div class="onboard-actions">
+          <button class="onboard-btn outline" id="onboard-back-2">Back</button>
+          <button class="onboard-btn primary" id="onboard-finish">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+            Complete Setup
+          </button>
+        </div>
+      </div>
+
+      <!-- Done -->
+      <div class="onboard-step" id="onboard-done" style="display:none;">
+        <div class="onboard-welcome">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+          <h2>You're all set!</h2>
+          <p>Your profile is ready. Let's start learning.</p>
+          <button class="onboard-btn primary" id="onboard-go-dashboard" style="margin-top:20px;">
+            Go to Dashboard
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-left:4px;"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+          <div class="skip" id="onboard-skip">Skip for now</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let supabaseClient=null,currentUser=null,currentStep=0;
+
+async function initOnboard(){
+  try{
+    const res=await fetch('/api/config');const config=await res.json();
+    if(config.supabaseUrl&&config.supabaseAnonKey){
+      supabaseClient=supabase.createClient(config.supabaseUrl,config.supabaseAnonKey);
+      const{data:{session}}=await supabaseClient.auth.getSession();
+      if(!session?.user){window.location.href='/';return;}
+      currentUser=session.user;
+      // Check if already completed onboarding
+      if(currentUser.user_metadata?.onboarding_completed){
+        window.location.href='/dashboard';return;
+      }
+      document.getElementById('onboard-email').textContent=currentUser.email||'';
+      // Pre-fill name
+      const name=currentUser.user_metadata?.full_name||'';
+      document.getElementById('onboard-name').value=name;
+    }
+  }catch(e){console.error('[ONBOARD] Init error:',e);window.location.href='/';}
+}
+
+// Chip selection (single-select for level/goal, multi-select for interests)
+document.querySelectorAll('.onboard-chips').forEach(container=>{
+  const isMulti=container.id==='onboard-interests';
+  container.querySelectorAll('.onboard-chip').forEach(chip=>{
+    chip.addEventListener('click',()=>{
+      if(!isMulti){
+        container.querySelectorAll('.onboard-chip').forEach(c=>c.classList.remove('selected'));
+        chip.classList.add('selected');
+      }else{
+        chip.classList.toggle('selected');
+      }
+    });
+  });
+});
+
+// Step navigation
+function goToStep(step){
+  document.querySelectorAll('.onboard-step').forEach(s=>s.classList.remove('active'));
+  document.getElementById('onboard-step-'+step)?.classList.add('active');
+  document.querySelectorAll('.onboard-dot').forEach((d,i)=>{
+    d.classList.remove('active','done');
+    if(i<step)d.classList.add('done');
+    if(i===step)d.classList.add('active');
+  });
+  currentStep=step;
+}
+
+document.getElementById('onboard-next-0')?.addEventListener('click',()=>goToStep(1));
+document.getElementById('onboard-back-1')?.addEventListener('click',()=>goToStep(0));
+document.getElementById('onboard-next-1')?.addEventListener('click',()=>goToStep(2));
+document.getElementById('onboard-back-2')?.addEventListener('click',()=>goToStep(1));
+
+// Finish
+document.getElementById('onboard-finish')?.addEventListener('click',async()=>{
+  const btn=document.getElementById('onboard-finish');
+  btn.disabled=true;
+  btn.textContent='Saving...';
+
+  const name=document.getElementById('onboard-name').value.trim()||currentUser.user_metadata?.full_name||'';
+  const bio=document.getElementById('onboard-bio').value.trim();
+  const level=document.querySelector('#onboard-level .onboard-chip.selected')?.dataset.value||'';
+  const interests=[...document.querySelectorAll('#onboard-interests .onboard-chip.selected')].map(c=>c.dataset.value);
+  const goal=document.querySelector('#onboard-goal .onboard-chip.selected')?.dataset.value||'';
+  const location=document.getElementById('onboard-location').value.trim();
+
+  try{
+    const{error}=await supabaseClient.auth.updateUser({
+      data:{
+        full_name:name,
+        bio,
+        experience_level:level,
+        interests,
+        learning_goal:goal,
+        location,
+        onboarding_completed:true,
+        onboarding_completed_at:new Date().toISOString()
+      }
+    });
+    if(error)throw error;
+
+    // Show done state
+    document.querySelectorAll('.onboard-step').forEach(s=>s.style.display='none');
+    document.getElementById('onboard-done').style.display='block';
+    document.getElementById('onboard-progress').style.display='none';
+  }catch(e){
+    Toast.error?.('Failed to save: '+e.message);
+    btn.disabled=false;
+    btn.textContent='Complete Setup';
+  }
+});
+
+// Go to dashboard
+document.getElementById('onboard-go-dashboard')?.addEventListener('click',()=>{
+  const host=location.hostname;
+  const isLearn=host==='learn.1percent.rw'||host==='www.learn.1percent.rw';
+  window.location.href=isLearn?'/dashboard':'/learn/dashboard';
+});
+
+// Skip
+document.getElementById('onboard-skip')?.addEventListener('click',async()=>{
+  try{
+    await supabaseClient.auth.updateUser({data:{onboarding_completed:true}});
+  }catch{}
+  const host=location.hostname;
+  const isLearn=host==='learn.1percent.rw'||host==='www.learn.1percent.rw';
+  window.location.href=isLearn?'/dashboard':'/learn/dashboard';
+});
+
+initOnboard();
+</script>
+</body>
+</html>
