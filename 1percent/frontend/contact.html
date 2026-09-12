@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact 1percent Rwanda — Support for the 1% Expert Programme</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="description" content="Questions about the 1% Expert Programme? Contact the 1percent Rwanda team about courses, payments, the CLI or VS Code extension. We reply within 48 hours.">
+<link rel="canonical" href="https://learn.1percent.rw/contact">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://learn.1percent.rw/contact">
+<meta property="og:title" content="Contact 1percent Rwanda — Support for the 1% Expert Programme">
+<meta property="og:description" content="Questions about the 1% Expert Programme? Contact the 1percent Rwanda team about courses, payments, the CLI or VS Code extension. We reply within 48 hours.">
+<meta property="og:image" content="https://learn.1percent.rw/og-image.png">
+<meta property="og:site_name" content="1percent Rwanda">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Contact 1percent Rwanda — Support for the 1% Expert Programme">
+<meta name="twitter:description" content="Questions about the 1% Expert Programme? Contact the 1percent Rwanda team about courses, payments, the CLI or VS Code extension. We reply within 48 hours.">
+<meta name="twitter:image" content="https://learn.1percent.rw/og-image.png">
+<meta name="robots" content="index, follow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/main.css">
+<script src="/js/error-reporter.js" defer></script>
+<style>
+:root{--primary:#0d6e3f;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:#f8fafc;color:#0f172a;min-height:100vh;display:flex;flex-direction:column;}
+.contact-main{flex:1;display:flex;align-items:center;justify-content:center;padding:48px 20px;}
+.contact-card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;box-shadow:0 20px 50px rgba(15,23,42,.08);max-width:560px;width:100%;padding:40px;}
+.contact-card h1{font-size:26px;font-weight:800;letter-spacing:-.5px;margin-bottom:8px;}
+.contact-card .sub{font-size:14px;color:#64748b;margin-bottom:28px;line-height:1.6;}
+.field{margin-bottom:18px;}
+.field label{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#475569;margin-bottom:6px;}
+.field input,.field select,.field textarea{width:100%;padding:11px 14px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;font-family:inherit;color:#0f172a;background:#fff;transition:border-color .15s,box-shadow .15s;}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(13,110,63,.12);}
+.field textarea{min-height:120px;resize:vertical;}
+.submit-btn{width:100%;padding:13px;border:none;border-radius:8px;background:var(--primary);color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:background .15s;font-family:inherit;}
+.submit-btn:hover{background:#0a5c34;}
+.submit-btn:disabled{opacity:.6;cursor:not-allowed;}
+.form-status{display:none;margin-top:14px;padding:12px 14px;border-radius:8px;font-size:13px;font-weight:600;}
+.form-status.success{display:block;background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;}
+.form-status.error{display:block;background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;}
+.contact-alt{margin-top:24px;padding-top:20px;border-top:1px solid #f1f5f9;font-size:13px;color:#64748b;text-align:center;line-height:1.7;}
+.contact-alt a{color:var(--primary);text-decoration:none;font-weight:600;}
+.contact-alt a:hover{text-decoration:underline;}
+.back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#64748b;text-decoration:none;margin-bottom:20px;}
+.back-link:hover{color:#0f172a;}
+</style>
+</head>
+<body>
+<main class="contact-main">
+  <div class="contact-card">
+    <a href="/" class="back-link">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      Back to 1% Expert Programme
+    </a>
+    <h1>Contact Us</h1>
+    <p class="sub">Have a question about courses, payments, or the 1% Learn tools? Send us a message — our team in Kigali replies within 48 hours.</p>
+
+    <form id="contact-form" action="https://formspree.io/f/mbgjbngp" method="POST">
+      <div class="field">
+        <label for="cf-name">Full name</label>
+        <input type="text" id="cf-name" name="name" required maxlength="100" placeholder="Your name" autocomplete="name">
+      </div>
+      <div class="field">
+        <label for="cf-email">Email address</label>
+        <input type="email" id="cf-email" name="email" required maxlength="200" placeholder="you@example.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label for="cf-topic">Topic</label>
+        <select id="cf-topic" name="topic">
+          <option value="general">General question</option>
+          <option value="courses">Courses &amp; learning</option>
+          <option value="payments">Payments &amp; subscriptions</option>
+          <option value="technical">CLI / VS Code extension support</option>
+          <option value="partnership">Partnerships &amp; sponsors</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="cf-message">Message</label>
+        <textarea id="cf-message" name="message" required maxlength="4000" placeholder="How can we help?"></textarea>
+      </div>
+      <!-- Honeypot (spam trap) -->
+      <input type="text" name="_gotcha" style="display:none;">
+      <input type="hidden" name="source" value="learn.1percent.rw/contact">
+      <button type="submit" class="submit-btn" id="cf-submit">Send message</button>
+      <div class="form-status" id="cf-status"></div>
+    </form>
+
+    <div class="contact-alt">
+      Prefer email? Write to us directly at
+      <a href="mailto:1percentrwanda@gmail.com">1percentrwanda@gmail.com</a>
+    </div>
+  </div>
+</main>
+
+<script>
+(function(){
+  const form=document.getElementById('contact-form');
+  const status=document.getElementById('cf-status');
+  const btn=document.getElementById('cf-submit');
+
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    status.className='form-status';
+    status.style.display='none';
+    btn.disabled=true; btn.textContent='Sending…';
+    try{
+      const data={
+        name:document.getElementById('cf-name').value.trim(),
+        email:document.getElementById('cf-email').value.trim(),
+        topic:document.getElementById('cf-topic').value,
+        message:document.getElementById('cf-message').value.trim(),
+        source:'learn.1percent.rw/contact',
+        _subject:`[1% Learn Contact] ${document.getElementById('cf-topic').value} — ${document.getElementById('cf-name').value.trim()}`
+      };
+      const res=await fetch(form.action,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Accept':'application/json'},
+        body:JSON.stringify(data)
+      });
+      if(res.ok){
+        status.className='form-status success';
+        status.textContent='✓ Message sent! Our team will get back to you within 48 hours.';
+        form.reset();
+        if(window.ErrorReporter&&ErrorReporter.event)ErrorReporter.event('contact_form_submitted',{topic:data.topic});
+      }else{
+        const j=await res.json().catch(()=>({}));
+        throw new Error(j.errors?Object.values(j.errors)[0].message:(j.error||'Failed to send. Please try again.'));
+      }
+    }catch(err){
+      status.className='form-status error';
+      status.textContent=err.message||'Failed to send. Please try again.';
+    }finally{
+      btn.disabled=false; btn.textContent='Send message';
+    }
+  });
+})();
+</script>
+</body>
+</html>

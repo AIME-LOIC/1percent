@@ -58,8 +58,13 @@ async function optionalAuth(req, res, next) {
   const token = authHeader.split(' ')[1];
 
   try {
-    const { data: { user } } = await adminClient.auth.getUser(token);
-    req.user = user || null;
+    // Verify the JWT signature locally against Supabase's JWKS.
+    // (adminClient.auth.getUser() rejects tokens created via the
+    // service-role admin API, which the persistent-session flow uses.)
+    const { createRemoteJWKSet, jwtVerify } = require('jose');
+    const JWKS = createRemoteJWKSet(new URL(`${process.env.SUPABASE_URL}/auth/v1/.well-known/jwks.json`));
+    const { payload } = await jwtVerify(token, JWKS);
+    req.user = payload?.sub ? { id: payload.sub, email: payload.email || null } : null;
   } catch {
     req.user = null;
   }

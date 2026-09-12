@@ -32,6 +32,13 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const { adminNotificationRoutes } = require('./routes/notificationRoutes');
 const ratingRoutes = require('./routes/ratingRoutes');
 const { adminRatingRoutes } = require('./routes/ratingRoutes');
+const logRoutes = require('./routes/logRoutes');
+const { adminLogRoutes } = require('./routes/logRoutes');
+const sitemapRoutes = require('./routes/sitemapRoutes');
+
+// Middlewares
+const { requestLogger } = require('./middlewares/requestLogger');
+const logService = require('./services/logService');
 
 const app = express();
 
@@ -84,6 +91,9 @@ app.use(express.urlencoded({ extended: false, limit: '5mb' }));
 // Disable x-powered-by
 app.disable('x-powered-by');
 
+// Request logging — assigns a request id and captures 5xx responses
+app.use(requestLogger);
+
 /* ============================================================
    SUBDOMAIN DETECTION — learn.1percent.rw serves learn at /
    Must run BEFORE static files so we can intercept root requests.
@@ -103,6 +113,12 @@ app.use((req, res, next) => {
 });
 
 /* ============================================================
+   SITEMAP — dynamic, served from the domain root
+   (mounted before static files so it always wins)
+   ============================================================ */
+app.use('/', sitemapRoutes);
+
+/* ============================================================
    STATIC FILES — Frontend
    ============================================================ */
 const frontendDir = path.join(__dirname, '..', 'frontend');
@@ -110,15 +126,28 @@ app.use(express.static(frontendDir, {
   etag: true,
   lastModified: true,
   maxAge: process.env.NODE_ENV === 'production' ? '1d' : 0,
+  setHeaders: (res, filePath) => {
+    // HTML must always be revalidated so deploys reach users immediately;
+    // hashed/immutable assets can still be cached by their own headers.
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+  },
   index: false  // We handle index.html manually for subdomain support
 }));
+
+/* Send HTML that's always revalidated — deploys reach users immediately */
+function sendHtml(res, ...segments) {
+  res.setHeader('Cache-Control', 'no-cache');
+  return res.sendFile(path.join(frontendDir, ...segments));
+}
 
 /* Handle root path — learn subdomain gets learn/index.html, main site gets index.html */
 app.get('/', (req, res) => {
   if (req.isLearnSubdomain) {
-    return res.sendFile(path.join(frontendDir, 'learn', 'index.html'));
+    return sendHtml(res, 'learn', 'index.html');
   }
-  res.sendFile(path.join(frontendDir, 'index.html'));
+  sendHtml(res, 'index.html');
 });
 
 /* ============================================================
@@ -137,7 +166,7 @@ app.get('/api/health', (req, res) => {
 // Diagnostics — check which tables exist
 const { adminClient: diagClient } = require('./config/database');
 app.get('/api/admin/diagnostics', async (req, res) => {
-  const tables = ['profiles', 'courses', 'lessons', 'enrollments', 'quizzes', 'challenges', 'notifications', 'ratings', 'parent_payments', 'premium_subscriptions', 'streaks', 'user_coins'];
+  const tables = ['profiles', 'courses', 'lessons', 'enrollments', 'quizzes', 'challenges', 'notifications', 'ratings', 'parent_payments', 'premium_subscriptions', 'streaks', 'user_coins', 'error_logs', 'system_logs', 'admin_alerts'];
   const results = {};
   for (const t of tables) {
     try {
@@ -180,6 +209,8 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin/notifications', adminNotificationRoutes);
 app.use('/api/ratings', ratingRoutes);
 app.use('/api/admin/ratings', adminRatingRoutes);
+app.use('/api/logs', logRoutes);
+app.use('/api/admin/logs', adminLogRoutes);
 app.use('/api/docs', docsRoutes);
 app.use('/api', courseRoutes);  // /api/roadmap, /api/courses (has /:slug)
 
@@ -205,6 +236,7 @@ const htmlRoutes = {
   '/settings': 'settings.html',
   '/terms': 'terms.html',
   '/privacy': 'privacy.html',
+  '/contact': 'contact.html',
   '/onboarding': 'onboarding.html',
 };
 
@@ -222,10 +254,12 @@ const learnSubdomainRoutes = {
   '/certificate': 'certificate-view.html',
   '/course': 'course.html',
   '/install': 'install.html',
+  '/docs': 'docs.html',
   '/parent-payment': 'parent-payment.html',
   '/settings': 'settings.html',
   '/terms': 'terms.html',
   '/privacy': 'privacy.html',
+  '/contact': 'contact.html',
   '/onboarding': 'onboarding.html',
 };
 
@@ -238,17 +272,17 @@ app.get('*', (req, res) => {
 
   // Check for exact route match
   if (routes[req.path]) {
-    return res.sendFile(path.join(frontendDir, routes[req.path]));
+    return sendHtml(res, routes[req.path]);
   }
 
   // Course detail page: /learn/course/:slug (or /course/:slug on subdomain)
   if (req.path.startsWith('/learn/course/') || (req.isLearnSubdomain && req.path.startsWith('/course/'))) {
-    return res.sendFile(path.join(frontendDir, 'course.html'));
+    return sendHtml(res, 'course.html');
   }
 
   // Parent payment page: /parent-payment/:token (or /learn/parent-payment/:token)
   if (req.path.startsWith('/learn/parent-payment/') || (req.isLearnSubdomain && req.path.startsWith('/parent-payment/'))) {
-    return res.sendFile(path.join(frontendDir, 'parent-payment.html'));
+    return sendHtml(res, 'parent-payment.html');
   }
 
   // Legacy redirects — old paths redirect to new /learn/* paths (main site only)
@@ -257,10 +291,10 @@ app.get('*', (req, res) => {
     if (req.path === '/playground') return res.redirect(301, '/learn/playground');
     if (req.path === '/lab') return res.redirect(301, '/learn/lab');
     if (req.path.startsWith('/course/')) return res.redirect(301, '/learn' + req.path);
-    if (req.path === '/settings') return res.sendFile(path.join(frontendDir, 'settings.html'));
-    if (req.path === '/terms') return res.sendFile(path.join(frontendDir, 'terms.html'));
-    if (req.path === '/privacy') return res.sendFile(path.join(frontendDir, 'privacy.html'));
-    if (req.path === '/onboarding') return res.sendFile(path.join(frontendDir, 'onboarding.html'));
+    if (req.path === '/settings') return sendHtml(res, 'settings.html');
+    if (req.path === '/terms') return sendHtml(res, 'terms.html');
+    if (req.path === '/privacy') return sendHtml(res, 'privacy.html');
+    if (req.path === '/onboarding') return sendHtml(res, 'onboarding.html');
   }
 
   // 401 for unauthorized API attempts
@@ -294,10 +328,24 @@ app.use((err, req, res, _next) => {
     console.error(err.stack);
   }
 
-  if (err.message === 'Not allowed by CORS') {
+  // CORS / known business errors get a specific status, not a 500.
+  const isCors = err.message === 'Not allowed by CORS';
+  const isNotEnrolled = err.message === 'Not enrolled in this course';
+
+  if (!isCors && !isNotEnrolled) {
+    // Persist to error_logs + raise an admin alert (fire and forget).
+    res.locals.errorLogged = true;
+    logService.logRequestError(req, err, {
+      level: 'error',
+      statusCode: 500,
+      path: req.path
+    }).catch(() => {});
+  }
+
+  if (isCors) {
     return res.status(403).json({ error: 'Origin not allowed' });
   }
-  if (err.message === 'Not enrolled in this course') {
+  if (isNotEnrolled) {
     return res.status(403).json({ error: 'Access denied' });
   }
 

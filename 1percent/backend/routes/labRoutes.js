@@ -1,5 +1,6 @@
 const { Router } = require('express');
 const https = require('https');
+const { authenticate } = require('../middlewares/auth');
 
 const router = Router();
 
@@ -17,6 +18,9 @@ const COMPILER_MAP = {
   ruby: 'ruby-4.0',
   typescript: 'typescript-deno'
 };
+
+// All lab endpoints require authentication — unauthenticated calls get 401
+router.use(authenticate);
 
 router.post('/run', async (req, res) => {
   try {

@@ -5,6 +5,8 @@
    ============================================================ */
 
 const courseService = require('../services/courseService');
+const premiumService = require('../services/premiumService');
+const { adminClient } = require('../config/database');
 
 class CourseController {
   /**
@@ -182,6 +184,43 @@ class CourseController {
     try {
       const lesson = await courseService.getLessonContent(req.params.lessonId);
       if (!lesson) return res.status(404).json({ error: 'Lesson not found.' });
+
+      /* ── Premium / tier enforcement (server-side) ─────────────
+         Free users may only read lessons flagged is_free_preview
+         inside a premium course. Resolving the parent course lets
+         us know whether this lesson belongs to a premium course. */
+      const { data: parentCourse } = await adminClient
+        .from('courses')
+        .select('id, is_premium')
+        .eq('id', lesson.course_id)
+        .single();
+
+      if (parentCourse?.is_premium) {
+        const { data: lessonMeta } = await adminClient
+          .from('lessons')
+          .select('is_free_preview')
+          .eq('id', req.params.lessonId)
+          .single();
+
+        const isPreview = lessonMeta?.is_free_preview === true;
+        if (!isPreview) {
+          let tier = 'free';
+          if (req.user?.id) {
+            try {
+              const status = await premiumService.getUserTier(req.user.id);
+              tier = status?.tier?.slug || 'free';
+            } catch { /* default free */ }
+          }
+          if (tier === 'free') {
+            return res.status(403).json({
+              error: 'Premium required',
+              code: 'PREMIUM_REQUIRED',
+              message: 'This lesson is part of a premium course. Upgrade your plan to continue.'
+            });
+          }
+        }
+      }
+
       res.json({ success: true, content_md: lesson.content_md || lesson.description || '' });
     } catch (err) {
       console.error('[COURSE] Lesson content error:', err.message);

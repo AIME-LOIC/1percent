@@ -5,15 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <title>Course — 1% Expert Programme</title>
+<meta name="description" content="Browse hands-on courses from the 1% Expert Programme: full-stack development, AI, cybersecurity and DevOps — with labs, challenges and certificates.">
+<link rel="canonical" href="https://learn.1percent.rw/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://learn.1percent.rw/">
+<meta property="og:title" content="Courses — 1% Expert Programme">
+<meta property="og:description" content="Hands-on courses: full-stack development, AI, cybersecurity and DevOps — with labs, challenges and certificates.">
+<meta property="og:image" content="https://learn.1percent.rw/og-image.png">
+<meta property="og:site_name" content="1percent Rwanda">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Courses — 1% Expert Programme">
+<meta name="twitter:description" content="Hands-on courses: full-stack development, AI, cybersecurity and DevOps — with labs, challenges and certificates.">
+<meta name="twitter:image" content="https://learn.1percent.rw/og-image.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/main.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/js/session.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/icons.js"></script>
 <script src="/js/toast.js"></script>
 <script src="/js/nav.js" defer></script>
+<script src="/js/error-reporter.js" defer></script>
 <link rel="stylesheet" href="/css/notification-popup.css">
 <script src="/js/notification-popup.js" defer></script>
 <style>
@@ -45,16 +59,35 @@
 body{font-family:'Inter',sans-serif;background:var(--c-bg);color:var(--c-text);overflow:hidden;height:100vh;}
 
 /* ── Top Bar ─────────────────────────────────────── */
-.topbar{height:48px;background:#fff;border-bottom:1px solid var(--c-border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0;}
-.topbar-left{display:flex;align-items:center;gap:12px;}
-.topbar-logo{font-size:14px;font-weight:800;color:var(--c-accent);text-decoration:none;display:flex;align-items:center;gap:6px;}
-.topbar-logo .mark{background:var(--c-accent);color:#fff;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:800;width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;}
-.topbar-sep{width:1px;height:20px;background:var(--c-border);}
-.topbar-course{font-size:13px;font-weight:600;color:var(--c-text);max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.topbar-right{display:flex;align-items:center;gap:8px;}
-.topbar-btn{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--c-border);background:#fff;color:var(--c-muted);transition:all .15s;text-decoration:none;}
+.topbar{height:60px;background:#fff;border-bottom:1px solid var(--c-border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;position:relative;z-index:30;}
+.topbar-left{display:flex;align-items:center;gap:14px;min-width:0;}
+.topbar-logo{font-size:14px;font-weight:800;color:var(--c-accent);text-decoration:none;display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.topbar-logo .mark{background:var(--c-accent);color:#fff;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;}
+.topbar-sep{width:1px;height:22px;background:var(--c-border);flex-shrink:0;}
+.topbar-course{font-size:13px;font-weight:600;color:var(--c-muted);max-width:320px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.topbar-right{display:flex;align-items:center;gap:6px;}
+.topbar-right .nav-bell{border:none;background:transparent;}
+.topbar-right .user-menu-trigger{margin-left:2px;}
+.topbar-right .user-avatar{width:32px;height:32px;font-size:12px;}
+.topbar-btn{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--c-border);background:#fff;color:var(--c-muted);transition:all .15s;text-decoration:none;}
 .topbar-btn:hover{border-color:var(--c-muted);color:var(--c-text);}
 .topbar-btn.primary{background:var(--c-accent);color:#fff;border-color:var(--c-accent);}
+/* Desktop nav links in the topbar */
+.topbar nav{display:flex;align-items:center;gap:2px;}
+.topbar nav a{padding:7px 13px;font-size:13px;font-weight:600;color:var(--c-muted);border-radius:8px;text-decoration:none;transition:all .15s;white-space:nowrap;position:relative;}
+.topbar nav a:hover{color:var(--c-accent);background:#f0fdf4;}
+.topbar nav a.active{color:var(--c-accent);background:#ecfdf5;}
+.topbar nav a.nav-cta{background:var(--c-accent);color:#fff;border-radius:8px;margin-left:6px;}
+.topbar nav a.nav-cta:hover{background:#0a5c34;color:#fff;}
+.topbar nav .user-menu{position:relative;display:flex;align-items:center;margin-left:6px;}
+.topbar nav .user-menu-dropdown{display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:210px;background:#fff;border:1px solid var(--c-border);border-radius:10px;box-shadow:0 16px 48px rgba(0,0,0,.14);padding:6px;z-index:200;}
+.topbar nav .user-menu-dropdown.open{display:block;}
+.topbar nav .user-menu-info{display:flex;flex-direction:column;gap:2px;padding:10px 12px 12px;margin-bottom:6px;border-bottom:1px solid var(--c-border);}
+.topbar nav .user-menu-info b{font-size:13.5px;color:var(--c-text);}
+.topbar nav .user-menu-info span{font-size:11.5px;color:var(--c-muted);word-break:break-all;}
+.topbar nav .user-menu-dropdown a,.topbar nav .user-menu-dropdown button{display:block;width:100%;text-align:left;padding:8px 12px;border-radius:6px;font-size:13px;font-weight:500;color:var(--c-text);background:none;border:none;cursor:pointer;transition:background .15s;font-family:'Inter',sans-serif;}
+.topbar nav .user-menu-dropdown a:hover,.topbar nav .user-menu-dropdown button:hover{background:#f3f4f6;}
+.topbar nav .user-menu-dropdown #user-menu-logout{color:var(--c-red);}
 /* Membership badge */
 .membership-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:100px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
 .membership-badge.free{background:#f3f4f6;color:var(--c-muted);border:1px solid var(--c-border);}
@@ -78,7 +111,7 @@ body{font-family:'Inter',sans-serif;background:var(--c-bg);color:var(--c-text);o
 .lesson-lock-icon{font-size:11px;color:var(--c-muted);margin-left:auto;flex-shrink:0;}
 
 /* ── Layout ──────────────────────────────────────── */
-.layout{display:grid;grid-template-columns:380px 1fr;height:calc(100vh - 48px);}
+.layout{display:grid;grid-template-columns:380px 1fr;height:calc(100vh - 60px);}
 
 /* ── Leaderboard Panel ───────────────────────────── */
 .leaderboard-panel{background:#fff;border-left:1px solid var(--c-border);display:flex;flex-direction:column;overflow:hidden;}
@@ -229,7 +262,7 @@ body{font-family:'Inter',sans-serif;background:var(--c-bg);color:var(--c-text);o
 /* ── Responsive ──────────────────────────────────── */
 @media(max-width:900px){
   /* Mobile: sidebar is hidden by default, toggled via JS */
-  .layout{grid-template-columns:1fr;grid-template-rows:1fr;position:relative;overflow:hidden;}
+  .layout{grid-template-columns:1fr;grid-template-rows:1fr;position:relative;overflow:hidden;height:calc(100vh - 40px);}
   .sidebar{position:absolute;inset:0;z-index:50;border-right:none;border-bottom:none;display:flex;flex-direction:column;transform:translateX(0);transition:transform .25s ease;}
   .sidebar.hidden-mobile{transform:translateX(-100%);pointer-events:none;}
   .main{position:relative;z-index:10;}
@@ -243,6 +276,9 @@ body{font-family:'Inter',sans-serif;background:var(--c-bg);color:var(--c-text);o
   .footer-actions{width:100%;justify-content:center;}
   .topbar-course{max-width:150px;}
   .topbar-right .topbar-btn{display:none;}
+  .topbar nav a{display:none;}
+  .topbar nav a.user-menu{display:flex;}
+  .topbar-right .nav-bell{display:none;}
   .mobile-back-btn{display:inline-flex !important;align-items:center;gap:6px;}
   .mobile-lesson-list-btn{display:inline-flex !important;align-items:center;gap:6px;}
   /* Bottom nav for mobile */
@@ -294,14 +330,20 @@ body{font-family:'Inter',sans-serif;background:var(--c-bg);color:var(--c-text);o
 
 <!-- Header -->
 <header id="header" class="scrolled">
-  <div class="container" style="display:flex;align-items:center;justify-content:space-between;">
-    <a href="/" class="logo">
-      <div class="logo-text">
-        <span class="name">1% Expert Programme</span>
-        <span class="tagline" id="topbar-course">Loading...</span>
-      </div>
-    </a>
-    <nav id="main-nav" aria-label="Primary"></nav>
+  <div class="topbar">
+    <div class="topbar-left">
+      <a href="/" class="topbar-logo">
+        <div class="mark">1%</div>
+        <div class="logo-text">
+          <span class="name" style="font-size:13.5px;">1% Expert Programme</span>
+        </div>
+      </a>
+      <span class="topbar-sep"></span>
+      <span class="topbar-course" id="topbar-course">Loading...</span>
+    </div>
+    <div class="topbar-right">
+      <nav id="main-nav" aria-label="Primary"></nav>
+    </div>
   </div>
 </header>
 
@@ -395,6 +437,113 @@ let supabaseClient=null,currentUser=null,courseData=null,slug='',activeLessonId=
 
 function escapeHTML(s){if(s==null)return'';return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
+/* ════════════════════════════════════════════════════
+   CACHE LAYER — instant repeat visits, fresh in background
+   ════════════════════════════════════════════════════ */
+const DataCache={
+  _mem:{},
+  _key(k){return '1p-cache-'+k;},
+  get(k){
+    if(this._mem[k]!==undefined)return this._mem[k];
+    try{const raw=sessionStorage.getItem(this._key(k));if(raw)return this._mem[k]=JSON.parse(raw);}catch{}
+    return undefined;
+  },
+  set(k,v){
+    this._mem[k]=v;
+    try{sessionStorage.setItem(this._key(k),JSON.stringify(v));}catch{}
+  },
+  del(k){delete this._mem[k];try{sessionStorage.removeItem(this._key(k));}catch{}}
+};
+
+/* fetchJSON — returns cached data instantly, then revalidates in the background.
+   onFresh(optional updatedData) fires only when data changed. */
+async function fetchJSON(url,opts={},cacheKey=null,onFresh=null){
+  const cached=cacheKey?DataCache.get(cacheKey):undefined;
+  const fetchPromise=fetch(url,{...opts,headers:{'Content-Type':'application/json',...(opts.headers||{})}})
+    .then(async r=>{
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      const j=await r.json();
+      if(cacheKey){
+        const prev=DataCache.get(cacheKey);
+        DataCache.set(cacheKey,j);
+        if(onFresh&&JSON.stringify(prev)!==JSON.stringify(j))onFresh(j);
+      }
+      return j;
+    });
+  if(cached!==undefined)return{data:cached,fromCache:true,promise:fetchPromise};
+  return{data:await fetchPromise,fromCache:false,promise:fetchPromise};
+}
+
+/* ── Mini virtual DOM — diff & patch without nuking the subtree ──
+   Nodes are plain objects: {tag, attrs:{}, children:[...|string]}.
+   renderVNode -> DOM element; patchVNode -> minimal DOM mutations. */
+function h(tag,attrs,...children){return{tag,attrs:attrs||{},children:children.flat(Infinity).filter(c=>c!==null&&c!==false&&c!==undefined)};}
+function renderVNode(n){
+  if(n==null||n===false)return document.createTextNode('');
+  if(typeof n==='string'||typeof n==='number')return document.createTextNode(String(n));
+  const el=document.createElement(n.tag);
+  for(const[k,v]of Object.entries(n.attrs||{})){
+    if(v==null||v===false)continue;
+    if(k==='class')el.className=v;
+    else if(k==='style'&&typeof v==='object')Object.assign(el.style,v);
+    else if(k.startsWith('on')&&typeof v==='function')el.addEventListener(k.slice(2),v);
+    else if(k==='html')el.innerHTML=v;
+    else el.setAttribute(k,v===true?'':String(v));
+  }
+  for(const c of n.children||[])el.appendChild(renderVNode(c));
+  return el;
+}
+function patchVNode(parent,el,vnode){
+  const want=typeof vnode==='string'||typeof vnode==='number'?String(vnode):null;
+  if(want!==null){
+    if(el&&el.nodeType===3){if(el.nodeValue!==want)el.nodeValue=want;return el;}
+    const t=document.createTextNode(want);if(el)parent.replaceChild(t,el);else parent.appendChild(t);return t;
+  }
+  if(!el||el.nodeType!==1||el.tagName.toLowerCase()!==vnode.tag.toLowerCase()){
+    const fresh=renderVNode(vnode);
+    if(el)parent.replaceChild(fresh,el);else parent.appendChild(fresh);
+    return fresh;
+  }
+  // Same tag — diff attrs
+  for(const[k,v]of Object.entries(vnode.attrs||{})){
+    if(v==null||v===false){el.removeAttribute(k);continue;}
+    if(k==='class'){if(el.className!==v)el.className=v;}
+    else if(k==='style'&&typeof v==='object')Object.assign(el.style,v);
+    else if(k.startsWith('on'))continue; // handlers bound once at creation
+    else if(k==='html'){if(el.innerHTML!==v)el.innerHTML=v;}
+    else if(el.getAttribute(k)!==String(v))el.setAttribute(k,String(v));
+  }
+  // Diff children by key (attrs.key) or position
+  const kids=vnode.children||[];
+  const elKids=Array.from(el.childNodes);
+  const keyed=new Map();
+  elKids.forEach(c=>{const k=c.nodeType===1?c.getAttribute('data-vkey'):null;if(k)keyed.set(k,c);});
+  let cursor=0;
+  let lastPlaced=null;
+  kids.forEach((kid)=>{
+    const key=kid&&typeof kid==='object'&&kid.attrs&&kid.attrs.key!=null?String(kid.attrs.key):null;
+    let child;
+    if(key&&keyed.has(key)){child=keyed.get(key);keyed.delete(key);}
+    else{while(cursor<elKids.length){const c=elKids[cursor++];const ck=c.nodeType===1?c.getAttribute('data-vkey'):null;if(!ck){child=c;break;}}}
+    if(!child){child=renderVNode(kid);el.insertBefore(child,lastPlaced?lastPlaced.nextSibling:el.firstChild);lastPlaced=child;patchVNode(el,child,kid);return;}
+    // Physically position the node (handles reordering), then diff in place
+    const ref=lastPlaced?lastPlaced.nextSibling:null;
+    if(ref!==child)el.insertBefore(child,ref);
+    lastPlaced=child;
+    patchVNode(el,child,kid);
+  });
+  keyed.forEach(c=>c.remove());
+  // Drop any trailing nodes beyond the new children
+  let n=lastPlaced?lastPlaced.nextSibling:null;
+  while(n){const nxt=n.nextSibling;n.remove();n=nxt;}
+  return el;
+}
+function renderVDOM(container,vnode){
+  const existing=Array.from(container.childNodes);
+  if(existing.length===0){container.appendChild(renderVNode(vnode));return;}
+  patchVNode(container,existing[0],vnode);
+}
+
 /**
  * Return the ID of the first lesson the user hasn't completed yet.
  * Falls back to the last lesson if everything's done, first lesson if nothing's started.
@@ -411,18 +560,27 @@ function getNextLesson(){
 
 async function init(){
   slug=window.location.pathname.split('/course/')[1];
-  if(!slug){window.location.href='/dashboard';return;}
-  try{
-    const res=await fetch('/api/config');const config=await res.json();
-    if(config.supabaseUrl&&config.supabaseAnonKey){
-      supabaseClient=supabase.createClient(config.supabaseUrl,config.supabaseAnonKey);
-      const{data:{session}}=await supabaseClient.auth.getSession();
-      currentUser=session?.user||null;
-      
-      // Initialize notification popup if user is logged in
-      if(currentUser && typeof NotificationPopup !== 'undefined'){
-        await NotificationPopup.init(supabaseClient);
+  if(!slug){window.location.href='/dashboard';return;}    try{
+    // Shared persistent session — restores login from localStorage, auto-refreshes tokens
+    if(typeof OPSession!=='undefined'){
+      supabaseClient=await OPSession.getClient();
+      currentUser=await OPSession.getUser();
+    } else {
+      const cached=DataCache.get('config');
+      if(cached){supabaseClient=supabase.createClient(cached.supabaseUrl,cached.supabaseAnonKey);}
+      else{
+        const res=await fetch('/api/config');const config=await res.json();
+        DataCache.set('config',config);
+        if(config.supabaseUrl&&config.supabaseAnonKey){
+          supabaseClient=supabase.createClient(config.supabaseUrl,config.supabaseAnonKey);
+        }
       }
+      const{data:{session}}=await supabaseClient?.auth.getSession()||{};
+      currentUser=session?.user||null;
+    }
+    // Initialize notification popup if user is logged in
+    if(currentUser && typeof NotificationPopup !== 'undefined'){
+      await NotificationPopup.init(supabaseClient);
     }
   }catch(e){console.warn('[COURSE] Config init error:',e.message);}
   try{await loadCourse();}catch(e){console.error('[COURSE] Load error:',e);document.getElementById('topbar-course').textContent='Error loading course';}
@@ -430,21 +588,59 @@ async function init(){
 
 async function apiFetch(url,opts={}){
   if(!supabaseClient)return fetch(url,opts);
-  const{data:{session}}=await supabaseClient.auth.getSession();
-  return fetch(url,{...opts,headers:{'Content-Type':'application/json',Authorization:`Bearer ${session?.access_token}`,...opts.headers}});
+  // Prefer the shared session manager (auto-refreshes near-expiry tokens)
+  let token=null;
+  if(typeof OPSession!=='undefined'){token=await OPSession.getToken();}
+  if(!token){
+    const{data:{session}}=await supabaseClient.auth.getSession();
+    token=session?.access_token||null;
+  }
+  return fetch(url,{...opts,headers:{'Content-Type':'application/json',Authorization:`Bearer ${token||''}`,...opts.headers}});
 }
 
 async function loadCourse(){
-  const res=await fetch(`/api/courses/${slug}`);const json=await res.json();
-  if(!json.success||!json.course){
+  /* Cache-first: instant paint from sessionStorage, revalidate in background */
+  const cacheKey='course-'+slug;
+  const{data:json,fromCache}=await fetchJSON(`/api/courses/${slug}`,{},cacheKey);
+  if(!json||!json.success||!json.course){
+    if(fromCache)return; // stale cache, wait for fresh fetch to decide
     document.getElementById('topbar-course').textContent='Course not found';
     document.getElementById('skel-main-loading').style.display='none';
     document.getElementById('empty-select-lesson').style.display='';
     return;
   }
   courseData=json.course;
+  // ── SEO: reflect the actual course in title/meta/canonical + Course JSON-LD ──
+  const COURSE_URL = `https://learn.1percent.rw/course/${slug}`;
+  const courseDesc=(courseData.description||'').slice(0,300);
+  document.title=`${courseData.title} — 1% Expert Programme`;
+  const setMeta=(sel,attr,val)=>{const el=document.querySelector(sel);if(el)el.setAttribute(attr,val);};
+  setMeta('meta[name="description"]','content',courseDesc);
+  setMeta('link[rel="canonical"]','href',COURSE_URL);
+  setMeta('meta[property="og:url"]','content',COURSE_URL);
+  setMeta('meta[property="og:title"]','content',`${courseData.title} — 1% Expert Programme`);
+  setMeta('meta[property="og:description"]','content',courseDesc);
+  setMeta('meta[property="og:type"]','content','website');
+  setMeta('meta[name="twitter:title"]','content',`${courseData.title} — 1% Expert Programme`);
+  setMeta('meta[name="twitter:description"]','content',courseDesc);
+  try{
+    document.getElementById('seo-jsonld')?.remove();
+    const ld=document.createElement('script');
+    ld.id='seo-jsonld';ld.type='application/ld+json';
+    ld.textContent=JSON.stringify({
+      '@context':'https://schema.org',
+      '@type':'Course',
+      name:courseData.title,
+      description:courseDesc,
+      url:COURSE_URL,
+      provider:{'@type':'Organization',name:'1percent Rwanda',sameAs:'https://learn.1percent.rw/'},
+      ...(courseData.level?{'educationalLevel':courseData.level}:{})
+    });
+    document.head.appendChild(ld);
+  }catch(e){console.warn('[COURSE] JSON-LD error:',e.message);}
   document.getElementById('topbar-course').textContent=courseData.title;
   document.getElementById('sidebar-count').textContent=`${courseData.lessons?.length||0} lessons · ${courseData.duration_weeks} weeks`;
+  if(fromCache)renderLessons(); // paint immediately from cache
 
   if(!currentUser){
     document.getElementById('skel-main-loading').style.display='none';
@@ -472,21 +668,20 @@ async function loadCourse(){
     renderLessons();return;
   }
 
-  await loadProgress();
-  await loadPremium();
+  /* Progress + premium + quiz info in parallel — the old code chained them */
+  await Promise.all([loadProgress(),loadPremium().catch(()=>{}),loadQuizInfo().catch(()=>{})]);
   const dlBtn=document.getElementById('download-course-btn');
   if(dlBtn){dlBtn.style.display='inline-flex';dlBtn.onclick=()=>downloadCoursePdf(courseData.id);}
   renderLessons();
   const nextId=getNextLesson();
-  if(nextId)doOpenLesson(nextId);
-  await loadQuizInfo();
-  await checkExistingCertificate();
+  if(nextId)openLesson(nextId);
+  await checkExistingCertificate().catch(()=>{});
 }
 
 async function doEnroll(){
   const res=await apiFetch(`/api/courses/${courseData.id}/enroll`,{method:'POST'});
   const json=await res.json();
-  if(json.success){await loadProgress();renderLessons();const nextId=getNextLesson();if(nextId)doOpenLesson(nextId);}
+  if(json.success){await loadProgress();renderLessons();const nextId=getNextLesson();if(nextId)openLesson(nextId);}
   else Toast.error(json.error||'Failed to enroll');
 }
 
@@ -532,25 +727,39 @@ function updateQuizButton(){
   }
 }
 
+/* Lesson list — rendered through the mini vDOM so repeat renders diff & patch
+   instead of rebuilding every row (keeps scroll position, no flicker). */
+function lessonItemVDOM(l,i){
+  const done=completedIds.has(l.id);
+  const active=activeLessonId===l.id;
+  const isLocked=courseData.is_premium&&!isPremiumUser&&!l.is_free_preview;
+  const lockSvg=h('span',{class:'lesson-lock-icon'},h('svg',{width:12,height:12,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor','stroke-width':2,'stroke-linecap':'round','stroke-linejoin':'round'},h('rect',{width:18,height:11,x:3,y:11,rx:2,ry:2}),h('path',{d:'M7 11V7a5 5 0 0 1 10 0v4'})));
+  return h('div',{
+    key:l.id,
+    class:'lesson-item'+(active?' active':'')+(done?' completed':'')+(isLocked?' locked':''),
+    'data-lesson-id':l.id,
+    'data-vkey':l.id,
+    onclick:()=>openLesson(l.id)
+  },
+    h('div',{class:'lesson-num'},done?'\u2713':String(i+1)),
+    h('div',{class:'lesson-info'},
+      h('h4',{},l.title||''),
+      h('div',{class:'lesson-meta'},
+        h('span',{class:'lesson-type '+l.lesson_type},l.lesson_type||''),
+        h('span',{},l.duration_min+' min')
+      )
+    ),
+    isLocked?lockSvg:null
+  );
+}
 function renderLessons(){
   const list=document.getElementById('lesson-list');
   const lessons=courseData.lessons||[];
-  const isPremium=courseData.is_premium;
-  list.innerHTML=lessons.map((l,i)=>{
-    const done=completedIds.has(l.id);
-    const active=activeLessonId===l.id;
-    // Only preview lessons remain visible for free users. Any locked premium lesson should stay blocked.
-    const isLocked=isPremium&&!isPremiumUser&&!l.is_free_preview;
-    return `<div class="lesson-item${active?' active':''}${done?' completed':''}${isLocked?' locked':''}" data-lesson-id="${l.id}" onclick="openLesson('${l.id}')">
-      <div class="lesson-num">${done?'&#10003;':i+1}</div>
-      <div class="lesson-info">
-        <h4>${escapeHTML(l.title)}</h4>
-        <div class="lesson-meta"><span class="lesson-type ${l.lesson_type}">${l.lesson_type}</span><span>${l.duration_min} min</span></div>
-      </div>
-      ${isLocked?'<span class="lesson-lock-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>':''}
-    </div>`;
-  }).join('');
-  if(!lessons.length)list.innerHTML='<div style="text-align:center;padding:30px;color:var(--c-muted);font-size:13px;">No lessons yet</div>';
+  if(!lessons.length){
+    renderVDOM(list,h('div',{style:'text-align:center;padding:30px;color:var(--c-muted);font-size:13px;'},'No lessons yet'));
+    return;
+  }
+  renderVDOM(list,h('div',{},lessons.map((l,i)=>lessonItemVDOM(l,i))));
 }
 
 function openLesson(lessonId){
@@ -576,7 +785,7 @@ function openLesson(lessonId){
   doOpenLesson(lessonId);
 }
 
-function doOpenLesson(lessonId){
+async function doOpenLesson(lessonId){
   const lesson=(courseData.lessons||[]).find(l=>l.id===lessonId);
   if(!lesson)return;
   activeLessonId=lessonId;
@@ -635,17 +844,38 @@ function doOpenLesson(lessonId){
   if(md){
     body.innerHTML=renderMarkdown(md);
   } else {
-    body.innerHTML='<p style="color:var(--c-muted);font-size:13px;">Loading content…</p>';
-    fetch(`/api/courses/lessons/${lessonId}/content`)
-      .then(r=>r.json())
+    /* Content cache: visited lessons paint instantly; fresh copy revalidates quietly */
+    const contentKey='lcontent-'+lessonId;
+    const cachedContent=DataCache.get(contentKey);
+    if(cachedContent){
+      lesson.content_md=cachedContent;
+      body.innerHTML=renderMarkdown(cachedContent);
+    } else {
+      body.innerHTML='<p style="color:var(--c-muted);font-size:13px;">Loading content…</p>';
+    }
+    fetch(`/api/courses/lessons/${lessonId}/content`,{headers:currentUser&&supabaseClient?{Authorization:`Bearer ${(OPSession?await OPSession.getToken():'')||''}`}:{}})
+      .then(async r=>{
+        if(r.status===403){
+          // Server-side tier check refused — show the upgrade wall.
+          const b=document.getElementById('lesson-content-body');
+          if(b)b.innerHTML=`<div style="text-align:center;padding:40px 20px;">
+            <h3 style="font-size:16px;font-weight:800;margin-bottom:8px;">Premium lesson</h3>
+            <p style="font-size:13px;color:var(--c-muted);margin-bottom:14px;">Upgrade your plan to unlock this lesson and the rest of the course.</p>
+            <a href="/payment" class="footer-btn primary">View Plans</a>
+          </div>`;
+          return null;
+        }
+        return r.json();
+      })
       .then(j=>{
+        if(!j)return;
         lesson.content_md=j.content_md||'';
+        DataCache.set(contentKey,j.content_md||'');
         const b=document.getElementById('lesson-content-body');
-        if(b)b.innerHTML=lesson.content_md?renderMarkdown(lesson.content_md):'<p style="color:var(--c-muted);font-size:14px;">Content will be available soon.</p>';
+        if(b&&(!cachedContent||b.dataset.revalidated!=='1')){b.dataset.revalidated='1';b.innerHTML=lesson.content_md?renderMarkdown(lesson.content_md):'<p style="color:var(--c-muted);font-size:14px;">Content will be available soon.</p>';}
       })
       .catch(()=>{
-        const b=document.getElementById('lesson-content-body');
-        if(b)b.innerHTML='<p style="color:var(--c-red);font-size:13px;">Failed to load content.</p>';
+        if(!cachedContent){const b=document.getElementById('lesson-content-body');if(b)b.innerHTML='<p style="color:var(--c-red);font-size:13px;">Failed to load content.</p>';}
       });
   }
 
@@ -946,10 +1176,24 @@ async function unlockLesson(lessonId){
   if(j.success){document.getElementById('modal-overlay')?.remove();Toast.success(`Unlocked! -${j.cost} coins`);openLesson(lessonId);}else Toast.error(j.error);}catch(e){Toast.error(e.message);}
 }
 
-// Initialize shared nav
-if(typeof Nav!=='undefined')Nav.init();
+// ── Shared nav wiring (desktop links + bell + user menu) ──
+document.addEventListener('nav:ready', () => {
+  const nav = document.getElementById('main-nav');
+  if (!nav) return;
 
+  // Nav.render() already built the shared links (Dashboard / Challenges /
+  // Code Lab) plus bell and user menu — the course page is a sub-page of
+  // Dashboard, so no extra link is needed here (adding one duplicated it).
 
+  // Shared mobile nav + page-specific "Lessons" action
+  Nav.addMobileAction({
+    id: 'course-lessons',
+    label: 'Lessons',
+    icon: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+    active: true,
+    onClick: showMobileSidebar
+  });
+});
 
 // ── Mobile sidebar toggle ───────────────────────
 function showMobileSidebar(){
@@ -998,7 +1242,8 @@ doOpenLesson=function(lessonId){
 
 // On mobile, start with sidebar visible
 if(window.innerWidth<=900){
-  showMobileSidebar();
+  // Slightly deferred so nav/mobile DOM is settled first
+  setTimeout(showMobileSidebar,0);
 }
 
 // ── Leaderboard ────────────────────────────────

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>1percent Rwanda — Expert Programme | Learn to Build Production Software</title>
+<title>1percent Rwanda Expert Programme — Learn Coding in Kigali, Rwanda</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <meta name="description" content="1percent Rwanda's Expert Programme turns junior developers into world-class engineers. Hands-on training in full-stack development, AI, cybersecurity, and DevOps from Kigali, Rwanda.">
 <meta property="og:title" content="1percent Rwanda — Expert Programme">
@@ -11,16 +11,30 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://learn.1percent.rw">
 <meta property="og:site_name" content="1percent Rwanda">
-<meta property="og:image" content="https://learn.1percent.rw/favicon.svg">
+<meta property="og:image" content="https://learn.1percent.rw/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="1percent Rwanda — Expert Programme">
 <meta name="twitter:description" content="Rigorous, hands-on developer training from Kigali. Master full-stack engineering, AI, cybersecurity, and ship real projects.">
-<meta name="twitter:image" content="https://learn.1percent.rw/favicon.svg">
+<meta name="twitter:image" content="https://learn.1percent.rw/og-image.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "EducationalOrganization",
+  "name": "1percent Rwanda — Expert Programme",
+  "url": "https://learn.1percent.rw",
+  "logo": "https://learn.1percent.rw/favicon.svg",
+  "description": "Rigorous, hands-on developer training from Kigali. Master full-stack engineering, AI, cybersecurity, and ship real projects.",
+  "address": { "@type": "PostalAddress", "addressLocality": "Kigali", "addressCountry": "RW" },
+  "email": "1percentrwanda@gmail.com",
+  "sameAs": ["https://1percent.rw"]
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link rel="stylesheet" href="/css/main.css">
+<script src="/js/error-reporter.js" defer></script>
 <style>
   /* Hero */
   .learn-hero{padding:140px 0 80px;background:linear-gradient(170deg,#0a0f1a 0%,#111827 50%,#0f172a 100%);color:#fff;overflow:hidden;position:relative;}
@@ -113,6 +127,7 @@
   }
 </style>
 <script src="/js/icons.js"></script>
+<script src="/js/session.js" defer></script>
 </head>
 <body>
 
@@ -356,12 +371,15 @@
           <li><a href="/playground">Challenges</a></li>
           <li><a href="/lab">Code Lab</a></li>
           <li><a href="/payment">Pricing</a></li>
+          <li><a href="/install">Install the 1% Learn Tools</a></li>
+          <li><a href="/docs">Documentation</a></li>
         </ul>
       </div>
       <div class="footer-col">
         <h4>Company</h4>
         <ul>
           <li><a href="https://1percent.rw">1percent Rwanda</a></li>
+          <li><a href="/contact">Contact Us</a></li>
           <li><a href="mailto:1percentrwanda@gmail.com">1percentrwanda@gmail.com</a></li>
         </ul>
       </div>
@@ -369,8 +387,9 @@
     <div class="footer-bottom">
       <span>&copy; 2026 1percent Rwanda — Kigali, Rwanda</span>
       <div class="footer-bottom-links">
-        <a href="#" data-modal="terms-modal">Terms of Service</a>
-        <a href="#" data-modal="privacy-modal">Privacy Policy</a>
+        <a href="/terms">Terms of Service</a>
+        <a href="/privacy">Privacy Policy</a>
+        <a href="/contact">Contact</a>
       </div>
       <div class="footer-social">
         <a href="#" aria-label="LinkedIn" class="icon-linkedin"></a>
@@ -508,7 +527,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function onLoggedIn() {
     const loginBtn = document.getElementById('open-auth');
-    // Check role to set correct destination        let dashUrl = '/dashboard';
+    let dashUrl = '/dashboard';
     try {
       const { data: { session } } = await supabaseClient.auth.getSession();
       const meRes = await fetch('/api/auth/me', {
@@ -523,6 +542,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     loginBtn.classList.remove('btn-primary');
     loginBtn.classList.add('btn-outline');
     document.getElementById('nav-dashboard-link').style.display = 'none';
+    return dashUrl;
   }
 
   // Auth modal handlers
@@ -626,16 +646,65 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // Auth-aware login buttons: FIRST read the stored session — only show
+  // the login form when there is genuinely no stored session.
+  function peekStoredSession() {
+    try {
+      // supabase-js v2 persists the session under "sb-<project-ref>-auth-token"
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!/^sb-.+-auth-token$/.test(key || '')) continue;
+        const raw = localStorage.getItem(key);
+        if (!raw) continue;
+        const parsed = JSON.parse(raw);
+        if (parsed?.access_token || parsed?.currentSession?.access_token) return true;
+      }
+      // Legacy keys written by the app's own login flows
+      if (localStorage.getItem('sb-access-token')) return true;
+      if (sessionStorage.getItem('sb-access-token')) return true;
+    } catch {}
+    return false;
+  }
+
+  async function openAuthOrDashboard() {
+    // 1) Ask Supabase first (reads storage, refreshes if near expiry)
+    try {
+      let client = supabaseClient;
+      if (!client && typeof supabase !== 'undefined') {
+        const res = await fetch('/api/config');
+        const config = await res.json();
+        if (config.supabaseUrl && config.supabaseAnonKey) {
+          client = supabaseClient = supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+        }
+      }
+      if (client) {
+        const { data: { session } } = await client.auth.getSession();
+        if (session?.user) {
+          const dashUrl = await onLoggedIn();
+          window.location.href = dashUrl || '/dashboard';
+          return;
+        }
+      }
+    } catch {}
+    // 2) Fallback: raw check of stored session tokens
+    if (peekStoredSession()) {
+      window.location.href = '/dashboard';
+      return;
+    }
+    // 3) Genuinely no stored session — show the login form
+    Modal.open('auth-modal');
+  }
+
   // CTA button
   document.getElementById('cta-login-btn')?.addEventListener('click', (e) => {
     e.preventDefault();
-    Modal.open('auth-modal');
+    openAuthOrDashboard();
   });
 
   // Open auth from header
   document.getElementById('open-auth')?.addEventListener('click', (e) => {
     e.preventDefault();
-    Modal.open('auth-modal');
+    openAuthOrDashboard();
   });
 
   // Forgot password

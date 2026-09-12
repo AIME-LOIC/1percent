@@ -10,6 +10,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/error-reporter.js" defer></script>
 <style>
 :root{--admin-bg:#f8f9fa;--admin-surface:#ffffff;--admin-card:#ffffff;--admin-border:#e5e7eb;--admin-text:#111827;--admin-muted:#6b7280;--admin-green:#059669;--admin-blue:#2563eb;--admin-yellow:#d97706;--admin-red:#dc2626;--admin-purple:#7c3aed;--admin-accent:#0d6e3f;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -110,7 +112,50 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .auth-loading p{color:#6c7086;font-size:14px;}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-@media(max-width:768px){.admin{grid-template-columns:1fr;}.sidebar{display:none;}.stats-row{grid-template-columns:1fr 1fr;}.form-row{grid-template-columns:1fr;}}
+/* ── Mobile drawer + responsive ───────────────────── */
+.sidebar-toggle{display:none;align-items:center;justify-content:center;width:34px;height:34px;border:1px solid var(--admin-border);border-radius:6px;background:#fff;color:var(--admin-text);cursor:pointer;flex-shrink:0;}
+.sidebar-toggle:active{background:#f3f4f6;}
+.sidebar-backdrop{position:fixed;inset:0;background:rgba(17,24,39,.5);z-index:55;opacity:0;pointer-events:none;transition:opacity .2s;}
+.sidebar-backdrop.show{opacity:1;pointer-events:auto;}
+.card-header{flex-wrap:wrap;gap:10px;}
+
+@media(max-width:900px){
+  .admin{grid-template-columns:1fr;}
+  .sidebar-toggle{display:inline-flex;}
+  .topbar{padding:0 12px;}
+  .topbar-left{gap:10px;}
+  .topbar-title{display:none;}
+  .topbar-right{gap:8px;}
+  .topbar-btn{padding:6px 10px;font-size:11px;}
+  .sidebar{position:fixed;top:0;left:0;bottom:0;width:270px;max-width:85vw;z-index:60;transform:translateX(-105%);transition:transform .22s ease;box-shadow:0 12px 40px rgba(0,0,0,.18);padding-top:20px;}
+  .sidebar.open{transform:none;}
+  .main{padding:16px;-webkit-overflow-scrolling:touch;}
+  .main h1{font-size:20px;}
+  .main .subtitle{font-size:13px;margin-bottom:16px;}
+  .stats-row,.stats-row.cols-5{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+  .stat-card{padding:14px;}
+  .stat-card .stat-value{font-size:22px;}
+  .card-header{padding:12px 14px;}
+  .card-header h2{font-size:14px;}
+  .card-body{padding:14px;}
+  .data-table th{padding:8px 10px;}
+  .data-table td{padding:10px;}
+  .form-row{grid-template-columns:1fr;}
+  .log-tabs{width:100%;}
+  .log-tabs .log-tab{flex:1;justify-content:center;padding:8px 10px;}
+  .log-toolbar{width:100%;}
+  .log-toolbar input{flex:1;width:auto;min-width:140px;}
+  .log-modal-overlay{padding:10px;}
+  .log-modal{max-height:94vh;}
+  .log-meta{grid-template-columns:1fr;}
+}
+@media(max-width:480px){
+  .topbar-user #admin-name{display:none;}
+  .stats-row,.stats-row.cols-5{grid-template-columns:1fr 1fr;}
+  #lessons-file-list{grid-template-columns:1fr;padding:10px;}
+  .log-toolbar{flex-direction:column;align-items:stretch;}
+  .log-toolbar input{min-width:0;width:100%;}
+}
 .lesson-md-content table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px;}
 .lesson-md-content th{text-align:left;padding:8px 12px;border-bottom:2px solid var(--admin-border);font-weight:700;color:var(--admin-muted);font-size:11px;text-transform:uppercase;}
 .lesson-md-content td{padding:8px 12px;border-bottom:1px solid #f3f4f6;}
@@ -118,6 +163,62 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 /* Lessons grid */
 #lessons-file-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;padding:16px;}
 #lessons-file-list:empty + #lessons-empty{display:block !important;}
+
+/* ════════════════════════════════════════════════════
+   LOGS & ERRORS PANEL
+   ════════════════════════════════════════════════════ */
+.stats-row.cols-5{grid-template-columns:repeat(5,1fr);}
+.log-tabs{display:flex;align-items:center;gap:4px;background:#fff;border:1px solid var(--admin-border);border-radius:8px;padding:4px;width:max-content;}
+.log-tabs .log-tab{padding:7px 18px;border:none;background:transparent;border-radius:6px;font-size:13px;font-weight:600;color:var(--admin-muted);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:7px;font-family:'Inter',sans-serif;}
+.log-tabs .log-tab:hover{color:var(--admin-text);}
+.log-tabs .log-tab.active{background:var(--admin-accent);color:#fff;}
+.tab-count{font-size:10px;font-weight:700;padding:1px 7px;border-radius:100px;background:rgba(0,0,0,.08);display:none;}
+.log-tab.active .tab-count{background:rgba(255,255,255,.25);}
+.log-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+.log-toolbar select,.log-toolbar input{padding:7px 10px;border:1px solid var(--admin-border);border-radius:6px;font-size:12px;color:var(--admin-text);background:#fff;outline:none;font-family:'Inter',sans-serif;}
+.log-toolbar select{cursor:pointer;}
+.log-toolbar select:focus,.log-toolbar input:focus{border-color:var(--admin-accent);box-shadow:0 0 0 3px rgba(13,110,63,.1);}
+.log-toolbar input{width:220px;}
+
+/* Level / severity pills */
+.lvl{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:3px 10px;border-radius:100px;border:1px solid transparent;white-space:nowrap;}
+.lvl::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.lvl-error{background:#fef2f2;color:#b91c1c;border-color:#fecaca;}
+.lvl-warning{background:#fffbeb;color:#b45309;border-color:#fde68a;}
+.lvl-fatal,.lvl-critical{background:#dc2626;color:#fff;border-color:#b91c1c;}
+.lvl-info,.lvl-low{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;}
+.lvl-debug{background:#f3f4f6;color:#4b5563;border-color:#e5e7eb;}
+.lvl-medium{background:#fffbeb;color:#b45309;border-color:#fde68a;}
+.lvl-high{background:#fef2f2;color:#b91c1c;border-color:#fecaca;}
+
+/* Table cells */
+.log-row-link{cursor:pointer;}
+.log-row-link:hover .log-msg{color:var(--admin-accent);}
+.log-msg{font-weight:500;color:var(--admin-text);max-width:420px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.log-msg-sub{font-size:11px;color:var(--admin-muted);font-family:'JetBrains Mono',monospace;max-width:420px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;}
+tr.log-fatal td{background:#fff7f7;}
+tr.log-fatal:hover td{background:#feeeee !important;}
+
+/* Detail modal */
+.log-modal-overlay{position:fixed;inset:0;z-index:3000;background:rgba(17,24,39,.55);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:24px;animation:logFadeIn .15s ease;}
+.log-modal{background:#fff;border-radius:14px;width:100%;max-width:760px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.25);animation:logModalUp .18s ease;}
+@keyframes logFadeIn{from{opacity:0}to{opacity:1}}
+@keyframes logModalUp{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+.log-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 22px;border-bottom:1px solid var(--admin-border);}
+.log-modal-title{font-size:15px;font-weight:800;margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.log-modal-sub{font-size:12px;color:var(--admin-muted);margin-top:5px;font-family:'JetBrains Mono',monospace;}
+.log-modal-body{flex:1;overflow-y:auto;padding:20px 22px;display:flex;flex-direction:column;gap:16px;}
+.log-modal-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 22px;border-top:1px solid var(--admin-border);background:#f9fafb;}
+.log-message{background:#f9fafb;border:1px solid var(--admin-border);border-left:4px solid var(--admin-red);border-radius:8px;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.6;word-break:break-word;color:var(--admin-text);white-space:pre-wrap;}
+.log-meta{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--admin-border);border:1px solid var(--admin-border);border-radius:8px;overflow:hidden;}
+.log-meta > div{background:#fff;padding:10px 14px;}
+.log-meta .k{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--admin-muted);margin-bottom:3px;}
+.log-meta .v{font-size:12.5px;color:var(--admin-text);word-break:break-all;font-family:'JetBrains Mono',monospace;}
+.log-stack{background:#0d1117;color:#c9d1d9;border-radius:8px;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.6;overflow:auto;max-height:280px;white-space:pre;margin:0;}
+.log-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--admin-muted);display:flex;align-items:center;justify-content:space-between;}
+.log-copy-btn{font-size:11px;font-weight:600;color:var(--admin-blue);background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:4px;font-family:'Inter',sans-serif;}
+.log-copy-btn:hover{background:#eff6ff;}
+@media(max-width:768px){.stats-row.cols-5{grid-template-columns:1fr 1fr;}.log-meta{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -126,6 +227,9 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
   <!-- Top Bar -->
   <div class="topbar">
     <div class="topbar-left">
+      <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle menu">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
       <a href="/dashboard" class="topbar-logo"><div class="mark">1%</div> Admin Panel</a>
       <span class="topbar-title" id="topbar-section-title">Dashboard</span>
     </div>
@@ -175,6 +279,14 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
       </a>
     </div>
     <div class="sidebar-section">
+      <div class="sidebar-label">System</div>
+      <a class="sidebar-item" data-panel="logs" id="logs-nav-item" onclick="showPanel('logs')">
+        <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
+        Logs & Errors
+        <span id="logs-unread-badge" style="display:none;margin-left:auto;background:var(--admin-red);color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;padding:0 5px;border-radius:100px;display:none;align-items:center;justify-content:center;"></span>
+      </a>
+    </div>
+    <div class="sidebar-section">
       <div class="sidebar-label">Tools</div>
       <a class="sidebar-item" onclick="openSignModal()">
         <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg></span>
@@ -190,6 +302,8 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
     </div>
   </nav>
 
+  <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="toggleSidebar(false)"></div>
+
   <!-- Main Content -->
   <main class="main" id="main-content">
     <!-- Dashboard Panel -->
@@ -197,10 +311,10 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
       <h1>Dashboard</h1>
       <p class="subtitle">Overview of your platform.</p>
       <div class="stats-row" id="stats-row">
-        <div class="stat-card"><div class="stat-label">Courses</div><div class="stat-value" id="stat-courses">—</div></div>
-        <div class="stat-card"><div class="stat-label">Lessons</div><div class="stat-value" id="stat-lessons">—</div></div>
-        <div class="stat-card"><div class="stat-label">Students</div><div class="stat-value" id="stat-students">—</div></div>
-        <div class="stat-card"><div class="stat-label">Challenges</div><div class="stat-value" id="stat-challenges">—</div></div>
+        <div class="stat-card"><div class="stat-label">Courses</div><div class="stat-value" id="stat-courses">0</div></div>
+        <div class="stat-card"><div class="stat-label">Lessons</div><div class="stat-value" id="stat-lessons">0</div></div>
+        <div class="stat-card"><div class="stat-label">Students</div><div class="stat-value" id="stat-students">0</div></div>
+        <div class="stat-card"><div class="stat-label">Challenges</div><div class="stat-value" id="stat-challenges">0</div></div>
       </div>
 
       <!-- Database Diagnostics -->
@@ -272,10 +386,104 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
     </div>
 
     <!-- Notifications Panel -->
+    <!-- Logs & Errors Panel -->
+    <div class="panel" id="panel-logs">
+      <h1>Logs &amp; Errors</h1>
+      <p class="subtitle">Live system errors, activity events and admin alerts.</p>
+
+      <!-- Stats cards -->
+      <div class="stats-row cols-5" id="log-stats-row">
+        <div class="stat-card"><div class="stat-label">Errors (24h)</div><div class="stat-value" id="logstat-errors24h">0</div></div>
+        <div class="stat-card"><div class="stat-label">Unresolved</div><div class="stat-value" id="logstat-unresolved">0</div></div>
+        <div class="stat-card"><div class="stat-label">Fatal (24h)</div><div class="stat-value" id="logstat-fatal">0</div></div>
+        <div class="stat-card"><div class="stat-label">Client Reports (24h)</div><div class="stat-value" id="logstat-client">0</div></div>
+        <div class="stat-card"><div class="stat-label">Unread Alerts</div><div class="stat-value" id="logstat-alerts">0</div></div>
+      </div>
+
+      <!-- Tabs -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+        <div class="log-tabs">
+          <button class="log-tab active" data-logtab="errors" onclick="switchLogTab('errors')">Errors <span class="tab-count" id="tab-count-errors"></span></button>
+          <button class="log-tab" data-logtab="activity" onclick="switchLogTab('activity')">Activity <span class="tab-count" id="tab-count-activity"></span></button>
+          <button class="log-tab" data-logtab="alerts" onclick="switchLogTab('alerts')">Alerts <span class="tab-count" id="tab-count-alerts"></span></button>
+        </div>
+        <button class="btn-admin outline" onclick="loadLogsPanel(true)">Refresh all</button>
+      </div>
+
+      <!-- ERRORS TAB -->
+      <div id="log-tab-errors">
+        <div class="card">
+          <div class="card-header">
+            <h2>Error Logs</h2>
+            <div class="log-toolbar">
+              <select id="log-errors-level" onchange="loadErrors()">
+                <option value="">All levels</option>
+                <option value="error">Error</option>
+                <option value="warning">Warning</option>
+                <option value="fatal">Fatal</option>
+                <option value="critical">Critical</option>
+              </select>
+              <select id="log-errors-source" onchange="loadErrors()">
+                <option value="">All sources</option>
+                <option value="frontend">Frontend</option>
+                <option value="backend">Backend</option>
+                <option value="cli">CLI</option>
+                <option value="vscode">VS Code</option>
+                <option value="worker">Worker</option>
+              </select>
+              <select id="log-errors-resolved" onchange="loadErrors()">
+                <option value="false">Unresolved</option>
+                <option value="">All</option>
+                <option value="true">Resolved</option>
+              </select>
+              <input id="log-errors-search" placeholder="Search messages…" oninput="clearTimeout(window.__logSearchT);window.__logSearchT=setTimeout(loadErrors,400);">
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead><tr><th style="width:110px;">Level</th><th>Message</th><th style="width:90px;">Source</th><th style="width:160px;">User</th><th style="width:130px;">When</th><th style="width:100px;">Status</th><th style="text-align:right;width:180px;">Actions</th></tr></thead>
+              <tbody id="log-errors-tbody"><tr><td colspan="7" class="empty">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTIVITY TAB -->
+      <div id="log-tab-activity" style="display:none;">
+        <div class="card">
+          <div class="card-header"><h2>System Activity</h2><button class="btn-admin outline" onclick="loadActivity()">Refresh</button></div>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead><tr><th style="width:90px;">Level</th><th style="width:190px;">Event</th><th>Message</th><th style="width:90px;">Source</th><th style="width:110px;">User</th><th style="width:120px;">When</th></tr></thead>
+              <tbody id="log-activity-tbody"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALERTS TAB -->
+      <div id="log-tab-alerts" style="display:none;">
+        <div class="card">
+          <div class="card-header">
+            <h2>Admin Alerts</h2>
+            <div style="display:flex;gap:8px;">
+              <button class="btn-admin outline" onclick="markAllAlertsRead()">Mark all read</button>
+              <button class="btn-admin outline" onclick="loadAlerts()">Refresh</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead><tr><th style="width:110px;">Severity</th><th style="width:220px;">Title</th><th>Message</th><th style="width:110px;">Type</th><th style="width:120px;">When</th><th style="text-align:right;width:160px;">Actions</th></tr></thead>
+              <tbody id="log-alerts-tbody"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="panel" id="panel-notifications">
       <h1>Notifications</h1>
       <p class="subtitle">Send notifications to users.</p>
-      
       <!-- Send Notification Form -->
       <div class="card">
         <div class="card-header">
@@ -359,7 +567,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 </div>
 
 <script>
-let supabaseClient=null, token='', allCourses=[], allChallenges=[];
+let supabaseClient=null, token='', allCourses=[], allChallenges=[], lastEnrollments=[];
 
 async function init(){
   try{
@@ -484,33 +692,466 @@ async function apiFetch(url,opts={}){
 }
 
 async function loadAll(){
-  const results=await Promise.allSettled([
-    apiFetch('/api/admin/courses').then(r=>r.ok?r.json():{}).catch(()=>({})),
-    apiFetch('/api/admin/enrollments').then(r=>r.ok?r.json():{}).catch(()=>({})),
-    apiFetch('/api/coins/challenges/all').then(r=>r.ok?r.json():{}).catch(()=>({})),
-  ]);
-  const cRes=results[0].status==='fulfilled'?results[0].value:{};
-  const eRes=results[1].status==='fulfilled'?results[1].value:{};
-  const chRes=results[2].status==='fulfilled'?results[2].value:{};
-  allCourses=cRes.courses||[];
-  allChallenges=chRes.challenges||[];
-  document.getElementById('stat-courses').textContent=allCourses.length;
-  document.getElementById('stat-students').textContent=(eRes.enrollments||[]).length;
-  document.getElementById('stat-challenges').textContent=allChallenges.length;
-  // Count total lessons
-  let totalLessons=0;
-  for(const c of allCourses){
-    try{const r=await apiFetch(`/api/admin/courses/${c.id}/lessons`);const j=await r.json();totalLessons+=(j.lessons||[]).length;}catch{}
+  /* Each stat counts up the moment its own data arrives — nothing waits for everything */
+  const coursesP=apiFetch('/api/admin/courses').then(r=>r.ok?r.json():{}).then(j=>{
+    allCourses=j.courses||[];
+    animateStat('stat-courses',allCourses.length);
+    renderCoursesTable();
+    fillCourseSelects();
+  }).catch(()=>{});
+  const enrollP=apiFetch('/api/admin/enrollments').then(r=>r.ok?r.json():{}).then(j=>{
+    lastEnrollments=j.enrollments||[];
+    animateStat('stat-students',lastEnrollments.length);
+    renderEnrollments(lastEnrollments);
+  }).catch(()=>{});
+  const challP=apiFetch('/api/coins/challenges/all').then(r=>r.ok?r.json():{}).then(j=>{
+    allChallenges=j.challenges||[];
+    animateStat('stat-challenges',allChallenges.length);
+    renderChallengesTable();
+  }).catch(()=>{});
+  /* Lessons counted in parallel — the stat ticks up as each course responds */
+  const lessonsP=coursesP.then(()=>countLessonsParallel()).catch(()=>0);
+  await Promise.allSettled([coursesP,enrollP,challP,lessonsP]);
+  if(!allCourses.length||!lastEnrollments.length)loadDiagnostics();
+}
+
+/* ════════════════════════════════════════════════════
+   LOGS & ERRORS PANEL
+   ════════════════════════════════════════════════════ */
+let logTab='errors', logsLoaded=false;
+let allLogErrors=[], allLogActivity=[], allLogAlerts=[];
+
+function switchLogTab(tab){
+  logTab=tab;
+  document.querySelectorAll('.log-tab').forEach(b=>b.classList.toggle('active',b.dataset.logtab===tab));
+  document.getElementById('log-tab-errors').style.display=tab==='errors'?'':'none';
+  document.getElementById('log-tab-activity').style.display=tab==='activity'?'':'none';
+  document.getElementById('log-tab-alerts').style.display=tab==='alerts'?'':'none';
+}
+
+async function loadLogsPanel(force){
+  if(logsLoaded&&!force)return;
+  logsLoaded=true;
+  loadLogStats(); loadErrors(); loadActivity(); loadAlerts();
+}
+
+async function loadLogStats(){
+  try{
+    const r=await apiFetch('/api/admin/logs/stats');
+    if(!r.ok)return; const j=await r.json();
+    if(!j.success)return;
+    const s=j.stats||{};
+    document.getElementById('logstat-errors24h').textContent=s.errors24h??0;
+    document.getElementById('logstat-unresolved').textContent=s.unresolvedErrors??0;
+    document.getElementById('logstat-fatal').textContent=s.fatal24h??0;
+    document.getElementById('logstat-client').textContent=s.clientReported24h??0;
+    document.getElementById('logstat-alerts').textContent=s.unreadAlerts??0;
+  }catch{}
+}
+
+function setTabCount(id,n){
+  const el=document.getElementById('tab-count-'+id);
+  if(!el)return;
+  if(n>0){el.textContent=n>99?'99+':String(n);el.style.display='';}
+  else el.style.display='none';
+}
+
+function levelClass(l){
+  const map={fatal:'lvl lvl-fatal',critical:'lvl lvl-critical',error:'lvl lvl-error',warning:'lvl lvl-warning',warn:'lvl lvl-warning',info:'lvl lvl-info',debug:'lvl lvl-debug',low:'lvl lvl-low',medium:'lvl lvl-medium',high:'lvl lvl-high'};
+  return map[(l||'error').toLowerCase()]||'lvl lvl-error';
+}
+
+function fullTime(s){
+  if(!s)return'—';
+  const d=new Date(s);
+  return isNaN(d)?'—':d.toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+/* ── Shared detail modal — professional popup for errors / activity / alerts ── */
+function openLogModal(html){
+  closeLogModal();
+  const ov=document.createElement('div');
+  ov.className='log-modal-overlay';
+  ov.id='log-modal-overlay';
+  ov.innerHTML=`<div class="log-modal" role="dialog" aria-modal="true">${html}</div>`;
+  ov.addEventListener('mousedown',ev=>{if(ev.target===ov)closeLogModal();});
+  document.body.appendChild(ov);
+  document.addEventListener('keydown',logModalEsc);
+}
+function logModalEsc(e){if(e.key==='Escape')closeLogModal();}
+function closeLogModal(){
+  document.getElementById('log-modal-overlay')?.remove();
+  document.removeEventListener('keydown',logModalEsc);
+}
+function copyLogText(btn){
+  const txt=btn.dataset.s||'';
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(()=>{const o=btn.textContent;btn.textContent='Copied';setTimeout(()=>btn.textContent=o,1400);});
   }
-  document.getElementById('stat-lessons').textContent=totalLessons;
-  renderCoursesTable();
-  renderEnrollments(eRes.enrollments||[]);
-  renderChallengesTable();
-  // Populate selects
+}
+function logMetaGrid(pairs){
+  const rows=(pairs||[]).filter(p=>p[1]!==null&&p[1]!==undefined&&String(p[1]).trim()!=='');
+  if(!rows.length)return'';
+  return `<div class="log-meta">${rows.map(p=>`<div><div class="k">${esc(p[0])}</div><div class="v">${esc(String(p[1]))}</div></div>`).join('')}</div>`;
+}
+
+async function loadErrors(){
+  try{
+    const level=document.getElementById('log-errors-level').value;
+    const source=document.getElementById('log-errors-source').value;
+    const resolved=document.getElementById('log-errors-resolved').value;
+    const search=document.getElementById('log-errors-search').value.trim();
+    const params=new URLSearchParams({limit:'50'});
+    if(level)params.set('level',level);
+    if(source)params.set('source',source);
+    if(resolved)params.set('resolved',resolved);
+    if(search)params.set('search',search);
+    const r=await apiFetch(`/api/admin/logs/errors?${params}`);
+    if(!r.ok)return; const j=await r.json();
+    if(!j.success)return;
+    allLogErrors=j.errors||[];
+    renderLogErrors();
+  }catch{}
+}
+
+function renderLogErrors(){
+  const tb=document.getElementById('log-errors-tbody');
+  setTabCount('errors',allLogErrors.length);
+  if(!allLogErrors.length){tb.innerHTML='<tr><td colspan="7" class="empty">No errors match the current filters</td></tr>';return;}
+  tb.innerHTML=allLogErrors.map((e,i)=>{
+    const lvl=(e.level||'error').toLowerCase();
+    const fatal=lvl==='fatal'||lvl==='critical';
+    const sub=[e.error_code,e.path,e.status_code?'HTTP '+e.status_code:null].filter(Boolean).join('  ·  ');
+    return `<tr class="${fatal?'log-fatal':''}">
+      <td><span class="${levelClass(e.level)}">${esc(lvl)}</span></td>
+      <td class="log-row-link" onclick="viewLogErrorIdx(${i})" title="Click to view full error details">
+        <div class="log-msg">${esc(e.message||'')}</div>
+        ${sub?`<div class="log-msg-sub">${esc(sub)}</div>`:''}
+        ${e.is_client_reported?'<span class="badge badge-blue" style="font-size:9px;margin-top:3px;display:inline-block;">client</span>':''}
+      </td>
+      <td style="font-size:12px;color:var(--admin-muted);">${esc(e.source||'—')}</td>
+      <td style="font-size:12px;color:var(--admin-muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(e.user_email||e.contact_email||'—')}</td>
+      <td style="font-size:12px;color:var(--admin-muted);white-space:nowrap;" title="${esc(fullTime(e.last_seen_at||e.created_at))}">${timeAgo(e.last_seen_at||e.created_at)}${e.occurrence_count>1?` <span class="badge badge-blue" style="font-size:9px;" title="Occurrences">×${e.occurrence_count}</span>`:''}</td>
+      <td>${e.is_resolved?'<span class="badge badge-green">Resolved</span>':'<span class="badge badge-yellow">Open</span>'}</td>
+      <td style="text-align:right;white-space:nowrap;">
+        <button class="btn-admin outline" onclick="viewLogErrorIdx(${i})">View</button>
+        ${e.is_resolved
+          ?`<button class="btn-admin outline" onclick="resolveLogError('${e.id}',false)">Reopen</button>`
+          :`<button class="btn-admin primary" onclick="resolveLogError('${e.id}',true)">Resolve</button>`}
+      </td>
+    </tr>`;
+  }).join('');
+}
+function viewLogErrorIdx(i){const e=allLogErrors[i];if(e)viewLogError(e.id);}
+
+async function viewLogError(id){
+  try{
+    const r=await apiFetch(`/api/admin/logs/errors/${id}`);
+    if(!r.ok){toast('Failed to load error details','error');return;}
+    const j=await r.json();
+    if(!j.success||!j.error){toast('Error not found','error');return;}
+    const e=j.error;
+    const lvl=(e.level||'error').toLowerCase();
+    const ctx=e.context&&Object.keys(e.context).length?e.context:null;
+    openLogModal(`
+      <div class="log-modal-head">
+        <div>
+          <h3 class="log-modal-title">
+            <span class="${levelClass(e.level)}">${esc(lvl)}</span>
+            ${e.error_code?`<span class="badge badge-blue">${esc(e.error_code)}</span>`:''}
+            ${e.is_resolved?'<span class="badge badge-green">Resolved</span>':'<span class="badge badge-yellow">Open</span>'}
+            ${e.is_client_reported?'<span class="badge badge-blue">Client report</span>':''}
+          </h3>
+          <div class="log-modal-sub">#${esc(String(e.id).slice(0,8))} · ${esc(e.source||'unknown')} · ${esc(fullTime(e.created_at))}</div>
+        </div>
+        <button class="btn-admin outline" onclick="closeLogModal()">Close</button>
+      </div>
+      <div class="log-modal-body">
+        <div>
+          <div class="log-section-title" style="margin-bottom:8px;">Error message</div>
+          <div class="log-message">${esc(e.message||'')}</div>
+        </div>
+        ${logMetaGrid([
+          ['Source',e.source],['HTTP status',e.status_code],
+          ['Method',e.method],['Path',e.path],
+          ['URL',e.url],['Request ID',e.request_id],
+          ['User',e.user_email],['Contact email',e.contact_email],
+          ['IP address',e.ip_address],['Occurrences',e.occurrence_count],
+          ['First seen',fullTime(e.created_at)],['Last seen',fullTime(e.last_seen_at)],
+          ['Resolved',e.is_resolved?`Yes · ${fullTime(e.resolved_at)}`:'No']
+        ])}
+        ${e.stack?`
+        <div>
+          <div class="log-section-title" style="margin-bottom:8px;"><span>Stack trace</span><button class="log-copy-btn" data-s="${esc(e.stack)}" onclick="copyLogText(this)">Copy</button></div>
+          <pre class="log-stack">${esc(e.stack)}</pre>
+        </div>`:''}
+        ${e.user_agent?`
+        <div>
+          <div class="log-section-title" style="margin-bottom:8px;">User agent</div>
+          <div class="log-message" style="border-left-color:var(--admin-muted);font-size:11.5px;">${esc(e.user_agent)}</div>
+        </div>`:''}
+        ${ctx?`
+        <div>
+          <div class="log-section-title" style="margin-bottom:8px;"><span>Context</span><button class="log-copy-btn" data-s="${esc(JSON.stringify(ctx,null,2))}" onclick="copyLogText(this)">Copy</button></div>
+          <pre class="log-stack" style="background:#f6f8fa;color:#24292f;">${esc(JSON.stringify(ctx,null,2))}</pre>
+        </div>`:''}
+        ${e.resolution_note?`
+        <div>
+          <div class="log-section-title" style="margin-bottom:8px;">Resolution note</div>
+          <div class="log-message" style="border-left-color:var(--admin-green);">${esc(e.resolution_note)}</div>
+        </div>`:''}
+      </div>
+      <div class="log-modal-foot">
+        <div style="font-size:11px;color:var(--admin-muted);">Last seen ${esc(timeAgo(e.last_seen_at||e.created_at))}</div>
+        <div style="display:flex;gap:8px;">
+          ${e.is_resolved
+            ?`<button class="btn-admin outline" onclick="resolveLogError('${e.id}',false,{close:true})">Reopen</button>`
+            :`<button class="btn-admin primary" onclick="resolveLogError('${e.id}',true,{close:true})">Mark resolved</button>`}
+        </div>
+      </div>`);
+  }catch(e){toast('Failed to load error details','error');}
+}
+
+async function resolveLogError(id,resolved,opts){
+  opts=opts||{};
+  try{
+    const r=await apiFetch(`/api/admin/logs/errors/${id}/resolve`,{method:'PUT',body:JSON.stringify({resolved})});
+    if(!r.ok){toast('Failed to update error','error');return;}
+    if(opts.close)closeLogModal();
+    toast(resolved?'Error marked as resolved':'Error reopened');
+    loadErrors(); loadLogStats();
+  }catch{toast('Failed to update error','error');}
+}
+
+async function loadActivity(){
+  try{
+    const r=await apiFetch('/api/admin/logs/activity?limit=50');
+    if(!r.ok)return; const j=await r.json();
+    if(!j.success)return;
+    allLogActivity=j.logs||[];
+    setTabCount('activity',allLogActivity.length);
+    const tb=document.getElementById('log-activity-tbody');
+    if(!allLogActivity.length){tb.innerHTML='<tr><td colspan="6" class="empty">No activity yet</td></tr>';return;}
+    tb.innerHTML=allLogActivity.map((l,i)=>`<tr>
+      <td><span class="${levelClass(l.level==='warn'?'warning':l.level)}">${esc((l.level||'info').toLowerCase())}</span></td>
+      <td style="font-weight:600;font-family:'JetBrains Mono',monospace;font-size:12px;">${esc(l.event||'')}</td>
+      <td class="log-row-link" onclick="viewActivityIdx(${i})" title="Click to view details"><div class="log-msg" style="max-width:360px;">${esc(l.message||'')}</div></td>
+      <td style="font-size:12px;color:var(--admin-muted);">${esc(l.source||'')}</td>
+      <td style="font-size:12px;color:var(--admin-muted);font-family:'JetBrains Mono',monospace;">${esc(l.user_id?l.user_id.slice(0,8)+'…':'—')}</td>
+      <td style="font-size:12px;color:var(--admin-muted);white-space:nowrap;" title="${esc(fullTime(l.created_at))}">${timeAgo(l.created_at)}</td>
+    </tr>`).join('');
+  }catch{}
+}
+
+function viewActivityIdx(i){
+  const l=allLogActivity[i];if(!l)return;
+  const md=l.metadata&&Object.keys(l.metadata).length?l.metadata:null;
+  openLogModal(`
+    <div class="log-modal-head">
+      <div>
+        <h3 class="log-modal-title">
+          <span class="${levelClass(l.level==='warn'?'warning':l.level)}">${esc((l.level||'info').toLowerCase())}</span>
+          <span class="badge badge-purple">${esc(l.event||'event')}</span>
+        </h3>
+        <div class="log-modal-sub">${esc(fullTime(l.created_at))}</div>
+      </div>
+      <button class="btn-admin outline" onclick="closeLogModal()">Close</button>
+    </div>
+    <div class="log-modal-body">
+      ${l.message?`
+      <div>
+        <div class="log-section-title" style="margin-bottom:8px;">Message</div>
+        <div class="log-message" style="border-left-color:var(--admin-blue);">${esc(l.message)}</div>
+      </div>`:''}
+      ${logMetaGrid([['Event',l.event],['Level',l.level],['Source',l.source],['User ID',l.user_id],['When',fullTime(l.created_at)]])}
+      ${md?`
+      <div>
+        <div class="log-section-title" style="margin-bottom:8px;"><span>Metadata</span><button class="log-copy-btn" data-s="${esc(JSON.stringify(md,null,2))}" onclick="copyLogText(this)">Copy</button></div>
+        <pre class="log-stack" style="background:#f6f8fa;color:#24292f;">${esc(JSON.stringify(md,null,2))}</pre>
+      </div>`:''}
+    </div>
+    <div class="log-modal-foot">
+      <div></div>
+      <button class="btn-admin outline" onclick="closeLogModal()">Close</button>
+    </div>`);
+}
+
+async function loadAlerts(){
+  try{
+    const r=await apiFetch('/api/admin/logs/alerts?limit=50');
+    if(!r.ok)return; const j=await r.json();
+    if(!j.success)return;
+    allLogAlerts=j.alerts||[];
+    updateUnreadBadge(j.unreadCount||0);
+    setTabCount('alerts',allLogAlerts.length);
+    const tb=document.getElementById('log-alerts-tbody');
+    if(!allLogAlerts.length){tb.innerHTML='<tr><td colspan="6" class="empty">No alerts</td></tr>';return;}
+    tb.innerHTML=allLogAlerts.map((a,i)=>{
+      const sev=(a.severity||'low').toLowerCase();
+      return `<tr style="${!a.is_read?'background:#fffdf5;':''}">
+        <td><span class="${levelClass(sev)}">${esc(sev)}</span>${a.is_read?'':' <span class="badge badge-blue" style="font-size:9px;">new</span>'}</td>
+        <td style="font-weight:600;" class="log-row-link" onclick="viewAlertIdx(${i})" title="Click to view details">${esc(a.title||'')}</td>
+        <td class="log-row-link" onclick="viewAlertIdx(${i})" title="Click to view details"><div class="log-msg" style="max-width:360px;">${esc(a.message||'')}</div></td>
+        <td style="font-size:12px;color:var(--admin-muted);">${esc(a.type||'')}</td>
+        <td style="font-size:12px;color:var(--admin-muted);white-space:nowrap;" title="${esc(fullTime(a.created_at))}">${timeAgo(a.created_at)}</td>
+        <td style="text-align:right;white-space:nowrap;">
+          ${a.is_read?'':`<button class="btn-admin outline" onclick="markAlertRead('${a.id}')">Read</button>`}
+          <button class="btn-admin danger" onclick="deleteAlert('${a.id}')">Delete</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }catch{}
+}
+
+function viewAlertIdx(i){
+  const a=allLogAlerts[i];if(!a)return;
+  const sev=(a.severity||'low').toLowerCase();
+  const md=a.metadata&&Object.keys(a.metadata).length?a.metadata:null;
+  openLogModal(`
+    <div class="log-modal-head">
+      <div>
+        <h3 class="log-modal-title">
+          <span class="${levelClass(sev)}">${esc(sev)}</span>
+          <span class="badge badge-purple">${esc(a.type||'alert')}</span>
+          ${a.is_read?'':'<span class="badge badge-blue">Unread</span>'}
+        </h3>
+        <div class="log-modal-sub">${esc(fullTime(a.created_at))}</div>
+      </div>
+      <button class="btn-admin outline" onclick="closeLogModal()">Close</button>
+    </div>
+    <div class="log-modal-body">
+      <div>
+        <div class="log-section-title" style="margin-bottom:8px;">Title</div>
+        <div class="log-message" style="border-left-color:var(--admin-blue);">${esc(a.title||'')}</div>
+      </div>
+      ${a.message?`
+      <div>
+        <div class="log-section-title" style="margin-bottom:8px;">Message</div>
+        <div class="log-message">${esc(a.message)}</div>
+      </div>`:''}
+      ${logMetaGrid([['Severity',sev],['Type',a.type],['Source',a.source],['When',fullTime(a.created_at)]])}
+      ${md?`
+      <div>
+        <div class="log-section-title" style="margin-bottom:8px;"><span>Metadata</span><button class="log-copy-btn" data-s="${esc(JSON.stringify(md,null,2))}" onclick="copyLogText(this)">Copy</button></div>
+        <pre class="log-stack" style="background:#f6f8fa;color:#24292f;">${esc(JSON.stringify(md,null,2))}</pre>
+      </div>`:''}
+    </div>
+    <div class="log-modal-foot">
+      <div></div>
+      <div style="display:flex;gap:8px;">
+        ${a.is_read?'':`<button class="btn-admin primary" onclick="markAlertRead('${a.id}');closeLogModal();">Mark read</button>`}
+        <button class="btn-admin outline" onclick="closeLogModal()">Close</button>
+      </div>
+    </div>`);
+}
+
+async function markAlertRead(id){
+  try{ await apiFetch(`/api/admin/logs/alerts/${id}/read`,{method:'PUT'}); loadAlerts(); loadLogStats(); }catch{}
+}
+async function markAllAlertsRead(){
+  try{ await apiFetch('/api/admin/logs/alerts/read-all',{method:'PUT'}); loadAlerts(); loadLogStats(); }catch{}
+}
+async function deleteAlert(id){
+  try{ await apiFetch(`/api/admin/logs/alerts/${id}`,{method:'DELETE'}); loadAlerts(); loadLogStats(); }catch{}
+}
+
+function updateUnreadBadge(n){
+  const b=document.getElementById('logs-unread-badge');
+  if(!b)return;
+  if(n>0){b.textContent=n>99?'99+':String(n);b.style.display='flex';}
+  else b.style.display='none';
+}
+
+function timeAgo(s){
+  if(!s)return'';
+  const d=new Date(s),sec=Math.floor((Date.now()-d)/1000);
+  if(sec<60)return'just now';
+  if(sec<3600)return Math.floor(sec/60)+'m ago';
+  if(sec<86400)return Math.floor(sec/3600)+'h ago';
+  return d.toLocaleDateString();
+}
+
+/* ── LIVE: socket.io → instant popups + badge updates ── */
+function initLiveLogs(){
+  if(typeof io==='undefined'||window.__liveLogsInited)return;
+  window.__liveLogsInited=true;
+  try{
+    const sock=io({auth:{token}});
+    sock.on('admin:alert',(alert)=>{
+      if(alert&&alert.type==='server_error'){
+        showLiveErrorToast(alert);
+      } else {
+        if(typeof Toast!=='undefined')Toast.warning(alert?.title||'New alert');
+      }
+      updateUnreadBadge((parseInt(localStorage.getItem('admin-unread-alerts'))||0)+1);
+      if(document.getElementById('panel-logs')?.classList.contains('active')){loadAlerts();loadLogStats();}
+    });
+    sock.on('admin:error',(err)=>{
+      showLiveErrorToast(err);
+      if(document.getElementById('panel-logs')?.classList.contains('active')){loadErrors();loadLogStats();}
+    });
+  }catch(e){console.warn('[ADMIN] Live logs unavailable:',e.message);}
+}
+
+function showLiveErrorToast(alert){
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;bottom:20px;right:20px;z-index:10000;background:#dc2626;color:#fff;padding:14px 18px;border-radius:10px;box-shadow:0 12px 32px rgba(220,38,38,.4);max-width:380px;font-family:Inter,sans-serif;cursor:pointer;animation:slideIn .3s ease;';
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;margin-bottom:4px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      ${esc(alert?.severity==='critical'?'CRITICAL ERROR':alert?.severity==='fatal'?'FATAL ERROR':'Server error')}
+    </div>
+    <div style="font-size:12px;opacity:.95;line-height:1.5;">${esc(alert?.message||alert?.title||'An error occurred')}</div>
+    <div style="font-size:10px;opacity:.7;margin-top:6px;">Click to view in Logs & Errors</div>`;
+  el.onclick=()=>{el.remove();showPanel('logs');switchLogTab('errors');};
+  document.body.appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .4s';setTimeout(()=>el.remove(),400);},10000);
+}
+
+/* slide-in animation for live error popups */
+const style=document.createElement('style');
+style.textContent='@keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}';
+document.head.appendChild(style);
+/* ════════════════════════════════════════════════════
+   END LOGS PANEL
+   ════════════════════════════════════════════════════ */
+
+function fillCourseSelects(){
   const sel=document.getElementById('lesson-course-select');
-  sel.innerHTML='<option value="">Select course...</option>'+allCourses.map(c=>`<option value="${c.id}">${c.title}</option>`).join('');
-  // Load diagnostics if data looks empty
-  if(!allCourses.length || !(eRes.enrollments||[]).length) loadDiagnostics();
+  if(sel)sel.innerHTML='<option value="">Select course...</option>'+allCourses.map(c=>`<option value="${c.id}">${esc(c.title)}</option>`).join('');
+}
+
+/* Count lessons across all courses in PARALLEL — the stat ticks up as each responds */
+async function countLessonsParallel(){
+  let total=0;
+  await Promise.all(allCourses.map(async c=>{
+    try{
+      const r=await apiFetch(`/api/admin/courses/${c.id}/lessons`);
+      const j=await r.json();
+      total+=(j.lessons||[]).length;
+    }catch{}
+    animateStat('stat-lessons',total);
+  }));
+  return total;
+}
+
+/* Animated counter — counts from the current displayed value up to target */
+const _statAnims={};
+function animateStat(id,target){
+  const el=document.getElementById(id);if(!el)return;
+  const to=Math.max(0,Math.round(Number(target)||0));
+  if(_statAnims[id])cancelAnimationFrame(_statAnims[id]);
+  const from=parseInt(String(el.textContent).replace(/[^\d]/g,''),10)||0;
+  if(from===to){el.textContent=to.toLocaleString();delete _statAnims[id];return;}
+  const dur=Math.min(900,300+Math.abs(to-from)*6);
+  const t0=performance.now();
+  const tick=t=>{
+    const p=Math.min(1,(t-t0)/dur);
+    const eased=1-Math.pow(1-p,3);
+    el.textContent=Math.round(from+(to-from)*eased).toLocaleString();
+    if(p<1)_statAnims[id]=requestAnimationFrame(tick);else delete _statAnims[id];
+  };
+  _statAnims[id]=requestAnimationFrame(tick);
 }
 
 async function loadDiagnostics(){
@@ -552,14 +1193,29 @@ async function loadDiagnostics(){
 function toast(msg,type='success'){const t=document.createElement('div');t.className=`toast ${type}`;t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);}
 
 // ── Navigation ─────────────────────────────────────
+/* ── Mobile sidebar drawer ────────────────────── */
+function toggleSidebar(force){
+  const sb=document.querySelector('.sidebar');
+  const bd=document.getElementById('sidebar-backdrop');
+  if(!sb||!bd)return;
+  const open=force!==undefined?force:!sb.classList.contains('open');
+  sb.classList.toggle('open',open);
+  bd.classList.toggle('show',open);
+}
+function closeSidebar(){toggleSidebar(false);}
+/* Close the drawer when a nav item is tapped (covers Logout / Sign too) */
+document.querySelector('.sidebar')?.addEventListener('click',e=>{if(e.target.closest('.sidebar-item'))closeSidebar();});
+
 function showPanel(name){
+  closeSidebar();
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById(`panel-${name}`).classList.add('active');
   document.querySelectorAll('.sidebar-item').forEach(a=>{a.classList.toggle('active',a.dataset.panel===name);});
-  const titles={dashboard:'Dashboard',courses:'Courses',lessons:'Lessons',quizzes:'Quizzes',challenges:'Challenges',enrollments:'Enrollments'};
+  const titles={dashboard:'Dashboard',courses:'Courses',lessons:'Lessons',quizzes:'Quizzes',challenges:'Challenges',enrollments:'Enrollments',logs:'Logs & Errors',notifications:'Notifications'};
   document.getElementById('topbar-section-title').textContent=titles[name]||name;
   if(name==='quizzes')loadQuizzes();
   if(name==='lessons'){const sel=document.getElementById('lesson-course-select');if(sel.options.length>1&&!sel.value){sel.value=sel.options[1].value;}if(sel.value)loadLessons();}
+  if(name==='logs')loadLogsPanel();
 }
 
 // ── Courses ────────────────────────────────────────

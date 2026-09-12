@@ -16,7 +16,7 @@
 
 const { Router } = require('express');
 const courseController = require('../controllers/courseController');
-const { authenticate } = require('../middlewares/auth');
+const { authenticate, optionalAuth } = require('../middlewares/auth');
 const { rateLimit } = require('../middlewares/rateLimit');
 const certificateController = require('../controllers/certificateController');
 
@@ -37,8 +37,10 @@ router.post('/courses/progress/:lessonId/complete', authenticate, (req, res, nex
 router.post('/courses/:courseId/enroll', authenticate, (req, res, next) => courseController.enroll(req, res, next));
 router.get('/courses/:courseId/progress', authenticate, (req, res, next) => courseController.getCourseProgress(req, res, next));
 
-// Lesson content on demand (BEFORE /:slug to avoid route collision)
-router.get('/courses/lessons/:lessonId/content', rateLimit, (req, res, next) => courseController.getLessonContent(req, res, next));
+// Lesson content on demand (BEFORE /:slug to avoid route collision).
+// optionalAuth resolves the user when a token is present so the
+// controller can enforce premium/free-preview access server-side.
+router.get('/courses/lessons/:lessonId/content', rateLimit, optionalAuth, (req, res, next) => courseController.getLessonContent(req, res, next));
 
 // Public — course detail by slug (AFTER all named routes)
 router.get('/courses/:slug', rateLimit, (req, res, next) => courseController.getCourse(req, res, next));
