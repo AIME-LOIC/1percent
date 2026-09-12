@@ -3,13 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>1% Playground — Code Lab</title>
+<title>Online Code Lab — Run Code in Your Browser | 1% Expert</title>
+<meta name="description" content="Write and run code instantly in the 1% Code Lab. A free online IDE for JavaScript, Python and more — no setup required, part of the 1% Expert Programme.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/main.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/js/icons.js"></script>
+<script src="/js/login-popup.js"></script>
+<script src="/js/error-reporter.js" defer></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;overflow:hidden;font-family:var(--sans);background:#1e1e2e;color:#cdd6f4;}
@@ -175,7 +178,8 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);background:#1e1e2e
         <option value="php">PHP</option><option value="ruby">Ruby</option>
       </select>
       <button class="btn-run-sm" id="run-btn" onclick="runCode()"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> Run</button>
-      <button class="btn-run-sm sec" onclick="window.location.href='/dashboard'">Dashboard</button>
+      <button class="btn-run-sm sec" id="login-gate-btn" onclick="LoginPopup.show('lab')" style="display:none;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Login</button>
+      <button class="btn-run-sm sec" id="dash-btn" onclick="window.location.href='/dashboard'">Dashboard</button>
     </div>
   </div>
 
@@ -693,13 +697,33 @@ editor.addEventListener('keydown', (e) => {
 
 // ── Run code ───────────────────────────────────────
 async function runCode() {
+  // Login gate — the lab requires an account
+  if (!currentUser) {
+    showLabToast('Please log in to use the Code Lab.', 'warn');
+    LoginPopup.show('lab');
+    return;
+  }
   const code = editor.value.trim();
   const lang = FILES[currentFile].lang || langSelect.value;
   if (!code) { output.innerHTML = '<span class="error">No code to run.</span>'; return; }
   output.innerHTML = '<span class="muted">Running...</span>';
   document.getElementById('run-btn').disabled = true;
   try {
-    const res = await fetch('/api/lab/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, language: lang }) });
+    const res = await fetch('/api/lab/run', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {})
+      },
+      body: JSON.stringify({ code, language: lang })
+    });
+    if (res.status === 401) {
+      output.innerHTML = '<span class="error">Session expired. Please log in again.</span>';
+      showLabToast('Session expired — please log in.', 'warn');
+      LoginPopup.show('lab');
+      document.getElementById('run-btn').disabled = false;
+      return;
+    }
     const data = await res.json();
     if (data.html_preview) {
       const pa = document.getElementById('preview-area'); pa.innerHTML = '';
@@ -823,7 +847,7 @@ let serverFiles = {}; // fileId -> { id, file_name, content, language }
     const res = await fetch('/api/config');
     const config = await res.json();
     if (config.supabaseUrl && config.supabaseAnonKey && typeof supabase !== 'undefined') {
-      supabaseClient = supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+      supabaseClient = supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
       const { data: { session: s } } = await supabaseClient.auth.getSession();
       session = s;
       currentUser = s?.user || null;
@@ -833,6 +857,13 @@ let serverFiles = {}; // fileId -> { id, file_name, content, language }
       }
     }
   } catch (e) { console.warn('[LAB] Auth init failed:', e.message); }
+  // Login gate — update UI once the session state is known
+  LoginPopup.setLoggedIn(!!currentUser);
+  const gateBtn = document.getElementById('login-gate-btn');
+  const dashBtn = document.getElementById('dash-btn');
+  if (gateBtn) gateBtn.style.display = currentUser ? 'none' : '';
+  if (dashBtn) dashBtn.style.display = currentUser ? '' : 'none';
+  if (!currentUser) LoginPopup.show('lab');
 })();
 
 async function apiFetch(url, opts = {}) {

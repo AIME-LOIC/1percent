@@ -39,6 +39,19 @@ function initSocket(server) {
       }
 
       socket.data.userId = user.id;
+
+      // Tag admins so they can receive system-wide alert events.
+      try {
+        const { data: profile } = await adminClient
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        socket.data.role = profile?.role || 'student';
+      } catch {
+        socket.data.role = 'student';
+      }
+
       next();
     } catch (err) {
       console.error('[SOCKET] Auth error:', err.message);
@@ -50,6 +63,13 @@ function initSocket(server) {
     const userId = socket.data.userId;
     // Join a room keyed by userId so we can target a specific user
     socket.join(userId);
+
+    // Admins also join a shared room for system-wide admin alerts.
+    if (socket.data.role === 'admin') {
+      socket.join('admins');
+      console.log(`[SOCKET] Admin ${userId.slice(0, 8)}… joined admins room`);
+    }
+
     console.log(`[SOCKET] User ${userId.slice(0, 8)}… connected (${socket.id})`);
 
     socket.on('disconnect', () => {

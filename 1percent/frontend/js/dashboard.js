@@ -26,10 +26,15 @@ const Dashboard = {
     try {
       const res = await fetch('/api/config');
       const config = await res.json();
-      if (!config.supabaseUrl || !config.supabaseAnonKey || typeof supabase === 'undefined') {
+      if ((!config.supabaseUrl || !config.supabaseAnonKey || typeof supabase === 'undefined') && typeof OPSession === 'undefined') {
         this._showGuest(); return;
       }
-      this.supabase = supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+      // Shared persistent session (restores login from localStorage)
+      if (typeof OPSession !== 'undefined') {
+        this.supabase = await OPSession.getClient();
+      } else {
+        this.supabase = supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+      }
       const { data: { session } } = await this.supabase.auth.getSession();
       if (!session?.user) { this._showGuest(); return; }
       // Redirect new users to onboarding
@@ -96,7 +101,8 @@ const Dashboard = {
     });
     document.addEventListener('click', () => dropdown.classList.remove('open'));
     menu.querySelector('#user-menu-logout').addEventListener('click', async () => {
-      await this.supabase.auth.signOut();
+      if (typeof OPSession !== 'undefined') await OPSession.signOut();
+      else await this.supabase.auth.signOut();
       window.location.href = _url('/');
     });
   },

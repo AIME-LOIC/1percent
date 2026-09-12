@@ -66,7 +66,7 @@ class CourseService {
   async getLessonContent(lessonId) {
     const { data, error } = await adminClient
       .from('lessons')
-      .select('id, content_md, description')
+      .select('id, course_id, content_md, description')
       .eq('id', lessonId)
       .single();
     if (error) throw error;

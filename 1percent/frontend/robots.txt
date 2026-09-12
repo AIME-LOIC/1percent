@@ -1,6 +1,23 @@
 User-agent: *
 Allow: /
-Disallow: /dashboard.html
-Disallow: /reset-password.html
+# Private app pages (require login, no SEO value)
+Disallow: /dashboard
+Disallow: /playground
+Disallow: /lab
+Disallow: /settings
+Disallow: /onboarding
+Disallow: /admin
+Disallow: /payment-details
+Disallow: /reset-password
+Disallow: /learn/dashboard
+Disallow: /learn/playground
+Disallow: /learn/lab
+Disallow: /learn/settings
+Disallow: /learn/onboarding
+Disallow: /learn/admin
+Disallow: /learn/payment-details
+Disallow: /learn/reset-password
+# API
+Disallow: /api/
 
-Sitemap: https://onepercent-rwanda.onrender.com/sitemap.xml
+Sitemap: https://learn.1percent.rw/sitemap.xml

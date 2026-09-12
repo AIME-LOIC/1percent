@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>1% Playground — Challenges</title>
+<title>Coding Challenges Playground — Practice &amp; Earn Coins | 1%</title>
+<meta name="description" content="Solve hands-on coding challenges in the 1% Playground. Practice JavaScript, Python and more, earn coins and climb the leaderboard of the 1% Expert Programme.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -11,6 +12,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/js/icons.js"></script>
 <script src="/js/toast.js"></script>
+<script src="/js/login-popup.js"></script>
+<script src="/js/error-reporter.js" defer></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;overflow:hidden;font-family:var(--sans);background:#1e1e2e;color:#cdd6f4;}
@@ -212,7 +215,8 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);background:#1e1e2e
         <span id="coins-count">0</span>
       </div>
       <button class="btn-run-sm warn" onclick="submitChallenge()" id="submit-btn">▶ Run &amp; Submit</button>
-      <button class="btn-run-sm sec" onclick="window.location.href='/dashboard'">Dashboard</button>
+      <button class="btn-run-sm sec" id="login-gate-btn" onclick="LoginPopup.show('playground')" style="display:none;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Login</button>
+      <button class="btn-run-sm sec" id="dash-btn" onclick="window.location.href='/dashboard'">Dashboard</button>
     </div>
   </div>
 
@@ -386,7 +390,7 @@ async function init() {
     const res = await fetch('/api/config');
     const config = await res.json();
     if (config.supabaseUrl && config.supabaseAnonKey && typeof supabase !== 'undefined') {
-      supabaseClient = supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+      supabaseClient = supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (session?.user) {
         currentUser = session.user;
@@ -394,6 +398,14 @@ async function init() {
       }
     }
   } catch {}
+
+  // Login gate — update UI once the session state is known
+  LoginPopup.setLoggedIn(!!currentUser);
+  const gateBtn = document.getElementById('login-gate-btn');
+  const dashBtn = document.getElementById('dash-btn');
+  if (gateBtn) gateBtn.style.display = currentUser ? 'none' : '';
+  if (dashBtn) dashBtn.style.display = currentUser ? '' : 'none';
+  if (!currentUser) LoginPopup.show('playground');
 
   // Terminal input
   document.getElementById('terminal-input').addEventListener('keydown', (e) => {
@@ -1049,7 +1061,11 @@ function updateAll() {
    ============================================================ */
 async function submitChallenge() {
   if (!currentChallenge) { Toast.warning('Select a challenge first'); return; }
-  if (!currentUser) { Toast.error('Please log in to submit challenges'); return; }
+  if (!currentUser) {
+    Toast.error('Please log in to submit challenges');
+    LoginPopup.show('playground');
+    return;
+  }
 
   const type = currentChallenge.challenge_type || 'javascript';
   const submitBtn = document.getElementById('submit-btn');
@@ -1074,6 +1090,13 @@ async function submitChallenge() {
       },
       body: JSON.stringify({ code, is_daily: isDaily })
     });
+    if (res.status === 401) {
+      Toast.error('Session expired — please log in again.');
+      LoginPopup.show('playground');
+      submitBtn.disabled = false;
+      submitBtn.textContent = '▶ Run & Submit';
+      return;
+    }
     const json = await res.json();
 
     if (json.passed) {
