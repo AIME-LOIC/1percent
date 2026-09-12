@@ -652,29 +652,47 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Auth-aware login buttons: FIRST read the stored session — only show
-  // the login form when there is genuinely no stored session.
+  // the login form when there is genuinely no live session.
+  // NOTE: stale tokens (e.g. legacy keys left behind by logout) must NOT
+  // count as a session, so we validate the JWT expiry claim client-side.
+  function tokenIsAlive(token) {
+    try {
+      const payload = JSON.parse(atob((token.split('.')[1] || '').replace(/-/g, '+').replace(/_/g, '/')));
+      return payload?.exp ? payload.exp * 1000 > Date.now() + 30000 : true;
+    } catch { return true; }
+  }
+
   function peekStoredSession() {
     try {
       // supabase-js v2 persists the session under "sb-<project-ref>-auth-token"
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (!/^sb-.+-auth-token$/.test(key || '')) continue;
-        const raw = localStorage.getItem(key);
-        if (!raw) continue;
-        const parsed = JSON.parse(raw);
-        if (parsed?.access_token || parsed?.currentSession?.access_token) return true;
+        const parsed = JSON.parse(localStorage.getItem(key) || 'null');
+        const tok = parsed?.access_token || parsed?.currentSession?.access_token;
+        if (tok && tokenIsAlive(tok)) return true;
       }
-      // Legacy keys written by the app's own login flows
-      if (localStorage.getItem('sb-access-token')) return true;
-      if (sessionStorage.getItem('sb-access-token')) return true;
+      // Legacy keys written by some of the app's own login flows
+      const legacy = localStorage.getItem('sb-access-token');
+      if (legacy && tokenIsAlive(legacy)) return true;
     } catch {}
     return false;
   }
 
-  async function openAuthOrDashboard() {
-    // 1) Ask Supabase first (reads storage, refreshes if near expiry)
+  function clearStaleLegacyTokens() {
     try {
-      let client = supabaseClient;
+      ['sb-access-token', 'sb-refresh-token'].forEach(k => {
+        localStorage.removeItem(k); sessionStorage.removeItem(k);
+      });
+    } catch {}
+  }
+
+  async function openAuthOrDashboard() {
+    // 1) Ask Supabase first (reads storage, refreshes if near expiry).
+    //    This is the source of truth when the client can be created.
+    let client = null;
+    try {
+      client = supabaseClient;
       if (!client && typeof supabase !== 'undefined') {
         const res = await fetch('/api/config');
         const config = await res.json();
@@ -691,12 +709,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
     } catch {}
-    // 2) Fallback: raw check of stored session tokens
-    if (peekStoredSession()) {
+    // 2) Raw fallback ONLY when Supabase itself is unavailable (config
+    //    fetch failed / CDN down) — otherwise getSession() already told
+    //    us there is no live session. Expired tokens don't count.
+    if (!client && peekStoredSession()) {
       window.location.href = '/dashboard';
       return;
     }
-    // 3) Genuinely no stored session — show the login form
+    // 3) No live session — drop stale legacy keys so they can't fool us
+    //    again, then show the login form.
+    clearStaleLegacyTokens();
     Modal.open('auth-modal');
   }
 
