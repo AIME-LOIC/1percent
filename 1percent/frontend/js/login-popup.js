@@ -11,6 +11,10 @@
         logged in.
      3. LoginPopup.isLoggedIn() reflects the latest known state.
 
+   The popup is a HARD GATE: there is no close button, and clicking
+   the overlay or pressing Escape does NOT dismiss it. Visitors must
+   log in, sign up, or leave via "Back to homepage".
+
    On successful login the session is stored in localStorage
    (same keys the rest of the app uses) and location.reload()
    is called so the page re-initializes as a logged-in user.
@@ -33,8 +37,6 @@
       #login-popup-overlay{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;background:rgba(5,5,10,0.75);backdrop-filter:blur(4px);}
       #login-popup-overlay.show{display:flex;}
       .login-popup{background:#181825;border:1px solid #313244;border-radius:14px;width:min(400px,92vw);max-height:92vh;overflow-y:auto;padding:28px 26px;box-shadow:0 20px 60px rgba(0,0,0,0.55);color:#cdd6f4;font-family:Inter,sans-serif;position:relative;}
-      .login-popup .lp-close{position:absolute;top:10px;right:14px;background:none;border:none;color:#6c7086;font-size:26px;line-height:1;cursor:pointer;}
-      .login-popup .lp-close:hover{color:#cdd6f4;}
       .login-popup .lp-icon{width:56px;height:56px;border-radius:14px;background:rgba(166,227,161,0.12);border:1px solid rgba(166,227,161,0.25);display:flex;align-items:center;justify-content:center;color:#a6e3a1;margin:0 auto 14px;}
       .login-popup h3{font-size:19px;font-weight:800;text-align:center;margin-bottom:6px;color:#cdd6f4;}
       .login-popup .lp-sub{font-size:13px;color:#a6adc8;text-align:center;line-height:1.55;margin-bottom:18px;}
@@ -60,7 +62,6 @@
     overlay.id = 'login-popup-overlay';
     overlay.innerHTML = `
       <div class="login-popup" role="dialog" aria-modal="true" aria-label="Login required">
-        <button class="lp-close" id="lp-close" title="Close">&times;</button>
         <div class="lp-icon">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         </div>
@@ -110,10 +111,9 @@
     `;
     document.body.appendChild(overlay);
 
-    // Close interactions
-    el('lp-close').addEventListener('click', hide);
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) hide(); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hide(); });
+    // Hard gate — intentionally NO close button, NO overlay-click dismiss,
+    // and NO Escape dismiss. The only exits are logging in (which reloads
+    // the page) or the "Back to homepage" link.
 
     // Tab switching
     el('lp-to-signup').addEventListener('click', () => switchForm('signup'));
