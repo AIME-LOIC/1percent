@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "node Streakservice.test.js"
+    "test": "node Streakservice.test.js",
+    "mcp": "node backend/mcp/server.js"
   },
   "engines": {
     "node": ">=18.0.0"

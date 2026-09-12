@@ -35,6 +35,7 @@ const { adminRatingRoutes } = require('./routes/ratingRoutes');
 const logRoutes = require('./routes/logRoutes');
 const { adminLogRoutes } = require('./routes/logRoutes');
 const sitemapRoutes = require('./routes/sitemapRoutes');
+const mcpRoutes = require('./routes/mcpRoutes');
 
 // Middlewares
 const { requestLogger } = require('./middlewares/requestLogger');
@@ -212,6 +213,13 @@ app.use('/api/admin/ratings', adminRatingRoutes);
 app.use('/api/logs', logRoutes);
 app.use('/api/admin/logs', adminLogRoutes);
 app.use('/api/docs', docsRoutes);
+
+// MCP over Streamable HTTP — remote server for claude.ai (token in URL path or Bearer).
+// Express sub-routers can't see parent mount params, so capture the path token here.
+app.use('/mcp/:token?', (req, res, next) => {
+  if (req.params.token) req.mcpPathToken = req.params.token;
+  next();
+}, mcpRoutes);
 app.use('/api', courseRoutes);  // /api/roadmap, /api/courses (has /:slug)
 
 /* ============================================================
