@@ -48,6 +48,11 @@ class CoinsController {
       if (!code) return res.status(422).json({ error: 'Code is required' });
 
       const result = await coinsService.submitChallenge(req.user.id, challengeId, code, is_daily);
+      // Attach the grader's feedback so the UI can show WHY it failed
+      if (!result.passed && coinsService._lastRejectReason) {
+        result.reason = coinsService._lastRejectReason;
+        coinsService._lastRejectReason = null;
+      }
       res.json({ success: true, ...result });
     } catch (err) {
       res.status(500).json({ error: err.message });

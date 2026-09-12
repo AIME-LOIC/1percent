@@ -13,7 +13,12 @@ const { parentPort } = require('worker_threads');
 const vm = require('vm');
 const { JSDOM } = require('jsdom');
 
-parentPort.on('message', ({ code, starterHtml, testCases }) => {
+// Signal ready once all heavy modules (jsdom) are loaded, so the parent can
+// start its execution timeout from here instead of from worker creation —
+// a slow cold start then never eats into the user's execution budget.
+parentPort.postMessage({ ready: true });
+
+parentPort.on('message', ({ code, starterHtml, testCases, captureOutput }) => {
   let result = false;
 
   try {
@@ -29,9 +34,20 @@ parentPort.on('message', ({ code, starterHtml, testCases }) => {
       document.body.innerHTML = starterHtml;
     }
 
+    // Console capture — every submission's console.* goes here
+    const logs = [];
+    const pushLog = (...args) => logs.push(args.map(a => {
+      if (typeof a === 'object' && a !== null) { try { return JSON.stringify(a); } catch { return String(a); } }
+      return String(a);
+    }).join(' '));
+    const sandboxConsole = {
+      log: pushLog, info: pushLog, warn: pushLog, error: pushLog, debug: pushLog
+    };
+
     // 2. Build sandboxed vm context — safe globals only
     const sandbox = {
-      document, window, console,
+      document, window,
+      console: sandboxConsole,
       setTimeout, setInterval, clearTimeout, clearInterval,
       Array, Object, String, Number, Boolean, RegExp, Date, Math,
       JSON, parseInt, parseFloat, isNaN, isFinite,
@@ -39,9 +55,28 @@ parentPort.on('message', ({ code, starterHtml, testCases }) => {
     };
     const context = vm.createContext(sandbox);
 
-    // 3. Run submitted code (worker will be terminated if this hangs)
+    // 3. Run submitted code (worker will be terminated if this hangs).
+    // Challenge snippets often register DOMContentLoaded handlers — the
+    // document is already interactive by the time the worker runs, so
+    // fire the event right after the code executes.
     const script = new vm.Script(code, { filename: 'challenge-submission.js' });
     script.runInContext(context);
+
+    try {
+      document.dispatchEvent(new window.Event('DOMContentLoaded'));
+      if (typeof window.onload === 'function') {
+        try { window.onload(); } catch (e) { parentPort.postMessage({ passed: false, error: e.message }); return; }
+      }
+    } catch (e) {
+      parentPort.postMessage({ passed: false, error: e.message });
+      return;
+    }
+
+    // Output-capture mode: report console output instead of DOM assertions
+    if (captureOutput) {
+      parentPort.postMessage({ passed: true, output: logs.join('\n') });
+      return;
+    }
 
     // 4. Evaluate test cases
     for (const tc of testCases) {

@@ -57,7 +57,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", supabaseHost].filter(Boolean),
+      connectSrc: ["'self'", supabaseHost, "https://api.github.com", "https://formspree.io"].filter(Boolean),
       frameSrc: ["'self'", "blob:"],
       objectSrc: ["'none'"]
     }

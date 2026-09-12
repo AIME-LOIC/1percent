@@ -1,5 +1,6 @@
 const { adminClient } = require('../config/database');
 const { Worker } = require('worker_threads');
+const { execFile } = require('child_process');
 const path = require('path');
 
 class CoinsService {
@@ -220,78 +221,260 @@ class CoinsService {
     return { passed, coins: coinsAwarded, total: await this.getBalance(userId), is_daily: isDaily };
   }
 
-  async _evaluateCode(code, challenge) {
-    const lower = (code || '').toLowerCase();
-    const title = challenge.title.toLowerCase();
+  /* ============================================================
+     Structural code review — the anti-cheat layer.
+     Strips comments and string literals so keyword checks can't be
+     fooled by prose (e.g. a comment containing "console.log"), then
+     applies real code-structure requirements per language.
+     Returns { ok, reason } instead of a bare boolean.
+     ============================================================ */
+  _stripCommentsAndStrings(code) {
+    return String(code || '')
+      // block comments
+      .replace(/\/\*[\s\S]*?\*\//g, ' ')
+      // line comments (// or # — covers JS, Python, Dockerfile, nginx, YAML)
+      .replace(/(^|\s)(?:\/\/|#)[^\n\r]*/g, '$1')
+      // string literals
+      .replace(/"(?:\\.|[^"\\\n])*"/g, '""')
+      .replace(/'(?:\\.|[^'\\\n])*'/g, "''")
+      .replace(/`(?:\\.|[^`\\])*`/g, '``');
+  }
+
+  _strippedLen(code) {
+    return this._stripCommentsAndStrings(code).replace(/\s+/g, '').length;
+  }
+
+  _reviewCode(code, challenge) {
     const type = challenge.challenge_type || 'javascript';
+    const stripped = this._stripCommentsAndStrings(code);
+    const fails = (reason) => ({ ok: false, reason });
+
+    // Universal: reject trivial submissions
+    if (stripped.replace(/\s+/g, '').length < 20) {
+      return fails('Submission is too short — write a real implementation.');
+    }
+
+    switch (type) {
+      case 'javascript': {
+        const hasStatement = /;|\n\s*(const|let|var|function|class|return|for|while|if|document\.|console\.)/.test(stripped);
+        if (!hasStatement) return fails('No real JavaScript statements found — write actual code, not just words.');
+        const hasLogic = /(function|=>|\bfor\b|\bwhile\b|\bif\b|\bswitch\b|\bclass\b|document\.|querySelector|createElement|addEventListener)/.test(stripped);
+        if (!hasLogic) return fails('Your code has no logic — define a function, loop, condition, or DOM operation.');
+        // Prose filter: real JS has calls (parens) AND assignment/termination punctuation
+        const hasCall = /\w+\s*\(/.test(stripped);
+        const hasPunct = /(=|;|\{|=>)/.test(stripped);
+        if (!hasCall || !hasPunct) return fails('That reads like a description, not JavaScript — write executable statements (assignments, calls, loops).');
+        break;
+      }
+      case 'python': {
+        // Require real structure: def/class with parens+colon, control flow
+        // ending with ":", or a top-level call statement like print(6 * 7)
+        const hasStructure = /(\bdef\s+\w+\s*\([^)]*\)\s*:|\bclass\s+\w+[^:\n]*:|^\s*(if|for|while|elif|else|try|except|with)\b[^:\n]*:|^\s*[A-Za-z_][\w.]*\s*\(.+\))/m.test(stripped);
+        if (!hasStructure) return fails('No Python structures found — define a function (def …():) or a loop/condition ending with ":".');
+        break;
+      }
+      case 'sql': {
+        const hasStatement = /\b(select|insert\s+into|update|delete\s+from|create\s+table|alter\s+table|drop\s+table)\b/i.test(stripped);
+        if (!hasStatement) return fails('No SQL statement found (SELECT / INSERT / CREATE TABLE / …).');
+        const hasClause = /\b(from|into|values|set|table|where|join|group\s+by|order\s+by|primary\s+key|references)\b/i.test(stripped);
+        const hasSqlPunct = /[;*(),=`]|\b(between|is\s+not|null|like|in)\b/i.test(stripped);
+        if (!hasClause || !hasSqlPunct) return fails('Write a complete SQL statement — e.g. SELECT columns FROM table WHERE condition.');
+        break;
+      }
+      case 'docker': {
+        if (!/^\s*FROM\s+\S+/im.test(stripped)) return fails('A Dockerfile must start with a FROM instruction.');
+        const hasBuildStep = /^\s*(RUN|COPY|ADD|CMD|ENTRYPOINT|WORKDIR|EXPOSE|ENV)\s+\S+/im.test(stripped);
+        if (!hasBuildStep) return fails('Add real Dockerfile instructions (RUN / COPY / CMD / …).');
+        break;
+      }
+      case 'yaml': {
+        const hasKeys = /^\s*[A-Za-z_][\w-]*\s*:(\s|$)/m.test(stripped);
+        if (!hasKeys) return fails('YAML must define keys (key: value).');
+        if (stripped.split('\n').filter(l => /:\s/.test(l)).length < 2) {
+          return fails('YAML is too minimal — define your configuration structure.');
+        }
+        break;
+      }
+      case 'nginx': {
+        if (!/(server|http|location|events)\s*\{/i.test(stripped)) return fails('nginx config needs a server { } or location { } block.');
+        if (!/\b(listen|proxy_pass|root|server_name)\b/i.test(stripped)) {
+          return fails('Add real directives (listen / root / proxy_pass / server_name).');
+        }
+        break;
+      }
+      case 'css': {
+        if (!/[^{}]+\{[^}]*:[^}]*\}/.test(stripped)) return fails('Write at least one complete CSS rule (selector { property: value; }).');
+        break;
+      }
+      case 'html': {
+        if (!(/<\w+[^>]*>[\s\S]*<\/\w+>/i.test(stripped) || /<(div|span|ul|li|p|h[1-6]|section|button|input|a)\b/i.test(stripped))) {
+          return fails('Write real HTML elements, not plain text.');
+        }
+        break;
+      }
+      default:
+        break;
+    }
+
+    return { ok: true, reason: null };
+  }
+
+  /* ── Real execution: run the code and capture what it prints ── */
+
+  _normalizeOutput(s) {
+    return String(s || '')
+      .replace(/\r\n/g, '\n')
+      .split('\n')
+      .map(l => l.trim())
+      .join('\n')
+      .replace(/\n+$/, '')
+      .trim();
+  }
+
+  _outputsMatch(actual, expected) {
+    return this._normalizeOutput(actual) === this._normalizeOutput(expected);
+  }
+
+  _runCodeCaptureOutput(code, type) {
+    if (type === 'javascript') return this._runWorkerCaptureOutput(code);
+    if (type === 'python') return this._runPythonCaptureOutput(code);
+    return Promise.resolve({ status: 'skip' });
+  }
+
+  /** Run JS in the sandboxed VM worker, capturing console output. */
+  _runWorkerCaptureOutput(code) {
+    return new Promise((resolve) => {
+      const timeout = 3000;
+      const workerPath = path.join(__dirname, '..', 'workers', 'challenge-evaluator.js');
+      const worker = new Worker(workerPath, { workerData: null });
+      worker.unref(); // never let a lingering worker block process exit
+      let settled = false;
+      let timer = null;
+      // Boot failsafe: if the worker never becomes ready (hung require, etc.),
+      // give up after 4× the execution budget instead of hanging forever.
+      let bootTimer = setTimeout(() => settle({ status: 'error', reason: 'Sandbox failed to start. Please try again.' }), timeout * 4);
+      const armTimer = () => {
+        clearTimeout(bootTimer);
+        // Armed only after the worker reports ready — the cold-start require()
+        // of jsdom must not eat into the execution timeout.
+        timer = setTimeout(() => {
+          if (!settled) {
+            settled = true;
+            worker.terminate();
+            resolve({ status: 'error', reason: 'Execution timed out (3s limit).' });
+          }
+        }, timeout);
+      };
+      const settle = (result) => {
+        if (settled) return;
+        settled = true;
+        if (bootTimer) clearTimeout(bootTimer);
+        if (timer) clearTimeout(timer);
+        try { worker.terminate(); } catch { } // free the thread; we have our answer
+        resolve(result);
+      };
+      worker.on('message', (msg) => {
+        if (msg && msg.ready) { armTimer(); return; }
+        if (msg.error) settle({ status: 'error', reason: `Runtime error: ${msg.error}`, output: msg.output || '' });
+        else settle({ status: 'ok', output: msg.output || '' });
+      });
+      worker.on('error', (err) => settle({ status: 'error', reason: err.message }));
+      worker.postMessage({ code, starterHtml: '', testCases: [], captureOutput: true });
+    });
+  }
+
+  /** Run Python via the system interpreter. status 'skip' = no python3. */
+  _runPythonCaptureOutput(code) {
+    return new Promise((resolve) => {
+      try {
+        execFile('python3', ['-I', '-c', code], { timeout: 5000, maxBuffer: 256 * 1024 }, (err, stdout, stderr) => {
+          if (err) {
+            if (err.killed || err.signal === 'SIGTERM') {
+              return resolve({ status: 'error', reason: 'Execution timed out (5s limit).' });
+            }
+            if (err.code === 'ENOENT') return resolve({ status: 'skip' });
+            const tail = String(stderr || err.message || '').trim().split('\n').slice(-3).join('\n');
+            return resolve({ status: 'error', reason: `Python error: ${tail}` });
+          }
+          resolve({ status: 'ok', output: String(stdout || '') });
+        });
+      } catch {
+        resolve({ status: 'skip' });
+      }
+    });
+  }
+
+  async _evaluateCode(code, challenge) {
+    const type = challenge.challenge_type || 'javascript';
+    const title = (challenge.title || '').toLowerCase();
 
     // Terminal (Linux/Git) challenges: check command output in the submitted text
     if (type === 'linux' || type === 'git') {
       return this._evaluateTerminal(code, challenge);
     }
 
-    // SQL challenges
-    if (type === 'sql') {
-      return lower.includes('select') || lower.includes('create table') || lower.includes('insert') || lower.includes('alter table');
-    }
-
-    // YAML / Docker challenges
-    if (type === 'yaml' || type === 'docker') {
-      return code.length > 30;
-    }
-
-    // JavaScript / programming challenges
-    // If the challenge has test_cases, run real code execution
     let testCases = challenge.test_cases;
     // Supabase may return jsonb as a string — parse it
     if (typeof testCases === 'string') {
       try { testCases = JSON.parse(testCases); } catch { testCases = []; }
     }
     if (!Array.isArray(testCases)) testCases = [];
+    const expectedOutput = String(challenge.expected_output || '').trim();
+
+    // ── Real execution first: when a challenge defines test cases or an
+    // expected output, that result IS the judge. Short-but-correct
+    // one-liners must not be rejected by structural review, and junk
+    // can't sneak through because it produces the wrong output anyway.
     if (type === 'javascript' && testCases.length > 0) {
-      return await this._evaluateJavaScript(code, challenge, testCases);
+      const passed = await this._evaluateJavaScript(code, challenge, testCases);
+      if (!passed) this._lastRejectReason = 'Test cases failed — your code did not produce the expected result.';
+      return passed;
     }
 
-    // JavaScript keyword-matching fallback (no test_cases defined)
-    if (title.includes('hello world')) {
-      return lower.includes('hello') || lower.includes('print') || lower.includes('console.log');
-    }
-    if (title.includes('variable')) {
-      return (lower.includes('let ') || lower.includes('const ') || lower.includes('var ') || lower.includes('int ') || lower.includes('def '));
-    }
-    if (title.includes('calculator')) {
-      return lower.includes('function') && (lower.includes('+') || lower.includes('add') || lower.includes('return'));
-    }
-    if (title.includes('fizzbuzz')) {
-      return lower.includes('fizz') || lower.includes('buzz') || lower.includes('for') || lower.includes('while');
-    }
-    if (title.includes('palindrome')) {
-      return lower.includes('reverse') || lower.includes('palindrome') || lower.includes('split');
-    }
-    if (title.includes('binary') || title.includes('algorithm')) {
-      return lower.includes('binary') || lower.includes('mid') || lower.includes('search');
-    }
-    if (title.includes('readme') || title.includes('documentation') || title.includes('blog') || title.includes('bug report') || title.includes('pr') || title.includes('architecture') || title.includes('error message')) {
-      return code.length > 40;
-    }
-    if (title.includes('docker')) {
-      return lower.includes('from ') || lower.includes('copy') || lower.includes('cmd');
-    }
-    if (title.includes('nginx')) {
-      return lower.includes('server') || lower.includes('listen') || lower.includes('proxy_pass');
-    }
-    if (title.includes('react') || title.includes('component')) {
-      return lower.includes('function') || lower.includes('return') || lower.includes('jsx');
-    }
-    if (title.includes('middleware') || title.includes('rate limit') || title.includes('brute')) {
-      return lower.includes('function') || lower.includes('req') || lower.includes('next');
-    }
-    if (title.includes('prompt') || title.includes('ai')) {
-      return code.length > 20;
+    if (expectedOutput && (type === 'javascript' || type === 'python')) {
+      const run = await this._runCodeCaptureOutput(code, type);
+      if (run.status === 'error') {
+        this._lastRejectReason = run.reason;
+        return false;
+      }
+      if (run.status === 'ok') {
+        const matched = this._outputsMatch(run.output, expectedOutput);
+        if (!matched) {
+          this._lastRejectReason = `Output mismatch — expected "${this._normalizeOutput(expectedOutput).slice(0, 120)}" but your code printed "${this._normalizeOutput(run.output).slice(0, 120) || '(nothing)'}".`;
+          return false;
+        }
+        return true;
+      }
+      // status === 'skip': runtime unavailable → fall through to review-only
     }
 
-    // Default: substantial code
-    return code.length > 30;
+    // ── Structural review (anti-cheat) for challenges we can't grade by
+    // execution: strips comments/strings so keyword soup fails.
+    const review = this._reviewCode(code, challenge);
+    if (!review.ok) {
+      this._lastRejectReason = review.reason;
+      return false;
+    }
+
+    // ── Review-only gates for languages we can't execute ──
+    if (type === 'python') {
+      const ok = this._strippedLen(code) >= 20;
+      if (!ok) this._lastRejectReason = 'Submission too short — implement the full solution (comments don\'t count).';
+      return ok;
+    }
+
+    if (type === 'markdown' || /readme|documentation|blog|bug report|architecture|error message/.test(title)) {
+      const ok = /(^|\n)#{1,3}\s+\S/.test(String(code || '')) && this._strippedLen(code) >= 80;
+      if (!ok) this._lastRejectReason = 'A proper document needs headings (## …) and substantial written content.';
+      return ok;
+    }
+
+    // Languages that already passed structural review: require substance
+    // (threshold mirrors the universal review minimum — short-but-real
+    // submissions like `SELECT * FROM users;` or a minimal Dockerfile pass)
+    const ok = this._strippedLen(code) >= 20;
+    if (!ok) this._lastRejectReason = 'Submission too short — comments and whitespace don\'t count.';
+    return ok;
   }
 
   /**
@@ -314,22 +497,41 @@ class CoinsService {
       const worker = new Worker(workerPath, {
         workerData: null
       });
+      worker.unref(); // never let a lingering worker block process exit
 
       let settled = false;
-
-      const timer = setTimeout(() => {
+      let timer = null;
+      // Boot failsafe: never hang forever if the worker never becomes ready.
+      const bootTimer = setTimeout(() => {
         if (!settled) {
           settled = true;
-          console.warn(`[VM] Worker terminated after ${timeout}ms (timeout)`);
+          console.warn('[VM] Worker never signalled ready');
           worker.terminate();
           resolve(false);
         }
-      }, timeout);
+      }, timeout * 4);
+
+      // Arm the timeout only after the worker reports ready, so the
+      // cold-start require() of jsdom doesn't consume execution time.
+      const armTimer = () => {
+        clearTimeout(bootTimer);
+        timer = setTimeout(() => {
+          if (!settled) {
+            settled = true;
+            console.warn(`[VM] Worker terminated after ${timeout}ms (timeout)`);
+            worker.terminate();
+            resolve(false);
+          }
+        }, timeout);
+      };
 
       worker.on('message', (msg) => {
+        if (msg && msg.ready) { armTimer(); return; }
         if (!settled) {
           settled = true;
-          clearTimeout(timer);
+          clearTimeout(bootTimer);
+          if (timer) clearTimeout(timer);
+          try { worker.terminate(); } catch { } // free the thread; we have our answer
           if (msg.reason) console.warn(`[VM] ${msg.reason}`);
           resolve(!!msg.passed);
         }
@@ -338,7 +540,8 @@ class CoinsService {
       worker.on('error', (err) => {
         if (!settled) {
           settled = true;
-          clearTimeout(timer);
+          clearTimeout(bootTimer);
+          if (timer) clearTimeout(timer);
           console.warn(`[VM] Worker error: ${err.message}`);
           resolve(false);
         }
