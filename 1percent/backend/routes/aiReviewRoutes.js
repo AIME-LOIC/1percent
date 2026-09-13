@@ -19,7 +19,7 @@ const adminOnly = requireRole('admin');
 /* ── Admin: list the queue ── */
 router.get('/admin/ai-reviews', authenticate, adminOnly, async (req, res, next) => {
   try {
-    const status = ['pending', 'approved', 'applied', 'rejected', 'all'].includes(req.query.status)
+    const status = ['pending', 'approved', 'applied', 'rejected', 'superseded', 'all'].includes(req.query.status)
       ? req.query.status : 'pending';
     const reviews = await aiReviewService.listByStatus(status, Number(req.query.limit) || 50);
     res.json({ reviews });

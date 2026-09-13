@@ -49,6 +49,18 @@ class AiReviewService {
     try {
       if (!reviewer.isModelReady()) return null; // model not trained yet — skip silently
 
+      /* ── Supersede stale pendings for the SAME user+challenge ──
+         A student can submit several times (fail, tweak, pass). Each
+         submission queues a review; older PENDING rows for this same
+         pair are now outdated (they describe an earlier attempt), so
+         mark them 'superseded' instead of leaving them as admin
+         noise. Decided rows (applied/rejected) are history — kept. */
+      await adminClient.from('ai_reviews')
+        .update({ status: 'superseded', admin_note: 'superseded by a newer submission' })
+        .eq('user_id', userId)
+        .eq('challenge_id', challenge.id)
+        .eq('status', 'pending');
+
       const review = reviewer.reviewSubmission(challenge, code);
 
       /* Combine the two brains:
@@ -159,6 +171,28 @@ class AiReviewService {
 
     if (decision !== 'approve') throw new Error('decision must be approve|reject');
 
+    /* ── Sanity: the review must reference a REAL submission ──
+       Test runs and edge cases can leave reviews whose submission row
+       no longer exists ("ghost" reviews). Approving one of those
+       would re-create a submission the student never made — so block
+       it and mark the review rejected instead. */
+    const { data: realSubmission } = await adminClient
+      .from('challenge_submissions')
+      .select('id')
+      .eq('user_id', rev.user_id)
+      .eq('challenge_id', rev.challenge_id)
+      .maybeSingle();
+    if (!realSubmission) {
+      const { data, error: upErr } = await adminClient
+        .from('ai_reviews')
+        .update({ status: 'rejected', reviewed_by: adminId, decided_at: new Date().toISOString(), admin_note: adminNote || 'no matching submission — discarded' })
+        .eq('id', reviewId)
+        .select()
+        .single();
+      if (upErr) throw upErr;
+      return { applied: false, review: data, discarded: true };
+    }
+
     /* ── APPLY the verdict ── */
     const effectivePass = rev.verdict === 'pass' ||
       (rev.verdict === 'needs_review' && rev.review?.deterministicPassed === true);
@@ -178,12 +212,6 @@ class AiReviewService {
           .from('challenge_submissions')
           .update({ passed: true })
           .eq('id', existing.id);
-      } else if (!existing) {
-        // Submission row vanished (shouldn't happen) — recreate minimally
-        await adminClient
-          .from('challenge_submissions')
-          .upsert({ user_id: rev.user_id, challenge_id: rev.challenge_id, code: rev.review?.submittedCode || '', passed: true },
-            { onConflict: 'user_id,challenge_id' });
       }
 
       // Award coins once (even if the deterministic grader already did)
