@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1Percent Courses — Software Development Training in Rwanda</title>
+<link rel="canonical" href="https://learn.1percent.rw/courses">
+<meta name="description" content="Explore 1Percent courses: Python, Git &amp; GitHub, backend development with Node.js, React frontend, databases, DevOps, security, robotics and more. Beginner to advanced software development training in Rwanda.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://learn.1percent.rw/courses">
+<meta property="og:title" content="1Percent Courses — Software Development Training in Rwanda">
+<meta property="og:description" content="Beginner to advanced software development training in Rwanda: Python, Git, Node.js backend, React frontend, databases, DevOps, security, robotics and more.">
+<meta property="og:image" content="https://learn.1percent.rw/og-image.png">
+<meta property="og:site_name" content="1percent Rwanda">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="1Percent Courses — Software Development Training in Rwanda">
+<meta name="twitter:description" content="Beginner to advanced software development training in Rwanda: Python, Git, Node.js backend, React frontend, databases, DevOps, security, robotics and more.">
+<meta name="twitter:image" content="https://learn.1percent.rw/og-image.png">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="robots" content="index, follow">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://learn.1percent.rw/" },
+        { "@type": "ListItem", "position": 2, "name": "Courses", "item": "https://learn.1percent.rw/courses" }
+      ]
+    },
+    {
+      "@type": "CollectionPage",
+      "name": "1Percent Courses — Software Development Training in Rwanda",
+      "url": "https://learn.1percent.rw/courses",
+      "description": "All published 1Percent courses: beginner to advanced software development training in Rwanda.",
+      "isPartOf": { "@id": "https://learn.1percent.rw/#website" },
+      "hasPart": {
+        "@type": "ItemList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Programming Fundamentals", "url": "https://learn.1percent.rw/course/programming-fundamentals" },
+          { "@type": "ListItem", "position": 2, "name": "Python Foundations", "url": "https://learn.1percent.rw/course/python-foundations" },
+          { "@type": "ListItem", "position": 3, "name": "Git & GitHub", "url": "https://learn.1percent.rw/course/git-github" }
+        ]
+      }
+    }
+  ]
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg-primary: #ffffff; --bg-secondary: #f8fafc; --bg-card: #ffffff;
+    --text-primary: #0f172a; --text-secondary: #475569; --text-muted: #64748b;
+    --accent-green: #059669; --accent-green-hover: #047857; --accent-green-dim: rgba(5, 150, 105, 0.08);
+    --border: #e2e8f0; --border-green: rgba(5, 150, 105, 0.4);
+    --radius: 12px; --radius-sm: 8px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.7; -webkit-font-smoothing: antialiased; }
+  .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 0 24px; height: 64px; display: flex; align-items: center; justify-content: space-between; }
+  .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); font-weight: 700; font-size: 18px; }
+  .nav-brand span { color: var(--accent-green); }
+  .nav-links { display: flex; gap: 32px; list-style: none; align-items: center; }
+  .nav-links a { color: var(--text-secondary); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+  .nav-links a:hover, .nav-links a.active { color: var(--accent-green); }
+  .container { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+  .main { padding: 140px 0 80px; }
+  .hero { text-align: center; margin-bottom: 56px; }
+  .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--accent-green-dim); color: var(--accent-green); padding: 8px 18px; border-radius: 100px; font-size: 13px; font-weight: 600; margin-bottom: 20px; border: 1px solid var(--border-green); }
+  .hero h1 { font-size: clamp(32px, 5vw, 44px); font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+  .hero h1 span { color: var(--accent-green); }
+  .hero p { font-size: 16px; color: var(--text-secondary); max-width: 640px; margin: 0 auto 28px; }
+  .hero-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; text-decoration: none; transition: all 0.2s; }
+  .btn-primary { background: var(--accent-green); color: #fff; }
+  .btn-primary:hover { background: var(--accent-green-hover); }
+  .btn-secondary { background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--border-green); color: var(--accent-green); }
+
+  .section-title { font-size: 22px; font-weight: 700; margin: 56px 0 8px; }
+  .section-sub { color: var(--text-secondary); font-size: 14.5px; margin-bottom: 24px; }
+
+  .course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+  .course-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; text-decoration: none; color: inherit; display: flex; flex-direction: column; transition: all 0.2s; }
+  .course-card:hover { border-color: var(--border-green); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+  .course-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .course-level { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 3px 10px; border-radius: 100px; }
+  .course-level.beginner { background: #d1fae5; color: #065f46; }
+  .course-level.intermediate { background: #dbeafe; color: #1e40af; }
+  .course-level.advanced { background: #ede9fe; color: #5b21b6; }
+  .course-weeks { font-size: 12px; color: var(--text-muted); }
+  .course-card h3 { font-size: 16.5px; font-weight: 700; margin-bottom: 6px; }
+  .course-card p { font-size: 13.5px; color: var(--text-secondary); flex: 1; }
+  .course-open { margin-top: 14px; font-size: 13px; font-weight: 600; color: var(--accent-green); }
+
+  .cta-strip { background: linear-gradient(135deg, #065f46, #059669); color: #fff; border-radius: var(--radius); padding: 40px; text-align: center; margin-top: 56px; }
+  .cta-strip h2 { font-size: 24px; margin-bottom: 8px; }
+  .cta-strip p { opacity: 0.9; margin-bottom: 24px; font-size: 15px; }
+  .cta-strip .btn { display: inline-flex; align-items: center; gap: 8px; background: #fff; color: #065f46; padding: 12px 26px; border-radius: var(--radius-sm); font-weight: 700; text-decoration: none; }
+
+  .footer { border-top: 1px solid var(--border); padding: 40px 24px; text-align: center; color: var(--text-muted); font-size: 14px; background: var(--bg-secondary); }
+  .footer a { color: var(--accent-green); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+  @media (max-width: 768px) { .nav-links { display: none; } .main { padding: 120px 0 60px; } }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="nav-brand"><span>1%</span> Expert</a>
+  <ul class="nav-links">
+    <li><a href="/courses" class="active" aria-current="page">Courses</a></li>
+    <li><a href="/pricing">Pricing</a></li>
+    <li><a href="/docs">Docs</a></li>
+    <li><a href="/getting-started">Get Started</a></li>
+  </ul>
+</nav>
+
+<main class="container main">
+  <section class="hero">
+    <div class="hero-badge">1Percent Courses</div>
+    <h1>Software development courses at <span>1Percent Rwanda</span></h1>
+    <p>Learn with 1Percent through hands-on courses with real lessons, graded coding challenges, and certificates. Start as a complete beginner and progress to advanced engineering topics.</p>
+    <div class="hero-actions">
+      <a href="/getting-started" class="btn btn-primary">Start learning free</a>
+      <a href="/pricing" class="btn btn-secondary">See pricing</a>
+    </div>
+  </section>
+
+  <section aria-labelledby="all-courses-h">
+    <h2 class="section-title" id="all-courses-h">All courses</h2>
+    <p class="section-sub">{{COURSE_COUNT}} published courses — click any course to see its full curriculum.</p>
+    <div class="course-grid">
+{{COURSE_CARDS}}
+    </div>
+  </section>
+
+  <section class="cta-strip">
+    <h2>Not sure where to start?</h2>
+    <p>Programming Fundamentals is the recommended first course for new learners.</p>
+    <a href="/getting-started" class="btn">Read the beginner guide</a>
+  </section>
+</main>
+
+<footer class="footer">
+  <p>1percent Rwanda — Kigali, Rwanda</p>
+  <p style="margin-top: 8px;">
+    <a href="/">Home</a> ·
+    <a href="/pricing">Pricing</a> ·
+    <a href="/payments">Payments</a> ·
+    <a href="/docs">Docs</a> ·
+    <a href="/faq">FAQ</a>
+  </p>
+</footer>
+
+</body>
+</html>

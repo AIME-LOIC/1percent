@@ -1,5 +1,7 @@
 User-agent: *
 Allow: /
+# Public SEO/documentation pages (indexable)
+# /, /courses, /pricing, /payments, /getting-started, /how-to-use, /install, /docs, /faq
 # Private app pages (require login, no SEO value)
 Disallow: /dashboard
 Disallow: /playground
@@ -19,5 +21,6 @@ Disallow: /learn/payment-details
 Disallow: /learn/reset-password
 # API
 Disallow: /api/
+Disallow: /mcp/
 
 Sitemap: https://learn.1percent.rw/sitemap.xml

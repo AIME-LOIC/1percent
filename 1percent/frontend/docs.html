@@ -3,20 +3,43 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>1% Learn Tools Documentation — CLI &amp; VS Code Extension Guide</title>
+<title>1Percent Documentation — Learning &amp; Platform Guide</title>
 <link rel="canonical" href="https://learn.1percent.rw/docs">
+<meta name="robots" content="index, follow">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://learn.1percent.rw/docs">
-<meta property="og:title" content="1% Learn Tools Documentation — CLI &amp; VS Code Extension Guide">
-<meta property="og:description" content="Learn how to use 1% Learn CLI and VS Code extension to upload, download, and solve coding challenges.">
+<meta property="og:title" content="1Percent Documentation — Learning &amp; Platform Guide">
+<meta property="og:description" content="The central 1Percent documentation hub: getting started, how to use the platform, pricing, payments, courses, installation, CLI and VS Code extension guides.">
 <meta property="og:image" content="https://learn.1percent.rw/og-image.png">
 <meta property="og:site_name" content="1percent Rwanda">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="1% Learn Tools Documentation — CLI &amp; VS Code Extension Guide">
-<meta name="twitter:description" content="Learn how to use 1% Learn CLI and VS Code extension to upload, download, and solve coding challenges.">
+<meta name="twitter:title" content="1Percent Documentation — Learning &amp; Platform Guide">
+<meta name="twitter:description" content="The central 1Percent documentation hub: getting started, how to use the platform, pricing, payments, courses, installation, CLI and VS Code extension guides.">
 <meta name="twitter:image" content="https://learn.1percent.rw/og-image.png">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<meta name="description" content="Learn how to use 1% Learn CLI and VS Code extension to upload, download, and solve coding challenges.">
+<meta name="description" content="The central 1Percent documentation hub: getting started, how to use the platform, pricing, payments, courses, installation, CLI and VS Code extension guides.">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://learn.1percent.rw/" },
+        { "@type": "ListItem", "position": 2, "name": "Documentation", "item": "https://learn.1percent.rw/docs" }
+      ]
+    },
+    {
+      "@type": "WebPage",
+      "name": "1Percent Documentation — Learning & Platform Guide",
+      "url": "https://learn.1percent.rw/docs",
+      "description": "The central 1Percent documentation hub: platform guides, installation, CLI and VS Code extension documentation.",
+      "isPartOf": { "@id": "https://learn.1percent.rw/#website" }
+    }
+  ]
+}
+</script>
 
 <!-- Fonts & Lucide Icons -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -602,26 +625,71 @@
     <span>1%</span> Learn Docs
   </a>
   <ul class="nav-links">
-    <li><a href="#cli" class="active">CLI Tool</a></li>
+    <li><a href="#platform" class="active">Platform</a></li>
+    <li><a href="#cli">CLI Tool</a></li>
     <li><a href="#vscode">VS Code Extension</a></li>
     <li><a href="#commands">Commands</a></li>
-    <li><a href="#faq">FAQ</a></li>
+    <li><a href="/faq">FAQ</a></li>
   </ul>
 </nav>
 
 <!-- Hero -->
 <section class="hero">
-  <h1>Learn Tools <span>Documentation</span></h1>
-  <p>Everything you need to use the 1% Learn CLI and VS Code extension. Upload files, download lessons, and solve challenges from your terminal.</p>
+  <h1>1Percent <span>Documentation</span></h1>
+  <p>The central hub for everything about learning with 1Percent — how the platform works, pricing and payments, installation, and the CLI &amp; VS Code tools.</p>
   <div class="hero-badges">
-    <a href="#cli" class="badge badge-primary"><i data-lucide="package"></i> Get Started with CLI</a>
+    <a href="#platform" class="badge badge-primary"><i data-lucide="book-open"></i> Platform Guides</a>
+    <a href="#cli" class="badge badge-outline"><i data-lucide="package"></i> CLI Tool</a>
     <a href="#vscode" class="badge badge-outline"><i data-lucide="plug"></i> VS Code Extension</a>
-    <a href="/api/docs/readme" class="badge badge-outline"><i data-lucide="file-text"></i> API Documentation</a>
   </div>
 </section>
 
 <!-- Main Content -->
 <main class="container">
+
+  <!-- Platform Documentation Hub -->
+  <section class="section" id="platform">
+    <h2 class="section-title">Platform documentation</h2>
+    <p class="section-subtitle">Guides for learning with 1Percent — from your first visit to your first certificate.</p>
+
+    <div class="card-grid">
+      <a class="card" href="/getting-started" style="text-decoration:none;color:inherit;">
+        <div class="card-icon"><i data-lucide="rocket"></i></div>
+        <h3>Getting Started</h3>
+        <p>How to join 1Percent: create a free account, confirm your email, and start your first lesson in minutes.</p>
+      </a>
+      <a class="card" href="/how-to-use" style="text-decoration:none;color:inherit;">
+        <div class="card-icon"><i data-lucide="compass"></i></div>
+        <h3>How to Use 1Percent</h3>
+        <p>The complete beginner guide: lessons, labs, challenges, coins, streaks, and certificates explained step by step.</p>
+      </a>
+      <a class="card" href="/courses" style="text-decoration:none;color:inherit;">
+        <div class="card-icon"><i data-lucide="graduation-cap"></i></div>
+        <h3>Courses</h3>
+        <p>Browse every 1Percent course — from Programming Fundamentals and Python to React, DevOps, and Robotics.</p>
+      </a>
+      <a class="card" href="/pricing" style="text-decoration:none;color:inherit;">
+        <div class="card-icon"><i data-lucide="tag"></i></div>
+        <h3>Pricing</h3>
+        <p>How much does it cost to learn with 1Percent? Free, Pro (RWF 15,000/mo) and Unlimited (RWF 35,000/mo) compared.</p>
+      </a>
+      <a class="card" href="/payments" style="text-decoration:none;color:inherit;">
+        <div class="card-icon"><i data-lucide="credit-card"></i></div>
+        <h3>Payments</h3>
+        <p>How to pay: MTN MoMo and Airtel Money via *182#, bank transfer, or card — with parent payment links.</p>
+      </a>
+      <a class="card" href="/install" style="text-decoration:none;color:inherit;">
+        <div class="card-icon"><i data-lucide="download"></i></div>
+        <h3>Installation</h3>
+        <p>Install the VS Code extension and CLI, with system requirements and step-by-step setup.</p>
+      </a>
+      <a class="card" href="/faq" style="text-decoration:none;color:inherit;">
+        <div class="card-icon"><i data-lucide="help-circle"></i></div>
+        <h3>FAQ</h3>
+        <p>Frequently asked questions about 1Percent — cost, free tier, joining, courses, and payments.</p>
+      </a>
+    </div>
+  </section>
 
   <!-- Quick Start Cards -->
   <section class="section">
@@ -959,8 +1027,10 @@ onepercent download -f "databases" -l 1 -o ./my-notes</pre>
   <p>Built with <i data-lucide="heart" style="width:14px; height:14px; display:inline; vertical-align:middle; color: var(--accent-green);"></i> by <a href="https://1percentrwanda.com">1percent Rwanda</a> — Kigali, Rwanda</p>
   <p style="margin-top: 8px;">
     <a href="/">Home</a> ·
-    <a href="/">Learn</a> ·
-    <a href="/lab">Lab</a> ·
+    <a href="/getting-started">Get Started</a> ·
+    <a href="/courses">Courses</a> ·
+    <a href="/pricing">Pricing</a> ·
+    <a href="/faq">FAQ</a> ·
     <a href="/api/docs/readme">API Docs</a>
   </p>
 </footer>
