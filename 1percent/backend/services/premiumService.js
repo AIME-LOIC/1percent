@@ -84,15 +84,20 @@ class PremiumService {
       .eq('user_id', userId)
       .eq('is_active', true);
 
-    // Create new subscription
+    // Upsert: the table has a unique(user_id, tier_slug) constraint, so a
+    // plain INSERT fails with "duplicate key" for any user who has EVER
+    // held this tier before (expired or deactivated) — that was the
+    // "DB error" on every Pay Now for returning customers. Upsert
+    // reactivates the existing row and extends it from now.
     const { data: sub, error } = await adminClient
       .from('user_subscriptions')
-      .insert({
+      .upsert({
         user_id: userId,
         tier_slug: tierSlug,
+        starts_at: new Date().toISOString(),
         expires_at: expiresAt.toISOString(),
         is_active: true
-      })
+      }, { onConflict: 'user_id,tier_slug' })
       .select()
       .single();
 

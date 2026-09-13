@@ -32,6 +32,7 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const { adminNotificationRoutes } = require('./routes/notificationRoutes');
 const ratingRoutes = require('./routes/ratingRoutes');
 const { adminRatingRoutes } = require('./routes/ratingRoutes');
+const aiReviewRoutes = require('./routes/aiReviewRoutes');
 const logRoutes = require('./routes/logRoutes');
 const { adminLogRoutes } = require('./routes/logRoutes');
 const sitemapRoutes = require('./routes/sitemapRoutes');
@@ -217,6 +218,7 @@ app.use('/api/files', fileRoutes);
 app.use('/api/challenges', challengesRoutes);
 app.use('/api/parent-payments', parentPaymentRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/ai-reviews', aiReviewRoutes); // admin AI-review queue + student own-review
 app.use('/api/admin/notifications', adminNotificationRoutes);
 app.use('/api/ratings', ratingRoutes);
 app.use('/api/admin/ratings', adminRatingRoutes);

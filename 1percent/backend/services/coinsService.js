@@ -205,6 +205,18 @@ class CoinsService {
       user_id: userId, challenge_id: challengeId, code, passed
     }, { onConflict: 'user_id,challenge_id' });
 
+    // ── AI review (trained on the course corpus, no LLM) ──
+    // The trained model reads the submission, scores it against the
+    // course concepts and writes a human-readable review. The verdict
+    // is stored as PENDING in ai_reviews — it only affects the
+    // student's record after an admin approves it in the admin panel.
+    try {
+      const aiReviewService = require('./aiReviewService');
+      aiReviewService.queueReview(challenge, userId, code, { passed }); // fire-and-forget
+    } catch (e) {
+      console.warn('[AI-REVIEW] queue error (non-fatal):', e.message);
+    }
+
     // Award coins if passed
     let coinsAwarded = 0;
     if (passed) {
