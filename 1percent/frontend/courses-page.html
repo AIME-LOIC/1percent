@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>1Percent Courses — Software Development Training in Rwanda</title>
+<title>1Percent Courses — Technology Training in Rwanda: Coding, AI, Robotics</title>
 <link rel="canonical" href="https://learn.1percent.rw/courses">
-<meta name="description" content="Explore 1Percent courses: Python, Git &amp; GitHub, backend development with Node.js, React frontend, databases, DevOps, security, robotics and more. Beginner to advanced software development training in Rwanda.">
+<meta name="description" content="Explore 1Percent courses: Python, Git &amp; GitHub, backend development with Node.js, React frontend, databases, DevOps, security, robotics and more. Beginner to advanced technology training in Rwanda — anyone 10+ can start free.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://learn.1percent.rw/courses">
-<meta property="og:title" content="1Percent Courses — Software Development Training in Rwanda">
-<meta property="og:description" content="Beginner to advanced software development training in Rwanda: Python, Git, Node.js backend, React frontend, databases, DevOps, security, robotics and more.">
+<meta property="og:title" content="1Percent Courses — Technology Training in Rwanda: Coding, AI, Robotics">
+<meta property="og:description" content="Beginner to advanced technology training in Rwanda: Python, Git, Node.js backend, React frontend, databases, DevOps, security, robotics and more.">
 <meta property="og:image" content="https://learn.1percent.rw/og-image.png">
 <meta property="og:site_name" content="1percent Rwanda">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="1Percent Courses — Software Development Training in Rwanda">
-<meta name="twitter:description" content="Beginner to advanced software development training in Rwanda: Python, Git, Node.js backend, React frontend, databases, DevOps, security, robotics and more.">
+<meta name="twitter:title" content="1Percent Courses — Technology Training in Rwanda: Coding, AI, Robotics">
+<meta name="twitter:description" content="Beginner to advanced technology training in Rwanda: Python, Git, Node.js backend, React frontend, databases, DevOps, security, robotics and more.">
 <meta name="twitter:image" content="https://learn.1percent.rw/og-image.png">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <meta name="robots" content="index, follow">
@@ -32,9 +32,9 @@
     },
     {
       "@type": "CollectionPage",
-      "name": "1Percent Courses — Software Development Training in Rwanda",
+      "name": "1Percent Courses — Technology Training in Rwanda: Coding, AI, Robotics",
       "url": "https://learn.1percent.rw/courses",
-      "description": "All published 1Percent courses: beginner to advanced software development training in Rwanda.",
+      "description": "All published 1Percent courses: beginner to advanced technology training in Rwanda.",
       "isPartOf": { "@id": "https://learn.1percent.rw/#website" },
       "hasPart": {
         "@type": "ItemList",
@@ -99,6 +99,15 @@
   .course-card p { font-size: 13.5px; color: var(--text-secondary); flex: 1; }
   .course-open { margin-top: 14px; font-size: 13px; font-weight: 600; color: var(--accent-green); }
 
+  /* Collapsed "more courses" expander */
+  details.course-more { margin-top: 28px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-card); }
+  details.course-more summary { cursor: pointer; padding: 18px 24px; font-size: 14.5px; font-weight: 600; color: var(--accent-green); list-style: none; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  details.course-more summary::-webkit-details-marker { display: none; }
+  details.course-more summary::after { content: '▾'; font-size: 12px; transition: transform 0.2s; }
+  details.course-more[open] summary::after { transform: rotate(180deg); }
+  details.course-more summary:hover { background: var(--accent-green-dim); border-radius: var(--radius); }
+  .course-grid-more { padding: 8px 24px 24px; }
+
   .cta-strip { background: linear-gradient(135deg, #065f46, #059669); color: #fff; border-radius: var(--radius); padding: 40px; text-align: center; margin-top: 56px; }
   .cta-strip h2 { font-size: 24px; margin-bottom: 8px; }
   .cta-strip p { opacity: 0.9; margin-bottom: 24px; font-size: 15px; }
@@ -125,8 +134,8 @@
 <main class="container main">
   <section class="hero">
     <div class="hero-badge">1Percent Courses</div>
-    <h1>Software development courses at <span>1Percent Rwanda</span></h1>
-    <p>Learn with 1Percent through hands-on courses with real lessons, graded coding challenges, and certificates. Start as a complete beginner and progress to advanced engineering topics.</p>
+    <h1>Technology courses at <span>1Percent Rwanda</span></h1>
+    <p>Learn with 1Percent through hands-on courses across the whole world of tech — coding, web, AI, security, robotics and more — with real lessons, graded challenges, and certificates. Start as a complete beginner and progress to advanced topics.</p>
     <div class="hero-actions">
       <a href="/getting-started" class="btn btn-primary">Start learning free</a>
       <a href="/pricing" class="btn btn-secondary">See pricing</a>

@@ -87,7 +87,12 @@ function escapeHtml(s) {
     .replace(/'/g, '&#39;');
 }
 
-/** Render the /courses landing page with real course data baked into the HTML. */
+/** Render the /courses landing page with real course data baked into the HTML.
+    Only the first FEATURED_COURSE_COUNT courses are expanded; the rest load
+    inside a collapsed <details> element so the page stays scannable while
+    every course remains in the static HTML for search engines. */
+const FEATURED_COURSE_COUNT = 6;
+
 async function renderCoursesPage(req, res) {
   const fs = require('fs');
   const path = require('path');
@@ -97,7 +102,7 @@ async function renderCoursesPage(req, res) {
     const courses = await getPublishedCourses();
     const template = fs.readFileSync(path.join(__dirname, '..', '..', 'frontend', 'courses-page.html'), 'utf8');
 
-    const cards = courses.map(c => {
+    const renderCard = c => {
       const level = escapeHtml(c.level);
       const weeks = c.duration_weeks ? `${c.duration_weeks} week${c.duration_weeks === 1 ? '' : 's'}` : '';
       return [
@@ -111,11 +116,30 @@ async function renderCoursesPage(req, res) {
         `        <span class="course-open">View course →</span>`,
         `      </a>`
       ].join('\n');
-    }).join('\n');
+    };
+
+    const featured = courses.slice(0, FEATURED_COURSE_COUNT);
+    const rest = courses.slice(FEATURED_COURSE_COUNT);
+
+    const featuredCards = featured.map(renderCard).join('\n');
+    const restCards = rest.map(renderCard).join('\n');
+
+    let restBlock = '';
+    if (rest.length) {
+      restBlock = [
+        '',
+        '    <details class="course-more">',
+        `      <summary>Show all ${rest.length} more courses</summary>`,
+        `      <div class="course-grid course-grid-more">`,
+        restCards,
+        '      </div>',
+        '    </details>'
+      ].join('\n');
+    }
 
     res.send(template
       .replace('{{COURSE_COUNT}}', String(courses.length))
-      .replace('{{COURSE_CARDS}}', cards));
+      .replace('{{COURSE_CARDS}}', featuredCards + restBlock));
   } catch (err) {
     console.error('[COURSES] Render failed:', err.message);
     res.status(500).send('Failed to load courses.');

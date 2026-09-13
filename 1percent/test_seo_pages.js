@@ -2,8 +2,8 @@
 const BASE = 'http://localhost:3000';
 
 const SEO_PAGES = [
-  { path: '/',                title: '1Percent Rwanda — Software Development & Technology Learning', h1: 'Turn junior developers' },
-  { path: '/courses',         title: '1Percent Courses — Software Development Training in Rwanda', h1: 'Software development courses' },
+  { path: '/',                title: '1Percent Rwanda — Technology Learning: Coding, AI, Robotics & More', h1: 'Turn curiosity about tech' },
+  { path: '/courses',         title: '1Percent Courses — Technology Training in Rwanda: Coding, AI, Robotics', h1: 'Technology courses' },
   { path: '/pricing',         title: '1Percent Pricing — How Much Does It Cost to Learn?', h1: 'How much does it cost to learn' },
   { path: '/payments',        title: '1Percent Payment — How to Pay (MoMo, Airtel & Bank)', h1: 'How to pay for' },
   { path: '/getting-started', title: 'Getting Started with 1Percent — Join and Start Learning Free', h1: 'How to join' },

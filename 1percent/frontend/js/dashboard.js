@@ -191,7 +191,35 @@ const Dashboard = {
         const subtitle = document.getElementById('dash-subtitle-text');
         if (subtitle) subtitle.after(row); else header.querySelector('div').appendChild(row);
       }
+      this._loadTestimonialBadge();
     } catch (e) { console.warn('[DASHBOARD] Tier theme failed:', e.message); }
+  },
+
+  async _loadTestimonialBadge() {
+    try {
+      const token = (await this.supabase.auth.getSession()).data.session?.access_token;
+      if (!token) return;
+      const res = await fetch('/api/testimonials/mine', { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) return;
+      const json = await res.json();
+      const t = json.testimonial;
+      if (!t) return;
+      const row = document.querySelector('.dash-tier-row');
+      if (!row || row.querySelector('.dash-testimonial-badge')) return;
+      const map = {
+        pending: { label: 'Testimonial: in review', style: 'background:#fffbeb;color:#92400e;border:1px solid #fde68a;' },
+        approved: { label: 'Testimonial: published', style: 'background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;' },
+        rejected: { label: 'Testimonial: not published', style: 'background:#fef2f2;color:#991b1b;border:1px solid #fecaca;' }
+      };
+      const meta = map[t.status] || map.pending;
+      const badge = document.createElement('a');
+      badge.href = _url('/settings#testimonial');
+      badge.className = 'dash-testimonial-badge';
+      badge.style.cssText = 'display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:100px;font-size:11px;font-weight:700;text-decoration:none;cursor:pointer;' + meta.style;
+      badge.textContent = meta.label;
+      badge.title = 'Manage your testimonial in Settings';
+      row.appendChild(badge);
+    } catch (e) { console.warn('[DASHBOARD] Testimonial badge failed:', e.message); }
   },
 
   async _loadStreak() {
