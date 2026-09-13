@@ -464,7 +464,10 @@ class CoinsService {
     }
 
     if (type === 'markdown' || /readme|documentation|blog|bug report|architecture|error message/.test(title)) {
-      const ok = /(^|\n)#{1,3}\s+\S/.test(String(code || '')) && this._strippedLen(code) >= 80;
+      // NOTE: markdown headings (# …) are CONTENT, not comments — the
+      // comment-stripper removes them, so measure the raw text instead.
+      const raw = String(code || '');
+      const ok = /(^|\n)#{1,3}\s+\S/.test(raw) && raw.replace(/\s+/g, '').length >= 80;
       if (!ok) this._lastRejectReason = 'A proper document needs headings (## …) and substantial written content.';
       return ok;
     }
@@ -556,37 +559,115 @@ class CoinsService {
   }
 
   _evaluateTerminal(code, challenge) {
-    const text = (code || '').toLowerCase();
-    const title = challenge.title.toLowerCase();
-    const expected = (challenge.expected_output || '').toLowerCase();
+    const stripped = this._stripCommentsAndStrings(code);
+    // Terminal "code" is a list of shell commands. Grade the actual command
+    // lines: strip prompts ($/#/>), comments, and blank lines, then check
+    // that the required command appears as a WORD (word-boundary match) and,
+    // where the task implies an argument, that a plausible argument follows.
+    const commands = String(code || '')
+      .split('\n')
+      .map(l => l.replace(/^\s*[$#>]\s*/, '').trim()) // strip shell prompts
+      .filter(l => l && !l.startsWith('#'));
+    const joined = commands.join('\n');
 
-    // Linux commands
-    if (title.includes('list files')) return text.includes('ls');
-    if (title.includes('navigate')) return text.includes('cd');
-    if (title.includes('find files')) return text.includes('find');
-    if (title.includes('process')) return text.includes('ps') || text.includes('top');
-    if (title.includes('permission')) return text.includes('chmod');
-    if (title.includes('disk usage')) return text.includes('du') || text.includes('sort');
-    if (title.includes('text processing')) return text.includes('sort') || text.includes('uniq') || text.includes('tr');
-    if (title.includes('shell script') || title.includes('bash')) return text.includes('#!/bin/bash') || text.includes('echo');
-    if (title.includes('monitor')) return text.includes('curl') || text.includes('grep') || text.includes('ping');
-    if (title.includes('deploy')) return text.includes('bash') || text.includes('docker') || text.includes('git');
+    const hasCommand = (name) =>
+      new RegExp(`(^|\\n|;|&&|\\|)\\s*${name.replace(/[.*+?^${}()|[\]\\\\]/g, '\\$&')}(\\s|$)`).test(joined);
+    const hasCommandWithArg = (name) =>
+      new RegExp(`(^|\\n|;|&&|\\|)\\s*${name.replace(/[.*+?^${}()|[\]\\\\]/g, '\\$&')}\\s+\\S`).test(joined);
 
-    // Git commands
-    if (title.includes('init')) return text.includes('git init');
-    if (title.includes('stage') && title.includes('commit')) return text.includes('git add') && text.includes('git commit');
-    if (title.includes('branch') && title.includes('create')) return text.includes('git checkout -b') || text.includes('git branch');
-    if (title.includes('merge')) return text.includes('git merge');
-    if (title.includes('conflict')) return text.includes('git merge') || text.includes('conflict');
-    if (title.includes('rebase')) return text.includes('git rebase');
-    if (title.includes('cherry')) return text.includes('git cherry');
+    const title = (challenge.title || '').toLowerCase();
+    const expected = String(challenge.expected_output || '').trim().toLowerCase();
 
-    // Docker
-    if (title.includes('dockerfile')) return text.includes('from ') || text.includes('copy') || text.includes('cmd');
-    if (title.includes('compose')) return text.includes('version') || text.includes('services');
+    // Explicit command requirement from the challenge (e.g. expected_output
+    // lists "git add" / "chmod 755" / "docker compose up") — grade those
+    // word-for-word, argument included when present. Every check is a
+    // word-boundary regex on real command lines — never a bare .includes,
+    // which would let "gitx add" or "mygit add" satisfy "git add".
+    if (expected && /^(git|docker|npm|chmod|chown|curl|ssh|tar|grep|find|du|df|ps|top|ls|cd|cat|mkdir|touch|mv|cp|rm|head|tail|sort|uniq|tr|wc|echo|bash|kubectl|ping)\b/.test(expected)) {
+      const required = expected
+        .split(/[\n;]|\s+&&\s+/)
+        .map(s => s.trim())
+        .filter(Boolean);
+      const missing = required.filter(cmd => {
+        const parts = cmd.split(/\s+/);
+        const base = parts[0];
+        if (!hasCommand(base)) return true;
+        // If the required form includes args (e.g. "git add"), require the
+        // full command with its argument(s) as a real command line too.
+        if (parts.length > 1) {
+          const full = cmd.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const fullRe = new RegExp(`(^|\\n|;|&&|\\|)\\s*${full}(\\s|$)`);
+          if (!fullRe.test(joined.toLowerCase())) return true;
+        }
+        return false;
+      });
+      if (missing.length) {
+        this._lastRejectReason = `Missing required command${missing.length > 1 ? 's' : ''}: ${missing.join(', ')}.`;
+        return false;
+      }
+      // Structural check still applies: submissions can't be an empty shell.
+      if (this._strippedLen(code) < 4) {
+        this._lastRejectReason = 'Submission is too short — write the actual commands you would run.';
+        return false;
+      }
+      return true;
+    }
 
-    // Default: if they ran commands
-    return text.includes('git ') || text.includes('ls') || text.includes('cd ') || code.length > 20;
+    // Task-derived requirements (word-boundary matches on real command lines)
+    const task = [
+      // Linux
+      { match: /list files/, need: () => hasCommand('ls') || hasCommandWithArg('ls'), label: 'ls' },
+      { match: /navigate|change directory/, need: () => hasCommandWithArg('cd'), label: 'cd <directory>' },
+      { match: /find files/, need: () => hasCommandWithArg('find'), label: 'find <path>' },
+      { match: /process/, need: () => hasCommand('ps') || hasCommand('top'), label: 'ps or top' },
+      { match: /permission/, need: () => hasCommandWithArg('chmod') || hasCommandWithArg('chown'), label: 'chmod/chown' },
+      { match: /disk usage/, need: () => hasCommandWithArg('du') || hasCommandWithArg('df'), label: 'du or df' },
+      { match: /text processing/, need: () => ['sort', 'uniq', 'tr', 'grep', 'awk', 'sed'].some(hasCommandWithArg), label: 'sort/uniq/grep/…' },
+      { match: /shell script|bash/, need: () => /^#!\s*\/bin\/(ba)?sh/m.test(stripped) || commands.some(c => /^(echo|printf)\s+/.test(c)), label: 'shebang or echo' },
+      { match: /monitor/, need: () => ['curl', 'grep', 'ping', 'netstat', 'ss'].some(hasCommand), label: 'curl/grep/…' },
+      { match: /deploy/, need: () => ['bash', 'docker', 'git', 'scp', 'rsync'].some(hasCommand), label: 'bash/docker/…' },
+      // Git
+      { match: /init/, need: () => hasCommand('git') && /git\s+init/.test(joined), label: 'git init' },
+      { match: /stage/, need: () => /git\s+add/.test(joined), label: 'git add' },
+      { match: /commit/, need: () => /git\s+commit/.test(joined), label: 'git commit' },
+      { match: /branch/, need: () => /git\s+(checkout\s+-b|branch)/.test(joined), label: 'git branch/checkout -b' },
+      { match: /merge/, need: () => /git\s+merge/.test(joined), label: 'git merge' },
+      { match: /rebase/, need: () => /git\s+rebase/.test(joined), label: 'git rebase' },
+      { match: /cherry/, need: () => /git\s+cherry-pick/.test(joined), label: 'git cherry-pick' },
+      { match: /remote|push/, need: () => /git\s+(remote|push)/.test(joined), label: 'git remote/push' },
+      // Docker
+      { match: /dockerfile/, need: () => ['from', 'copy', 'cmd', 'run'].some(k => hasCommand(k) || new RegExp(`^\\s*${k}\\s+\\S`, 'im').test(stripped)), label: 'FROM/COPY/CMD/…' },
+      { match: /compose/, need: () => /version\s*:|services\s*:/.test(stripped) || hasCommandWithArg('docker'), label: 'compose file or docker command' }
+    ];
+
+    for (const t of task) {
+      if (t.match.test(title)) {
+        if (!t.need()) {
+          this._lastRejectReason = `Your submission doesn't include the required command (${t.label}). Write the actual command line(s).`;
+          return false;
+        }
+        return this._strippedLen(code) >= 4 || this._failShort();
+      }
+    }
+
+    // Default: require at least one real command line (not just prose).
+    // Each line must START with a recognizable command word — this rejects
+    // prose like "I would list the files…" while accepting real shell usage.
+    if (!commands.length) {
+      this._lastRejectReason = 'Write the actual command(s) you would run, one per line.';
+      return false;
+    }
+    const knownCommand = /^(?:sudo\s+)?(?:git|docker|npm|npx|yarn|pnpm|chmod|chown|curl|wget|ssh|scp|rsync|tar|grep|find|du|df|ps|top|htop|ls|cd|cat|mkdir|touch|mv|cp|rm|head|tail|sort|uniq|tr|wc|echo|printf|bash|sh|kubectl|ping|sed|awk|cut|less|more|nano|vim|export|source|systemctl|journalctl|whoami|pwd|man|which|alias|ln|kill|netstat|ss|apt|apt-get|yum|pip|pip3|node|python3?|make|gcc|code)\b/;
+    if (!commands.some(c => knownCommand.test(c))) {
+      this._lastRejectReason = 'That reads like a description, not commands — start each line with the command itself (e.g. ls -la).';
+      return false;
+    }
+    return true;
+  }
+
+  _failShort() {
+    this._lastRejectReason = 'Submission is too short — write the actual commands you would run.';
+    return false;
   }
 }
 

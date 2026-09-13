@@ -6,6 +6,8 @@
 
 const { adminClient } = require('../config/database');
 
+const { invalidateCourseCache } = require('../routes/sitemapRoutes');
+
 class AdminController {
   /* ---- COURSES ---- */
 
@@ -18,6 +20,7 @@ class AdminController {
         .select()
         .single();
       if (error) throw error;
+      invalidateCourseCache(); // public pages reflect the new course immediately
       res.status(201).json({ success: true, course: data });
     } catch (err) {
       console.error('[ADMIN] Create course error:', err.message);
@@ -45,6 +48,7 @@ class AdminController {
         .select()
         .single();
       if (error) throw error;
+      invalidateCourseCache(); // title/description/publish changes go live now
       res.json({ success: true, course: data });
     } catch (err) {
       console.error('[ADMIN] Update course error:', err.message);
@@ -56,6 +60,7 @@ class AdminController {
     try {
       const { error } = await adminClient.from('courses').delete().eq('id', req.params.courseId);
       if (error) throw error;
+      invalidateCourseCache(); // removed course disappears from public pages now
       res.json({ success: true, message: 'Course deleted.' });
     } catch (err) {
       console.error('[ADMIN] Delete course error:', err.message);
@@ -96,6 +101,7 @@ class AdminController {
         .select()
         .single();
       if (error) throw error;
+      invalidateCourseCache(); // lesson counts on public course pages stay fresh
       res.status(201).json({ success: true, lesson: data });
     } catch (err) {
       console.error('[ADMIN] Create lesson error:', err.message);
@@ -122,6 +128,7 @@ class AdminController {
         .select()
         .single();
       if (error) throw error;
+      invalidateCourseCache();
       res.json({ success: true, lesson: data });
     } catch (err) {
       console.error('[ADMIN] Update lesson error:', err.message);
@@ -133,6 +140,7 @@ class AdminController {
     try {
       const { error } = await adminClient.from('lessons').delete().eq('id', req.params.lessonId);
       if (error) throw error;
+      invalidateCourseCache();
       res.json({ success: true, message: 'Lesson deleted.' });
     } catch (err) {
       console.error('[ADMIN] Delete lesson error:', err.message);

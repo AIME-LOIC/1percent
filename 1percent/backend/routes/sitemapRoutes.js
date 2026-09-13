@@ -234,6 +234,13 @@ async function renderCoursePage(req, res, next) {
 
 router.get('/course/:slug', renderCoursePage);
 
+/* Called by admin routes right after a course create/update/delete or a
+   lesson change, so /courses, /course/:slug and /sitemap.xml reflect the
+   change on the very next request instead of up to 5 minutes later. */
+function invalidateCourseCache() {
+  courseCache = { full: null, urls: null, fetchedAt: 0 };
+}
+
 function xmlEscape(s) {
   return String(s)
     .replace(/&/g, '&amp;')
@@ -271,3 +278,4 @@ router.get('/sitemap.xml', async (req, res) => {
 });
 
 module.exports = router;
+module.exports.invalidateCourseCache = invalidateCourseCache;
