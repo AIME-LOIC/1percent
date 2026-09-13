@@ -15,6 +15,7 @@
 <script src="/js/toast.js"></script>
 <script src="/js/login-popup.js"></script>
 <script src="/js/tierTheme.js"></script>
+<script src="/js/aiFeedback.js"></script>
 <script src="/js/error-reporter.js" defer></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -1126,6 +1127,11 @@ async function submitChallenge() {
       Toast.error('Challenge not passed. ' + (reason || 'Check your solution and try again.'));
       output.innerHTML = `<span class="error"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg> Challenge not passed</span>\n<span class="output">${reason ? reason.replace(/</g, '&lt;') : 'Check your solution and try again.'}</span>`;
     }
+
+    // ── AI feedback card (trained local engine, informational only) ──
+    // The review is queued asynchronously by the backend right after the
+    // submission, so give it a moment before fetching; silence on failure.
+    setTimeout(() => AiFeedback.show(currentChallenge.id, '#output'), 1500);
   } catch (e) {
     Toast.error('Failed to submit: ' + e.message);
   }

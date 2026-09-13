@@ -1,8 +1,33 @@
 /* ============================================================
-   Express App Setup
+   Express App Setup — THE REQUEST LIFECYCLE MAP
    ============================================================
    Configures the Express application with all middleware
    and routes. Does NOT start the server — that's server.js.
+
+   Every incoming request flows through this file top-to-bottom,
+   in exactly this order:
+
+     1. helmet          → security headers (CSP, etc.)
+     2. cors            → origin allow-list
+     3. compression     → gzip for text responses
+     4. json/urlencoded → body parsing (5 MB cap)
+     5. requestLogger   → request id + 5xx capture
+     6. /learn rewrite  → subdomain/legacy path normalization
+     7. sitemapRoutes   → /sitemap.xml, /courses, /course/:slug
+                          (dynamic SEO pages, MUST be before static)
+     8. template block  → 404s raw *-page.html templates
+     9. static files    → frontend/ assets (HTML = no-cache)
+    10. '/'             → homepage (host-aware)
+    11. /api/*          → JSON APIs (auth, courses, premium, coins,
+                          challenges, ai-reviews, …)
+    12. /mcp/*          → student MCP (Claude connector)
+    13. htmlRoutes map  → every HTML app page (host-aware)
+    14. catch-all       → legacy 301s, then 404
+     15. error handler  → last; logs + safe 500 JSON
+
+   Keeping this order intact matters: an earlier mount shadows a
+   later one (e.g. sitemapRoutes must precede static files or
+   Google could get the raw unfilled template).
    ============================================================ */
 
 const express = require('express');
@@ -48,10 +73,13 @@ const logService = require('./services/logService');
 const app = express();
 
 /* ============================================================
-   SECURITY MIDDLEWARE
+   1–5. SECURITY + BODY + LOGGING MIDDLEWARE
    ============================================================ */
 
-// Helmet — sets security headers
+// Helmet — sets security headers. The CSP allows only what the app
+// actually uses: jsDelivr (lucide icons), Google Fonts, the Supabase
+// origin (auth+DB REST), GitHub API (import features) and Formspree
+// (contact form). Everything else is default-deny.
 const supabaseHost = process.env.SUPABASE_URL ? new URL(process.env.SUPABASE_URL).origin : '';
 app.use(helmet({
   contentSecurityPolicy: {
@@ -100,6 +128,18 @@ app.disable('x-powered-by');
 app.use(requestLogger);
 
 /* ============================================================
+   6. SUBDOMAIN + LEGACY PATH NORMALIZATION
+   ------------------------------------------------------------
+   learn.1percent.rw serves the app at '/' while the main site
+   serves the marketing pages; a single codebase handles both.
+   Any path starting with /learn/ is rewritten (stripped) so the
+   SAME routes below serve both hosts. req.isLearnSubdomain is
+   read later by the route maps and by sitemapRoutes (which
+   serves the in-app course viewer on the subdomain but the SEO
+   course page on the main host).
+   ============================================================ */
+
+/* ============================================================
    SUBDOMAIN DETECTION — learn.1percent.rw serves learn at /
    Must run BEFORE static files so we can intercept root requests.
    ============================================================ */
@@ -118,18 +158,29 @@ app.use((req, res, next) => {
 });
 
 /* ============================================================
-   SITEMAP — dynamic, served from the domain root
-   (mounted before static files so it always wins)
+   7. SITEMAP + SEO PAGES — dynamic, served from the domain root
+   ------------------------------------------------------------
+   Mounted BEFORE static files so it always wins: /sitemap.xml,
+   /courses and /course/:slug are server-rendered from Supabase
+   (5-min in-memory cache; admin mutations call
+   invalidateCourseCache() to bust it instantly). If the static
+   middleware came first it would 404 these paths — they don't
+   exist as files.
    ============================================================ */
 app.use('/', sitemapRoutes);
 
 /* ============================================================
-   STATIC FILES — Frontend
+   8–9. STATIC FILES — Frontend
+   ------------------------------------------------------------
+   Serves frontend/ assets AFTER sitemapRoutes (so dynamic SEO
+   pages win) and BEFORE the API/HTML maps (so a real file like
+   /toast.js never falls through to the catch-all).
    ============================================================ */
 const frontendDir = path.join(__dirname, '..', 'frontend');
 
-// Block direct access to server-side templates (they contain {{PLACEHOLDERS}}
-// that are only filled when served through their real routes).
+// 8. Block direct access to server-side templates. They contain
+// {{PLACEHOLDERS}} that are only filled when served through their real
+// routes; letting a crawler hit the raw file would index placeholder text.
 app.get(['/courses-page.html', '/course-page.html'], (req, res) => {
   res.status(404).sendFile(path.join(frontendDir, '404.html'));
 });
@@ -148,13 +199,18 @@ app.use(express.static(frontendDir, {
   index: false  // We handle index.html manually for subdomain support
 }));
 
-/* Send HTML that's always revalidated — deploys reach users immediately */
+/* 9b. sendHtml — always revalidate HTML (Cache-Control: no-cache).
+   Static assets (JS/CSS/images) keep their normal caching, but any
+   HTML file must re-check with the server so a deploy reaches every
+   user on their very next page view. */
 function sendHtml(res, ...segments) {
   res.setHeader('Cache-Control', 'no-cache');
   return res.sendFile(path.join(frontendDir, ...segments));
 }
 
-/* Handle root path — learn subdomain gets learn/index.html, main site gets index.html */
+/* 10. Root path — host-aware homepage: the learn subdomain serves the
+   in-app landing (learn/index.html) while the main domain serves the
+   public marketing homepage (index.html). */
 app.get('/', (req, res) => {
   if (req.isLearnSubdomain) {
     return sendHtml(res, 'learn', 'index.html');
@@ -311,7 +367,17 @@ const learnSubdomainRoutes = {
   '/onboarding': 'onboarding.html',
 };
 
+/* ============================================================
+   13–14. HTML ROUTE MAPS + CATCH-ALL
+   ------------------------------------------------------------
+   Two maps, one per host, same values mostly: htmlRoutes for the
+   main site (with /learn/* app paths) and learnSubdomainRoutes
+   for learn.1percent.rw (same pages without the prefix). The
+   catch-all runs LAST — exact matches first, then the special
+   parameterized views, then legacy 301 redirects, then 404.
+   ============================================================ */
 app.get('*', (req, res) => {
+  // Non-HTML clients (API tools) and API paths get JSON, never the 404 page
   if (!req.accepts('html') || req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'Not found' });
   }
@@ -367,7 +433,11 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 /* ============================================================
-   ERROR HANDLING — generic messages only, no stack traces
+   15. ERROR HANDLING — generic messages only, no stack traces
+   ------------------------------------------------------------
+   Express error middleware has FOUR args (err, req, res, next) —
+   that signature is how Express identifies it. Runs last, after
+   every route, catching anything a route threw (via next(err)).
    ============================================================ */
 app.use((err, req, res, _next) => {
   // Log full error server-side only

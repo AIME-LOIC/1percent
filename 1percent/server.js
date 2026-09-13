@@ -46,6 +46,13 @@ server.listen(PORT, () => {
   }
 
   try {
+    const { startAiRetrainCron } = require('./backend/workers/aiRetrainCron');
+    startAiRetrainCron();
+  } catch (e) {
+    console.error('[SERVER] Failed to start AI retrain cron:', e.message);
+  }
+
+  try {
     const { startKeepAlive } = require('./backend/workers/keepAlive');
     startKeepAlive();
   } catch (e) {
