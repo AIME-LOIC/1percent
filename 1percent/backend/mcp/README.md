@@ -13,6 +13,65 @@ No extra dependencies — it uses the same Supabase service-role client your bac
 
 All tool logic lives in `backend/mcp/core.js`; `server.js` (stdio) and `../routes/mcpRoutes.js` (HTTP) are thin transports over it.
 
+---
+
+# Student connection — "Connect to Claude"
+
+Students get their own read-only MCP server so Claude can act as a **study
+companion** instead of a homework machine. Each student generates a personal
+token in **Settings → Connect to Claude**, adds the connector in claude.ai,
+and Claude can then see *their* learning data — and nothing else.
+
+| | Admin MCP | Student MCP |
+|---|---|---|
+| Endpoint | `/mcp/<MCP_HTTP_TOKEN>` | `/mcp/student/<student-token>` |
+| Auth | shared `MCP_HTTP_TOKEN` from `.env` | per-student token (hashed at rest) |
+| Identity | service-role (full platform) | scoped to the token's `user_id` |
+| Writes | full CRUD on courses/lessons/challenges | **none — read-only** |
+
+## Student tools
+
+| Tool | What it does |
+|---|---|
+| `my_learning_overview` | Enrolled courses with progress %, coins, streak, certificates |
+| `my_courses` | Enrolled courses with next lessons + next un-passed challenge |
+| `get_lesson` | Full lesson content — explain, summarize, answer questions |
+| `get_challenge` | Challenge description + starter code (**never** the hidden expected output/test cases) |
+| `check_my_code` | Dry-run the student's draft through the real grader — no coins, no submission, no completion |
+| `my_progress_in_course` | Every lesson/challenge in a course, done vs not, plus the next step |
+| `my_activity` | Recent completions and challenge attempts |
+
+## Academic-integrity guarantees
+
+- There is **no tool that writes anything**: no submit, no progress, no coins.
+- `get_challenge` deliberately withholds `expected_output` and `test_cases`.
+- `check_my_code` returns the same reject reason the playground shows, so
+  Claude can *explain* a failure — but the tool result tells Claude the
+  student must submit their own final solution.
+- The server's `instructions` field tells Claude: never do assignments for
+  the student.
+
+## Student setup steps (shown in the settings page)
+
+1. Settings → **Connect to Claude** → Generate Token (shown once).
+2. claude.ai → Settings → Connectors → **Add custom connector**.
+3. Name: `1% Learn`. URL: `https://learn.1percent.rw/mcp/student/<token>`.
+4. Start a chat → tools menu → pick **1% Learn**.
+
+## Implementation map
+
+| File | Role |
+|---|---|
+| `backend/mcp/studentCore.js` | Student tool definitions + JSON-RPC dispatch (user-scoped) |
+| `backend/services/studentMcpService.js` | Token generate/verify (SHA-256)/revoke/status |
+| `backend/routes/studentMcpRoutes.js` | `/api/mcp/student/*` token management + `/mcp/student` JSON-RPC |
+| `migrations/add_student_mcp_tokens.sql` | `student_mcp_tokens` table (run in Supabase SQL editor) |
+| `frontend/settings.html` | "Connect to Claude" settings tab |
+
+> Rotating a token instantly invalidates the old connector URL (the old hash
+> is replaced). Revoking disconnects Claude immediately. Tokens can only be
+> generated for one's own account (JWT-authenticated endpoints).
+
 ## Tools
 
 | Tool | What it does |

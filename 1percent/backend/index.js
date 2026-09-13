@@ -36,6 +36,7 @@ const logRoutes = require('./routes/logRoutes');
 const { adminLogRoutes } = require('./routes/logRoutes');
 const sitemapRoutes = require('./routes/sitemapRoutes');
 const mcpRoutes = require('./routes/mcpRoutes');
+const { studentMcpTokenRoutes, studentMcpRpcRoutes } = require('./routes/studentMcpRoutes');
 
 // Middlewares
 const { requestLogger } = require('./middlewares/requestLogger');
@@ -213,9 +214,18 @@ app.use('/api/admin/ratings', adminRatingRoutes);
 app.use('/api/logs', logRoutes);
 app.use('/api/admin/logs', adminLogRoutes);
 app.use('/api/docs', docsRoutes);
+app.use('/api/mcp', studentMcpTokenRoutes);
 
 // MCP over Streamable HTTP — remote server for claude.ai (token in URL path or Bearer).
-// Express sub-routers can't see parent mount params, so capture the path token here.
+
+// Student MCP — "Connect to Claude" for students. Mount BEFORE the /mcp/:token?
+// catch-all so the 'student' path segment is never treated as an admin token.
+app.use('/mcp/student/:token?', (req, res, next) => {
+  if (req.params.token) req.mcpPathToken = req.params.token;
+  next();
+}, studentMcpRpcRoutes);
+
+// Admin MCP catch-all — any other /mcp/<token> goes to the admin server.
 app.use('/mcp/:token?', (req, res, next) => {
   if (req.params.token) req.mcpPathToken = req.params.token;
   next();
