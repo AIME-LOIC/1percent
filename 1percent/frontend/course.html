@@ -21,11 +21,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/main.css">
+<link rel="stylesheet" href="/css/tier-theme.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/js/session.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/icons.js"></script>
 <script src="/js/toast.js"></script>
+<script src="/js/tierTheme.js"></script>
 <script src="/js/nav.js" defer></script>
 <script src="/js/error-reporter.js" defer></script>
 <link rel="stylesheet" href="/css/notification-popup.css">
@@ -1058,6 +1060,8 @@ async function loadPremium(){
       const slug=json.tier?.slug||'free';
       const name=json.tier?.name||'Free';
       isPremiumUser=slug!=='free';
+      // Apply the tier visual theme (free / pro / pro+)
+      if(typeof TierTheme!=='undefined')TierTheme.applySlug(slug);
       const badge=document.getElementById('membership-badge');
       if(badge){
         badge.textContent=name;

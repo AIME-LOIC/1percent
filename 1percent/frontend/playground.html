@@ -9,10 +9,12 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/main.css">
+<link rel="stylesheet" href="/css/tier-theme.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/js/icons.js"></script>
 <script src="/js/toast.js"></script>
 <script src="/js/login-popup.js"></script>
+<script src="/js/tierTheme.js"></script>
 <script src="/js/error-reporter.js" defer></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -395,6 +397,12 @@ async function init() {
       if (session?.user) {
         currentUser = session.user;
         await loadCoins();
+        // Apply tier theme (fire and forget — playground is dark-themed already,
+        // so only accent variables change)
+        fetch('/api/premium/status', { headers: { 'Authorization': `Bearer ${session.access_token}` } })
+          .then(r => r.ok ? r.json() : null)
+          .then(j => { if (j && j.success && typeof TierTheme !== 'undefined') TierTheme.applySlug(j.tier?.slug || 'free'); })
+          .catch(() => {});
       }
     }
   } catch {}

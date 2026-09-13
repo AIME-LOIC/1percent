@@ -93,49 +93,81 @@
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.7; -webkit-font-smoothing: antialiased; }
+
+  /* ── Nav ─────────────────────────────────────────── */
   .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 0 24px; height: 64px; display: flex; align-items: center; justify-content: space-between; }
   .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); font-weight: 700; font-size: 18px; }
   .nav-brand span { color: var(--accent-green); }
   .nav-links { display: flex; gap: 32px; list-style: none; align-items: center; }
   .nav-links a { color: var(--text-secondary); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
   .nav-links a:hover, .nav-links a.active { color: var(--accent-green); }
-  .container { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+
+  /* ── Layout ──────────────────────────────────────── */
+  .container { max-width: 920px; margin: 0 auto; padding: 0 24px; }
   .main { padding: 140px 0 80px; }
   .hero { text-align: center; margin-bottom: 56px; }
   .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--accent-green-dim); color: var(--accent-green); padding: 8px 18px; border-radius: 100px; font-size: 13px; font-weight: 600; margin-bottom: 20px; border: 1px solid var(--border-green); }
-  .hero h1 { font-size: clamp(32px, 5vw, 44px); font-weight: 800; line-height: 1.15; margin-bottom: 12px; }
+  .hero h1 { font-size: clamp(32px, 5vw, 44px); font-weight: 800; line-height: 1.15; margin-bottom: 12px; letter-spacing: -0.5px; }
   .hero h1 span { color: var(--accent-green); }
   .hero p { font-size: 16px; color: var(--text-secondary); max-width: 620px; margin: 0 auto; }
-  .section-title { font-size: 22px; font-weight: 700; margin: 56px 0 8px; }
+  .section-title { font-size: 22px; font-weight: 700; margin: 56px 0 8px; letter-spacing: -0.3px; }
   .section-sub { color: var(--text-secondary); font-size: 14.5px; margin-bottom: 24px; }
+
+  /* ── Notice ──────────────────────────────────────── */
   .notice { display: flex; gap: 12px; align-items: flex-start; padding: 16px 20px; border-radius: var(--radius-sm); margin: 0 0 32px; font-size: 14px; background: rgba(217, 119, 6, 0.06); border: 1px solid rgba(217, 119, 6, 0.2); color: #92400e; }
   .notice svg { width: 20px; height: 20px; flex-shrink: 0; margin-top: 2px; }
   .notice a { color: inherit; font-weight: 600; }
+
+  /* ── Method cards ────────────────────────────────── */
   .method-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 16px; }
-  .method { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+  .method { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; transition: border-color 0.2s, box-shadow 0.2s; }
+  .method:hover { border-color: var(--border-green); box-shadow: 0 4px 16px rgba(5, 150, 105, 0.06); }
   .method-icon { width: 44px; height: 44px; border-radius: var(--radius-sm); background: var(--accent-green-dim); color: var(--accent-green); display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
   .method-icon svg { width: 22px; height: 22px; }
   .method h3 { font-size: 16px; margin-bottom: 6px; }
   .method p { font-size: 13.5px; color: var(--text-secondary); }
+  .method .mono { margin: 0 2px; }
+
+  /* ── Step list ───────────────────────────────────── */
   .steps { list-style: none; counter-reset: step; margin: 16px 0 0; }
   .steps li { counter-increment: step; padding: 14px 0 14px 44px; position: relative; border-left: 2px solid var(--border); margin-left: 15px; font-size: 14.5px; color: var(--text-secondary); }
   .steps li:last-child { border-left-color: transparent; }
   .steps li::before { content: counter(step); position: absolute; left: -15px; top: 14px; width: 30px; height: 30px; background: var(--accent-green); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
   .steps li b { color: var(--text-primary); }
+
+  /* ── Cards / code ────────────────────────────────── */
   .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; margin-bottom: 20px; }
   .card h3 { font-size: 17px; margin-bottom: 10px; }
   .card p { font-size: 14.5px; color: var(--text-secondary); }
   .mono { font-family: 'JetBrains Mono', monospace; background: var(--accent-green-dim); color: var(--accent-green); padding: 2px 8px; border-radius: 4px; font-size: 13px; font-weight: 600; }
+
+  /* ── Bank transfer detail rows ───────────────────── */
+  .detail-row { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px dashed var(--border); font-size: 14px; }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-row dt { color: var(--text-muted); font-weight: 500; }
+  .detail-row dd { color: var(--text-primary); font-weight: 600; text-align: right; }
+  .placeholder { color: #b45309; background: rgba(217, 119, 6, 0.08); border: 1px dashed rgba(217, 119, 6, 0.4); padding: 1px 8px; border-radius: 4px; font-style: italic; font-weight: 500; }
+
+  /* ── FAQ ─────────────────────────────────────────── */
   details { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; padding: 20px; transition: border-color 0.2s; }
   details:hover { border-color: var(--border-green); }
   summary { cursor: pointer; font-weight: 600; font-size: 15px; list-style: none; }
   summary::-webkit-details-marker { display: none; }
   details p { color: var(--text-secondary); margin-top: 12px; font-size: 14px; }
   details a { color: var(--accent-green); }
+
+  /* ── Footer ──────────────────────────────────────── */
   .footer { border-top: 1px solid var(--border); padding: 40px 24px; text-align: center; color: var(--text-muted); font-size: 14px; background: var(--bg-secondary); }
   .footer a { color: var(--accent-green); text-decoration: none; }
   .footer a:hover { text-decoration: underline; }
-  @media (max-width: 768px) { .nav-links { display: none; } .main { padding: 120px 0 60px; } }
+
+  @media (max-width: 768px) {
+    .nav-links { display: none; }
+    .main { padding: 120px 0 60px; }
+    .card { padding: 20px; }
+    .detail-row { flex-direction: column; gap: 2px; }
+    .detail-row dd { text-align: left; }
+  }
 </style>
 </head>
 <body>
@@ -178,9 +210,9 @@
         <p>Visa and Mastercard are accepted in the payment flow. Card details are encrypted — we never store them.</p>
       </div>
       <div class="method">
-        <div class="method-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg></div>
+        <div class="method-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg></div>
         <h3>Bank transfer</h3>
-        <p>You can also pay by bank transfer. Start the payment flow and choose bank transfer for instructions.</p>
+        <p>Pay directly from your bank account. See the <a href="#bank-transfer" style="color: var(--accent-green); font-weight: 600;">bank transfer instructions</a> below.</p>
       </div>
     </div>
   </section>
@@ -202,6 +234,32 @@
     </div>
   </section>
 
+  <section aria-labelledby="bank-h">
+    <h2 class="section-title" id="bank-h">Pay by Bank transfer (step by step)</h2>
+    <p class="section-sub">Use this if mobile money is not an option. Transfers are verified after the bank confirms.</p>
+
+    <div class="card" id="bank-transfer">
+      <h3>Transfer details</h3>
+      <dl style="margin: 12px 0 20px;">
+        <!-- TODO(business): replace the placeholders below with the real bank
+             account name, number and bank before launch. Nothing in the
+             repository states these values, so they are intentionally
+             left as clearly-marked placeholders. -->
+        <div class="detail-row"><dt>Account name</dt><dd><span class="placeholder">1percent Rwanda Ltd — confirm with support</span></dd></div>
+        <div class="detail-row"><dt>Bank</dt><dd><span class="placeholder">Bank name — confirm with support</span></dd></div>
+        <div class="detail-row"><dt>Account number</dt><dd><span class="placeholder">Request from support</span></dd></div>
+        <div class="detail-row"><dt>Reference</dt><dd>Your registered email address</dd></div>
+      </dl>
+      <ol class="steps">
+        <li><b>Subscribe first:</b> open <a href="/payment" style="color: var(--accent-green);">Pricing &amp; Plans</a>, pick your plan, and choose <b>Bank transfer</b> as the payment method so the amount is recorded against your account.</li>
+        <li>Transfer the exact plan amount (RWF 15,000 for Pro, RWF 35,000 for Unlimited) to the account above from any Rwandan bank.</li>
+        <li>Use <b>your registered email address</b> as the transfer reference so we can match the payment to your account.</li>
+        <li>Send the transfer confirmation to <a href="mailto:1percentrwanda@gmail.com" style="color: var(--accent-green);">1percentrwanda@gmail.com</a> with your name and plan.</li>
+        <li>Your subscription is activated once the transfer is confirmed — usually within one business day.</li>
+      </ol>
+    </div>
+  </section>
+
   <section aria-labelledby="parent-h">
     <h2 class="section-title" id="parent-h">Paying for a child or student</h2>
     <div class="card">
@@ -219,7 +277,7 @@
     </details>
     <details>
       <summary>How long does verification take?</summary>
-      <p>Mobile money payments are verified automatically within 5 minutes. If your access doesn't update within an hour, <a href="/contact">contact support</a>.</p>
+      <p>Mobile money payments are verified automatically within 5 minutes. Bank transfers are confirmed within one business day. If your access doesn't update within an hour (mobile money), <a href="/contact">contact support</a>.</p>
     </details>
     <details>
       <summary>Can a parent pay for me?</summary>

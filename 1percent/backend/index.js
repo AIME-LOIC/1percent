@@ -37,6 +37,8 @@ const { adminLogRoutes } = require('./routes/logRoutes');
 const sitemapRoutes = require('./routes/sitemapRoutes');
 const mcpRoutes = require('./routes/mcpRoutes');
 const { studentMcpTokenRoutes, studentMcpRpcRoutes } = require('./routes/studentMcpRoutes');
+const testimonialRoutes = require('./routes/testimonialRoutes');
+const { adminTestimonialRoutes } = require('./routes/testimonialRoutes');
 
 // Middlewares
 const { requestLogger } = require('./middlewares/requestLogger');
@@ -124,6 +126,13 @@ app.use('/', sitemapRoutes);
    STATIC FILES — Frontend
    ============================================================ */
 const frontendDir = path.join(__dirname, '..', 'frontend');
+
+// Block direct access to server-side templates (they contain {{PLACEHOLDERS}}
+// that are only filled when served through their real routes).
+app.get(['/courses-page.html', '/course-page.html'], (req, res) => {
+  res.status(404).sendFile(path.join(frontendDir, '404.html'));
+});
+
 app.use(express.static(frontendDir, {
   etag: true,
   lastModified: true,
@@ -211,6 +220,8 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin/notifications', adminNotificationRoutes);
 app.use('/api/ratings', ratingRoutes);
 app.use('/api/admin/ratings', adminRatingRoutes);
+app.use('/api/testimonials', testimonialRoutes);
+app.use('/api/admin/testimonials', adminTestimonialRoutes);
 app.use('/api/logs', logRoutes);
 app.use('/api/admin/logs', adminLogRoutes);
 app.use('/api/docs', docsRoutes);

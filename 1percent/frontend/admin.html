@@ -269,6 +269,10 @@ tr.log-fatal:hover td{background:#feeeee !important;}
     </div>
     <div class="sidebar-section">
       <div class="sidebar-label">Users</div>
+      <a class="sidebar-item" data-panel="testimonials" onclick="showPanel('testimonials')">
+        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9h.01"/><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M14 13h.01"/><path d="M10 13h.01"/></svg></span>
+        Testimonials <span class="badge badge-yellow" id="testimonials-pending-count" style="display:none;margin-left:auto;"></span>
+      </a>
       <a class="sidebar-item" data-panel="enrollments" onclick="showPanel('enrollments')">
         <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
         Enrollments
@@ -321,6 +325,17 @@ tr.log-fatal:hover td{background:#feeeee !important;}
       <div class="card" id="diagnostics-card" style="display:none;">
         <div class="card-header"><h2><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Database Status</h2><button class="btn-admin outline" onclick="loadDiagnostics()">Refresh</button></div>
         <div class="card-body" id="diagnostics-body"></div>
+      </div>
+    </div>
+
+    <!-- Testimonials Panel -->
+    <div class="panel" id="panel-testimonials">
+      <h1>Testimonials</h1>
+      <p class="subtitle">Review student submissions — approved quotes appear on the public homepage.</p>
+      <div class="card">
+        <div class="card-header"><h2>All Submissions</h2><button class="btn-admin outline" onclick="loadTestimonials()">Refresh</button></div>
+        <div id="testimonials-loading" style="padding:24px;color:var(--admin-muted);font-size:13px;">Loading…</div>
+        <div id="testimonials-list" style="display:none;"></div>
       </div>
     </div>
 
@@ -1211,11 +1226,66 @@ function showPanel(name){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById(`panel-${name}`).classList.add('active');
   document.querySelectorAll('.sidebar-item').forEach(a=>{a.classList.toggle('active',a.dataset.panel===name);});
-  const titles={dashboard:'Dashboard',courses:'Courses',lessons:'Lessons',quizzes:'Quizzes',challenges:'Challenges',enrollments:'Enrollments',logs:'Logs & Errors',notifications:'Notifications'};
+  const titles={dashboard:'Dashboard',courses:'Courses',lessons:'Lessons',quizzes:'Quizzes',challenges:'Challenges',enrollments:'Enrollments',logs:'Logs & Errors',notifications:'Notifications',testimonials:'Testimonials'};
   document.getElementById('topbar-section-title').textContent=titles[name]||name;
   if(name==='quizzes')loadQuizzes();
+  if(name==='testimonials')loadTestimonials();
   if(name==='lessons'){const sel=document.getElementById('lesson-course-select');if(sel.options.length>1&&!sel.value){sel.value=sel.options[1].value;}if(sel.value)loadLessons();}
   if(name==='logs')loadLogsPanel();
+}
+
+// ── Testimonials ──────────────────────────────────
+let testimonialsLoaded=false;
+
+async function loadTestimonials(){
+  const list=document.getElementById('testimonials-list');
+  const loading=document.getElementById('testimonials-loading');
+  try{
+    const res=await apiFetch('/api/admin/testimonials');
+    const json=await res.json();
+    if(!json.success)throw new Error(json.error||'Failed');
+    const items=json.testimonials||[];
+    const pending=items.filter(t=>t.status==='pending').length;
+    const badge=document.getElementById('testimonials-pending-count');
+    if(badge){badge.textContent=pending;badge.style.display=pending?'':'none';}
+    loading.style.display='none';
+    list.style.display='';
+    if(!items.length){
+      list.innerHTML='<div style="padding:24px;color:var(--admin-muted);font-size:13px;">No testimonial submissions yet.</div>';
+      return;
+    }
+    const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const stars=n=>{let s='';for(let i=0;i<5;i++)s+='<span style="color:'+(i<n?'#f59e0b':'#d1d5db')+'">★</span>';return s;};
+    const statusBadge=t=>t.status==='approved'?'<span class="badge badge-green">Approved</span>':t.status==='rejected'?'<span class="badge badge-red">Rejected</span>':'<span class="badge badge-yellow">Pending</span>';
+    list.innerHTML=items.map(t=>`
+      <div style="padding:20px 24px;border-bottom:1px solid #f3f4f6;" id="testimonial-${esc(t.id)}">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;">
+          <strong style="font-size:14px;">${esc(t.display_name||'Anonymous student')}</strong>
+          ${t.role?`<span style="font-size:12px;color:var(--admin-muted);">· ${esc(t.role)}</span>`:''}
+          ${statusBadge(t.status)}
+          <span style="margin-left:auto;font-size:12px;">${stars(t.rating||5)}</span>
+        </div>
+        <p style="font-size:13.5px;color:var(--admin-text);line-height:1.7;margin:0 0 10px;">“${esc(t.quote)}”</p>
+        <div style="font-size:11.5px;color:var(--admin-muted);margin-bottom:12px;">Submitted ${new Date(t.created_at).toLocaleString()}</div>
+        ${t.status!=='approved'?`<button class="btn-admin primary" onclick="setTestimonialStatus('${t.id}','approved')">Approve</button>`:''}
+        ${t.status!=='rejected'?`<button class="btn-admin danger" onclick="setTestimonialStatus('${t.id}','rejected')">Reject</button>`:''}
+        ${t.status==='rejected'?`<button class="btn-admin outline" onclick="setTestimonialStatus('${t.id}','pending')">Restore to pending</button>`:''}
+      </div>`).join('');
+    testimonialsLoaded=true;
+  }catch(e){
+    loading.style.display='none';
+    list.style.display='';
+    list.innerHTML='<div style="padding:24px;color:var(--admin-red);font-size:13px;">Could not load testimonials: '+esc(e.message)+'</div>';
+  }
+}
+
+async function setTestimonialStatus(id,status){
+  try{
+    const res=await apiFetch(`/api/admin/testimonials/${id}/status`,{method:'PUT',body:JSON.stringify({status})});
+    const json=await res.json();
+    if(json.success){loadTestimonials();}
+    else alert(json.error||'Could not update testimonial');
+  }catch(e){alert('Network error');}
 }
 
 // ── Courses ────────────────────────────────────────

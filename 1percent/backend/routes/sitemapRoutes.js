@@ -124,6 +124,92 @@ async function renderCoursesPage(req, res) {
 
 router.get('/courses', renderCoursesPage);
 
+/* ── Public course detail pages: /course/:slug ────────────────────
+   Server-rendered static HTML (indexable without JS) from the same
+   cached course query. Fills the course-page.html template. */
+async function getCourseBySlug(slug) {
+  const courses = await getPublishedCourses();
+  const found = courses.find(c => c.slug === slug);
+  if (!found) return null;
+
+  // Lesson count + full description for this course (single query)
+  try {
+    const { data, error } = await adminClient
+      .from('courses')
+      .select('description, lessons(count)')
+      .eq('slug', slug)
+      .eq('is_published', true)
+      .single();
+    if (!error && data) {
+      return {
+        ...found,
+        description: data.description || found.description,
+        lesson_count: (data.lessons && data.lessons[0] && data.lessons[0].count) || 0
+      };
+    }
+  } catch (err) {
+    console.error('[COURSES] Detail query failed:', err.message);
+  }
+  return { ...found, lesson_count: 0 };
+}
+
+async function renderCoursePage(req, res, next) {
+  // On the learn subdomain, /course/:slug is the in-app course viewer —
+  // only the main host serves the public SEO page.
+  if (req.isLearnSubdomain) return next();
+  const fs = require('fs');
+  const path = require('path');
+  res.set('Cache-Control', 'public, max-age=300');
+
+  try {
+    const course = await getCourseBySlug(String(req.params.slug || '').toLowerCase());
+    if (!course || !course.slug) return res.status(404).sendFile(path.join(__dirname, '..', '..', 'frontend', '404.html'));
+
+    const template = fs.readFileSync(path.join(__dirname, '..', '..', 'frontend', 'course-page.html'), 'utf8');
+
+    const title = course.title || course.slug;
+    const desc = course.description || `Learn ${title} with hands-on lessons and graded challenges at 1Percent Rwanda.`;
+    const descShort = desc.length > 160 ? desc.slice(0, 157).replace(/\s+\S*$/, '') + '…' : desc;
+    const SITE_URL = 'https://learn.1percent.rw';
+    const courseUrl = `${SITE_URL}/course/${course.slug}`;
+
+    const level = (course.level || '').toLowerCase();
+    const levelPill = level
+      ? `<span class="pill level ${level}">${escapeHtml(course.level)}</span>`
+      : '';
+    const weeks = course.duration_weeks ? `${course.duration_weeks} week${course.duration_weeks === 1 ? '' : 's'}` : 'Self-paced';
+    const lessonCount = course.lesson_count ? `${course.lesson_count} lesson${course.lesson_count === 1 ? '' : 's'}` : 'Structured lessons';
+
+    // educationalLevel only when the level is a known value
+    const knownLevels = ['beginner', 'intermediate', 'advanced'];
+    const levelJsonld = knownLevels.includes(level)
+      ? `,
+      "educationalLevel": "${level}"`
+      : '';
+
+    const jsonEscape = s => String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/[\r\n]+/g, ' ');
+    const htmlEscape = escapeHtml;
+
+    res.send(template
+      .replace(/\{\{COURSE_TITLE_JSON\}\}/g, jsonEscape(title))
+      .replace(/\{\{COURSE_DESC_JSON\}\}/g, jsonEscape(descShort))
+      .replace(/\{\{LEVEL_JSONLD\}\}/g, levelJsonld)
+      .replace(/\{\{LEVEL_PILL\}\}/g, levelPill)
+      .replace(/\{\{DURATION_TEXT\}\}/g, escapeHtml(weeks))
+      .replace(/\{\{LESSON_COUNT\}\}/g, escapeHtml(lessonCount))
+      .replace(/\{\{COURSE_DESCRIPTION\}\}/g, htmlEscape(desc))
+      .replace(/\{\{COURSE_DESC_SHORT\}\}/g, htmlEscape(descShort))
+      .replace(/\{\{COURSE_TITLE\}\}/g, htmlEscape(title))
+      .replace(/\{\{COURSE_SLUG\}\}/g, htmlEscape(course.slug))
+      .replace(/\{\{SITE_URL\}\}/g, SITE_URL));
+  } catch (err) {
+    console.error('[COURSES] Detail render failed:', err.message);
+    res.status(500).send('Failed to load course.');
+  }
+}
+
+router.get('/course/:slug', renderCoursePage);
+
 function xmlEscape(s) {
   return String(s)
     .replace(/&/g, '&amp;')

@@ -124,6 +124,18 @@
   .why-card h3{font-size:17px;font-weight:700;margin-bottom:8px;}
   .why-card p{font-size:14px;color:var(--text-secondary);line-height:1.6;}
 
+  /* Testimonials */
+  .testimonial-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
+  .testimonial-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;display:flex;flex-direction:column;gap:14px;}
+  .testimonial-stars{display:flex;gap:2px;color:#f59e0b;}
+  .testimonial-quote{font-size:14px;color:var(--text-secondary);line-height:1.7;flex:1;margin:0;}
+  .testimonial-quote::before{content:'\u201C';}
+  .testimonial-quote::after{content:'\u201D';}
+  .testimonial-author{display:flex;align-items:center;gap:12px;}
+  .testimonial-avatar{width:40px;height:40px;border-radius:50%;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0;}
+  .testimonial-author b{display:block;font-size:13.5px;font-weight:700;}
+  .testimonial-author span{display:block;font-size:12px;color:var(--text-muted);}
+
   @media(max-width:900px){
     .learn-hero .container{grid-template-columns:1fr;gap:40px;}
     .learn-visual{display:none;}
@@ -134,7 +146,7 @@
   @media(max-width:640px){
     .learn-hero{padding:120px 0 60px;}
     .learn-stats{gap:24px;flex-wrap:wrap;}
-    .curriculum-grid,.track-cards,.why-grid{grid-template-columns:1fr;}
+    .curriculum-grid,.track-cards,.why-grid,.testimonial-grid{grid-template-columns:1fr;}
     .footer-grid{grid-template-columns:1fr;}
     .learn-cta{padding:48px 24px;}
   }
@@ -342,6 +354,20 @@
         <h3>1% Certification</h3>
         <p>Earn a certification that proves you can build production systems — not just follow tutorials.</p>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- STUDENT TESTIMONIALS -->
+<section class="section section-alt" id="testimonials" aria-labelledby="testimonials-title">
+  <div class="container">
+    <div style="margin-bottom:48px;">
+      <span class="eyebrow">Student Voices</span>
+      <h2 class="section-title" id="testimonials-title">What Students Say</h2>
+      <p class="section-subtitle">Real words from learners studying with 1Percent. Every story is submitted by a student and reviewed before publishing.</p>
+    </div>
+    <div class="testimonial-grid" id="testimonial-grid">
+      <!-- Approved testimonials are loaded from /api/testimonials (JS-enhanced) -->
     </div>
   </div>
 </section>
@@ -772,6 +798,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 });
+
+/* ── Student testimonials — load approved quotes from the API ── */
+(async function loadTestimonials() {
+  const grid = document.getElementById('testimonial-grid');
+  if (!grid) return;
+  try {
+    const res = await fetch('/api/testimonials?limit=6');
+    const json = await res.json();
+    const items = (json.testimonials || []).slice(0, 6);
+    if (!items.length) { grid.closest('.section').style.display = 'none'; return; }
+    const stars = n => {
+      let s = '';
+      for (let i = 0; i < 5; i++) s += '<svg width="14" height="14" viewBox="0 0 24 24" fill="' + (i < n ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+      return s;
+    };
+    grid.innerHTML = items.map(t => {
+      const name = t.display_name || '1Percent student';
+      const initial = name.trim().charAt(0).toUpperCase() || '1';
+      const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      return `<article class="testimonial-card">` +
+        `<div class="testimonial-stars" role="img" aria-label="${Number(t.rating) || 5} out of 5 stars">${stars(Number(t.rating) || 5)}</div>` +
+        `<p class="testimonial-quote">${esc(t.quote)}</p>` +
+        `<div class="testimonial-author">` +
+          `<span class="testimonial-avatar" aria-hidden="true">${esc(initial)}</span>` +
+          `<div><b>${esc(name)}</b>${t.role ? `<span>${esc(t.role)}</span>` : ''}</div>` +
+        `</div>` +
+      `</article>`;
+    }).join('');
+  } catch (e) { console.warn('[TESTIMONIALS] Load failed:', e.message); }
+})();
 </script>
 </body>
 </html>

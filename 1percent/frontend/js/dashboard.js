@@ -124,6 +124,9 @@ const Dashboard = {
     greetEl.textContent = `Welcome back, ${name}`;
     document.getElementById('dash-subtitle-text').style.display = '';
 
+    // Apply the membership tier theme (free / pro / pro+) + badge
+    this._applyTierTheme();
+
     // Fetch enrolled courses (shows enrolled skeletons while loading)
     const courses = await this._fetchCourses();
     const enrolled = courses.filter(c => c.enrolled);
@@ -173,6 +176,22 @@ const Dashboard = {
     // Initialize notification and rating handlers
     this._initNotificationHandlers();
     this._initRatingHandlers();
+  },
+
+  async _applyTierTheme() {
+    try {
+      const token = (await this.supabase.auth.getSession()).data.session?.access_token;
+      if (typeof TierTheme === 'undefined') return;
+      const theme = await TierTheme.init(token);
+      const header = document.querySelector('.dash-header');
+      if (header && !header.querySelector('.dash-tier-row')) {
+        const row = document.createElement('div');
+        row.className = 'dash-tier-row';
+        row.innerHTML = TierTheme.badgeHTML(theme.slug);
+        const subtitle = document.getElementById('dash-subtitle-text');
+        if (subtitle) subtitle.after(row); else header.querySelector('div').appendChild(row);
+      }
+    } catch (e) { console.warn('[DASHBOARD] Tier theme failed:', e.message); }
   },
 
   async _loadStreak() {
@@ -443,10 +462,11 @@ const Dashboard = {
     try {
       const token = (await this.supabase.auth.getSession()).data.session?.access_token;
       if (!token) return;
-      // Check premium status
+      // Check premium status (json.tier is an object: { slug, name, ... })
       const res = await fetch('/api/premium/status', { headers: { Authorization: `Bearer ${token}` } });
       const json = await res.json();
-      const isPro = json.tier && json.tier !== 'free';
+      const tierSlug = json.tier && json.tier.slug ? json.tier.slug : 'free';
+      const isPro = tierSlug === 'pro' || tierSlug === 'unlimited';
       const header = document.querySelector('.dash-header');
       if (!header) return;
       const upgradeBtn = document.createElement('a');
