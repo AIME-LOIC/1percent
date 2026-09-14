@@ -122,9 +122,7 @@ const Dashboard = {
     const greetEl = document.getElementById('dash-greeting-text');
     greetEl.style.display = '';
     greetEl.textContent = `Welcome back, ${name}`;
-    document.getElementById('dash-subtitle-text').style.display = '';
-
-    // Apply the membership tier theme (free / pro / pro+) + badge
+    document.getElementById('dash-subtitle-text').style.display = '';      // Apply the membership tier theme (free / pro / pro+) + badge
     this._applyTierTheme();
 
     // Fetch enrolled courses (shows enrolled skeletons while loading)
@@ -191,7 +189,9 @@ const Dashboard = {
       if (header && !header.querySelector('.dash-tier-row')) {
         const row = document.createElement('div');
         row.className = 'dash-tier-row';
-        row.innerHTML = TierTheme.badgeHTML(theme.slug);
+        // Paid tiers get a crown inside the badge — the single premium indicator
+        const crown = theme.isPaid ? `<span class="crown-ic">${Icons.get('crown', 12)}</span>` : '';
+        row.innerHTML = TierTheme.badgeHTML(theme.slug).replace('</span>', `${crown}</span>`);
         const subtitle = document.getElementById('dash-subtitle-text');
         if (subtitle) subtitle.after(row); else header.querySelector('div').appendChild(row);
       }
@@ -316,10 +316,10 @@ const Dashboard = {
       const colorMap = {
         beginner: 'linear-gradient(135deg,#d1fae5,#a7f3d0)',
         intermediate: 'linear-gradient(135deg,#dbeafe,#bfdbfe)',
-        advanced: 'linear-gradient(135deg,#ede9fe,#ddd6fe)'
+        advanced: 'linear-gradient(135deg,#fef3c7,#fde68a)'
       };
       const levelColor = {
-        beginner: '#059669', intermediate: '#2563eb', advanced: '#7c3aed'
+        beginner: '#059669', intermediate: '#2563eb', advanced: '#b45309'
       };
 
       grid.innerHTML = json.courses.map(c => `
@@ -486,7 +486,7 @@ const Dashboard = {
   },
 
   _typeColor(type) {
-    const map = { video: '#dbeafe;color:#2563eb', lab: '#fef3c7;color:#d97706', project: '#ede9fe;color:#7c3aed', reading: '#e0e7ff;color:#4f46e5', quiz: '#fee2e2;color:#dc2626' };
+    const map = { video: '#dbeafe;color:#2563eb', lab: '#fef3c7;color:#d97706', project: '#fef3c7;color:#b45309', reading: '#e0e7ff;color:#4f46e5', quiz: '#fee2e2;color:#dc2626' };
     return map[type] || map.reading;
   },
 
@@ -517,16 +517,15 @@ const Dashboard = {
       }
       const header = document.querySelector('.dash-header');
       if (!header) return;
+      /* Consolidated premium indicator: paid users get NO second button —
+         their single gold crown badge already sits by the greeting
+         (see _applyTierTheme). Free users get one gold upgrade CTA. */
+      if (isPro) return;
       const upgradeBtn = document.createElement('a');
       upgradeBtn.href = _url('/payment');
-      upgradeBtn.className = 'dash-upgrade-btn' + (isPro ? ' is-premium' : '');
-      upgradeBtn.innerHTML = isPro
-        ? `${Icons.get('star', 14)} Pro Member`
-        : `${Icons.get('zap', 14)} Upgrade to Pro`;
-      upgradeBtn.style.cssText = isPro
-        ? 'display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;text-decoration:none;border:none;cursor:pointer;transition:all .15s;'
-        : 'display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;text-decoration:none;border:none;cursor:pointer;transition:all .15s;';
-      if (!isPro) upgradeBtn.onmouseenter = () => upgradeBtn.style.opacity = '0.9';
+      upgradeBtn.className = 'dash-upgrade-btn';
+      upgradeBtn.innerHTML = `${Icons.get('zap', 14)} Upgrade to Pro`;
+      upgradeBtn.style.cssText = 'display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;background:linear-gradient(135deg,#f59e0b,#b45309);color:#fff;text-decoration:none;border:none;cursor:pointer;transition:all .15s;';
       header.appendChild(upgradeBtn);
     } catch {}
   },
@@ -575,13 +574,15 @@ const Dashboard = {
       const rankClass = r => r === 1 ? 'gold' : r === 2 ? 'silver' : r === 3 ? 'bronze' : '';
       const medalSvg = (color) => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15"/><path d="M11 12 5.12 2.2"/><path d="m13 12 5.88-9.8"/><path d="M8 7h8"/><circle cx="12" cy="17" r="5"/><path d="M12 18v-2h-.5"/></svg>`;
       const rankIcon = r => r === 1 ? medalSvg('#f59e0b') : r === 2 ? medalSvg('#9ca3af') : r === 3 ? medalSvg('#b45309') : `<span style="font-size:11px;font-weight:800;color:var(--text-muted);">${r}</span>`;
+      // Crown for paid (Pro/Pro+) members — badge lives in the name row
+      const crown = `<span class="lb-crown" title="Pro member">${Icons.get('crown', 12)}</span>`;
       target.innerHTML = leaderboard.map(u => {
         const initials = (u.name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
         const score = lbType === 'coins' ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><circle cx="12" cy="12" r="8"/><path d="M12 8v8"/><path d="M9.5 10.5c0-1 1-1.5 2.5-1.5s2.5.5 2.5 1.5-1 1.5-2.5 1.5-2.5.5-2.5 1.5 1 1.5 2.5 1.5 2.5-.5 2.5-1.5"/></svg> ${u.coins} coins` : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> ${u.streak}d`;
-        return `<div class="dash-lb-item${u.isCurrentUser ? ' me' : ''}">
+        return `<div class="dash-lb-item${u.isCurrentUser ? ' me' : ''}${u.is_premium ? ' is-pro' : ''}">
           <div class="dash-lb-rank ${rankClass(u.rank)}">${rankIcon(u.rank)}</div>
           <div class="dash-lb-avatar">${u.avatar ? `<img src="${u.avatar}" alt="">` : initials}</div>
-          <div class="dash-lb-info"><div class="dash-lb-name">${escapeHTML(u.name)}</div><div class="dash-lb-score">${score}</div></div>
+          <div class="dash-lb-info"><div class="dash-lb-name">${escapeHTML(u.name)}${u.is_premium ? crown : ''}</div><div class="dash-lb-score">${score}</div></div>
           ${u.isCurrentUser ? '<span class="dash-lb-you">YOU</span>' : ''}
         </div>`;
       }).join('');
@@ -637,7 +638,7 @@ const Dashboard = {
           title: course.title || 'Course',
           slug: course.slug || '',
           icon: course.icon || 'book-open',
-          color: course.level === 'advanced' ? '#ede9fe,#ddd6fe' : course.level === 'intermediate' ? '#dbeafe,#bfdbfe' : '#d1fae5,#a7f3d0',
+          color: course.level === 'advanced' ? '#fef3c7,#fde68a' : course.level === 'intermediate' ? '#dbeafe,#bfdbfe' : '#d1fae5,#a7f3d0',
           level: course.level || '',
           progress: progMap[e.course_id] || 0,
           enrolled: true

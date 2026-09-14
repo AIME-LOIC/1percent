@@ -79,8 +79,10 @@ class CertificateController {
         return res.json({ success: false, error: 'Certificate not found.' });
       }
 
-      // Get signature — first try certificate owner, then fallback to any admin
+      // Get signature — first try certificate owner, then fallback to any admin.
+      // signer_name is the printed name under the signature line (matches the PDF).
       let signatureUrl = null;
+      let signerName = null;
       try {
         // Try certificate owner's signature first
         const { data: sig } = await adminClient
@@ -94,11 +96,12 @@ class CertificateController {
           // Fallback: get any admin's signature
           const { data: adminProfile } = await adminClient
             .from('profiles')
-            .select('id')
+            .select('id, full_name')
             .eq('role', 'admin')
             .limit(1)
             .single();
           if (adminProfile?.id) {
+            signerName = adminProfile.full_name || null;
             const { data: adminSig } = await adminClient
               .from('signatures')
               .select('signature_url')
@@ -122,7 +125,8 @@ class CertificateController {
           completed_at: cert.issued_at,
           course_id: cert.course_id
         },
-        signature_url: signatureUrl
+        signature_url: signatureUrl,
+        signer_name: signerName
       });
     } catch (err) {
       console.error('[CERT] Public view error:', err.message);

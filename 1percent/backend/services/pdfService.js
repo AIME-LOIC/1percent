@@ -497,12 +497,13 @@ class PdfService {
       doc.rect(w - 30 - ornW, h - 30 - ornLen, ornW, ornLen).fill('#0d6e3f');
 
       // ── Watermark ──────────────────────────────────────
-      // Kept tiny + far from the centre band so it can never overlap or
-      // "come in front of" the student name.
+      // Small and lifted clear of the bottom row: its rotated glyph box ends
+      // ~60px above the DATE ISSUED label (bottomY = h-71) and stays inside
+      // the left border, away from the bottom-left corner ornament.
       doc.save();
-      doc.translate(w * 0.14, h * 0.86).rotate(-24);
-      doc.fontSize(60).fillColor('rgba(13,110,63,0.04)').font('Helvetica-Bold')
-        .text('1%', -80, -40, { width: 160, align: 'center' });
+      doc.translate(w * 0.13, h * 0.75).rotate(-24);
+      doc.fontSize(44).fillColor('rgba(13,110,63,0.04)').font('Helvetica-Bold')
+        .text('1%', -60, -30, { width: 120, align: 'center' });
       doc.restore();
 
       // ── Header ─────────────────────────────────────────
@@ -537,13 +538,17 @@ class PdfService {
 
       // ── Student Name ──────────────────────────────────
       doc.moveDown(0.4);
-      const nameFontSize = Math.min(30, Math.max(20, 300 / (cert.learner_name || 'Student').length));
+      // Floor lowered to 14pt so very long names shrink instead of wrapping
+      // (a wrap would cascade every block below it downwards).
+      const nameFontSize = Math.min(30, Math.max(14, 300 / (cert.learner_name || 'Student').length));
       doc.fontSize(nameFontSize).fillColor('#1a1a2e').font('Helvetica-Bold')
         .text(cert.learner_name || 'Student', 0, doc.y, { align: 'center', width: w });
 
-      // Name underline
+      // Name underline (scales with the rendered name so long names don't
+      // spill past it)
       const nameLineY = doc.y + 3;
-      doc.moveTo(w / 2 - 130, nameLineY).lineTo(w / 2 + 130, nameLineY)
+      const nameHalfW = Math.min(130, doc.widthOfString(cert.learner_name || 'Student') / 2 + 10);
+      doc.moveTo(w / 2 - nameHalfW, nameLineY).lineTo(w / 2 + nameHalfW, nameLineY)
         .lineWidth(1).strokeColor('#d1d5db').stroke();
 
       // ── Course completion text ─────────────────────────
@@ -553,7 +558,8 @@ class PdfService {
 
       // ── Course Title ──────────────────────────────────
       doc.moveDown(0.3);
-      const courseFontSize = Math.min(22, Math.max(16, 400 / (cert.course_title || course?.title || 'Course').length));
+      // Floor lowered to 12pt so very long course titles stay on one line
+      const courseFontSize = Math.min(22, Math.max(12, 400 / (cert.course_title || course?.title || 'Course').length));
       doc.fontSize(courseFontSize).fillColor('#0d6e3f').font('Helvetica-Bold')
         .text(cert.course_title || course?.title || 'Course', 0, doc.y, { align: 'center', width: w });
 
@@ -571,8 +577,9 @@ class PdfService {
         );
 
       // ── Verified Seal (bottom right area) ─────────────
+      // Lifted 28px so the signature ink below it never crowds the seal ring
       const sealX = w - 110;
-      const sealY = h - 130;
+      const sealY = h - 158;
       const sealR = 35;
       // Outer circle
       doc.circle(sealX, sealY, sealR)
@@ -591,47 +598,57 @@ class PdfService {
         .text('1% EXPERT', sealX - 20, sealY + 8, { width: 40, align: 'center', characterSpacing: 2 });
 
       // ── Bottom Section ────────────────────────────────
-      const bottomY = h - 88;
+      // Three columns share one bottom baseline and the same label→content
+      // gap (bottom-aligned, matching the on-screen view), so no column
+      // overflows into another:
+      //   DATE ISSUED / CERT NUMBER : label → value
+      //   signature column          : ink → line → printed name → label
+      const bottomY = h - 71;   // DATE ISSUED / CERT NUMBER label row
       const colW = 180;
 
       // Left: Date Issued
       doc.fontSize(8).fillColor('#9ca3af').font('Helvetica')
         .text('DATE ISSUED', 60, bottomY, { width: colW, align: 'center', characterSpacing: 1.5 });
       doc.fontSize(10).fillColor('#374151').font('Helvetica-Bold')
-        .text(cert.issued_at ? new Date(cert.issued_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '', 60, bottomY + 12, { width: colW, align: 'center' });
+        .text(cert.issued_at ? new Date(cert.issued_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '', 60, bottomY + 13, { width: colW, align: 'center' });
 
       // Center: Certificate Number
       doc.fontSize(8).fillColor('#9ca3af').font('Helvetica')
         .text('CERTIFICATE NUMBER', w / 2 - colW / 2, bottomY, { width: colW, align: 'center', characterSpacing: 1.5 });
       doc.fontSize(10).fillColor('#374151').font('Courier-Bold')
-        .text(cert.certificate_number, w / 2 - colW / 2, bottomY + 12, { width: colW, align: 'center' });
+        .text(cert.certificate_number, w / 2 - colW / 2, bottomY + 13, { width: colW, align: 'center' });
 
-      // Right: Signature (image or hand-drawn vector script) + signer name
+      // Right: Signature column — paint order: line → ink → name → label.
+      // The ink rests just above the line, the printed name sits cleanly
+      // below it, and the label closes the column (bottom-aligned with the
+      // value rows of the other two columns).
       const sigX = w - 60 - colW;
-      doc.fontSize(8).fillColor('#9ca3af').font('Helvetica')
-        .text('AUTHORIZED SIGNATURE', sigX, bottomY, { width: colW, align: 'center', characterSpacing: 1.5 });
-
       const sigW = 120;
-      const sigH = 36;
+      const sigH = 34;
+      const sigLineY = bottomY - 1;            // signing line
+      const sigNameY = bottomY + 3;            // printed name, below the line
+      const sigLabelY = bottomY + 15;          // AUTHORIZED SIGNATURE label
       const sigImgX = sigX + (colW - sigW) / 2;
-      const sigImgY = bottomY + 8;
+      const sigImgY = sigLineY - 2 - sigH;     // ink bottom 2px above the line
+
+      this._drawSigLine(doc, sigX, sigLineY, colW);
       if (sigBuffer) {
         try {
           doc.image(sigBuffer, sigImgX, sigImgY, { fit: [sigW, sigH], align: 'center', valign: 'bottom' });
         } catch (e) {
           console.warn('[PDF] Signature image failed, drawing script:', e.message);
-          this._drawScriptSignature(doc, sigImgX, sigImgY + sigH - 6, sigW, signerName);
+          this._drawScriptSignature(doc, sigX, colW, sigLineY - 2, sigH, signerName);
         }
       } else {
         // No uploaded signature — render a real hand-drawn-style script name
-        this._drawScriptSignature(doc, sigImgX, sigImgY + sigH - 6, sigW, signerName);
+        this._drawScriptSignature(doc, sigX, colW, sigLineY - 2, sigH, signerName);
       }
-      // Signing line under the signature
-      this._drawSigLine(doc, sigX, bottomY + 30, colW);
       if (signerName) {
         doc.fontSize(8).fillColor('#374151').font('Helvetica-Bold')
-          .text(signerName, sigX, bottomY + 34, { width: colW, align: 'center' });
+          .text(signerName, sigX, sigNameY, { width: colW, align: 'center' });
       }
+      doc.fontSize(8).fillColor('#9ca3af').font('Helvetica')
+        .text('AUTHORIZED SIGNATURE', sigX, sigLabelY, { width: colW, align: 'center', characterSpacing: 1.5 });
 
       // ── Footer ────────────────────────────────────────
       doc.fontSize(7).fillColor('#c4c8cf').font('Helvetica')
@@ -645,10 +662,16 @@ class PdfService {
    * Draw a hand-drawn-style (cursive) signature using Bézier curves.
    * Used when no uploaded signature image exists so the downloaded
    * certificate always carries a real, official-looking signature.
+   *
+   * (colX, colW) — the signature column box; the flourish is centred in it.
+   * inkBottom     — y of the bottom of the ink area (just above the line).
+   * inkHeight     — available vertical room; the script is scaled to fit so
+   *                 its strokes and underline flourish never cross the line.
    */
-  _drawScriptSignature(doc, x, y, width, name) {
-    const label = (name || '1% Rwanda').trim();
-    const u = width / 10;               // unit size
+  _drawScriptSignature(doc, colX, colW, inkBottom, inkHeight, name) {
+    const u = Math.min(colW / 10, inkHeight / 4.3);   // unit size, fits the band
+    const x = colX + (colW - 8.7 * u) / 2 - 0.5 * u;  // centre the 0.5u…9.2u span
+    const y = inkBottom - 1.7 * u;                    // flourish ends at inkBottom
     const c = '#1e3a5f';                // ink colour
     doc.save();
     doc.lineWidth(1.7).strokeColor(c).lineCap('round').lineJoin('round');

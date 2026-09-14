@@ -31,8 +31,9 @@ body{font-family:'Inter',sans-serif;background:#f0f2f5;min-height:100vh;display:
 /* Decorative background pattern */
 .cert-paper::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 20% 20%,rgba(13,110,63,0.03) 0%,transparent 50%),radial-gradient(circle at 80% 80%,rgba(245,158,11,0.03) 0%,transparent 50%);pointer-events:none;}
 
-/* Watermark */
-.cert-watermark{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:120px;font-weight:900;color:rgba(13,110,63,0.03);pointer-events:none;white-space:nowrap;letter-spacing:20px;user-select:none;}
+/* Watermark — centered; clamps to the paper width so it can never crowd
+   the bottom row on small viewports (min 40px, max 12% of paper width) */
+.cert-watermark{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:clamp(40px,12vw,120px);font-weight:900;color:rgba(13,110,63,0.03);pointer-events:none;white-space:nowrap;letter-spacing:20px;user-select:none;}
 
 /* Borders */
 .cert-border{position:absolute;inset:14px;border:3px solid #0d6e3f;pointer-events:none;border-radius:2px;}
@@ -67,12 +68,14 @@ body{font-family:'Inter',sans-serif;background:#f0f2f5;min-height:100vh;display:
 
 .cert-awarded{font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:3px;margin-bottom:8px;}
 
-.cert-name{font-family:'Playfair Display',serif;font-size:34px;font-weight:600;color:#1a1a2e;margin-bottom:4px;line-height:1.2;}
-.cert-name-line{width:280px;height:1px;background:linear-gradient(90deg,transparent,#d1d5db,transparent);margin:0 auto 14px;}
+/* Name auto-fits its container so long names never wrap and cascade
+   every block below into the bottom row / seal */
+.cert-name{font-family:'Playfair Display',serif;font-size:clamp(14px,4vw,34px);font-weight:600;color:#1a1a2e;margin-bottom:4px;line-height:1.2;white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis;}
+.cert-name-line{width:min(280px,60%);height:1px;background:linear-gradient(90deg,transparent,#d1d5db,transparent);margin:0 auto 14px;}
 
 .cert-desc{font-size:11px;color:#9ca3af;margin-bottom:6px;letter-spacing:0.5px;}
 
-.cert-course{font-size:22px;font-weight:700;color:#0d6e3f;margin-bottom:4px;}
+.cert-course{font-size:clamp(12px,3vw,22px);font-weight:700;color:#0d6e3f;margin-bottom:4px;white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis;}
 
 .cert-details{font-size:10px;color:#9ca3af;margin-bottom:24px;letter-spacing:0.5px;}
 
@@ -90,11 +93,13 @@ body{font-family:'Inter',sans-serif;background:#f0f2f5;min-height:100vh;display:
 .cert-bottom-date{font-size:11px;font-weight:600;color:#374151;}
 .cert-bottom-number{font-family:'Courier New',monospace;font-size:10px;color:#6b7280;letter-spacing:1.5px;}
 
-/* Signature */
+/* Signature — strict vertical stack, no overlap:
+   ink → line → printed signer name → AUTHORIZED SIGNATURE label */
 .cert-signature-section{text-align:center;}
-.cert-signature-img{max-width:120px;max-height:40px;}
-.cert-signature-line{width:120px;height:1px;background:linear-gradient(90deg,transparent,#374151,transparent);margin:2px auto 0;}
-.cert-signature-label{font-size:9px;color:#9ca3af;margin-top:3px;letter-spacing:0.5px;}
+.cert-signature-img{max-width:120px;max-height:40px;display:block;margin:0 auto 2px;}
+.cert-signature-line{width:120px;height:1px;background:linear-gradient(90deg,transparent,#374151,transparent);margin:0 auto;}
+.cert-signature-name{font-size:9px;font-weight:600;color:#374151;margin-top:3px;}
+.cert-signature-label{font-size:9px;color:#9ca3af;margin-top:2px;letter-spacing:0.5px;}
 
 /* Footer text */
 .cert-footer{position:absolute;bottom:16px;left:0;right:0;text-align:center;font-size:7.5px;color:#c4c8cf;letter-spacing:1.5px;}
@@ -231,6 +236,7 @@ body{-webkit-user-select:none;user-select:none;}
         <div class="cert-signature-section">
           <img class="cert-signature-img" id="cert-signature" src="" alt="Signature" style="display:none;">
           <div class="cert-signature-line"></div>
+          <div class="cert-signature-name" id="cert-signer" style="display:none;"></div>
           <div class="cert-signature-label">Authorized Signature</div>
         </div>
         <div class="cert-bottom-section">
@@ -314,6 +320,13 @@ const certNumber = urlParams.get('number');
 
     certData = json.certificate;
     signatureUrl = json.signature_url;
+
+    // Printed signer name under the signature line (matches the PDF)
+    if (json.signer_name) {
+      const signerEl = document.getElementById('cert-signer');
+      signerEl.textContent = json.signer_name;
+      signerEl.style.display = 'block';
+    }
 
     // Fill certificate
     document.getElementById('cert-student').textContent = certData.learner_name || 'Student';

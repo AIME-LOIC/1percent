@@ -27,6 +27,19 @@ class StreakController {
 
       if (error) throw error;
 
+      // Which leaderboard users hold an active paid subscription?
+      // (One batched query — powers the crown badge in the UI.)
+      let premiumIds = new Set();
+      if (data && data.length) {
+        const { data: subs } = await adminClient
+          .from('user_subscriptions')
+          .select('user_id')
+          .in('user_id', data.map(u => u.id))
+          .eq('is_active', true)
+          .gt('expires_at', new Date().toISOString());
+        premiumIds = new Set((subs || []).map(s => s.user_id));
+      }
+
       const board = (data || []).map((u, i) => ({
         rank: i + 1,
         id: u.id,
@@ -34,6 +47,7 @@ class StreakController {
         coins: u.coins || 0,
         streak: u.streak_count || 0,
         avatar: u.avatar_url || null,
+        is_premium: premiumIds.has(u.id),
         isCurrentUser: u.id === req.user?.id
       }));
 

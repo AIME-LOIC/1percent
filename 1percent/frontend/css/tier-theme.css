@@ -1,30 +1,35 @@
 /* ============================================================
    Tier Theme — per-membership visual themes.
-   body.tier-free       → classic look (default, no overrides)
-   body.tier-pro        → Pro look (violet/indigo)
-   body.tier-unlimited  → Pro+ look (gold on dark)
+   body.tier-free       → classic green look (default, no overrides)
+   body.tier-pro        → Pro look — GOLD/AMBER on light (no violet)
+   body.tier-unlimited  → Pro+ look — richer warm gold, still light
    ============================================================ */
 
 /* ── Free badge ──────────────────────────────────────────── */
 .membership-badge.tier-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 100px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
 .membership-badge.tier-badge.free { background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; }
-.membership-badge.tier-badge.pro { background: #f5f3ff; color: #7c3aed; border: 1px solid #ddd6fe; }
-.membership-badge.tier-badge.unlimited { background: linear-gradient(135deg, #78350f, #b45309); color: #fde68a; border: 1px solid #92400e; }
+.membership-badge.tier-badge.pro,
+.membership-badge.tier-badge.unlimited {
+  background: linear-gradient(135deg, #78350f, #b45309);
+  color: #fde68a;
+  border: 1px solid #92400e;
+  box-shadow: 0 2px 8px rgba(146, 98, 10, .25);
+}
 
 /* ============================================================
-   PRO — fresh violet look, same structure as free
+   PRO — gold/amber accent on light background (no violet)
    ============================================================ */
 body.tier-pro {
-  --accent: #7c3aed;
-  --accent-hover: #6d28d9;
-  --accent-dim: rgba(124, 58, 237, 0.08);
-  --primary: #7c3aed;
-  --primary-light: #f5f3ff;
-  --primary-dark: #5b21b6;
+  --accent: #b45309;
+  --accent-hover: #92400e;
+  --accent-dim: rgba(180, 83, 9, 0.08);
+  --primary: #b45309;
+  --primary-light: #fffbeb;
+  --primary-dark: #92400e;
 }
 body.tier-pro .topbar,
 body.tier-pro .sidebar,
-body.tier-pro .dash-header { border-color: rgba(124, 58, 237, 0.18); }
+body.tier-pro .dash-header { border-color: rgba(180, 83, 9, 0.18); }
 body.tier-pro .topbar-logo .mark,
 body.tier-pro .progress-fill,
 body.tier-pro .sidebar-quiz-btn,
@@ -38,50 +43,50 @@ body.tier-pro .footer-btn.primary { background-color: var(--accent); }
 body.tier-pro .lesson-item.active { border-left-color: var(--accent); }
 body.tier-pro .dash-stat-icon.courses,
 body.tier-pro .dash-stat-icon.coins { background: var(--primary-light); color: var(--accent); }
-body.tier-pro ::selection { background: rgba(124, 58, 237, 0.2); }
+body.tier-pro ::selection { background: rgba(180, 83, 9, 0.2); }
 
-/* Pro chrome accent line at the very top */
+/* Gold chrome accent line at the very top */
 body.tier-pro .topbar { box-shadow: inset 0 3px 0 var(--accent); }
 body.tier-pro .dash-layout { border-top: 3px solid var(--accent); }
 
 /* ============================================================
-   UNLIMITED (PRO+) — gold-on-dark premium look
+   UNLIMITED (PRO+) — richer warm gold, still LIGHT (no dark bg)
    ============================================================ */
 body.tier-unlimited {
   --accent: #b45309;
   --accent-hover: #92400e;
   --accent-dim: rgba(180, 83, 9, 0.08);
-  --primary: #78350f;
-  --primary-light: #fffbeb;
-  --primary-dark: #451a03;
+  --primary: #92400e;
+  --primary-light: #fef3c7;
+  --primary-dark: #78350f;
   --gold: #d97706;
 }
 body.tier-unlimited .topbar,
 body.tier-unlimited .sidebar {
-  background: linear-gradient(180deg, #1c1917 0%, #1c1917 100%);
+  background: linear-gradient(180deg, #fffbeb 0%, #fef7e0 100%);
   border-color: rgba(217, 119, 6, 0.25);
-  color: #fde68a;
+  color: #78350f;
 }
 body.tier-unlimited .topbar-logo,
-body.tier-unlimited .sidebar-head h3 { color: #fcd34d; }
-body.tier-unlimited .topbar-logo .mark { background: #d97706; color: #1c1917; }
-body.tier-unlimited .topbar nav a { color: rgba(253, 230, 138, 0.75); }
-body.tier-unlimited .topbar nav a:hover { color: #fcd34d; background: rgba(217, 119, 6, 0.15); }
-body.tier-unlimited .topbar nav a.active { background: rgba(217, 119, 6, 0.2); color: #fcd34d; }
-body.tier-unlimited .topbar nav a.nav-cta { background: #d97706; color: #1c1917; }
-body.tier-unlimited .topbar-btn { background: rgba(217, 119, 6, 0.15); border-color: rgba(217, 119, 6, 0.3); color: #fde68a; }
-body.tier-unlimited .sidebar-quiz-btn { background: #d97706; border-color: #d97706; color: #1c1917; }
+body.tier-unlimited .sidebar-head h3 { color: #92400e; }
+body.tier-unlimited .topbar-logo .mark { background: #d97706; color: #fffbeb; }
+body.tier-unlimited .topbar nav a { color: rgba(120, 53, 15, 0.8); }
+body.tier-unlimited .topbar nav a:hover { color: #92400e; background: rgba(217, 119, 6, 0.12); }
+body.tier-unlimited .topbar nav a.active { background: rgba(217, 119, 6, 0.18); color: #78350f; }
+body.tier-unlimited .topbar nav a.nav-cta { background: #d97706; color: #fffbeb; }
+body.tier-unlimited .topbar-btn { background: rgba(217, 119, 6, 0.12); border-color: rgba(217, 119, 6, 0.3); color: #92400e; }
+body.tier-unlimited .sidebar-quiz-btn { background: #d97706; border-color: #d97706; color: #fffbeb; }
 body.tier-unlimited .progress-fill { background: #d97706; }
-body.tier-unlimited .lesson-item.active { background: rgba(217, 119, 6, 0.12); border-left-color: #d97706; }
-body.tier-unlimited .lesson-info h4 { color: #fde68a; }
+body.tier-unlimited .lesson-item.active { background: rgba(217, 119, 6, 0.1); border-left-color: #d97706; }
+body.tier-unlimited .lesson-info h4 { color: #78350f; }
 body.tier-unlimited .lesson-meta,
 body.tier-unlimited .progress-text,
-body.tier-unlimited .sidebar-head .count { color: rgba(253, 230, 138, 0.6); }
-body.tier-unlimited .lesson-num { background: rgba(217, 119, 6, 0.15); border-color: rgba(217, 119, 6, 0.3); color: #fcd34d; }
-body.tier-unlimited .lesson-item.completed .lesson-num { background: #d97706; border-color: #d97706; color: #1c1917; }
+body.tier-unlimited .sidebar-head .count { color: rgba(120, 53, 15, 0.6); }
+body.tier-unlimited .lesson-num { background: rgba(217, 119, 6, 0.15); border-color: rgba(217, 119, 6, 0.3); color: #92400e; }
+body.tier-unlimited .lesson-item.completed .lesson-num { background: #d97706; border-color: #d97706; color: #fffbeb; }
 body.tier-unlimited .footer-btn.primary,
 body.tier-unlimited .sidebar-quiz-btn:hover { background: #b45309; }
-body.tier-unlimited ::selection { background: rgba(217, 119, 6, 0.35); color: #fff; }
+body.tier-unlimited ::selection { background: rgba(217, 119, 6, 0.25); }
 
 /* Gold chrome line at the very top */
 body.tier-unlimited .topbar { box-shadow: inset 0 3px 0 #d97706; }
@@ -89,10 +94,11 @@ body.tier-unlimited .dash-layout { border-top: 3px solid #d97706; }
 
 /* ============================================================
    Playground (VS Code-style dark UI) — logo + accent touches
+   (titlebar stays dark there by design; accents are gold now)
    ============================================================ */
-body.tier-pro .titlebar-logo { color: #c4b5fd; }
-body.tier-pro .titlebar-logo .mark { background: #7c3aed; color: #fff; }
-body.tier-pro .titlebar { box-shadow: inset 0 2px 0 #7c3aed; }
+body.tier-pro .titlebar-logo { color: #fcd34d; }
+body.tier-pro .titlebar-logo .mark { background: #d97706; color: #fffbeb; }
+body.tier-pro .titlebar { box-shadow: inset 0 2px 0 #d97706; }
 body.tier-unlimited .titlebar-logo { color: #fcd34d; }
 body.tier-unlimited .titlebar-logo .mark { background: #d97706; color: #1c1917; }
 body.tier-unlimited .titlebar { box-shadow: inset 0 2px 0 #d97706; }
@@ -102,3 +108,7 @@ body.tier-unlimited .titlebar { box-shadow: inset 0 2px 0 #d97706; }
    ============================================================ */
 .dash-tier-row { display: inline-flex; align-items: center; gap: 8px; margin-top: 6px; }
 .dash-tier-row .membership-badge { vertical-align: middle; }
+
+/* Crown inside the Pro badge */
+.membership-badge.tier-badge .crown-ic{ display:inline-flex; }
+.membership-badge.tier-badge .crown-ic svg{ display:block; }
