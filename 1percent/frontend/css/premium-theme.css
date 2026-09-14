@@ -1,0 +1,130 @@
+/* ============================================================
+   Premium Theme — dashboard look for active paid subscribers
+   ============================================================
+   Direction: gold-accented + warmer, richer card treatment.
+   (Single direction on purpose — no mixing with the violet
+   Pro accents; this layer wins because it keys off
+   <html>.theme-premium which outranks the :root defaults.)
+
+   Applied by js/tierTheme.js based on the tier resolved from
+   the backend session payload (/api/auth/me → user.tier) —
+   never from localStorage or URL params.
+   ============================================================ */
+
+/* ── Theme-switch fade (requirement: 200–300ms) ────────────
+   Transitions live on the elements that change appearance so
+   flipping the class reads as an intentional, smooth switch. */
+html.theme-free body,
+html.theme-premium body{transition:background-color .25s ease,color .25s ease;}
+html.theme-free .dash-stat,
+html.theme-free .dash-enrolled-card,
+html.theme-free .dash-course-card,
+html.theme-free .dash-challenge-card,
+html.theme-free .dash-lb,
+html.theme-free .dash-lb-head,
+html.theme-free .dash-lb-tab,
+html.theme-free .dash-section .count,
+html.theme-premium .dash-stat,
+html.theme-premium .dash-enrolled-card,
+html.theme-premium .dash-course-card,
+html.theme-premium .dash-challenge-card,
+html.theme-premium .dash-lb,
+html.theme-premium .dash-lb-head,
+html.theme-premium .dash-lb-tab,
+html.theme-premium .dash-section .count{
+  transition:background-color .25s ease,border-color .25s ease,box-shadow .25s ease,color .25s ease;
+}
+
+/* ── 1. Variable overrides (gold direction) ─────────────── */
+html.theme-premium{
+  --primary:#b45309;
+  --primary-light:#fffbeb;
+  --primary-hover:#92400e;
+  --accent:#d97706;
+  --accent-light:#fef3c7;
+}
+
+/* ── 2. Cards: richer warm surface + gold hairline ──────── */
+html.theme-premium .dash-stat,
+html.theme-premium .dash-enrolled-card,
+html.theme-premium .dash-course-card,
+html.theme-premium .dash-challenge-card{
+  background:linear-gradient(180deg,#fffef9 0%,#fffdf6 100%);
+  border-color:#efe3c6;
+  box-shadow:0 2px 10px rgba(146,98,10,.06);
+}
+html.theme-premium .dash-stat:hover,
+html.theme-premium .dash-enrolled-card:hover,
+html.theme-premium .dash-course-card:hover,
+html.theme-premium .dash-challenge-card:hover{
+  border-color:#d97706;
+  box-shadow:0 8px 22px rgba(146,98,10,.14);
+}
+html.theme-premium .dash-enrolled-meta .bar{background:#f3e8cf;}
+html.theme-premium .dash-enrolled-meta .bar-fill{background:linear-gradient(90deg,#f59e0b,#b45309);}
+html.theme-premium .dash-section .count{background:#fffbeb;color:#92400e;}
+
+/* ── 3. Greeting treatment ──────────────────────────────── */
+html.theme-premium .dash-greeting::after{
+  content:'';
+  display:block;width:64px;height:3px;border-radius:2px;margin-top:8px;
+  background:linear-gradient(90deg,#f59e0b,#b45309);
+}
+
+/* Greeting tier badge — always gold under the premium theme
+   (regardless of pro/unlimited slug) so the look stays uniform. */
+html.theme-premium .membership-badge.tier-badge{
+  background:linear-gradient(135deg,#78350f,#b45309);
+  color:#fde68a;
+  border:1px solid #92400e;
+  box-shadow:0 2px 8px rgba(146,98,10,.25);
+}
+
+/* ── 4. Leaderboard sidebar treatment ───────────────────── */
+html.theme-premium .dash-lb{
+  border-color:#f0e2c0;
+  box-shadow:0 6px 24px rgba(180,83,9,.10);
+}
+html.theme-premium .dash-lb-head{background:linear-gradient(135deg,#fffbeb 0%,#fff7e6 100%);}
+html.theme-premium .dash-lb-head h3{color:#78350f;}
+html.theme-premium .dash-lb-head h3 svg{color:#d97706;}
+html.theme-premium .dash-lb-tabs{background:#fff7e6;border-color:#f0e2c0;}
+html.theme-premium .dash-lb-tab.active{
+  background:linear-gradient(135deg,#d97706,#b45309);
+  box-shadow:0 2px 8px rgba(180,83,9,.35);
+}
+html.theme-premium .dash-lb-item.me{background:linear-gradient(135deg,#fffbeb 0%,#fef3c7 100%);border-left-color:#d97706;}
+html.theme-premium .dash-lb-you{
+  color:#92400e;
+  background:linear-gradient(135deg,#fde68a 0%,#fcd34d 100%);
+  border:1px solid #f59e0b;
+}
+html.theme-premium .dash-lb-avatar{background:linear-gradient(135deg,#d97706 0%,#92400e 100%);}
+html.theme-premium .dash-lb-footer{background:#fffdf6;}
+
+/* Weekly goal bar matches the gold direction */
+html.theme-premium .dash-goal-bar span{background:linear-gradient(90deg,#f59e0b,#b45309);}
+
+/* ── 5. Premium badge next to the avatar / user menu ────── */
+html.theme-premium .user-avatar{
+  box-shadow:0 0 0 2px #ffffff,0 0 0 4px rgba(217,119,6,.75);
+}
+html.theme-premium .mobile-profile-avatar{
+  box-shadow:0 4px 10px rgba(180,83,9,.35),0 0 0 2px #ffffff,0 0 0 3.5px rgba(217,119,6,.75);
+}
+/* CSS-only "Premium" pill next to the name in the user dropdown */
+html.theme-premium .user-menu-info b::after{
+  content:'Premium';
+  display:inline-flex;align-items:center;
+  margin-left:8px;padding:2px 8px;border-radius:100px;
+  font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;
+  background:linear-gradient(135deg,#f59e0b,#b45309);color:#fff;
+  vertical-align:2px;
+}
+
+/* ── 6. Membership button in the dash header ────────────── */
+html.theme-premium .dash-upgrade-btn.is-premium{
+  background:linear-gradient(135deg,#f59e0b 0%,#b45309 100%);
+  box-shadow:0 4px 14px rgba(180,83,9,.35);
+}
+html.theme-premium .dash-upgrade-btn.is-premium:hover{box-shadow:0 6px 18px rgba(180,83,9,.45);}

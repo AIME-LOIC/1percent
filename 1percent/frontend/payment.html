@@ -19,6 +19,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="/js/tierTheme.js" defer></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -376,6 +377,21 @@
         const data = await res.json();
         if (data.success) {
           showToast(data.message || `Subscribed to ${tier}!`, 'success');
+          /* Subscription row is in the DB — re-fetch the session payload so
+             the tier flows through the auth path; the dashboard applies the
+             premium theme from the session, never from this event. */
+          try {
+            const meRes = await fetch('/api/auth/me', {
+              headers: { Authorization: `Bearer ${session.access_token}` }
+            });
+            if (meRes.ok && typeof TierTheme !== 'undefined') {
+              const meJson = await meRes.json();
+              const slug = String(meJson?.user?.tier || 'free').toLowerCase();
+              if (meJson?.user?.is_premium === true || meJson?.user?.subscription_status === 'active') {
+                TierTheme.applySlug(slug);
+              }
+            }
+          } catch {}
           setTimeout(() => window.location.href = (location.hostname==='learn.1percent.rw'?'/dashboard':'/learn/dashboard'), 1500);
         } else {
           showToast(data.error || 'Subscription failed', 'error');

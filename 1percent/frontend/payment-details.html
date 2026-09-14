@@ -11,6 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="/js/tierTheme.js" defer></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
@@ -474,6 +475,23 @@
 
         if (data.success) {
           showToast('Payment successful! Redirecting...', 'success');
+          /* The subscribe handler has already updated user_subscriptions in
+             the DB. Re-fetch the session payload so the new tier flows
+             through the normal auth path, then hand it to TierTheme before
+             redirecting — the dashboard applies the premium theme from the
+             session, never from this client-side event. */
+          try {
+            const meRes = await fetch('/api/auth/me', {
+              headers: { Authorization: `Bearer ${session.access_token}` }
+            });
+            if (meRes.ok && typeof TierTheme !== 'undefined') {
+              const meJson = await meRes.json();
+              const tier = String(meJson?.user?.tier || 'free').toLowerCase();
+              if (meJson?.user?.is_premium === true || meJson?.user?.subscription_status === 'active') {
+                TierTheme.applySlug(tier);
+              }
+            }
+          } catch (e) { console.warn('[PAYMENT] Session refresh failed:', e.message); }
           setTimeout(() => {
             window.location.href = (location.hostname === 'learn.1percent.rw' ? '/dashboard' : '/learn/dashboard');
           }, 1500);

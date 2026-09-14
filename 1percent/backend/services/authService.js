@@ -149,7 +149,11 @@ class AuthService {
   }
 
   /**
-   * Get user profile from profiles table
+   * Get user profile from profiles table.
+   * Attaches the subscription tier from user_subscriptions so the session
+   * payload (/api/auth/me) is the single source of truth for the client
+   * theme — the premium UI must never be derived from localStorage or
+   * URL params.
    */
   async getProfile(userId) {
     const { data, error } = await adminClient
@@ -159,7 +163,33 @@ class AuthService {
       .single();
 
     if (error) throw error;
-    return data;
+
+    // Resolve the active paid tier (source of truth for theme + badges)
+    let tier = 'free';
+    let is_premium = false;
+    let subscription_status = 'inactive';
+    try {
+      const { data: sub } = await adminClient
+        .from('user_subscriptions')
+        .select('tier_slug, is_active, expires_at')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .gt('expires_at', new Date().toISOString())
+        .order('expires_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (sub?.tier_slug && sub.tier_slug !== 'free') {
+        tier = sub.tier_slug;
+        is_premium = true;
+        subscription_status = 'active';
+      }
+    } catch (e) {
+      // Subscription lookup is non-fatal — default to free
+      console.warn('[AUTH] Tier lookup failed:', e.message);
+    }
+
+    return { ...data, tier, is_premium, subscription_status };
   }
 
   /**

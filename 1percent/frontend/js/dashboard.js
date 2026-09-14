@@ -182,6 +182,10 @@ const Dashboard = {
     try {
       const token = (await this.supabase.auth.getSession()).data.session?.access_token;
       if (typeof TierTheme === 'undefined') return;
+      /* Tier is resolved from the backend session payload (/api/auth/me →
+         user.tier) — never from localStorage/URL params. This runs on every
+         dashboard load, so the theme persists across visits and after a
+         payment refreshes the subscription row. */
       const theme = await TierTheme.init(token);
       const header = document.querySelector('.dash-header');
       if (header && !header.querySelector('.dash-tier-row')) {
@@ -490,21 +494,37 @@ const Dashboard = {
     try {
       const token = (await this.supabase.auth.getSession()).data.session?.access_token;
       if (!token) return;
-      // Check premium status (json.tier is an object: { slug, name, ... })
-      const res = await fetch('/api/premium/status', { headers: { Authorization: `Bearer ${token}` } });
-      const json = await res.json();
-      const tierSlug = json.tier && json.tier.slug ? json.tier.slug : 'free';
-      const isPro = tierSlug === 'pro' || tierSlug === 'unlimited';
+      /* Source of truth: the session endpoint (which resolves the
+         subscription from the DB). Falls back to the premium status
+         endpoint, never to client-only flags. */
+      let tierSlug = 'free';
+      let isPro = false;
+      let statusFetched = false;
+      try {
+        const meRes = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } });
+        if (meRes.ok) {
+          const meJson = await meRes.json();
+          tierSlug = String(meJson?.user?.tier || 'free').toLowerCase();
+          isPro = ['pro', 'unlimited'].includes(tierSlug) && (meJson?.user?.is_premium === true || meJson?.user?.subscription_status === 'active');
+          statusFetched = true;
+        }
+      } catch {}
+      if (!statusFetched) {
+        const res = await fetch('/api/premium/status', { headers: { Authorization: `Bearer ${token}` } });
+        const json = await res.json();
+        tierSlug = json.tier && json.tier.slug ? json.tier.slug : 'free';
+        isPro = tierSlug === 'pro' || tierSlug === 'unlimited';
+      }
       const header = document.querySelector('.dash-header');
       if (!header) return;
       const upgradeBtn = document.createElement('a');
       upgradeBtn.href = _url('/payment');
-      upgradeBtn.className = 'dash-upgrade-btn';
-      upgradeBtn.innerHTML = isPro 
-        ? `${Icons.get('crown', 14)} Pro Member`
+      upgradeBtn.className = 'dash-upgrade-btn' + (isPro ? ' is-premium' : '');
+      upgradeBtn.innerHTML = isPro
+        ? `${Icons.get('star', 14)} Pro Member`
         : `${Icons.get('zap', 14)} Upgrade to Pro`;
       upgradeBtn.style.cssText = isPro
-        ? 'display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;text-decoration:none;border:none;cursor:pointer;'
+        ? 'display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;text-decoration:none;border:none;cursor:pointer;transition:all .15s;'
         : 'display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;text-decoration:none;border:none;cursor:pointer;transition:all .15s;';
       if (!isPro) upgradeBtn.onmouseenter = () => upgradeBtn.style.opacity = '0.9';
       header.appendChild(upgradeBtn);

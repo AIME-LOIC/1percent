@@ -120,6 +120,8 @@ class AuthController {
 
   /**
    * GET /api/auth/me
+   * Session payload — includes tier/is_premium/subscription_status so the
+   * client theme is driven by the backend session, never client-only flags.
    */
   async getMe(req, res) {
     try {
