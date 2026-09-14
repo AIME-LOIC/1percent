@@ -104,6 +104,27 @@
     /* ---- COMPARISON ---- */
     .comparison-section { max-width: 900px; margin: 0 auto 80px; padding: 0 24px; }
     .comparison-section h2 { font-size: 24px; font-weight: 700; text-align: center; margin-bottom: 32px; }
+
+    /* ---- MANAGE SUBSCRIPTION ---- */
+    .manage-sub { max-width: 900px; margin: 0 auto 48px; padding: 0 24px; }
+    .manage-card {
+      display: flex; align-items: center; justify-content: space-between; gap: 20px;
+      flex-wrap: wrap; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+      padding: 20px 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .manage-plan { font-size: 17px; font-weight: 800; color: #111827; text-transform: capitalize; }
+    .manage-meta { font-size: 13px; color: #6b7280; margin-top: 2px; }
+    .manage-note { font-size: 12.5px; margin-top: 6px; }
+    .manage-actions { display: flex; gap: 10px; }
+    .manage-btn {
+      padding: 9px 20px; border-radius: 8px; font-size: 13.5px; font-weight: 600;
+      cursor: pointer; border: 1px solid transparent; font-family: inherit; transition: all .2s;
+    }
+    .manage-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .manage-btn.danger { background: #fff; color: #dc2626; border-color: #fecaca; }
+    .manage-btn.danger:hover { background: #fef2f2; border-color: #dc2626; }
+    .manage-btn.primary { background: #0d6e3f; color: #fff; }
+    .manage-btn.primary:hover { background: #0a5c34; }
     .comparison-table {
       width: 100%; border-collapse: collapse; background: #fff;
       border-radius: 12px; overflow: hidden; border: 1px solid #e5e7eb;
@@ -237,6 +258,23 @@
     </div>
   </section>
 
+  <!-- MANAGE SUBSCRIPTION (signed-in users with a plan) -->
+  <section class="manage-sub" id="manage-sub" style="display:none;">
+    <div class="manage-card">
+      <div class="manage-info">
+        <div class="manage-plan" id="manage-plan-name">Pro</div>
+        <div class="manage-meta" id="manage-plan-meta">Active</div>
+        <div class="manage-note" id="manage-cancelled-note" style="display:none;color:#b45309;">
+          Your plan ends on <span id="manage-end-date"></span>. You keep full access until then.
+        </div>
+      </div>
+      <div class="manage-actions">
+        <button class="manage-btn danger" id="cancel-btn" onclick="cancelPlan()">Cancel Plan</button>
+        <button class="manage-btn primary" id="resume-btn" onclick="resumePlan()" style="display:none;">Resume Plan</button>
+      </div>
+    </div>
+  </section>
+
   <!-- COMPARISON -->
   <section class="comparison-section">
     <h2>Compare Plans</h2>
@@ -292,7 +330,92 @@
     (async function init() {
       await checkAuth();
       renderNav();
+      await loadManageBar();
     })();
+
+    /* ---- Manage subscription (cancel / resume) ---- */
+    let subState = null;
+
+    async function loadManageBar() {
+      if (!session) return;
+      try {
+        const res = await fetch('/api/premium/status', {
+          headers: { 'Authorization': `Bearer ${session.access_token}` }
+        });
+        const data = await res.json();
+        if (!data.success) return;
+        subState = data;
+        renderManageBar(data);
+      } catch (e) { console.warn('[PAY] status load failed:', e.message); }
+    }
+
+    function renderManageBar(status) {
+      const slug = status.tier?.slug || 'free';
+      if (slug === 'free' || !status.subscription) return; // free users see the plans only
+
+      const bar = document.getElementById('manage-sub');
+      document.getElementById('manage-plan-name').textContent = status.tier.name || slug;
+      const ends = status.subscription.expires_at
+        ? new Date(status.subscription.expires_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+        : null;
+      document.getElementById('manage-plan-meta').textContent =
+        `Active · renews ${ends || '—'} · ${status.days_remaining || 0} day${status.days_remaining === 1 ? '' : 's'} left`;
+
+      const cancelled = !!status.cancel_at_period_end;
+      document.getElementById('manage-cancelled-note').style.display = cancelled ? 'block' : 'none';
+      if (cancelled && ends) document.getElementById('manage-end-date').textContent = ends;
+      document.getElementById('cancel-btn').style.display = cancelled ? 'none' : 'inline-block';
+      document.getElementById('resume-btn').style.display = cancelled ? 'inline-block' : 'none';
+      bar.style.display = 'block';
+    }
+
+    async function cancelPlan() {
+      if (!requireAuth()) return;
+      if (!confirm('Cancel your plan? You will keep full access until the end of the current billing period.')) return;
+      const btn = document.getElementById('cancel-btn');
+      btn.disabled = true; btn.textContent = 'Cancelling…';
+      try {
+        const res = await fetch('/api/premium/cancel', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.message || 'Plan cancelled.', 'success');
+          // Refresh from the server so the UI reflects the DB, not a local flag
+          await loadManageBar();
+        } else {
+          showToast(data.error || 'Could not cancel plan.', 'error');
+          btn.disabled = false; btn.textContent = 'Cancel Plan';
+        }
+      } catch (e) {
+        showToast('Network error. Please try again.', 'error');
+        btn.disabled = false; btn.textContent = 'Cancel Plan';
+      }
+    }
+
+    async function resumePlan() {
+      if (!requireAuth()) return;
+      const btn = document.getElementById('resume-btn');
+      btn.disabled = true; btn.textContent = 'Resuming…';
+      try {
+        const res = await fetch('/api/premium/resume', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.message || 'Plan resumed!', 'success');
+          await loadManageBar();
+        } else {
+          showToast(data.error || 'Could not resume plan.', 'error');
+          btn.disabled = false; btn.textContent = 'Resume Plan';
+        }
+      } catch (e) {
+        showToast('Network error. Please try again.', 'error');
+        btn.disabled = false; btn.textContent = 'Resume Plan';
+      }
+    }
 
     async function checkAuth() {
       try {

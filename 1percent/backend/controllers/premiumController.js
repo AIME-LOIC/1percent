@@ -58,6 +58,45 @@ class PremiumController {
   }
 
   /**
+   * POST /api/premium/cancel
+   * Cancel the active subscription at the end of the billing period.
+   * Access continues until expires_at.
+   */
+  async cancel(req, res) {
+    try {
+      const result = await premiumService.cancelSubscription(req.user.id);
+      res.json({
+        success: true,
+        message: `Plan cancelled. You keep ${result.subscription.tier_slug} access until ${new Date(result.expires_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}.`,
+        ...result
+      });
+    } catch (err) {
+      console.error('[PREMIUM] Cancel error:', err.message);
+      const status = /No active|already cancelled/.test(err.message) ? 409 : 500;
+      res.status(status).json({ error: err.message || 'Failed to cancel plan.' });
+    }
+  }
+
+  /**
+   * POST /api/premium/resume
+   * Undo a pending cancellation before the period ends.
+   */
+  async resume(req, res) {
+    try {
+      const result = await premiumService.resumeSubscription(req.user.id);
+      res.json({
+        success: true,
+        message: 'Welcome back! Your plan will renew as usual.',
+        ...result
+      });
+    } catch (err) {
+      console.error('[PREMIUM] Resume error:', err.message);
+      const status = /No cancelled|not cancelled/.test(err.message) ? 409 : 500;
+      res.status(status).json({ error: err.message || 'Failed to resume plan.' });
+    }
+  }
+
+  /**
    * POST /api/premium/free-trial
    * Activate free starter week
    */
