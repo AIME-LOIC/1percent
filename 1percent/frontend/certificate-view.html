@@ -320,11 +320,19 @@ const certNumber = urlParams.get('number');
     document.getElementById('cert-course').textContent = certData.course_title || certData.course_name || 'Course';
     document.getElementById('cert-number').textContent = certData.certificate_number;
     document.getElementById('cert-date').textContent = certData.issued_at ? new Date(certData.issued_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
-    document.getElementById('cert-details').textContent = `Level: ${certData.course_level || 'Beginner'} | Duration: ${certData.duration_weeks || 0} weeks`;
+    document.getElementById('cert-details').textContent = `Level: ${certData.course_level || 'Beginner'} | Duration: ${certData.duration_weeks || 0} weeks | Issued: ${certData.issued_at ? new Date(certData.issued_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : ''}`;
 
     if (signatureUrl) {
       document.getElementById('cert-signature').src = signatureUrl;
       document.getElementById('cert-signature').style.display = 'block';
+    } else {
+      /* No uploaded signature image — render the vector script signature
+         so the on-screen certificate matches the downloaded PDF. */
+      const sigImg = document.getElementById('cert-signature');
+      sigImg.outerHTML = `<svg class="cert-signature-img" id="cert-signature" width="120" height="40" viewBox="0 0 120 40" style="display:block;">
+        <path d="M6 25 C 14 5, 26 8, 28 22 C 29 30, 34 30, 40 22 C 44 16, 48 18, 48 25 C 47 32, 54 30, 62 21 C 67 15, 72 18, 70 25 C 68 31, 76 27, 84 20 C 90 15, 94 18, 92 24 C 90 29, 98 26, 108 18" fill="none" stroke="#1e3a5f" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M10 32 C 30 37, 60 37, 110 30" fill="none" stroke="#1e3a5f" stroke-width="0.9" stroke-linecap="round"/>
+      </svg>`;
     }
 
     // Access control

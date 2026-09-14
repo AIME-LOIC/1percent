@@ -129,12 +129,13 @@ class CourseController {
 
   /**
    * POST /api/courses/progress/:moduleId/complete
-   * Mark a module as completed
+   * Mark a module as completed (requires sequential order + 10 min study time)
    */
   async completeLesson(req, res) {
     try {
       const { lessonId } = req.params;
-      const progress = await courseService.completeLesson(req.user.id, lessonId);
+      const studySeconds = Number(req.body?.study_seconds) || null;
+      const progress = await courseService.completeLesson(req.user.id, lessonId, studySeconds);
 
       res.json({
         success: true,
@@ -143,6 +144,23 @@ class CourseController {
       });
     } catch (err) {
       console.error('[COURSE] Complete error:', err.message);
+      if (err.status === 409) {
+        return res.status(409).json({
+          error: err.message,
+          code: err.code || 'PREVIOUS_LESSON_INCOMPLETE'
+        });
+      }
+      if (err.status === 422) {
+        return res.status(422).json({
+          error: err.message,
+          code: err.code || 'STUDY_TIME_REQUIRED',
+          required_seconds: err.required || 600,
+          elapsed_seconds: err.elapsed || 0
+        });
+      }
+      if (err.message?.includes('not found')) {
+        return res.status(404).json({ error: err.message });
+      }
       res.status(500).json({ error: 'Failed to update progress.' });
     }
   }
@@ -194,6 +212,12 @@ class CourseController {
         .select('id, is_premium')
         .eq('id', lesson.course_id)
         .single();
+
+      /* Record when this learner first opened the lesson — the study-time
+         gate uses it server-side. Never blocks the read. */
+      if (req.user?.id) {
+        try { await courseService.markLessonStarted(req.user.id, lesson.id); } catch {}
+      }
 
       if (parentCourse?.is_premium) {
         const { data: lessonMeta } = await adminClient

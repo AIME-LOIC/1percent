@@ -422,7 +422,7 @@ class PdfService {
   /**
    * Build a certificate PDF with signature
    */
-  async buildCertificatePdf(cert, course, signatureUrl) {
+  async buildCertificatePdf(cert, course, signatureUrl, signerName) {
     // Pre-fetch remote signature image buffer before creating the PDF
     let sigBuffer = null;
     if (signatureUrl) {
@@ -497,10 +497,12 @@ class PdfService {
       doc.rect(w - 30 - ornW, h - 30 - ornLen, ornW, ornLen).fill('#0d6e3f');
 
       // ── Watermark ──────────────────────────────────────
+      // Kept tiny + far from the centre band so it can never overlap or
+      // "come in front of" the student name.
       doc.save();
-      doc.translate(w / 2, h / 2).rotate(-30);
-      doc.fontSize(100).fillColor('rgba(13,110,63,0.025)').font('Helvetica-Bold')
-        .text('1% DIGITAL', -200, -40, { width: 400, align: 'center' });
+      doc.translate(w * 0.14, h * 0.86).rotate(-24);
+      doc.fontSize(60).fillColor('rgba(13,110,63,0.04)').font('Helvetica-Bold')
+        .text('1%', -80, -40, { width: 160, align: 'center' });
       doc.restore();
 
       // ── Header ─────────────────────────────────────────
@@ -589,7 +591,7 @@ class PdfService {
         .text('1% EXPERT', sealX - 20, sealY + 8, { width: 40, align: 'center', characterSpacing: 2 });
 
       // ── Bottom Section ────────────────────────────────
-      const bottomY = h - 80;
+      const bottomY = h - 88;
       const colW = 180;
 
       // Left: Date Issued
@@ -604,37 +606,76 @@ class PdfService {
       doc.fontSize(10).fillColor('#374151').font('Courier-Bold')
         .text(cert.certificate_number, w / 2 - colW / 2, bottomY + 12, { width: colW, align: 'center' });
 
-      // Right: Signature
+      // Right: Signature (image or hand-drawn vector script) + signer name
       const sigX = w - 60 - colW;
       doc.fontSize(8).fillColor('#9ca3af').font('Helvetica')
         .text('AUTHORIZED SIGNATURE', sigX, bottomY, { width: colW, align: 'center', characterSpacing: 1.5 });
 
-      // Signature image or placeholder line
+      const sigW = 120;
+      const sigH = 36;
+      const sigImgX = sigX + (colW - sigW) / 2;
+      const sigImgY = bottomY + 8;
       if (sigBuffer) {
         try {
-          doc.image(sigBuffer, sigX + colW / 2 - 55, bottomY + 12, { width: 110, height: 30, fit: [110, 30] });
+          doc.image(sigBuffer, sigImgX, sigImgY, { fit: [sigW, sigH], align: 'center', valign: 'bottom' });
         } catch (e) {
-          console.warn('[PDF] Signature render failed, drawing line:', e.message);
-          this._drawSigLine(doc, sigX, bottomY + 25, colW);
+          console.warn('[PDF] Signature image failed, drawing script:', e.message);
+          this._drawScriptSignature(doc, sigImgX, sigImgY + sigH - 6, sigW, signerName);
         }
       } else {
-        this._drawSigLine(doc, sigX, bottomY + 25, colW);
+        // No uploaded signature — render a real hand-drawn-style script name
+        this._drawScriptSignature(doc, sigImgX, sigImgY + sigH - 6, sigW, signerName);
+      }
+      // Signing line under the signature
+      this._drawSigLine(doc, sigX, bottomY + 30, colW);
+      if (signerName) {
+        doc.fontSize(8).fillColor('#374151').font('Helvetica-Bold')
+          .text(signerName, sigX, bottomY + 34, { width: colW, align: 'center' });
       }
 
       // ── Footer ────────────────────────────────────────
       doc.fontSize(7).fillColor('#c4c8cf').font('Helvetica')
-        .text('Verify at: 1percentrwanda.com/learn  |  1percent Rwanda  |  Kigali, Rwanda', 0, h - 32, { align: 'center', width: w, characterSpacing: 1 });
+        .text('Verify at: 1percentrwanda.com/certificate  |  1percent Rwanda  |  Kigali, Rwanda', 0, h - 34, { align: 'center', width: w, characterSpacing: 1 });
 
       doc.end();
     });
   }
 
   /**
-   * Draw a placeholder signature line
+   * Draw a hand-drawn-style (cursive) signature using Bézier curves.
+   * Used when no uploaded signature image exists so the downloaded
+   * certificate always carries a real, official-looking signature.
+   */
+  _drawScriptSignature(doc, x, y, width, name) {
+    const label = (name || '1% Rwanda').trim();
+    const u = width / 10;               // unit size
+    const c = '#1e3a5f';                // ink colour
+    doc.save();
+    doc.lineWidth(1.7).strokeColor(c).lineCap('round').lineJoin('round');
+    doc.moveTo(x + 0.5 * u, y - 1.0 * u);
+    doc.bezierCurveTo(x + 1.2 * u, y - 2.6 * u, x + 2.4 * u, y - 2.4 * u, x + 2.6 * u, y - 0.6 * u);
+    doc.bezierCurveTo(x + 2.7 * u, y + 0.4 * u, x + 3.2 * u, y + 0.4 * u, x + 3.8 * u, y - 0.6 * u);
+    doc.bezierCurveTo(x + 4.2 * u, y - 1.4 * u, x + 4.7 * u, y - 1.2 * u, x + 4.7 * u, y - 0.3 * u);
+    doc.bezierCurveTo(x + 4.6 * u, y + 0.6 * u, x + 5.5 * u, y + 0.2 * u, x + 6.4 * u, y - 1.1 * u);
+    doc.bezierCurveTo(x + 7.0 * u, y - 1.9 * u, x + 7.6 * u, y - 1.4 * u, x + 7.4 * u, y - 0.4 * u);
+    doc.bezierCurveTo(x + 7.2 * u, y + 0.3 * u, x + 8.2 * u, y - 0.2 * u, x + 9.2 * u, y - 1.3 * u);
+    doc.stroke();
+    // underline flourish
+    doc.lineWidth(0.9);
+    doc.moveTo(x + 1.0 * u, y + 1.1 * u);
+    doc.bezierCurveTo(x + 3.0 * u, y + 1.7 * u, x + 6.0 * u, y + 1.7 * u, x + 9.0 * u, y + 0.9 * u);
+    doc.stroke();
+    doc.restore();
+  }
+
+  /**
+   * Draw the signing line under a signature
    */
   _drawSigLine(doc, x, y, width) {
+    doc.save();
     doc.moveTo(x + 10, y).lineTo(x + width - 10, y)
       .lineWidth(1).strokeColor('#374151').stroke();
+    doc.restore();
   }
 
   /**

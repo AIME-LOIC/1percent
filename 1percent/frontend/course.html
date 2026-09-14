@@ -44,6 +44,7 @@
 .skel-lesson .skel-line{height:10px;border-radius:4px;}
 .skel-lesson .skel-line.w60{width:60%;}
 .skel-lesson .skel-line.w40{width:40%;}
+.skel-lesson .skel-line.w30{width:30%;}
 .skel-main-header{padding:28px 32px 20px;border-bottom:1px solid var(--c-border);background:#fff;}
 .skel-main-header .skel-badge{width:80px;height:20px;border-radius:100px;margin-bottom:10px;}
 .skel-main-header .skel-title{height:28px;width:70%;border-radius:6px;margin-bottom:8px;}
@@ -96,21 +97,51 @@ body{font-family:'Inter',sans-serif;background:var(--c-bg);color:var(--c-text);o
 .membership-badge.starter{background:#eff6ff;color:var(--c-blue);border:1px solid #bfdbfe;}
 .membership-badge.pro{background:#f5f3ff;color:var(--c-purple);border:1px solid #ddd6fe;}
 .membership-badge.unlimited{background:#fffbeb;color:var(--c-yellow);border:1px solid #fde68a;}
-/* Premium lock wall */
-.premium-wall{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 32px;text-align:center;gap:16px;background:#fff;min-height:400px;}
-.premium-wall .lock-icon{width:56px;height:56px;background:#f5f3ff;border-radius:50%;display:flex;align-items:center;justify-content:center;}
-.premium-wall h2{font-size:22px;font-weight:800;}
-.premium-wall p{font-size:14px;color:var(--c-muted);max-width:380px;line-height:1.7;}
-.premium-wall .plans{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:8px;}
-.plan-card{border:1px solid var(--c-border);border-radius:10px;padding:16px 20px;min-width:160px;text-align:center;background:#fafafa;}
-.plan-card.highlight{border-color:var(--c-accent);background:#f0fdf4;}
+/* ── Premium upgrade wall ─────────────────────────── */
+.premium-wall{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:0;padding:56px 32px 48px;min-height:100%;background:
+  radial-gradient(600px 240px at 50% -60px, rgba(124,58,237,0.08), transparent 70%),
+  radial-gradient(500px 220px at 85% 110%, rgba(13,110,63,0.07), transparent 70%),
+  #fff;}
+.premium-wall .lock-icon{width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #ddd6fe;box-shadow:0 8px 24px rgba(124,58,237,0.15);margin-bottom:18px;}
+.premium-wall h2{font-size:24px;font-weight:800;letter-spacing:-0.3px;}
+.premium-wall .wall-sub{font-size:14px;color:var(--c-muted);max-width:440px;line-height:1.7;margin-top:6px;}
+.premium-wall .wall-perks{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:18px 0 20px;}
+.premium-wall .perk{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:100px;font-size:12px;font-weight:600;background:#f8fafc;border:1px solid var(--c-border);color:#374151;}
+.premium-wall .perk svg{color:var(--c-accent);flex-shrink:0;}
+.premium-wall .plans{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:22px;}
+.plan-card{border:1px solid var(--c-border);border-radius:14px;padding:18px 22px;min-width:170px;text-align:center;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.04);transition:transform .15s,box-shadow .15s;}
+.plan-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,0.08);}
+.plan-card.highlight{border-color:var(--c-accent);background:#f0fdf4;box-shadow:0 8px 20px rgba(13,110,63,0.12);position:relative;}
+.plan-card .plan-flag{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--c-accent);color:#fff;font-size:9.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;padding:3px 10px;border-radius:100px;white-space:nowrap;}
 .plan-card .plan-name{font-size:13px;font-weight:700;margin-bottom:4px;}
-.plan-card .plan-price{font-size:20px;font-weight:800;color:var(--c-accent);}
+.plan-card .plan-price{font-size:22px;font-weight:800;color:var(--c-accent);}
 .plan-card .plan-price span{font-size:12px;font-weight:400;color:var(--c-muted);}
+.plan-card .plan-desc{font-size:11px;color:var(--c-muted);margin-top:4px;}
+/* Premium user chip (dashboard-style) */
+.premium-chip{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:100px;font-size:13px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;cursor:pointer;border:none;transition:transform .15s,box-shadow .15s;color:#fff;}
+.premium-chip.free{background:linear-gradient(135deg,#4b5563,#374151);box-shadow:0 4px 14px rgba(55,65,81,0.25);}
+.premium-chip.pro{background:linear-gradient(135deg,#8b5cf6,#6d28d9);box-shadow:0 4px 14px rgba(124,58,237,0.35);}
+.premium-chip.unlimited{background:linear-gradient(135deg,#f59e0b,#b45309);box-shadow:0 4px 14px rgba(180,83,9,0.35);}
+.premium-chip:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(0,0,0,0.18);}
 /* Lesson lock indicator */
 .lesson-item.locked .lesson-num{background:#f3f4f6;color:var(--c-muted);}
 .lesson-item.locked .lesson-info h4{color:var(--c-muted);}
+.lesson-item.locked{opacity:.62;}
 .lesson-lock-icon{font-size:11px;color:var(--c-muted);margin-left:auto;flex-shrink:0;}
+/* Sequential-lesson wall (between lessons) */
+.premium-wall .seq-graphic{display:flex;align-items:center;gap:10px;margin-bottom:16px;font-weight:800;font-size:14px;color:var(--c-muted);}
+.premium-wall .seq-graphic .seq-dot{width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border:1px solid var(--c-border);color:var(--c-muted);}
+.premium-wall .seq-graphic .seq-dot.done{background:#ecfdf5;border-color:#a7f3d0;color:var(--c-accent);}
+.premium-wall .seq-graphic .seq-dot.now{background:#fffbeb;border-color:#fde68a;color:var(--c-yellow);box-shadow:0 4px 12px rgba(245,158,11,0.25);}
+.premium-wall .seq-graphic .seq-arrow{color:#d1d5db;}
+/* Inline premium strip (footer, non-blocking) */
+.premium-inline{display:flex;align-items:center;justify-content:center;gap:10px;padding:10px 16px;margin:0 32px;border:1px dashed #ddd6fe;border-radius:10px;background:#faf5ff;font-size:12.5px;color:#6d28d9;font-weight:600;}
+.premium-inline a{color:#6d28d9;text-decoration:underline;font-weight:700;}
+/* ── Study timer ─────────────────────────────────── */
+.study-timer{display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border-radius:100px;background:#f0fdf4;border:1px solid #bbf7d0;color:var(--c-accent);font-weight:700;font-size:12.5px;font-variant-numeric:tabular-nums;}
+.study-timer.ready{background:#eff6ff;border-color:#bfdbfe;color:var(--c-blue);}
+.study-timer svg{flex-shrink:0;}
+.skel-lesson .skel-line.w30{width:30%;}
 
 /* ── Layout ──────────────────────────────────────── */
 .layout{display:grid;grid-template-columns:380px 1fr;height:calc(100vh - 60px);}
@@ -344,6 +375,7 @@ body{font-family:'Inter',sans-serif;background:var(--c-bg);color:var(--c-text);o
       <span class="topbar-course" id="topbar-course">Loading...</span>
     </div>
     <div class="topbar-right">
+      <span id="premium-chip-holder"></span>
       <nav id="main-nav" aria-label="Primary"></nav>
     </div>
   </div>
@@ -386,12 +418,12 @@ body{font-family:'Inter',sans-serif;background:var(--c-bg);color:var(--c-text);o
       <div class="progress-text"><span id="progress-pct">0%</span><span id="progress-count">0/0</span></div>
     </div>
     <div class="lesson-list" id="lesson-list">
-      <div class="skel-lesson"><div class="skel-circle skeleton"></div><div class="skel-lines"><div class="skel-line w60 skeleton"></div><div class="skel-line w40 skeleton"></div></div></div>
-      <div class="skel-lesson"><div class="skel-circle skeleton"></div><div class="skel-lines"><div class="skel-line w60 skeleton"></div><div class="skel-line w40 skeleton"></div></div></div>
-      <div class="skel-lesson"><div class="skel-circle skeleton"></div><div class="skel-lines"><div class="skel-line w60 skeleton"></div><div class="skel-line w40 skeleton"></div></div></div>
-      <div class="skel-lesson"><div class="skel-circle skeleton"></div><div class="skel-lines"><div class="skel-line w60 skeleton"></div><div class="skel-line w40 skeleton"></div></div></div>
-      <div class="skel-lesson"><div class="skel-circle skeleton"></div><div class="skel-lines"><div class="skel-line w60 skeleton"></div><div class="skel-line w40 skeleton"></div></div></div>
-      <div class="skel-lesson"><div class="skel-circle skeleton"></div><div class="skel-lines"><div class="skel-line w60 skeleton"></div><div class="skel-line w40 skeleton"></div></div></div>
+      <div class="skel-lesson"><div class="skel-circle skeleton"></div><div class="skel-lines"><div class="skel-line w60 skeleton"></div><div class="skel-line w30 skeleton"></div></div></div>
+      <div class="skel-lesson"><div class="skel-circle skeleton"></div><div class="skel-lines"><div class="skel-line w60 skeleton"></div><div class="skel-line w30 skeleton"></div></div></div>
+      <div class="skel-lesson"><div class="skel-circle skeleton"></div><div class="skel-lines"><div class="skel-line w60 skeleton"></div><div class="skel-line w30 skeleton"></div></div></div>
+      <div class="skel-lesson"><div class="skel-circle skeleton"></div><div class="skel-lines"><div class="skel-line w60 skeleton"></div><div class="skel-line w30 skeleton"></div></div></div>
+      <div class="skel-lesson"><div class="skel-circle skeleton"></div><div class="skel-lines"><div class="skel-line w60 skeleton"></div><div class="skel-line w30 skeleton"></div></div></div>
+      <div class="skel-lesson"><div class="skel-circle skeleton"></div><div class="skel-lines"><div class="skel-line w60 skeleton"></div><div class="skel-line w30 skeleton"></div></div></div>
     </div>
     <div class="sidebar-bottom" id="sidebar-bottom" style="display:none;">
       <button class="sidebar-quiz-btn" id="take-quiz-btn" onclick="openQuizModal()">
@@ -436,6 +468,37 @@ body{font-family:'Inter',sans-serif;background:var(--c-bg);color:var(--c-text);o
 
 <script>
 let supabaseClient=null,currentUser=null,courseData=null,slug='',activeLessonId=null,completedIds=new Set(),premiumStatus=null,isPremiumUser=false;
+/* Study-timer state (10-minute minimum per lesson) */
+const MIN_STUDY_SECONDS=10*60;
+let studySeconds=0,studyTimerId=null,studyTickTs=null,studyTimerEl=null,studyComplete=false;
+
+/* Cached premium status — premium users keep their premium UI on repeat visits
+   even if the status endpoint is slow or fails. */
+function loadCachedPremium(){
+  try{
+    const c=DataCache.get('premium-'+(currentUser?.id||'anon'));
+    if(c&&c.at&&Date.now()-c.at<24*60*60*1000){
+      premiumStatus=c.status;
+      isPremiumUser=!!c.isPremiumUser;
+      if(typeof TierTheme!=='undefined'&&premiumStatus?.tier?.slug)TierTheme.applySlug(premiumStatus.tier.slug);
+      applyPremiumChip();
+    }
+  }catch{}
+}
+function applyPremiumChip(){
+  const wrap=document.getElementById('premium-chip-holder');
+  if(!wrap)return;
+  const meta=premiumStatus?.tier||{slug:isPremiumUser?'pro':'free',name:isPremiumUser?'Premium':'Free Starter'};
+  const slugKey=meta.slug||'free';
+  const label=slugKey==='unlimited'?'Unlimited':(slugKey==='pro'?'Pro':(meta.name||'Free'));
+  wrap.innerHTML=`<button class="premium-chip ${slugKey==='free'?'free':slugKey}" onclick="window.location.href='/payment'" title="Your plan — click to manage">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.26L21 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.1-1.01L12 2z"/></svg>
+    ${escapeHTML(label)}
+  </button>`;
+}
+function saveCachedPremium(){
+  try{DataCache.set('premium-'+(currentUser?.id||'anon'),{at:Date.now(),status:premiumStatus,isPremiumUser});}catch{}
+}
 
 function escapeHTML(s){if(s==null)return'';return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
@@ -608,6 +671,8 @@ async function loadCourse(){
     if(fromCache)return; // stale cache, wait for fresh fetch to decide
     document.getElementById('topbar-course').textContent='Course not found';
     document.getElementById('skel-main-loading').style.display='none';
+    /* Also clear the sidebar skeleton — it must never keep shimmering */
+    document.getElementById('lesson-list').innerHTML='<div style="padding:24px 16px;text-align:center;color:var(--c-muted);font-size:12.5px;">Lessons unavailable</div>';
     document.getElementById('empty-select-lesson').style.display='';
     return;
   }
@@ -642,7 +707,9 @@ async function loadCourse(){
   }catch(e){console.warn('[COURSE] JSON-LD error:',e.message);}
   document.getElementById('topbar-course').textContent=courseData.title;
   document.getElementById('sidebar-count').textContent=`${courseData.lessons?.length||0} lessons · ${courseData.duration_weeks} weeks`;
-  if(fromCache)renderLessons(); // paint immediately from cache
+  /* Course metadata has arrived — replace the sidebar skeleton with the real
+     lesson list NOW so it never keeps shimmering while auth/progress resolve. */
+  renderLessons();
 
   if(!currentUser){
     document.getElementById('skel-main-loading').style.display='none';
@@ -670,8 +737,13 @@ async function loadCourse(){
     renderLessons();return;
   }
 
+  /* Paint the cached premium look immediately, then refresh quietly */
+  loadCachedPremium();
+
   /* Progress + premium + quiz info in parallel — the old code chained them */
   await Promise.all([loadProgress(),loadPremium().catch(()=>{}),loadQuizInfo().catch(()=>{})]);
+  applyPremiumChip();
+  saveCachedPremium();
   const dlBtn=document.getElementById('download-course-btn');
   if(dlBtn){dlBtn.style.display='inline-flex';dlBtn.onclick=()=>downloadCoursePdf(courseData.id);}
   renderLessons();
@@ -735,10 +807,15 @@ function lessonItemVDOM(l,i){
   const done=completedIds.has(l.id);
   const active=activeLessonId===l.id;
   const isLocked=courseData.is_premium&&!isPremiumUser&&!l.is_free_preview;
+  /* Sequential learning: lesson N+1 stays locked until lesson N is completed.
+     The very first lesson is always open. Free-preview lessons of premium
+     courses are still gated by the premium wall instead. */
+  const prevDone=i===0||completedIds.has((courseData.lessons||[])[i-1]?.id);
+  const seqLocked=!prevDone&&!isLocked;
   const lockSvg=h('span',{class:'lesson-lock-icon'},h('svg',{width:12,height:12,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor','stroke-width':2,'stroke-linecap':'round','stroke-linejoin':'round'},h('rect',{width:18,height:11,x:3,y:11,rx:2,ry:2}),h('path',{d:'M7 11V7a5 5 0 0 1 10 0v4'})));
   return h('div',{
     key:l.id,
-    class:'lesson-item'+(active?' active':'')+(done?' completed':'')+(isLocked?' locked':''),
+    class:'lesson-item'+(active?' active':'')+(done?' completed':'')+((isLocked||seqLocked)?' locked':''),
     'data-lesson-id':l.id,
     'data-vkey':l.id,
     onclick:()=>openLesson(l.id)
@@ -751,7 +828,7 @@ function lessonItemVDOM(l,i){
         h('span',{},l.duration_min+' min')
       )
     ),
-    isLocked?lockSvg:null
+    (isLocked||seqLocked)?lockSvg:null
   );
 }
 function renderLessons(){
@@ -780,6 +857,15 @@ function openLesson(lessonId){
     return;
   }
 
+  /* Sequential learning — a lesson can only be opened once the previous one
+     is completed (lesson 1 is always open). Already-completed lessons stay
+     revisitable. The server enforces the same rule on completion. */
+  const prev=(courseData.lessons||[])[idx-1];
+  if(idx>0&&prev&&!completedIds.has(lessonId)&&!completedIds.has(prev.id)){
+    showSequentialWall(idx,prev);
+    return;
+  }
+
   if(idx>=3&&!completedIds.has(lessonId)&&!courseData.is_premium){
     checkLessonLock(lessonId,idx).then(locked=>{if(!locked)doOpenLesson(lessonId);});
     return;
@@ -800,6 +886,12 @@ async function doOpenLesson(lessonId){
   const idx=(courseData.lessons||[]).findIndex(l=>l.id===lessonId);
   const prev=(courseData.lessons||[])[idx-1];
   const next=(courseData.lessons||[])[idx+1];
+
+  /* ── Study timer — 10-minute minimum per lesson ── */
+  stopStudyTimer();
+  studyComplete=isCompleted;
+  studySeconds=0;
+  document.getElementById('content-footer-timer-holder')?.remove();
   const colors={video:'var(--c-blue)',lab:'var(--c-yellow)',project:'var(--c-purple)',reading:'var(--c-green)',quiz:'var(--c-red)'};
   const color=colors[lesson.lesson_type]||'var(--c-muted)';
 
@@ -824,7 +916,7 @@ async function doOpenLesson(lessonId){
       <p style="color:var(--c-muted);">Loading content...</p>
     </div>
     <div class="content-footer">
-      <div class="footer-actions">
+      <div class="footer-actions" id="content-footer-left">
         ${prev?`<button class="footer-btn outline" onclick="openLesson('${prev.id}')">&#8592; Previous</button>`:''}
         ${next?(()=>{
           const nextLocked=courseData.is_premium&&!isPremiumUser&&!next.is_free_preview;
@@ -833,7 +925,7 @@ async function doOpenLesson(lessonId){
             :`<button class="footer-btn outline" onclick="openLesson('${next.id}')">Next &#8594;</button>`;
         })():''}
       </div>
-      <div class="footer-actions">
+      <div class="footer-actions" id="lesson-footer-right">
         ${isCompleted
           ?`<span class="completed-badge">${Icons.get('check-circle',14)} Completed</span>`
           :`<button class="footer-btn primary" onclick="markLessonComplete('${lessonId}')">Mark Complete</button>`}
@@ -841,10 +933,27 @@ async function doOpenLesson(lessonId){
       </div>
     </div>`;
 
+  /* Inject the live study timer into the lesson footer (premium users get a
+     quiet inline strip instead — their plan is already showing). */
+  if(!isPremiumUser){
+    const holder=document.createElement('div');
+    holder.id='content-footer-timer-holder';
+    holder.style.cssText='display:flex;justify-content:center;padding:6px 0 2px;';
+    holder.innerHTML=`<span class="study-timer" id="study-timer"></span>`;
+    document.querySelector('.content-footer')?.insertAdjacentElement('afterend',holder);
+    updateStudyTimerDisplay();
+  }else{
+    const holder=document.createElement('div');
+    holder.id='content-footer-timer-holder';
+    holder.innerHTML=`<div class="premium-inline">${Icons.get('star',13)} Enjoying the full course? <a href="/payment">Manage your Premium plan</a></div>`;
+    document.querySelector('.content-footer')?.insertAdjacentElement('afterend',holder);
+  }
+
   const md=lesson.content_md;
   const body=document.getElementById('lesson-content-body');
   if(md){
     body.innerHTML=renderMarkdown(md);
+    startStudyTimer(lessonId,isCompleted);
   } else {
     /* Content cache: visited lessons paint instantly; fresh copy revalidates quietly */
     const contentKey='lcontent-'+lessonId;
@@ -875,6 +984,7 @@ async function doOpenLesson(lessonId){
         DataCache.set(contentKey,j.content_md||'');
         const b=document.getElementById('lesson-content-body');
         if(b&&(!cachedContent||b.dataset.revalidated!=='1')){b.dataset.revalidated='1';b.innerHTML=lesson.content_md?renderMarkdown(lesson.content_md):'<p style="color:var(--c-muted);font-size:14px;">Content will be available soon.</p>';}
+        startStudyTimer(lessonId,isCompleted);
       })
       .catch(()=>{
         if(!cachedContent){const b=document.getElementById('lesson-content-body');if(b)b.innerHTML='<p style="color:var(--c-red);font-size:13px;">Failed to load content.</p>';}
@@ -915,10 +1025,60 @@ async function markLessonComplete(lessonId){
   const btn=document.querySelector(`.footer-btn.primary[onclick*="markLessonComplete"]`);
   if(btn){btn.disabled=true;btn.textContent='Saving…';}
   try{
-    const res=await apiFetch(`/api/courses/progress/${lessonId}/complete`,{method:'POST'});
+    const res=await apiFetch(`/api/courses/progress/${lessonId}/complete`,{method:'POST',body:JSON.stringify({study_seconds:studySeconds})});
     const json=await res.json();
-    if(json.success){await loadProgress();}else{Toast.error(json.error||'Failed to save');if(btn){btn.disabled=false;btn.textContent='Mark Complete';}}
+    if(json.success){
+      studyComplete=true;studySeconds=0;updateStudyTimerDisplay();
+      await loadProgress();
+    }else if(json.error&&json.error.includes('Study for at least')){
+      const need=Math.max(0,(json.required_seconds||MIN_STUDY_SECONDS)-(json.elapsed_seconds||studySeconds));
+      Toast.warning(json.error+` (${Math.ceil(need/60)} more min)`);
+      if(btn){btn.disabled=false;btn.textContent='Mark Complete';}
+    }else{Toast.error(json.error||'Failed to save');if(btn){btn.disabled=false;btn.textContent='Mark Complete';}}
   }catch(e){Toast.error('Failed to save');if(btn){btn.disabled=false;btn.textContent='Mark Complete';}}
+}
+
+/* ── Study timer ──────────────────────────────────────────────────────
+   Enforces a 10-minute minimum per lesson. Ticks only while the tab is
+   visible; auto-flags completion at the 10-minute mark. */
+function fmtStudy(s){return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;}
+function updateStudyTimerDisplay(){
+  const el=document.getElementById('study-timer');
+  if(!el)return;
+  if(studyComplete){
+    el.className='study-timer ready';
+    el.innerHTML=`${Icons.get('check-circle',13)} Lesson time complete — you can continue`;return;
+  }
+  const remain=Math.max(0,MIN_STUDY_SECONDS-studySeconds);
+  if(remain<=0){
+    el.className='study-timer ready';
+    el.innerHTML=`${Icons.get('check-circle',13)} 10 min done — lesson unlocked`;
+  }else{
+    el.className='study-timer';
+    el.innerHTML=`${Icons.get('clock',13)} Study time: <b>${fmtStudy(remain)}</b> until you can continue`;
+  }
+}
+function startStudyTimer(lessonId,isCompleted){
+  stopStudyTimer();
+  studyComplete=!!isCompleted;
+  if(!currentUser||studyComplete)return;
+  updateStudyTimerDisplay();
+  studyTickTs=Date.now();
+  studyTimerId=setInterval(()=>{
+    if(document.hidden){studyTickTs=Date.now();return;}
+    const now=Date.now();
+    studySeconds+=Math.round((now-studyTickTs)/1000);
+    studyTickTs=now;
+    if(studySeconds>=MIN_STUDY_SECONDS){
+      studySeconds=MIN_STUDY_SECONDS;
+      if(!studyComplete){updateStudyTimerDisplay();}
+    }else updateStudyTimerDisplay();
+    if(studySeconds>=MIN_STUDY_SECONDS&&studyTimerId){clearInterval(studyTimerId);studyTimerId=null;}
+  },1000);
+}
+function stopStudyTimer(){
+  if(studyTimerId){clearInterval(studyTimerId);studyTimerId=null;}
+  studySeconds=0;studyTickTs=null;
 }
 
 let currentQuizData=null;
@@ -1079,33 +1239,62 @@ function showPremiumWall(){
   document.getElementById('content-placeholder').style.display='none';
   const render=document.getElementById('content-render');
   render.style.display='block';
-  const tierName=premiumStatus?.tier?.name||'Free';
+  const tierName=premiumStatus?.tier?.name||'Free Starter';
+  const check='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
   render.innerHTML=`
     <div class="premium-wall">
       <div class="lock-icon">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--c-purple)" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
       </div>
-      <h2>Premium Course</h2>
-      <p>You're on the <strong>${escapeHTML(tierName)}</strong> plan. Lesson 1 is free — upgrade to unlock all ${courseData.lessons?.length||0} lessons.</p>
+      <h2>Unlock the full course</h2>
+      <p class="wall-sub">You're on the <strong>${escapeHTML(tierName)}</strong> plan. Lesson 1 is free to try — upgrade to keep learning with all ${courseData.lessons?.length||0} lessons, labs and challenges.</p>
+      <div class="wall-perks">
+        <span class="perk">${check} All ${courseData.lessons?.length||0} lessons</span>
+        <span class="perk">${check} Certificates</span>
+        <span class="perk">${check} PDF downloads</span>
+        <span class="perk">${check} Bonus coins</span>
+      </div>
       <div class="plans">
         <div class="plan-card">
-          <div class="plan-name">Starter</div>
-          <div class="plan-price">$5<span>/mo</span></div>
-          <div style="font-size:11px;color:var(--c-muted);margin-top:4px;">All premium courses</div>
+          <div class="plan-name">Pro</div>
+          <div class="plan-price">15,000<span> RWF/mo</span></div>
+          <div class="plan-desc">All courses + certificates</div>
         </div>
         <div class="plan-card highlight">
-          <div class="plan-name">Pro</div>
-          <div class="plan-price">$12<span>/mo</span></div>
-          <div style="font-size:11px;color:var(--c-muted);margin-top:4px;">Courses + downloads</div>
-        </div>
-        <div class="plan-card">
+          <div class="plan-flag">Best value</div>
           <div class="plan-name">Unlimited</div>
-          <div class="plan-price">$25<span>/mo</span></div>
-          <div style="font-size:11px;color:var(--c-muted);margin-top:4px;">Everything</div>
+          <div class="plan-price">35,000<span> RWF/mo</span></div>
+          <div class="plan-desc">Everything + mentorship</div>
         </div>
       </div>
-      <a href="/payment" class="footer-btn primary" style="margin-top:8px;padding:10px 28px;font-size:14px;">Upgrade Now</a>
+      <a href="/payment" class="footer-btn primary" style="padding:11px 34px;font-size:14px;">Upgrade Now</a>
+      <p style="font-size:12px;color:var(--c-muted);margin-top:10px;">Mobile Money (MTN · Airtel) · Card · Bank transfer — cancel anytime.</p>
       <p style="font-size:12px;color:var(--c-muted);">Already subscribed? <a href="/" style="color:var(--c-accent);">Log out and back in</a> to refresh.</p>
+    </div>`;
+  document.getElementById('main-area').scrollTop=0;
+}
+
+/* Shown when a student taps a lesson before finishing the previous one */
+function showSequentialWall(idx,prev){
+  document.getElementById('content-placeholder').style.display='none';
+  const render=document.getElementById('content-render');
+  render.style.display='block';
+  const lessons=courseData.lessons||[];
+  const arrow='<svg class="seq-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
+  const dot=(cls,label)=>`<span class="seq-dot ${cls}">${label}</span>`;
+  const firstDone=idx>=2&&completedIds.has(lessons[idx-2]?.id);
+  render.innerHTML=`
+    <div class="premium-wall">
+      <div class="seq-graphic">
+        ${dot(firstDone?'done':'',firstDone?Icons.get('check-circle',18):String(idx-1))}
+        ${arrow}
+        ${dot('now',String(idx))}
+        ${arrow}
+        <span class="seq-dot" style="opacity:.55;">${Math.min(idx+1,lessons.length)}</span>
+      </div>
+      <h2>Finish the current lesson first</h2>
+      <p class="wall-sub">Lessons build on each other. Complete <strong>"${escapeHTML(prev.title||'the previous lesson')}"</strong> (Lesson ${idx}) to unlock this one.</p>
+      <button class="footer-btn primary" style="margin-top:14px;padding:11px 28px;font-size:14px;" onclick="openLesson('${prev.id}')">Continue Lesson ${idx} &#8594;</button>
     </div>`;
   document.getElementById('main-area').scrollTop=0;
 }

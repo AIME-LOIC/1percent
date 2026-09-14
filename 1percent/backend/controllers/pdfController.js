@@ -156,17 +156,52 @@ class PdfController {
         .eq('id', courseId)
         .single();
 
-      // Get user signature
+      /* ── Signature: uploaded image (student → admin fallback) + signer name ──
+         Same lookup as the on-screen certificate view so the downloaded PDF
+         always matches what the user sees. */
       let signatureUrl = null;
-      const { data: sig } = await adminClient
+      let signerName = null;
+      const signerIds = [];
+      const { data: ownSig } = await adminClient
         .from('signatures')
         .select('signature_url')
         .eq('user_id', userId)
         .single();
-      if (sig) signatureUrl = sig.signature_url;
+      if (ownSig?.signature_url) {
+        signatureUrl = ownSig.signature_url;
+      } else {
+        const { data: admins } = await adminClient
+          .from('profiles')
+          .select('id, full_name')
+          .eq('role', 'admin')
+          .limit(5);
+        (admins || []).forEach(a => signerIds.push(a));
+        for (const admin of signerIds) {
+          const { data: adminSig } = await adminClient
+            .from('signatures')
+            .select('signature_url')
+            .eq('user_id', admin.id)
+            .single();
+          if (adminSig?.signature_url) {
+            signatureUrl = adminSig.signature_url;
+            signerName = admin.full_name || null;
+            break;
+          }
+        }
+      }
+      // Default signer for the printed name under the signature line
+      if (!signerName) {
+        const { data: adminProfile } = await adminClient
+          .from('profiles')
+          .select('full_name')
+          .eq('role', 'admin')
+          .limit(1)
+          .single();
+        signerName = adminProfile?.full_name || null;
+      }
 
       // Generate certificate PDF
-      const pdfBuffer = await pdfService.buildCertificatePdf(cert, course, signatureUrl);
+      const pdfBuffer = await pdfService.buildCertificatePdf(cert, course, signatureUrl, signerName);
 
       const filename = `certificate-${cert.certificate_number}.pdf`;
       res.setHeader('Content-Type', 'application/pdf');
