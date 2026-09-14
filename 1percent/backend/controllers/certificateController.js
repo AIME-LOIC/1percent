@@ -79,6 +79,17 @@ class CertificateController {
         return res.json({ success: false, error: 'Certificate not found.' });
       }
 
+      // Published lesson count for the details row (Level / Duration / Lessons)
+      let lessonCount = null;
+      try {
+        const { count } = await adminClient
+          .from('lessons')
+          .select('id', { count: 'exact', head: true })
+          .eq('course_id', cert.course_id)
+          .eq('is_published', true);
+        lessonCount = count;
+      } catch {}
+
       // Get signature — first try certificate owner, then fallback to any admin.
       // signer_name is the printed name under the signature line (matches the PDF).
       let signatureUrl = null;
@@ -123,7 +134,8 @@ class CertificateController {
           duration_weeks: cert.duration_weeks,
           issued_at: cert.issued_at,
           completed_at: cert.issued_at,
-          course_id: cert.course_id
+          course_id: cert.course_id,
+          lesson_count: lessonCount
         },
         signature_url: signatureUrl,
         signer_name: signerName

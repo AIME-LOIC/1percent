@@ -468,11 +468,15 @@ class PdfService {
         .strokeColor('#0d6e3f')
         .stroke();
 
-      // Inner border (lighter green)
+      // Inner border (lighter green) — strokeOpacity persists on the PDF
+      // graphics state, so isolate it with save/restore
+      doc.save();
       doc.rect(32, 32, w - 64, h - 64)
         .lineWidth(1)
-        .strokeColor('rgba(13,110,63,0.3)')
+        .strokeColor('#0d6e3f')
+        .strokeOpacity(0.3)
         .stroke();
+      doc.restore();
 
       // Gold accent lines (top and bottom)
       doc.moveTo(40, 40).lineTo(w - 40, 40)
@@ -497,18 +501,23 @@ class PdfService {
       doc.rect(w - 30 - ornW, h - 30 - ornLen, ornW, ornLen).fill('#0d6e3f');
 
       // ── Watermark ──────────────────────────────────────
-      // Small and lifted clear of the bottom row: its rotated glyph box ends
-      // ~60px above the DATE ISSUED label (bottomY = h-71) and stays inside
-      // the left border, away from the bottom-left corner ornament.
+      // Blurred-looking brand word centred behind the content: fillOpacity
+      // for the tint (rgba() strings render OPAQUE in this PDFKit version),
+      // double strike with a 3px offset reads as a soft blur. Its rotated box
+      // ends far above the bottom row (DATE ISSUED block at h-71).
       doc.save();
-      doc.translate(w * 0.13, h * 0.75).rotate(-24);
-      doc.fontSize(44).fillColor('rgba(13,110,63,0.04)').font('Helvetica-Bold')
-        .text('1%', -60, -30, { width: 120, align: 'center' });
+      doc.translate(w * 0.5, h * 0.56).rotate(-18);
+      doc.fontSize(46).font('Helvetica-Bold');
+      doc.fillOpacity(0.05);
+      doc.fillColor('#0d6e3f');
+      doc.text('1PERCENT', -160, -25, { width: 320, align: 'center', lineBreak: false });
+      doc.text('1PERCENT', -157, -22, { width: 320, align: 'center', lineBreak: false });
+      doc.fillOpacity(1);
       doc.restore();
 
       // ── Header ─────────────────────────────────────────
       doc.fontSize(11).fillColor('#0d6e3f').font('Helvetica-Bold')
-        .text('1% DIGITAL SOLUTIONS', 0, 60, { align: 'center', width: w });
+        .text('1PERCENT RWANDA', 0, 60, { align: 'center', width: w, characterSpacing: 3 });
       doc.fontSize(9).fillColor('#9ca3af').font('Helvetica')
         .text('Kigali, Rwanda', 0, 76, { align: 'center', width: w });
 
@@ -563,39 +572,57 @@ class PdfService {
       doc.fontSize(courseFontSize).fillColor('#0d6e3f').font('Helvetica-Bold')
         .text(cert.course_title || course?.title || 'Course', 0, doc.y, { align: 'center', width: w });
 
-      // ── Course Details ────────────────────────────────
-      doc.moveDown(0.3);
-      const dateStr = cert.completed_at
-        ? new Date(cert.completed_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-        : cert.issued_at
-          ? new Date(cert.issued_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-          : '';
-      doc.fontSize(9).fillColor('#9ca3af').font('Helvetica')
-        .text(
-          `Level: ${cert.course_level || 'Beginner'}  |  Duration: ${cert.duration_weeks || 0} weeks${dateStr ? '  |  ' + dateStr : ''}`,
-          0, doc.y, { align: 'center', width: w, characterSpacing: 0.5 }
-        );
+      // ── Course Details (three-column row) ──────────────
+      // Level / Duration / Lessons rendered as a mini grid, matching the
+      // on-screen view. Issue date lives in the bottom DATE ISSUED column.
+      doc.moveDown(0.4);
+      const detailsY = doc.y;
+      const detailCols = [
+        { label: 'LEVEL', value: cert.course_level || 'Beginner' },
+        { label: 'DURATION', value: `${cert.duration_weeks || 0} weeks` },
+        { label: 'LESSONS', value: course?.lesson_count != null ? String(course.lesson_count) : '—' }
+      ];
+      const dColSpan = 150;
+      detailCols.forEach((d, i) => {
+        const cx = w / 2 + (i - 1) * dColSpan;
+        doc.fontSize(7).fillColor('#9ca3af').font('Helvetica')
+          .text(d.label, cx - dColSpan / 2, detailsY, { width: dColSpan, align: 'center', characterSpacing: 1.5 });
+        doc.fontSize(11).fillColor('#374151').font('Helvetica-Bold')
+          .text(d.value, cx - dColSpan / 2, detailsY + 12, { width: dColSpan, align: 'center' });
+      });
+      doc.y = detailsY + 30;
 
       // ── Verified Seal (bottom right area) ─────────────
-      // Lifted 28px so the signature ink below it never crowds the seal ring
+      // Enlarged seal (r=50) lifted so its bottom edge keeps ~20px clearance
+      // from the signature ink below (ink top = h-108).
       const sealX = w - 110;
-      const sealY = h - 158;
-      const sealR = 35;
+      const sealY = h - 178;
+      const sealR = 50;
       // Outer circle
       doc.circle(sealX, sealY, sealR)
-        .lineWidth(2.5).strokeColor('#d4a843').stroke();
-      // Inner circle
-      doc.circle(sealX, sealY, sealR - 5)
-        .lineWidth(1).strokeColor('rgba(212,168,67,0.4)').stroke();
+        .lineWidth(3).strokeColor('#d4a843').stroke();
+      // Inner circle — isolated so the 0.4 alpha doesn't dim the outer ring
+      // and checkmark that follow
+      doc.save();
+      doc.circle(sealX, sealY, sealR - 6)
+        .lineWidth(1).strokeColor('#d4a843').strokeOpacity(0.4).stroke();
+      doc.restore();
       // "VERIFIED" text
-      doc.fontSize(6).fillColor('#d4a843').font('Helvetica-Bold')
-        .text('VERIFIED', sealX - 20, sealY - 14, { width: 40, align: 'center', characterSpacing: 2 });
-      // Checkmark icon (simple circle with check)
-      doc.fontSize(14).fillColor('#d4a843').font('Helvetica-Bold')
-        .text('✓', sealX - 5, sealY - 4, { width: 10, align: 'center' });
-      // "1% EXPERT" text
-      doc.fontSize(5.5).fillColor('#d4a843').font('Helvetica-Bold')
-        .text('1% EXPERT', sealX - 20, sealY + 8, { width: 40, align: 'center', characterSpacing: 2 });
+      doc.fontSize(8).fillColor('#d4a843').font('Helvetica-Bold')
+        .text('VERIFIED', sealX - 32, sealY - 34, { width: 64, align: 'center', characterSpacing: 1.5 });
+      // Vector checkmark (no font-glyph dependency, scales with the seal)
+      doc.save();
+      doc.lineWidth(3).lineCap('round').lineJoin('round').strokeColor('#d4a843');
+      doc.moveTo(sealX - 11, sealY - 3);
+      doc.lineTo(sealX - 3, sealY + 6);
+      doc.lineTo(sealX + 12, sealY - 12);
+      doc.stroke();
+      doc.restore();
+      // Brand lines
+      doc.fontSize(7).fillColor('#d4a843').font('Helvetica-Bold')
+        .text('1PERCENT', sealX - 32, sealY + 14, { width: 64, align: 'center', characterSpacing: 1.5 });
+      doc.fontSize(6.5).fillColor('#d4a843').font('Helvetica-Bold')
+        .text('EXPERT', sealX - 32, sealY + 25, { width: 64, align: 'center', characterSpacing: 1.5 });
 
       // ── Bottom Section ────────────────────────────────
       // Three columns share one bottom baseline and the same label→content

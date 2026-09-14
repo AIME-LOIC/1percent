@@ -156,6 +156,14 @@ class PdfController {
         .eq('id', courseId)
         .single();
 
+      // Published lesson count for the certificate details row
+      const { count: lessonCount } = await adminClient
+        .from('lessons')
+        .select('id', { count: 'exact', head: true })
+        .eq('course_id', courseId)
+        .eq('is_published', true);
+      if (course) course.lesson_count = lessonCount ?? null;
+
       /* ── Signature: uploaded image (student → admin fallback) + signer name ──
          Same lookup as the on-screen certificate view so the downloaded PDF
          always matches what the user sees. */
