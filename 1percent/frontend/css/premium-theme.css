@@ -49,9 +49,9 @@ html.theme-premium .dash-stat,
 html.theme-premium .dash-enrolled-card,
 html.theme-premium .dash-course-card,
 html.theme-premium .dash-challenge-card{
-  background:linear-gradient(180deg,#fffef9 0%,#fffdf6 100%);
-  border-color:#efe3c6;
-  box-shadow:0 2px 10px rgba(146,98,10,.06);
+  background:#ffffff;
+  border-color:#f1e5c8;
+  box-shadow:0 2px 10px rgba(217,119,6,.05);
 }
 html.theme-premium .dash-stat:hover,
 html.theme-premium .dash-enrolled-card:hover,
@@ -71,13 +71,13 @@ html.theme-premium .dash-greeting::after{
   background:linear-gradient(90deg,#f59e0b,#b45309);
 }
 
-/* Greeting tier badge — always gold under the premium theme
+/* Greeting tier badge — light gold under the premium theme
    (regardless of pro/unlimited slug) so the look stays uniform. */
 html.theme-premium .membership-badge.tier-badge{
-  background:linear-gradient(135deg,#78350f,#b45309);
-  color:#fde68a;
-  border:1px solid #92400e;
-  box-shadow:0 2px 8px rgba(146,98,10,.25);
+  background:linear-gradient(135deg,#fef3c7,#fde68a);
+  color:#92400e;
+  border:1px solid #f59e0b;
+  box-shadow:0 2px 8px rgba(245,158,11,.22);
 }
 
 /* ── 4. Leaderboard sidebar treatment ───────────────────── */
@@ -85,21 +85,21 @@ html.theme-premium .dash-lb{
   border-color:#f0e2c0;
   box-shadow:0 6px 24px rgba(180,83,9,.10);
 }
-html.theme-premium .dash-lb-head{background:linear-gradient(135deg,#fffbeb 0%,#fff7e6 100%);}
-html.theme-premium .dash-lb-head h3{color:#78350f;}
+html.theme-premium .dash-lb-head{background:#fffdf6;}
+html.theme-premium .dash-lb-head h3{color:#92400e;}
 html.theme-premium .dash-lb-head h3 svg{color:#d97706;}
 html.theme-premium .dash-lb-tabs{background:#fff7e6;border-color:#f0e2c0;}
 html.theme-premium .dash-lb-tab.active{
   background:linear-gradient(135deg,#d97706,#b45309);
   box-shadow:0 2px 8px rgba(180,83,9,.35);
 }
-html.theme-premium .dash-lb-item.me{background:linear-gradient(135deg,#fffbeb 0%,#fef3c7 100%);border-left-color:#d97706;}
+html.theme-premium .dash-lb-item.me{background:#fffbeb;border-left-color:#d97706;}
 html.theme-premium .dash-lb-you{
   color:#92400e;
-  background:linear-gradient(135deg,#fde68a 0%,#fcd34d 100%);
-  border:1px solid #f59e0b;
+  background:#fef3c7;
+  border:1px solid #fcd34d;
 }
-html.theme-premium .dash-lb-avatar{background:linear-gradient(135deg,#d97706 0%,#92400e 100%);}
+html.theme-premium .dash-lb-avatar{background:linear-gradient(135deg,#fbbf24 0%,#d97706 100%);}
 html.theme-premium .dash-lb-footer{background:#fffdf6;}
 
 /* Weekly goal bar matches the gold direction */
@@ -118,13 +118,14 @@ html.theme-premium .user-menu-info b::after{
   display:inline-flex;align-items:center;
   margin-left:8px;padding:2px 8px;border-radius:100px;
   font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;
-  background:linear-gradient(135deg,#f59e0b,#b45309);color:#fff;
+  background:#fef3c7;color:#92400e;border:1px solid #fcd34d;
   vertical-align:2px;
 }
 
 /* ── 6. Membership button in the dash header ────────────── */
 html.theme-premium .dash-upgrade-btn.is-premium{
-  background:linear-gradient(135deg,#f59e0b 0%,#b45309 100%);
-  box-shadow:0 4px 14px rgba(180,83,9,.35);
+  background:linear-gradient(135deg,#fbbf24 0%,#d97706 100%);
+  color:#fff;
+  box-shadow:0 4px 14px rgba(217,119,6,.3);
 }
-html.theme-premium .dash-upgrade-btn.is-premium:hover{box-shadow:0 6px 18px rgba(180,83,9,.45);}
+html.theme-premium .dash-upgrade-btn.is-premium:hover{box-shadow:0 6px 18px rgba(217,119,6,.4);}

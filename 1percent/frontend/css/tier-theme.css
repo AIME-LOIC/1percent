@@ -10,10 +10,10 @@
 .membership-badge.tier-badge.free { background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; }
 .membership-badge.tier-badge.pro,
 .membership-badge.tier-badge.unlimited {
-  background: linear-gradient(135deg, #78350f, #b45309);
-  color: #fde68a;
-  border: 1px solid #92400e;
-  box-shadow: 0 2px 8px rgba(146, 98, 10, .25);
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #92400e;
+  border: 1px solid #f59e0b;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, .22);
 }
 
 /* ============================================================
@@ -38,7 +38,6 @@ body.tier-pro .topbar nav a.active,
 body.tier-pro .lesson-item.active { background: var(--primary-light); color: var(--accent); }
 body.tier-pro .topbar nav a:hover { background: var(--primary-light); }
 body.tier-pro .topbar nav a.nav-cta { background: var(--accent); }
-body.tier-pro a,
 body.tier-pro .footer-btn.primary { background-color: var(--accent); }
 body.tier-pro .lesson-item.active { border-left-color: var(--accent); }
 body.tier-pro .dash-stat-icon.courses,
@@ -58,30 +57,30 @@ body.tier-unlimited {
   --accent-dim: rgba(180, 83, 9, 0.08);
   --primary: #92400e;
   --primary-light: #fef3c7;
-  --primary-dark: #78350f;
+  --primary-dark: #92400e;
   --gold: #d97706;
 }
 body.tier-unlimited .topbar,
 body.tier-unlimited .sidebar {
   background: linear-gradient(180deg, #fffbeb 0%, #fef7e0 100%);
   border-color: rgba(217, 119, 6, 0.25);
-  color: #78350f;
+  color: #92400e;
 }
 body.tier-unlimited .topbar-logo,
 body.tier-unlimited .sidebar-head h3 { color: #92400e; }
 body.tier-unlimited .topbar-logo .mark { background: #d97706; color: #fffbeb; }
-body.tier-unlimited .topbar nav a { color: rgba(120, 53, 15, 0.8); }
+body.tier-unlimited .topbar nav a { color: #92400e; }
 body.tier-unlimited .topbar nav a:hover { color: #92400e; background: rgba(217, 119, 6, 0.12); }
-body.tier-unlimited .topbar nav a.active { background: rgba(217, 119, 6, 0.18); color: #78350f; }
+body.tier-unlimited .topbar nav a.active { background: rgba(217, 119, 6, 0.18); color: #92400e; }
 body.tier-unlimited .topbar nav a.nav-cta { background: #d97706; color: #fffbeb; }
 body.tier-unlimited .topbar-btn { background: rgba(217, 119, 6, 0.12); border-color: rgba(217, 119, 6, 0.3); color: #92400e; }
 body.tier-unlimited .sidebar-quiz-btn { background: #d97706; border-color: #d97706; color: #fffbeb; }
 body.tier-unlimited .progress-fill { background: #d97706; }
 body.tier-unlimited .lesson-item.active { background: rgba(217, 119, 6, 0.1); border-left-color: #d97706; }
-body.tier-unlimited .lesson-info h4 { color: #78350f; }
+body.tier-unlimited .lesson-info h4 { color: #92400e; }
 body.tier-unlimited .lesson-meta,
 body.tier-unlimited .progress-text,
-body.tier-unlimited .sidebar-head .count { color: rgba(120, 53, 15, 0.6); }
+body.tier-unlimited .sidebar-head .count { color: rgba(146, 64, 14, 0.7); }
 body.tier-unlimited .lesson-num { background: rgba(217, 119, 6, 0.15); border-color: rgba(217, 119, 6, 0.3); color: #92400e; }
 body.tier-unlimited .lesson-item.completed .lesson-num { background: #d97706; border-color: #d97706; color: #fffbeb; }
 body.tier-unlimited .footer-btn.primary,
@@ -100,7 +99,7 @@ body.tier-pro .titlebar-logo { color: #fcd34d; }
 body.tier-pro .titlebar-logo .mark { background: #d97706; color: #fffbeb; }
 body.tier-pro .titlebar { box-shadow: inset 0 2px 0 #d97706; }
 body.tier-unlimited .titlebar-logo { color: #fcd34d; }
-body.tier-unlimited .titlebar-logo .mark { background: #d97706; color: #1c1917; }
+body.tier-unlimited .titlebar-logo .mark { background: #d97706; color: #fffbeb; }
 body.tier-unlimited .titlebar { box-shadow: inset 0 2px 0 #d97706; }
 
 /* ============================================================
