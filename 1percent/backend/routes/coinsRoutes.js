@@ -1,16 +1,18 @@
 const { Router } = require('express');
 const coinsController = require('../controllers/coinsController');
 const { authenticate, optionalAuth } = require('../middlewares/auth');
+const { rateLimit } = require('../middlewares/rateLimit');
 
 const router = Router();
 
 router.get('/balance', authenticate, (req, res, next) => coinsController.getBalance(req, res, next));
 router.get('/transactions', authenticate, (req, res, next) => coinsController.getTransactions(req, res, next));
 
-// Optional auth routes — work with or without login
-router.get('/challenges/all', optionalAuth, (req, res, next) => coinsController.getAllChallenges(req, res, next));
-router.get('/challenges/search', optionalAuth, (req, res, next) => coinsController.searchChallenges(req, res, next));
-router.get('/challenges/daily', optionalAuth, (req, res, next) => coinsController.getDailyChallenge(req, res, next));
+// Optional auth routes — work with or without login.
+// Rate limited (red-teamed): public enumeration endpoints were unthrottled.
+router.get('/challenges/all', rateLimit, optionalAuth, (req, res, next) => coinsController.getAllChallenges(req, res, next));
+router.get('/challenges/search', rateLimit, optionalAuth, (req, res, next) => coinsController.searchChallenges(req, res, next));
+router.get('/challenges/daily', rateLimit, optionalAuth, (req, res, next) => coinsController.getDailyChallenge(req, res, next));
 
 // Auth-required routes
 router.get('/challenges/:courseId', authenticate, (req, res, next) => coinsController.getChallenges(req, res, next));

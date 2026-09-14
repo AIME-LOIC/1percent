@@ -1,12 +1,29 @@
+/* ============================================================
+   Lab Routes — Code Playground Execution
+   ============================================================
+   SECURITY MODEL (red-teamed):
+   - The server NEVER executes user code. A previous version used
+     new Function() locally, which gave any logged-in student full
+     RCE: process.env leakage (service-role key!) and a single
+     while(true){} could hang the whole server (sync, single
+     thread). That path is gone for good.
+   - JavaScript/TypeScript run CLIENT-SIDE in a Web Worker: the
+     user's own browser is the only machine their code executes on.
+   - Python and compiled languages go to the external sandboxed
+     compiler API (isolated runners, 15s wall clock).
+   - Payload size caps + per-user rate limiting stop abuse of the
+     compiler relay.
+   ============================================================ */
+
 const { Router } = require('express');
 const https = require('https');
 const { authenticate } = require('../middlewares/auth');
+const { authRateLimit } = require('../middlewares/rateLimit');
 
 const router = Router();
 
 // Map frontend language names to compiler identifiers
 const COMPILER_MAP = {
-  javascript: 'typescript-deno',  // Use Deno for JS
   python: 'python-3.14',
   html: null,  // handled locally (iframe preview)
   c: 'gcc-15',
@@ -15,22 +32,55 @@ const COMPILER_MAP = {
   go: 'go-1.26',
   rust: 'rust-1.93',
   php: 'php-8.5',
-  ruby: 'ruby-4.0',
-  typescript: 'typescript-deno'
+  ruby: 'ruby-4.0'
 };
+
+// Client-side execution languages (Web Worker in the browser)
+const CLIENT_RUN = new Set(['javascript', 'typescript']);
+
+// Hard caps — anything bigger is rejected before it goes anywhere
+const MAX_CODE_LENGTH = 64_000;
+const MAX_COMPILER_BODY = 80_000;
 
 // All lab endpoints require authentication — unauthenticated calls get 401
 router.use(authenticate);
 
-router.post('/run', async (req, res) => {
+// Relay abuse guard: a shared cap per user (15 min window), tighter than
+// the global limiter so the compiler relay can't be hammered.
+const relayHits = new Map();
+setInterval(() => relayHits.clear(), 15 * 60 * 1000).unref();
+
+function relayLimit(req, res, next) {
+  const key = req.user?.id || req.ip;
+  const now = Date.now();
+  const entry = relayHits.get(key);
+  if (!entry || now - entry.start > 15 * 60 * 1000) {
+    relayHits.set(key, { start: now, count: 1 });
+    return next();
+  }
+  entry.count++;
+  if (entry.count > 60) {
+    return res.status(429).json({ error: 'Too many executions. Please wait a few minutes.' });
+  }
+  next();
+}
+
+router.post('/run', authRateLimit, relayLimit, async (req, res) => {
   try {
-    const { code, language } = req.body;
-    if (!code) return res.status(422).json({ error: 'Code is required' });
+    const { code, language } = req.body || {};
 
-    const apiKey = process.env.COMPILER_API_KEY || '';
+    if (typeof code !== 'string' || !code.trim()) {
+      return res.status(422).json({ error: 'Code is required' });
+    }
+    if (code.length > MAX_CODE_LENGTH) {
+      return res.status(413).json({ error: 'Code too large (64KB max).' });
+    }
 
-    // HTML — render locally as iframe preview
+    // HTML — render locally in the client iframe (never executed server-side)
     if (language === 'html') {
+      if (code.length > MAX_CODE_LENGTH) {
+        return res.status(413).json({ error: 'HTML too large.' });
+      }
       return res.json({
         output: '',
         html_preview: true,
@@ -39,54 +89,37 @@ router.post('/run', async (req, res) => {
       });
     }
 
-    // Local eval for JavaScript/Python (no API key needed)
-    if ((language === 'javascript' || language === 'python' || language === 'typescript') && !apiKey) {
-      try {
-        const logs = [];
-        const fakeConsole = {
-          log: (...args) => logs.push(args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' ')),
-          warn: (...args) => logs.push('[WARN] ' + args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ')),
-          error: (...args) => logs.push('[ERROR] ' + args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ')),
-          info: (...args) => logs.push('[INFO] ' + args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '))
-        };
-        // For Python: translate print() to console.log(), input() to a placeholder
-        let runCode = code;
-        if (language === 'python') {
-          runCode = code
-            .replace(/print\(([^)]*)\)/g, 'console.log($1)')
-            .replace(/input\(\)/g, 'prompt("Enter: ")')
-            .replace(/input\(([^)]+)\)/g, 'prompt($1)')
-            .replace(/#.*$/gm, '// $&')  // convert Python comments
-            .replace(/def (\w+)\(/g, 'function $1(')
-            .replace(/elif /g, 'else if ')
-            .replace(/:\s*$/gm, ' {')  // indent blocks
-            .replace(/    /g, '  ');
-          // Wrap in async to handle top-level code
-          runCode = `(async () => { ${runCode} })();`;
-        }
-        const fn = new Function('console', 'prompt', runCode);
-        fn(fakeConsole, (msg) => 'user-input');
-        return res.json({ output: logs.join('\n') || '(no output)' });
-      } catch (e) {
-        return res.json({ output: '', error: e.message });
-      }
+    // JavaScript / TypeScript — run in the USER'S browser (Web Worker).
+    // The server only tells the client how to execute it; no user code is
+    // ever evaluated here. (This keeps the existing response contract while
+    // the actual sandbox lives in the client.)
+    if (CLIENT_RUN.has(language)) {
+      return res.json({
+        output: '',
+        client_run: true,
+        language,
+        code,
+        message: 'Executed in your browser sandbox (Web Worker)'
+      });
     }
 
-    // Determine compiler identifier
+    // Python and compiled languages — external sandboxed compiler
     const compiler = COMPILER_MAP[language];
     if (!compiler) {
       return res.status(400).json({ error: `Unsupported language: ${language}` });
     }
 
+    const apiKey = process.env.COMPILER_API_KEY || '';
     if (!apiKey) {
-      return res.json({
-        output: '',
-        error: 'Compiler API key not configured. JavaScript/Python runs locally. Add COMPILER_API_KEY to .env for other languages.'
+      return res.status(503).json({
+        error: 'Compiler service not configured for this language. JavaScript and TypeScript still run in your browser.'
       });
     }
 
-    // Call onlinecompiler.io sync endpoint
     const postData = JSON.stringify({ compiler, code, input: '' });
+    if (postData.length > MAX_COMPILER_BODY) {
+      return res.status(413).json({ error: 'Payload too large.' });
+    }
 
     const options = {
       hostname: 'api.onlinecompiler.io',
@@ -97,46 +130,37 @@ router.post('/run', async (req, res) => {
         'Authorization': apiKey,
         'Content-Length': Buffer.byteLength(postData)
       },
-      timeout: 30000
+      timeout: 15000
     };
 
     const apiReq = https.request(options, (apiRes) => {
       let data = '';
-      apiRes.on('data', (chunk) => data += chunk);
+      apiRes.on('data', (chunk) => {
+        data += chunk;
+        if (data.length > 256 * 1024) apiReq.destroy(); // response size cap
+      });
       apiRes.on('end', () => {
         try {
           const result = JSON.parse(data);
           res.json({
-            output: result.output || '',
-            error: result.error || '',
+            output: String(result.output || '').slice(0, 16_000),
+            error: String(result.error || '').slice(0, 4_000),
             exitCode: result.exit_code,
             time: result.time
           });
         } catch {
-          res.json({ output: data, error: '' });
+          res.json({ output: data.slice(0, 16_000), error: '' });
         }
       });
     });
 
     apiReq.on('timeout', () => {
       apiReq.destroy();
-      res.json({ output: '', error: 'Execution timed out (30s limit).' });
+      res.json({ output: '', error: 'Execution timed out (15s limit).' });
     });
 
-    apiReq.on('error', (e) => {
-      // Fallback: simple eval for JS
-      if (language === 'javascript') {
-        try {
-          const logs = [];
-          const fakeConsole = { log: (...args) => logs.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ')) };
-          const fn = new Function('console', code);
-          fn(fakeConsole);
-          return res.json({ output: logs.join('\n') || '(no output)' });
-        } catch (err) {
-          return res.json({ output: '', error: err.message });
-        }
-      }
-      res.json({ output: '', error: 'Compiler service unavailable. Try JavaScript for local execution.' });
+    apiReq.on('error', () => {
+      res.status(502).json({ output: '', error: 'Compiler service unavailable. JavaScript and TypeScript still run in your browser.' });
     });
 
     apiReq.write(postData);

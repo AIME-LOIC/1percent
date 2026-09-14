@@ -35,7 +35,12 @@ router.post('/login',
 
 router.post('/logout', authenticate, (req, res, next) => authController.logout(req, res, next));
 
-router.post('/refresh', (req, res, next) => authController.refresh(req, res, next));
+// Refresh tokens are bearer credentials — brute-forcing them must be as
+// expensive as brute-forcing passwords.
+router.post('/refresh',
+  authRateLimit,
+  (req, res, next) => authController.refresh(req, res, next)
+);
 
 router.post('/reset-password',
   authRateLimit,

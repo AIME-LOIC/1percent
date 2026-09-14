@@ -14,6 +14,9 @@ const OPTIONAL_VARS = {
   PORT: '3000',
   NODE_ENV: 'development',
   JWT_SECRET: 'change-this-to-a-strong-random-string',
+  // Pepper for HMAC-hashing IPs in logs. Should be set in production; the
+  // default keeps dev working. Rotating it invalidates IP correlation.
+  LOG_HASH_SECRET: '1percent-log-pepper',
   CONTACT_EMAIL: '1percentrwanda@gmail.com',
   ALLOWED_ORIGINS: 'http://localhost:3000',
   AWS_ACCESS_KEY_ID: '',

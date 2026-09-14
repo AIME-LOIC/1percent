@@ -7,13 +7,36 @@
    ============================================================ */
 
 const { adminClient } = require('../config/database');
+const crypto = require('crypto');
 
 class LogService {
   clientIp(req) {
     if (!req) return null;
-    const forwarded = req.headers && (req.headers['x-forwarded-for'] || req.headers['X-Forwarded-For']);
-    if (forwarded) return Array.isArray(forwarded) ? forwarded[0] : String(forwarded).split(',')[0].trim();
+    // With 'trust proxy' set, req.ip is already the real client address.
     return req.ip || req.connection?.remoteAddress || null;
+  }
+
+  /*
+   * Privacy: logs are the first place a DB leak or over-broad SELECT gets
+   * mined for user details, so we never store raw identifiers.
+   *   - IPs are HMAC-SHA256'd with a server secret: same IP still correlates
+   *     across rows (abuse tracing), but the raw address is unrecoverable.
+   *   - Emails are masked (a***@domain.com): enough to spot duplicates,
+   *     useless to an attacker harvesting contacts.
+   */
+  hashIp(ip) {
+    if (!ip) return null;
+    const secret = process.env.LOG_HASH_SECRET || process.env.JWT_SECRET || '1percent-log-pepper';
+    return crypto.createHmac('sha256', secret).update(String(ip)).digest('hex').slice(0, 32);
+  }
+
+  maskEmail(email) {
+    if (!email) return null;
+    const s = String(email);
+    const at = s.lastIndexOf('@');
+    if (at <= 0) return '***';
+    const local = s.slice(0, at), domain = s.slice(at + 1);
+    return `${local[0]}***@${domain}`;
   }
 
   /** Emit a live event to all connected admin dashboards (best-effort). */
@@ -81,11 +104,11 @@ class LogService {
       path,
       url,
       user_agent: userAgent,
-      ip_address: ipAddress,
+      ip_address: this.hashIp(ipAddress),
       request_id: requestId,
       user_id: userId,
-      user_email: userEmail,
-      contact_email: contactEmail,
+      user_email: this.maskEmail(userEmail),
+      contact_email: this.maskEmail(contactEmail),
       context: context || {},
       is_client_reported: !!isClientReported,
       created_at: new Date().toISOString()

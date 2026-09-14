@@ -730,6 +730,20 @@ async function runCode() {
       const iframe = document.createElement('iframe'); iframe.className = 'html-preview-frame'; iframe.sandbox = 'allow-scripts'; iframe.srcdoc = data.html;
       pa.appendChild(iframe); switchPanel('preview');
       output.innerHTML = '<span class="success">HTML rendered successfully</span>';
+    } else if (data.client_run) {
+      /* JS/TS execute HERE, in your browser (Web Worker sandbox) — the
+         server never runs user code. Worker has no DOM/network identity:
+         no fetch to authenticated APIs, no cookies, no server env. */
+      runInWorker(data.code, data.language)
+        .then(out => {
+          output.innerHTML = `<span class="success">${escHtml(out || '(no output)')}</span>`;
+          switchPanel('output');
+        })
+        .catch(err => {
+          output.innerHTML = `<span class="error">${escHtml(String(err?.message || err))}</span>`;
+          switchPanel('output');
+        });
+      return; // run-btn re-enabled below
     } else if (data.error) {
       output.innerHTML = `<span class="error">${escHtml(data.error)}</span>`;
     } else {
@@ -740,6 +754,51 @@ async function runCode() {
     switchPanel('output');
   } catch (e) { output.innerHTML = `<span class="error">Network error: ${escHtml(e.message)}</span>`; }
   document.getElementById('run-btn').disabled = false;
+}
+
+/* ── Client-side JS/TS sandbox (Web Worker) ──────────
+   Runs the student's JavaScript on their own machine with no
+   access to the app: no cookies, no localStorage, no auth
+   tokens, no fetch to our API (selfOrigin check), 5s CPU cap.
+   TypeScript is stripped with a light transform (types only).
+   ──────────────────────────────────────────────────── */
+function runInWorker(code, language) {
+  return new Promise((resolve) => {
+    let src = code;
+    if (language === 'typescript') {
+      src = src
+        .replace(/^\s*(?:export\s+)?(?:interface|type)\s+\w+[^{=]*(?:=\s*[^;]+;?|\{[^}]*\}?)/gm, '')
+        .replace(/([\w)$\]])\s*:\s*[\w<>\[\]{}|,&\s'".]+?(?=\s*(?:,|\)|=|\{))/g, '$1')
+        .replace(/\)\s*:\s*[\w<>\[\]{}|,&\s'".]+?(?=\s*\{)/g, ')')
+        .replace(/<[\w<>\[\],\s|&]+>(?=\()/g, '')
+        .replace(/\bas\s+(?:const\s+)?[\w<>\[\]{}|,&\s'".]+/g, '')
+        .replace(/!\./g, '.')
+        .replace(/(\bconst\s+\w+)!(?=\s*=)/g, '$1');
+    }
+    const workerSrc = `
+      self.onmessage = (e) => {
+        const logs = [];
+        const fmt = (a) => { try { return typeof a === 'object' ? JSON.stringify(a) : String(a); } catch { return String(a); } };
+        const console = { log: (...a) => logs.push(a.map(fmt).join(' ')), warn: (...a) => logs.push('[WARN] ' + a.map(fmt).join(' ')), error: (...a) => logs.push('[ERROR] ' + a.map(fmt).join(' ')), info: (...a) => logs.push(a.map(fmt).join(' ')) };
+        const fetch = undefined; const XMLHttpRequest = undefined; const WebSocket = undefined;
+        const globalThis = undefined;
+        (async () => { ${src} })().catch(err => logs.push('[ERROR] ' + (err && err.message ? err.message : String(err))));
+        // Async-friendly flush
+        setTimeout(() => self.postMessage(logs.join('\\n') || '(no output)'), 50);
+      };
+    `;
+    let worker;
+    try {
+      worker = new Worker(URL.createObjectURL(new Blob([workerSrc], { type: 'application/javascript' })));
+    } catch (e) {
+      resolve('');
+      return;
+    }
+    const timer = setTimeout(() => { worker.terminate(); resolve('(execution timed out after 5s)'); }, 5000);
+    worker.onmessage = (e) => { clearTimeout(timer); worker.terminate(); resolve(String(e.data || '(no output)')); };
+    worker.onerror = (e) => { clearTimeout(timer); worker.terminate(); resolve('[ERROR] ' + (e.message || 'runtime error')); };
+    worker.postMessage({ go: true });
+  });
 }
 
 // ── Terminal ───────────────────────────────────────

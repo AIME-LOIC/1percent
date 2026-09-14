@@ -98,7 +98,19 @@ class CoinsService {
       .eq('is_active', true);
 
     if (query) {
-      q = q.or(`title.ilike.%${query}%,description.ilike.%${query}%`);
+      /* Red-teamed: raw interpolation into .or() lets a crafted query inject
+         PostgREST filter syntax (e.g. `x%),id=in.("...")`) to alter the
+         filter or leak error structure. Strip the operators/parens that
+         give it meaning, then escape wildcard chars for ilike. */
+      const clean = String(query)
+        .replace(/[(),]/g, ' ')           // break filter/cast syntax
+        .replace(/[.%*]/g, ' ')           // break ilike wildcards
+        .replace(/["']/g, '')             // break value quoting
+        .trim();
+      if (!clean) {
+        return { challenges: [], total: 0, page, limit, pages: 0 };
+      }
+      q = q.or(`title.ilike.%${clean}%,description.ilike.%${clean}%`);
     }
     if (difficulty) {
       q = q.eq('difficulty', difficulty);
@@ -107,6 +119,9 @@ class CoinsService {
       q = q.eq('course_id', course_id);
     }
 
+    // Clamp pagination — negative/huge ranges would probe the API's limits
+    page = Math.max(1, Math.min(10_000, Number(page) || 1));
+    limit = Math.max(1, Math.min(100, Number(limit) || 20));
     const offset = (page - 1) * limit;
     q = q.order('sort_order').range(offset, offset + limit - 1);
 

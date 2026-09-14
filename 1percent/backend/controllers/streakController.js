@@ -70,16 +70,28 @@ class StreakController {
 
   // Called by a daily cron — deduct coins from users who broke streak
   async runDailyPenalty(req, res) {
-    // Simple secret check to prevent abuse
-    const secret = req.headers['x-cron-secret'] || req.query.secret;
-    if (secret !== process.env.CRON_SECRET && process.env.NODE_ENV === 'production') {
+    /* Fail CLOSED (red-teamed): the old check `secret !== CRON_SECRET &&
+       production` let ANYONE through when CRON_SECRET was unset — the
+       comparison with undefined always passed. Now: no secret configured →
+       503 (endpoint unusable, not exploitable); secret required in the
+       x-cron-secret HEADER only (a query-string secret leaks into proxy
+       and access logs); constant-time compare. */
+    const expected = process.env.CRON_SECRET;
+    if (!expected) {
+      return res.status(503).json({ error: 'Cron endpoint not configured (CRON_SECRET missing).' });
+    }
+    const provided = req.headers['x-cron-secret'];
+    const a = Buffer.from(String(provided || ''));
+    const b = Buffer.from(String(expected));
+    const ok = a.length === b.length && require('crypto').timingSafeEqual(a, b);
+    if (!ok) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
     try {
       const result = await streakService.penalizeMissedStreaks();
       res.json({ success: true, ...result });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: 'Penalty run failed.' });
     }
   }
 }

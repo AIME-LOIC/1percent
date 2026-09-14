@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Access Denied — 1percent Rwanda</title>
+  <style>
+    :root {
+      --green: #10b981;
+      --green-dark: #047857;
+      --gold: #f59e0b;
+      --bg: #0b1210;
+      --card: #101915;
+      --text: #e7f0ec;
+      --muted: #9fb3ab;
+      --red: #ef4444;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: radial-gradient(1200px 600px at 50% -10%, #14211b 0%, var(--bg) 60%);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      width: 100%;
+      max-width: 560px;
+      background: var(--card);
+      border: 1px solid rgba(16, 185, 129, .25);
+      border-radius: 20px;
+      padding: 44px 40px 36px;
+      text-align: center;
+      box-shadow: 0 24px 70px rgba(0,0,0,.55);
+    }
+    .shield {
+      width: 92px; height: 92px;
+      margin: 0 auto 22px;
+      border-radius: 50%;
+      background: rgba(239, 68, 68, .1);
+      border: 2px solid rgba(239, 68, 68, .45);
+      display: flex; align-items: center; justify-content: center;
+      animation: pulse 2.2s ease-in-out infinite;
+    }
+    .shield svg { width: 44px; height: 44px; }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,.25); }
+      50% { box-shadow: 0 0 0 16px rgba(239,68,68,0); }
+    }
+    .code-tag {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--red);
+      background: rgba(239,68,68,.1);
+      border: 1px solid rgba(239,68,68,.35);
+      border-radius: 999px;
+      padding: 6px 14px;
+      margin-bottom: 16px;
+    }
+    h1 { font-size: 28px; margin-bottom: 10px; letter-spacing: -.02em; }
+    p.lead { color: var(--muted); font-size: 15px; line-height: 1.65; margin-bottom: 26px; }
+    .ref {
+      font-family: ui-monospace, 'Cascadia Code', Menlo, monospace;
+      font-size: 12.5px;
+      color: var(--muted);
+      background: #0c1310;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 26px;
+      word-break: break-all;
+    }
+    .ref b { color: var(--gold); font-weight: 600; }
+    .actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-block;
+      padding: 12px 26px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-home {
+      background: linear-gradient(135deg, var(--green), var(--green-dark));
+      color: #04120c;
+      box-shadow: 0 8px 22px rgba(16,185,129,.28);
+    }
+    .btn-contact {
+      border: 1px solid rgba(16,185,129,.4);
+      color: var(--green);
+    }
+    .foot {
+      margin-top: 28px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .foot .brand { color: var(--gold); font-weight: 700; letter-spacing: .06em; }
+    .note {
+      margin-top: 18px;
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="shield" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        <line x1="9" y1="9" x2="15" y2="15"/>
+        <line x1="15" y1="9" x2="9" y2="15"/>
+      </svg>
+    </div>
+
+    <span class="code-tag">403 · Request blocked</span>
+    <h1>Security check failed</h1>
+    <p class="lead">
+      Our security system flagged this request as potentially harmful
+      (malicious payload, probing, or abuse) and blocked it.
+      If you were just using the site normally, this may have been a mistake.
+    </p>
+
+    <div class="ref">Reference: <b id="ref-id">—</b></div>
+
+    <div class="actions">
+      <a class="btn btn-home" href="/">Back to homepage</a>
+      <a class="btn btn-contact" href="/contact">Contact support</a>
+    </div>
+
+    <p class="note">
+      If you keep seeing this page, your network may have been temporarily blocked
+      (usually lifts within an hour). Contact support with the reference above
+      and we'll review it.
+    </p>
+
+    <div class="foot"><span class="brand">1percent Rwanda</span> · protected by automated security monitoring</div>
+  </main>
+
+  <script>
+    // Show the request id so a wrongly-blocked user can quote it to support.
+    // Purely cosmetic: the server also stores the real id in security_events.
+    (function () {
+      try {
+        var el = document.getElementById('ref-id');
+        if (!el) return;
+        var rid = new URLSearchParams(location.search).get('rid')
+          || (window.crypto && crypto.randomUUID ? crypto.randomUUID().slice(0, 8).toUpperCase() : 'N/A');
+        el.textContent = rid;
+      } catch (e) { /* never break the block page */ }
+    })();
+  </script>
+</body>
+</html>

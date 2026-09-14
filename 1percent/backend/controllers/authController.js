@@ -14,6 +14,16 @@ class AuthController {
     try {
       const { email, password, full_name } = req.body;
 
+      // Server-side password policy — never rely on the client or the
+      // Supabase default (6) alone. Short passwords fall to trivial
+      // offline/credential-stuffing attacks.
+      if (typeof password !== 'string' || password.length < 8 || password.length > 128) {
+        return res.status(400).json({ error: 'Password must be between 8 and 128 characters.' });
+      }
+      if (/^[\s]+$/.test(password) || /^(?:password|12345678|qwertyui|letmein123|1percent)/i.test(password)) {
+        return res.status(400).json({ error: 'Please choose a stronger password.' });
+      }
+
       const result = await authService.signup(email, password, {
         full_name,
         policy_version: '1.0'
@@ -31,7 +41,7 @@ class AuthController {
         return res.status(409).json({ error: 'An account with this email already exists.' });
       }
       if (err.message?.includes('password')) {
-        return res.status(400).json({ error: 'Password must be at least 6 characters.' });
+        return res.status(400).json({ error: 'Password must be between 8 and 128 characters.' });
       }
 
       res.status(500).json({ error: 'Failed to create account. Please try again.' });

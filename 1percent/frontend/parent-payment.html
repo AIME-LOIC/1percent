@@ -208,6 +208,7 @@
 
     function renderPaymentForm() {
       const student = paymentData.profiles || {};
+        const studentName = paymentData.student_first_name || (student.full_name || 'Student').split(' ')[0];
       const planNames = { pro: 'Pro', unlimited: 'Unlimited' };
       const planFeatures = {
         pro: ['Full course access', 'All labs & projects', 'Certificates', '50 bonus coins'],
@@ -225,8 +226,8 @@
           <div class="student-avatar">${(student.full_name || 'S')[0].toUpperCase()}</div>
           <div>
             <div class="student-label">Student</div>
-            <div class="student-name">${esc(student.full_name || 'Student')}</div>
-            <div class="student-email">${esc(student.email || '')}</div>
+            <div class="student-name">${esc(studentName)}</div>
+            <div class="student-email">Secure payment link</div>
           </div>
         </div>
 

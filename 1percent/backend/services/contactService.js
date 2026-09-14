@@ -27,7 +27,9 @@ class ContactService {
     if (error) throw error;
 
     // In production: send notification email, add to CRM, etc.
-    console.log('[CONTACT] New service request:', { name, email, service_slug });
+    // Never print raw contact PII to stdout — logs get shipped/aggregated and
+    // a proxy or log drain would expose lead details. Log the shape only.
+    console.log('[CONTACT] New service request received', { service_slug, fields: { name: !!name, email: !!email } });
 
     return data;
   }

@@ -56,17 +56,40 @@ class ParentPaymentController {
   /**
    * GET /api/parent-payments/:token
    * Get payment request by token (public — parent page)
+   *
+   * Response is MINIMIZED for the public: only what the payment page renders
+   * (amount/plan/status/notes + first name). The raw row previously included
+   * the student's full email, phone numbers, and every DB column — anyone
+   * with the link (or a proxy logging responses) could harvest them.
    */
   async getByToken(req, res) {
     try {
       const { token } = req.params;
+      // Token shape check (32 hex chars) — reject garbage before hitting the DB
+      if (!token || !/^[a-f0-9]{32}$/.test(String(token))) {
+        return res.status(404).json({ error: 'Payment link not found or expired' });
+      }
       const request = await parentPaymentService.getByToken(token);
 
       if (!request) {
         return res.status(404).json({ error: 'Payment link not found or expired' });
       }
 
-      res.json({ success: true, request });
+      const student = request.profiles || {};
+      res.json({
+        success: true,
+        request: {
+          plan_slug: request.plan_slug,
+          amount: request.amount,
+          status: request.status,
+          paid_at: request.paid_at || null,
+          notes: request.notes || null,
+          parent_name: request.parent_name || null,
+          student_first_name: (student.full_name || 'Student').split(' ')[0],
+          // Omitted vs the old response: student email, student_id,
+          // parent_email, parent_phone, reference_token, internal ids
+        }
+      });
     } catch (err) {
       console.error('[PARENT-PAY] Get by token error:', err.message);
       // Check if it's a missing table error

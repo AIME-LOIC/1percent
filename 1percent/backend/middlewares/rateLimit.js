@@ -35,6 +35,12 @@ function rateLimit(req, res, next) {
   entry.count++;
 
   if (entry.count > maxRequests) {
+    // Feed the security monitor: sustained 429 storms are an abuse signal.
+    // Fire-and-forget so the limiter's hot path stays fast.
+    try {
+      const securityService = require('../services/securityService');
+      securityService.recordRateLimitAbuse(req).catch(() => {});
+    } catch { /* monitor unavailable — rate limiting still applies */ }
     res.setHeader('X-RateLimit-Limit', maxRequests);
     res.setHeader('X-RateLimit-Remaining', 0);
     res.setHeader('Retry-After', Math.ceil((windowMs - (now - entry.start)) / 1000));

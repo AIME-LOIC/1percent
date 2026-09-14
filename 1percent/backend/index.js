@@ -72,6 +72,60 @@ const logService = require('./services/logService');
 
 const app = express();
 
+// Trust the reverse proxy (nginx/Render/Heroku style) for X-Forwarded-*.
+// Without this, req.ip is the PROXY's IP: rate limiting would bucket ALL
+// users into one shared limit, and logs would record the proxy, not clients.
+app.set('trust proxy', 1);
+
+/* ============================================================
+   0. HTTPS ENFORCEMENT — before anything else
+   ------------------------------------------------------------
+   Previously this lived at the END of the file, after every route:
+   a proxied plaintext request executed fully (Bearer tokens in
+   headers!) and was only told to redirect afterwards, leaving
+   tokens and user details exposed on the wire to any proxy on
+   the path.
+   ============================================================ */
+if (process.env.NODE_ENV === 'production') {
+  /* Allowed redirect hosts — the Host header is attacker-controlled and
+     was previously echoed into the Location header (open-redirect for
+     phishing: https://evil.example.com/learn/dashboard). */
+  const allowedHosts = new Set(
+    (process.env.ALLOWED_ORIGINS || '')
+      .split(',')
+      .map(o => { try { return new URL(o.trim()).host; } catch { return ''; } })
+      .filter(Boolean)
+  );
+  app.use((req, res, next) => {
+    // Behind a proxy the scheme arrives in X-Forwarded-Proto (trust proxy above).
+    const proto = req.headers['x-forwarded-proto'] || req.protocol;
+    if (proto !== 'https' && !req.path.startsWith('/api/health')) {
+      // Only redirect when the request host is one of ours; a foreign/attacker
+      // Host gets no Location to a domain we don't control.
+      const reqHost = (req.headers.host || '').split(':')[0];
+      if (!allowedHosts.has(reqHost) && !allowedHosts.has(req.headers.host)) {
+        return res.status(400).json({ error: 'Bad request' });
+      }
+      return res.redirect(308, `https://${req.headers.host}${req.originalUrl}`);
+    }
+    next();
+  });
+  // HSTS is already sent by the helmet() middleware below (max-age=31536000,
+  // includeSubDomains). Note: browsers ignore HSTS over plain HTTP, so it
+  // only needs to appear on the HTTPS responses helmet handles.
+}
+
+/* ============================================================
+   0b. SECURITY MONITOR — payload detection + IP blocking
+   ------------------------------------------------------------
+   Runs before every route: scans path/query/headers/body for attack
+   payloads, enforces the IP blocklist, logs security_events, raises
+   live admin alerts, and serves hack.html to blocked sources.
+   Verified logged-in attackers get an in-app notification.
+   ============================================================ */
+const { securityMonitor, securityBodyScan } = require('./middlewares/securityMonitor');
+app.use(securityMonitor);
+
 /* ============================================================
    1–5. SECURITY + BODY + LOGGING MIDDLEWARE
    ============================================================ */
@@ -121,8 +175,39 @@ app.use(compression());
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: false, limit: '5mb' }));
 
+// Payload scan for request BODIES — mounted here (not earlier) because
+// req.body only exists after the parsers above. URL/query/header scans
+// already ran in the early securityMonitor gate.
+app.use(securityBodyScan);
+
+// API responses must never be cached by any intermediary. Shared proxies
+// caching an authenticated payload is exactly how "user details" leak to
+// other people on the same network — no-store forbids storing at all.
+app.use('/api', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('Pragma', 'no-cache');
+  next();
+});
+
+// Same for the MCP endpoints (tokens and student data flow there)
+app.use('/mcp', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  next();
+});
+
 // Disable x-powered-by
 app.disable('x-powered-by');
+
+// Sanitize x-request-id before it is stored/echoed: it is attacker-controlled
+// (proxy or client can set it) and would otherwise flow into DB rows and
+// response headers verbatim. Cap length, allowlist the characters.
+app.use((req, res, next) => {
+  const rid = req.headers['x-request-id'];
+  if (rid && (typeof rid !== 'string' || rid.length > 64 || !/^[A-Za-z0-9_.:-]+$/.test(rid))) {
+    delete req.headers['x-request-id']; // fall back to a server-generated UUID
+  }
+  next();
+});
 
 // Request logging — assigns a request id and captures 5xx responses
 app.use(requestLogger);
@@ -231,9 +316,11 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Diagnostics — check which tables exist
+// Diagnostics — admin-only (previously UNAUTHENTICATED: anyone could
+// enumerate DB tables and row counts).
 const { adminClient: diagClient } = require('./config/database');
-app.get('/api/admin/diagnostics', async (req, res) => {
+const { authenticate, requireRole } = require('./middlewares/auth');
+app.get('/api/admin/diagnostics', authenticate, requireRole('admin'), async (req, res) => {
   const tables = ['profiles', 'courses', 'lessons', 'enrollments', 'quizzes', 'challenges', 'notifications', 'ratings', 'parent_payments', 'premium_subscriptions', 'streaks', 'user_coins', 'error_logs', 'system_logs', 'admin_alerts'];
   const results = {};
   for (const t of tables) {
@@ -305,6 +392,8 @@ app.use('/api', courseRoutes);  // /api/roadmap, /api/courses (has /:slug)
    SPA ROUTES — serve specific HTML files for app pages
    ============================================================ */
 const htmlRoutes = {
+  '/hack': 'hack.html',
+  '/hack.html': 'hack.html',
   '/learn': 'learn/index.html',
   '/learn/dashboard': 'dashboard.html',
   '/learn/playground': 'playground.html',
@@ -341,6 +430,8 @@ const htmlRoutes = {
 // Learn subdomain routes — same pages, no /learn prefix
 const learnSubdomainRoutes = {
   '/': 'learn/index.html',
+  '/hack': 'hack.html',
+  '/hack.html': 'hack.html',
   '/dashboard': 'dashboard.html',
   '/playground': 'playground.html',
   '/lab': 'lab.html',
@@ -419,18 +510,6 @@ app.get('*', (req, res) => {
   // 404 for everything else
   res.status(404).sendFile(path.join(frontendDir, '404.html'));
 });
-
-/* ============================================================
-   HTTPS ENFORCEMENT (production only)
-   ============================================================ */
-if (process.env.NODE_ENV === 'production') {
-  app.use((req, res, next) => {
-    if (req.headers['x-forwarded-proto'] !== 'https' && !req.path.startsWith('/api/health')) {
-      return res.redirect(301, `https://${req.headers.host}${req.url}`);
-    }
-    next();
-  });
-}
 
 /* ============================================================
    15. ERROR HANDLING — generic messages only, no stack traces
