@@ -275,12 +275,18 @@ app.get(['/courses-page.html', '/course-page.html'], (req, res) => {
 app.use(express.static(frontendDir, {
   etag: true,
   lastModified: true,
-  maxAge: process.env.NODE_ENV === 'production' ? '1d' : 0,
+  // Assets revalidate quickly (10 min) and always with the server, so a
+  // deploy is picked up within minutes instead of up to a day. The ETag
+  // makes the revalidation cheap (304 Not Modified).
+  maxAge: process.env.NODE_ENV === 'production' ? 0 : 0,
   setHeaders: (res, filePath) => {
-    // HTML must always be revalidated so deploys reach users immediately;
-    // hashed/immutable assets can still be cached by their own headers.
     if (filePath.endsWith('.html')) {
+      // HTML must always be revalidated so deploys reach users immediately.
       res.setHeader('Cache-Control', 'no-cache');
+    } else {
+      // JS/CSS/images: cache briefly, but ALWAYS revalidate with the
+      // server (stale-while-revalidate keeps repeat views fast).
+      res.setHeader('Cache-Control', 'public, max-age=600, stale-while-revalidate=300, must-revalidate');
     }
   },
   index: false  // We handle index.html manually for subdomain support
@@ -344,6 +350,36 @@ app.get('/api/config', (req, res) => {
     contactEmail: process.env.CONTACT_EMAIL || '1percentrwanda@gmail.com',
     environment: process.env.NODE_ENV || 'development'
   });
+});
+
+/* Build version + What's New — the update banner polls this. The build
+   id combines the deploy date (updates on every deploy) with the server
+   boot time, so any restart produces a new id even mid-day. Release
+   notes come from CHANGELOG.md (first entry). */
+const BUILD_ID = `${process.env.DEPLOY_STAMP || new Date().toISOString().slice(0, 10)}.${process.uptime ? '' : ''}${Date.now().toString(36)}`;
+let CHANGELOG_NOTES = null; // lazy-cached
+function getReleaseNotes() {
+  if (CHANGELOG_NOTES) return CHANGELOG_NOTES;
+  try {
+    const raw = require('fs').readFileSync(path.join(__dirname, '..', 'CHANGELOG.md'), 'utf8');
+    // Split on "## " section headers; sections[1] is the latest release.
+    // (A regex with a $-alternation lookahead breaks here: in multiline
+    // mode $ matches at every line end, truncating the notes to nothing.)
+    const sections = raw.split(/^## /m);
+    const head = (sections[1] || '').split(/\n/);
+    const versionMatch = (head.shift() || '').match(/^\[([^\]]+)\]/);
+    CHANGELOG_NOTES = {
+      version: versionMatch ? versionMatch[1].trim() : null,
+      notes: head.join('\n').trim()
+    };
+  } catch { /* no changelog — fine */ }
+  if (!CHANGELOG_NOTES) CHANGELOG_NOTES = { version: null, notes: '' };
+  return CHANGELOG_NOTES;
+}
+app.get('/api/version', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const notes = getReleaseNotes();
+  res.json({ success: true, buildId: BUILD_ID, version: notes.version, notes: notes.notes });
 });
 
 // Mount route groups (config route above prevents /api/:slug from catching it)
