@@ -20,4 +20,9 @@ router.post('/challenges/:challengeId/submit', authenticate, (req, res, next) =>
 router.get('/lock/:lessonId', authenticate, (req, res, next) => coinsController.checkLessonLock(req, res, next));
 router.post('/unlock/:lessonId', authenticate, (req, res, next) => coinsController.unlockLesson(req, res, next));
 
+// Hints — status first (static path), then per-challenge reveal.
+router.get('/hints/status', authenticate, (req, res, next) => coinsController.getHintStatus(req, res, next));
+router.get('/challenges/:challengeId/hints', authenticate, (req, res, next) => coinsController.getUnlockedHints(req, res, next));
+router.post('/challenges/:challengeId/hints/reveal', authenticate, (req, res, next) => coinsController.revealHint(req, res, next));
+
 module.exports = router;

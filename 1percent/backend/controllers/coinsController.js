@@ -117,6 +117,45 @@ class CoinsController {
       res.json({ success: true, locked: false, coins: 0, cost: 0 });
     }
   }
+
+  /** GET /api/coins/hints/status — free hints left this month + cost */
+  async getHintStatus(req, res) {
+    try {
+      const status = await coinsService.getHintStatus(req.user.id);
+      const coins = await coinsService.getBalance(req.user.id);
+      res.json({ success: true, ...status, coins });
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to load hint status.' });
+    }
+  }
+
+  /** GET /api/coins/challenges/:challengeId/hints — unlocked hints only */
+  async getUnlockedHints(req, res) {
+    try {
+      const hints = await coinsService.getUnlockedHints(req.user.id, req.params.challengeId);
+      res.json({ success: true, hints });
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to load hints.' });
+    }
+  }
+
+  /**
+   * POST /api/coins/challenges/:challengeId/hints/reveal
+   * Body: { hint_index }. Uses a free monthly hint first, then coins.
+   */
+  async revealHint(req, res) {
+    try {
+      const { hint_index } = req.body || {};
+      const result = await coinsService.revealHint(req.user.id, req.params.challengeId, hint_index);
+      res.json({ success: true, ...result });
+    } catch (err) {
+      if (err.code === 'INSUFFICIENT_COINS') {
+        return res.status(402).json({ error: err.message, code: err.code });
+      }
+      const status = err.status || (err.message?.includes('not found') ? 404 : 500);
+      res.status(status).json({ error: err.message || 'Failed to reveal hint.' });
+    }
+  }
 }
 
 module.exports = new CoinsController();

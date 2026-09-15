@@ -146,6 +146,10 @@ body{padding-top:60px;}
 .study-timer{display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border-radius:100px;background:#f0fdf4;border:1px solid #bbf7d0;color:var(--c-accent);font-weight:700;font-size:12.5px;font-variant-numeric:tabular-nums;}
 .study-timer.ready{background:#eff6ff;border-color:#bfdbfe;color:var(--c-blue);}
 .study-timer svg{flex-shrink:0;}
+/* Timer lives under the topbar, right side — fixed so it stays visible
+   while the student scrolls the lesson. */
+.study-timer-float{position:fixed;top:68px;right:20px;z-index:40;box-shadow:0 4px 14px rgba(13,110,63,.12);}
+.study-timer-float.study-timer.ready{box-shadow:0 4px 14px rgba(37,99,235,.10);}
 .skel-lesson .skel-line.w30{width:30%;}
 
 /* ── Layout ──────────────────────────────────────── */
@@ -487,6 +491,25 @@ let supabaseClient=null,currentUser=null,courseData=null,slug='',activeLessonId=
 /* Study-timer state (10-minute minimum per lesson) */
 const MIN_STUDY_SECONDS=10*60;
 let studySeconds=0,studyTimerId=null,studyTickTs=null,studyTimerEl=null,studyComplete=false;
+
+/* ── Study-time persistence ──
+   Elapsed study time survives page refreshes, tab switches, and
+   leave-and-return: it is kept in sessionStorage keyed by lesson and
+   synced with the server's started_at wall-clock. The displayed value
+   is the best-known elapsed time; the server remains the source of
+   truth at completion (it takes the max of client and wall-clock). */
+function studyKey(lessonId){return '1p:study:'+slug+':'+(lessonId||activeLessonId||'x');}
+function saveStudyTime(lessonId,secs){
+  try{sessionStorage.setItem(studyKey(lessonId),String(Math.max(0,Math.round(secs))));}catch{}
+}
+function loadStudyTime(lessonId){
+  try{const v=parseInt(sessionStorage.getItem(studyKey(lessonId))||'0',10);return Number.isFinite(v)&&v>0?v:0;}catch{return 0;}
+}
+function maxStudyTime(lessonId){
+  // Server wall-clock seconds (progress payload) vs local counter
+  const l=(courseData?.lessons||[]).find(x=>x.id===(lessonId||activeLessonId));
+  return Math.max(loadStudyTime(lessonId),l?.time_spent_seconds||0);
+}
 
 /* Cached premium status — premium users keep their premium UI on repeat visits
    even if the status endpoint is slow or fails. */
@@ -910,7 +933,9 @@ async function doOpenLesson(lessonId){
   /* ── Study timer — 10-minute minimum per lesson ── */
   stopStudyTimer();
   studyComplete=isCompleted;
-  studySeconds=0;
+  // Resume from where the student left off: sessionStorage counter
+  // (survives refresh) and the server's recorded time — never reset.
+  studySeconds=maxStudyTime(lessonId);
   document.getElementById('content-footer-timer-holder')?.remove();
   const colors={video:'var(--c-blue)',lab:'var(--c-yellow)',project:'var(--c-purple)',reading:'var(--c-green)',quiz:'var(--c-red)'};
   const color=colors[lesson.lesson_type]||'var(--c-muted)';
@@ -953,16 +978,20 @@ async function doOpenLesson(lessonId){
       </div>
     </div>`;
 
-  /* Inject the live study timer into the lesson footer (premium users get a
-     quiet inline strip instead — their plan is already showing). */
+  /* Live study timer — fixed under the nav's right side so it stays
+     visible while scrolling (premium users get a quiet inline strip). */
   if(!isPremiumUser){
-    const holder=document.createElement('div');
-    holder.id='content-footer-timer-holder';
-    holder.style.cssText='display:flex;justify-content:center;padding:6px 0 2px;';
-    holder.innerHTML=`<span class="study-timer" id="study-timer"></span>`;
-    document.querySelector('.content-footer')?.insertAdjacentElement('afterend',holder);
+    let floatEl=document.getElementById('study-timer');
+    if(!floatEl){
+      floatEl=document.createElement('span');
+      floatEl.id='study-timer';
+      document.body.appendChild(floatEl);
+    }
+    floatEl.className='study-timer study-timer-float';
+    floatEl.style.display='inline-flex';
     updateStudyTimerDisplay();
   }else{
+    document.getElementById('study-timer')?.remove();
     const holder=document.createElement('div');
     holder.id='content-footer-timer-holder';
     holder.innerHTML=`<div class="premium-inline">${Icons.get('star',13)} Enjoying the full course? <a href="/payment">Manage your Premium plan</a></div>`;
@@ -1048,7 +1077,7 @@ async function markLessonComplete(lessonId){
     const res=await apiFetch(`/api/courses/progress/${lessonId}/complete`,{method:'POST',body:JSON.stringify({study_seconds:studySeconds})});
     const json=await res.json();
     if(json.success){
-      studyComplete=true;studySeconds=0;updateStudyTimerDisplay();
+      studyComplete=true;saveStudyTime(activeLessonId,MIN_STUDY_SECONDS);updateStudyTimerDisplay();
       await loadProgress();
     }else if(json.error&&json.error.includes('Study for at least')){
       const need=Math.max(0,(json.required_seconds||MIN_STUDY_SECONDS)-(json.elapsed_seconds||studySeconds));
@@ -1065,16 +1094,17 @@ function fmtStudy(s){return `${String(Math.floor(s/60)).padStart(2,'0')}:${Strin
 function updateStudyTimerDisplay(){
   const el=document.getElementById('study-timer');
   if(!el)return;
+  // Toggle 'ready' without wiping other classes (e.g. study-timer-float)
   if(studyComplete){
-    el.className='study-timer ready';
+    el.classList.add('ready');
     el.innerHTML=`${Icons.get('check-circle',13)} Lesson time complete — you can continue`;return;
   }
   const remain=Math.max(0,MIN_STUDY_SECONDS-studySeconds);
   if(remain<=0){
-    el.className='study-timer ready';
+    el.classList.add('ready');
     el.innerHTML=`${Icons.get('check-circle',13)} 10 min done — lesson unlocked`;
   }else{
-    el.className='study-timer';
+    el.classList.remove('ready');
     el.innerHTML=`${Icons.get('clock',13)} Study time: <b>${fmtStudy(remain)}</b> until you can continue`;
   }
 }
@@ -1082,15 +1112,22 @@ function startStudyTimer(lessonId,isCompleted){
   stopStudyTimer();
   studyComplete=!!isCompleted;
   if(!currentUser||studyComplete)return;
+  // Start from the best-known elapsed time (sessionStorage + server),
+  // so a refresh or a leave-and-return never restarts the countdown.
+  studySeconds=maxStudyTime(lessonId);
   updateStudyTimerDisplay();
   studyTickTs=Date.now();
   studyTimerId=setInterval(()=>{
     if(document.hidden){studyTickTs=Date.now();return;}
     const now=Date.now();
+    const prev=studySeconds;
     studySeconds+=Math.round((now-studyTickTs)/1000);
     studyTickTs=now;
+    // Persist every 5 seconds so a refresh keeps the progress
+    if(Math.floor(prev/5)!==Math.floor(studySeconds/5))saveStudyTime(lessonId,studySeconds);
     if(studySeconds>=MIN_STUDY_SECONDS){
       studySeconds=MIN_STUDY_SECONDS;
+      saveStudyTime(lessonId,studySeconds);
       if(!studyComplete){updateStudyTimerDisplay();}
     }else updateStudyTimerDisplay();
     if(studySeconds>=MIN_STUDY_SECONDS&&studyTimerId){clearInterval(studyTimerId);studyTimerId=null;}
@@ -1098,7 +1135,8 @@ function startStudyTimer(lessonId,isCompleted){
 }
 function stopStudyTimer(){
   if(studyTimerId){clearInterval(studyTimerId);studyTimerId=null;}
-  studySeconds=0;studyTickTs=null;
+  if(activeLessonId)saveStudyTime(activeLessonId,studySeconds); // keep, don't wipe
+  studyTickTs=null;
 }
 
 let currentQuizData=null;
@@ -1224,19 +1262,33 @@ async function openQuizModal(){
     </div>`).join('');
 
   // Countdown timer (from quizzes.time_limit_min — set 10 for a 10-min quiz)
+  // Resume semantics: the deadline is stored (wall-clock) per quiz, so
+  // closing the modal, refreshing the page, or leaving and coming back
+  // continues from where the student left off — the clock does NOT reset.
   if(hasTimer){
-    let remaining=limitMin*60;
+    const qKey='1p:quizdeadline:'+currentUser?.id+':'+currentQuizData.id;
+    let deadline=0;
+    try{deadline=parseInt(sessionStorage.getItem(qKey)||'0',10)||0;}catch{}
+    if(!deadline||deadline<=Date.now()){
+      deadline=Date.now()+limitMin*60*1000;
+      try{sessionStorage.setItem(qKey,String(deadline));}catch{}
+    }
     const tick=()=>{
-      remaining--;
+      const remaining=Math.max(0,Math.round((deadline-Date.now())/1000));
       const el=document.getElementById('quiz-timer-text');
       if(!el){clearInterval(window.__quizTimer);return;}
       const m=Math.floor(remaining/60),s=remaining%60;
       el.textContent=m+':'+String(s).padStart(2,'0');
       el.parentElement.style.color=remaining<=60?'var(--c-red)':remaining<=180?'#d97706':'var(--c-text)';
-      if(remaining<=0){clearInterval(window.__quizTimer);Toast.warning('Time is up — submitting your quiz.');submitQuizModal(currentQuizData.id);}
+      if(remaining<=0){
+        clearInterval(window.__quizTimer);
+        try{sessionStorage.removeItem(qKey);}catch{}
+        Toast.warning('Time is up — submitting your quiz.');submitQuizModal(currentQuizData.id);
+      }
     };
-    document.getElementById('quiz-timer-text').textContent=limitMin+':00';
+    tick();
     window.__quizTimer=setInterval(tick,1000);
+    window.__quizTimerDeadlineKey=qKey;
   }
 }
 
@@ -1263,6 +1315,8 @@ function stopQuizWatchAndCollect(){
 function closeQuizModal(){
   if(quizWatch.cleanup)quizWatch.cleanup();
   clearInterval(window.__quizTimer);
+  // Keep the stored deadline — reopening resumes the same countdown.
+  // It is only cleared on submit or when it naturally expires.
   document.querySelector('.quiz-modal-overlay')?.remove();
 }
 
@@ -1293,6 +1347,9 @@ async function submitQuizModal(quizId){
     return;
   }
   const r=json.result;
+  // Attempt consumed — clear the stored quiz deadline so the next
+  // attempt starts with the full time again.
+  try{sessionStorage.removeItem(window.__quizTimerDeadlineKey||'');}catch{}
   quizState={allowed:r.passed,passed:r.passed,percentage:r.percentage,attempts_remaining:r.attempts_remaining};
   if(!r.passed)quizState.allowed=true;
   renderQuizStatus();

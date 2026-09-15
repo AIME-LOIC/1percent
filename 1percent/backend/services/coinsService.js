@@ -3,6 +3,117 @@ const { Worker } = require('worker_threads');
 const { execFile } = require('child_process');
 const path = require('path');
 
+/* ── Challenge hints economy ──
+   Every user gets FREE_HINTS_PER_MONTH hints per calendar month (any
+   challenge). After the free quota, each hint costs HINT_COST_COINS,
+   deducted through the normal coin ledger. */
+const FREE_HINTS_PER_MONTH = 5;
+const HINT_COST_COINS = 15;
+
+function hintPeriod(date = new Date()) {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+/** Free hints used this calendar month (creates no row). */
+async function getFreeHintsUsed(userId) {
+  const { data } = await adminClient
+    .from('hint_allowance')
+    .select('free_used')
+    .eq('user_id', userId)
+    .eq('period', hintPeriod())
+    .single();
+  return data?.free_used || 0;
+}
+
+async function getHintStatus(userId) {
+  const freeUsed = await getFreeHintsUsed(userId);
+  return {
+    free_remaining: Math.max(0, FREE_HINTS_PER_MONTH - freeUsed),
+    free_per_month: FREE_HINTS_PER_MONTH,
+    free_used: freeUsed,
+    hint_cost: HINT_COST_COINS
+  };
+}
+
+/**
+ * Reveal a single hint (index) for a challenge. Uses the free monthly
+ * quota first, then charges coins. Already-unlocked hints are free to
+ * re-read forever.
+ */
+async function revealHint(userId, challengeId, hintIndex) {
+  const idx = Number(hintIndex);
+  if (!Number.isInteger(idx) || idx < 0) throw new Error('Invalid hint index');
+
+  const { data: challenge } = await adminClient
+    .from('challenges')
+    .select('id, hints, is_active')
+    .eq('id', challengeId)
+    .eq('is_active', true)
+    .single();
+  if (!challenge) throw new Error('Challenge not found');
+  const hints = Array.isArray(challenge.hints) ? challenge.hints : [];
+  if (idx >= hints.length) throw new Error('Hint not found');
+
+  // Already unlocked? Reveal again at no cost.
+  const { data: existing } = await adminClient
+    .from('challenge_hints_unlocked')
+    .select('id, source')
+    .eq('user_id', userId)
+    .eq('challenge_id', challengeId)
+    .eq('hint_index', idx)
+    .single();
+  if (existing) {
+    return { hint: hints[idx], source: existing.source, already_unlocked: true, ...(await getHintStatus(userId)) };
+  }
+
+  // Pay: free monthly quota first, then coins.
+  const freeUsed = await getFreeHintsUsed(userId);
+  let source = 'coins';
+  if (freeUsed < FREE_HINTS_PER_MONTH) {
+    const { error: upErr } = await adminClient
+      .from('hint_allowance')
+      .upsert({
+        user_id: userId,
+        period: hintPeriod(),
+        free_used: freeUsed + 1,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id,period' });
+    if (upErr) throw upErr;
+    source = 'free';
+  } else {
+    const balance = await this.getBalance(userId);
+    if (balance < HINT_COST_COINS) {
+      const err = new Error(`Not enough coins — a hint costs ${HINT_COST_COINS}. You have ${balance}.`);
+      err.status = 402; err.code = 'INSUFFICIENT_COINS';
+      throw err;
+    }
+    await this.addCoins(userId, -HINT_COST_COINS, `Hint revealed`, challengeId);
+  }
+
+  const { error: insErr } = await adminClient
+    .from('challenge_hints_unlocked')
+    .insert({ user_id: userId, challenge_id: challengeId, hint_index: idx, source });
+  if (insErr && insErr.code !== '23505') throw insErr; // unique → raced, fine
+
+  return { hint: hints[idx], source, already_unlocked: false, ...(await getHintStatus(userId)) };
+}
+
+/** All unlocked hint texts for a challenge (for re-rendering the panel). */
+async function getUnlockedHints(userId, challengeId) {
+  const [{ data: challenge }, { data: unlocked }] = await Promise.all([
+    adminClient.from('challenges').select('hints').eq('id', challengeId).single(),
+    adminClient.from('challenge_hints_unlocked')
+      .select('hint_index, source, created_at')
+      .eq('user_id', userId)
+      .eq('challenge_id', challengeId)
+      .order('hint_index')
+  ]);
+  const hints = Array.isArray(challenge?.hints) ? challenge.hints : [];
+  return (unlocked || [])
+    .filter(u => u.hint_index < hints.length)
+    .map(u => ({ index: u.hint_index, text: hints[u.hint_index], source: u.source, unlocked_at: u.created_at }));
+}
+
 class CoinsService {
   async getBalance(userId) {
     const { data, error } = await adminClient
