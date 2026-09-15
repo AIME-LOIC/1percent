@@ -82,6 +82,11 @@ async function main() {
   r = await grade('print(6 * 7)', { title: 'Answer', description: '', challenge_type: 'python', expected_output: '42', test_cases: [] });
   record('Python real computation still PASSES', true, r.passed, r.reason);
 
+  // Regression: valid Python with trailing semicolon must NOT be flagged as JS
+  // (old regex `;\s*$` treated `print("hi");` as JavaScript — false reject)
+  r = await grade('print("Hello, Python!");', { title: 'Answer', description: '', challenge_type: 'python', expected_output: 'Hello, Python!', test_cases: [] });
+  record('Python with trailing semicolon passes language gate', true, r.passed !== false || !String(r.reason||'').includes('looks like JavaScript'), r.reason);
+
   const domCh = {
     id: 'dom', title: 'Render colors', description: 'Render colors into #color-list',
     challenge_type: 'javascript', expected_output: '', starter_html: '<ul id="color-list"></ul>',

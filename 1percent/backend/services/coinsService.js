@@ -392,9 +392,18 @@ class CoinsService {
       }
       case 'python': {
         const stripped = this._stripCommentsAndStrings(code);
-        // JS tells: braces, const/let/var, function keyword, => arrows.
-        if (/\b(const|let)\s+\w+|=>|\bfunction\s+\w+\s*\(|;\s*$/m.test(stripped)) {
+        // JS tells: ONLY unambiguous JS-only constructs — const/let/var
+        // declarations, function keyword, => arrows, console.*.
+        // Deliberately NOT flagged (all legal Python):
+        //   • semicolons            → print("hi"); is valid Python
+        //   • curly braces          → dicts {"a": 1} and sets {1, 2}
+        //   • parentheses in calls  → f-string/format syntax
+        if (/\b(const|let|var)\s+\w+|=>|\bfunction\s+\w+\s*\(|\bconsole\s*\./.test(stripped)) {
           return fail('That looks like JavaScript — submit Python instead.');
+        }
+        // Common beginner mistake: python("...") instead of print("...")
+        if (/\bpython\s*\(/.test(stripped) && !/\bprint\s*\(/.test(stripped)) {
+          return fail('Python prints with print("…"), not python("…").');
         }
         if (!/(\bdef\s+\w+\s*\(|\bprint\s*\(|=|\bimport\b|\bfor\b|\bwhile\b|\bif\b)/.test(stripped)) {
           return fail('No Python code was found in your submission.');
