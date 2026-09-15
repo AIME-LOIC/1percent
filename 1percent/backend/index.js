@@ -501,6 +501,7 @@ const learnSubdomainRoutes = {
   '/privacy': 'privacy.html',
   '/contact': 'contact.html',
   '/onboarding': 'onboarding.html',
+  '/mentors': 'mentors.html',
 };
 
 /* ============================================================
