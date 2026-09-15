@@ -81,8 +81,15 @@
 <template id="dashboard-guest-template">
   <div class="container dashboard-guest">
     <h1>You need to log in to view your dashboard.</h1>
-    <p class="text-secondary">Head back to the learning platform and use "Student Login" to sign in or create an account.</p>
-    <a href="/" class="btn btn-primary btn-lg">Back to Learning Platform</a>
+    <p class="text-secondary">Log in to see your courses, progress and coins — or create a free account in seconds.</p>
+    <button type="button" id="guest-login-btn" class="btn btn-primary btn-lg">Student Login</button>
+    <p style="margin-top:14px;font-size:14px;color:var(--text-secondary);">No password handy? <a href="#" id="guest-magic-link" style="color:var(--primary);font-weight:600;">✨ Email me a magic link</a></p>
+    <form id="guest-magic-form" style="display:none;margin-top:16px;max-width:360px;text-align:left;">
+      <label for="guest-magic-email" style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">Email</label>
+      <input type="email" id="guest-magic-email" placeholder="you@example.com" required style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;">
+      <button type="submit" class="btn btn-primary" style="margin-top:10px;">Send Magic Link</button>
+      <div id="guest-magic-status" style="font-size:13px;margin-top:8px;min-height:18px;"></div>
+    </form>
   </div>
 </template>
 
@@ -288,6 +295,43 @@
     }
   });
 })();
+</script>
+
+<!-- Guest gate: shared login popup + magic link. Delegated listeners
+     because dashboard.js renders the guest template after load. -->
+<script src="/js/login-popup.js"></script>
+<script>
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('#guest-login-btn')) {
+      e.preventDefault();
+      window.LoginPopup?.show('dashboard');
+      return;
+    }
+    if (e.target.closest('#guest-magic-link')) {
+      e.preventDefault();
+      const f = document.getElementById('guest-magic-form');
+      if (f) { f.style.display = ''; document.getElementById('guest-magic-email')?.focus(); }
+    }
+  });
+  document.addEventListener('submit', async (e) => {
+    if (!e.target.matches || !e.target.matches('#guest-magic-form')) return;
+    e.preventDefault();
+    const status = document.getElementById('guest-magic-status');
+    status.style.color = '';
+    status.textContent = 'Sending magic link...';
+    try {
+      const res = await fetch('/api/auth/magic-link', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: document.getElementById('guest-magic-email').value.trim() })
+      });
+      const json = await res.json();
+      status.style.color = json.success ? 'var(--success,#0d6e3f)' : 'var(--danger,#dc2626)';
+      status.textContent = json.success ? '✓ Magic link sent! Check your inbox and click the link.' : (json.error || 'Failed to send.');
+    } catch {
+      status.style.color = 'var(--danger,#dc2626)';
+      status.textContent = 'Network error. Please try again.';
+    }
+  });
 </script>
 
 </body>

@@ -80,7 +80,19 @@
           </div>
           <button type="submit" class="lp-btn" id="lp-login-btn">Log In</button>
           <div class="lp-status" id="lp-status"></div>
+          <div class="lp-resend" id="lp-resend-row" style="display:none;text-align:center;margin-top:8px;"><a id="lp-resend-btn" style="font-size:12px;color:#f9e2af;text-decoration:none;font-weight:600;cursor:pointer;">✉ Resend confirmation email</a></div>
+          <div class="lp-swap" style="margin-top:10px;">or <a id="lp-to-magic">email me a magic link</a> (no password)</div>
           <div class="lp-swap">New here? <a id="lp-to-signup">Create a free account</a></div>
+        </form>
+
+        <!-- MAGIC LINK FORM -->
+        <form id="lp-magic-form" style="display:none;">
+          <p style="font-size:13px;color:#a6adc8;line-height:1.55;margin-top:4px;">Enter your email and we'll send you a one-tap login link — no password needed.</p>
+          <label for="lp-magic-email">Email</label>
+          <input type="email" id="lp-magic-email" placeholder="you@example.com" autocomplete="email" required>
+          <button type="submit" class="lp-btn" id="lp-magic-btn">Send Magic Link</button>
+          <div class="lp-status" id="lp-magic-status"></div>
+          <div class="lp-swap">Prefer a password? <a id="lp-magic-back">Back to login</a></div>
         </form>
 
         <!-- SIGNUP FORM -->
@@ -90,7 +102,7 @@
           <label for="lp-signup-email">Email</label>
           <input type="email" id="lp-signup-email" placeholder="you@example.com" autocomplete="email" required>
           <label for="lp-signup-password">Password</label>
-          <input type="password" id="lp-signup-password" placeholder="Min 6 characters" autocomplete="new-password" minlength="6" required>
+          <input type="password" id="lp-signup-password" placeholder="Min 8 characters" autocomplete="new-password" minlength="8" required>
           <button type="submit" class="lp-btn" id="lp-signup-btn">Create Account</button>
           <div class="lp-status" id="lp-signup-status"></div>
           <div class="lp-swap">Already have an account? <a id="lp-to-login">Log in</a></div>
@@ -120,6 +132,52 @@
     el('lp-to-login').addEventListener('click', () => switchForm('login'));
     el('lp-back-login').addEventListener('click', () => switchForm('login'));
     el('lp-forgot').addEventListener('click', (e) => { e.preventDefault(); switchForm('reset'); });
+    el('lp-to-magic').addEventListener('click', () => switchForm('magic'));
+    el('lp-magic-back').addEventListener('click', () => switchForm('login'));
+
+    // Resend confirmation email (shown after an email-not-confirmed login)
+    el('lp-resend-btn').addEventListener('click', async (e) => {
+      e.preventDefault();
+      const link = el('lp-resend-btn');
+      const email = el('lp-login-email').value.trim();
+      if (!email) { switchForm('login'); return; }
+      link.textContent = 'Sending…';
+      try {
+        await fetch('/api/auth/resend-confirmation', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        link.textContent = '✓ Sent — check your inbox';
+      } catch { link.textContent = 'Could not send — try again'; }
+      setTimeout(() => { link.textContent = '✉ Resend confirmation email'; }, 4000);
+    });
+
+    // Magic link submit
+    el('lp-magic-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = el('lp-magic-btn');
+      const status = el('lp-magic-status');
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+      status.className = 'lp-status';
+      status.textContent = '';
+      try {
+        const res = await fetch('/api/auth/magic-link', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: el('lp-magic-email').value.trim() })
+        });
+        const json = await res.json();
+        if (!res.ok || !json.success) throw new Error(json.error || 'Failed to send magic link');
+        status.className = 'lp-status success';
+        status.textContent = '✓ Magic link sent! Check your inbox and click the link to log in.';
+      } catch (err) {
+        status.className = 'lp-status error';
+        status.textContent = err.message || 'Failed to send magic link.';
+      }
+      btn.disabled = false;
+      btn.textContent = 'Send Magic Link';
+    });
 
     // Login submit
     el('lp-login-form').addEventListener('submit', async (e) => {
@@ -140,7 +198,19 @@
           })
         });
         const json = await res.json();
-        if (!res.ok || !json.success) throw new Error(json.error || 'Login failed');
+        if (!res.ok || !json.success) {
+          // Email-confirmation gate: offer a resend right here.
+          if (json.code === 'email_not_confirmed') {
+            status.className = 'lp-status error';
+            status.textContent = json.error || 'Please confirm your email first.';
+            el('lp-resend-row').style.display = '';
+            btn.disabled = false;
+            btn.textContent = 'Log In';
+            return;
+          }
+          throw new Error(json.error || 'Login failed');
+        }
+        el('lp-resend-row').style.display = 'none';
         await persistSession(json.session);
         loggedIn = true;
         status.className = 'lp-status success';
@@ -161,7 +231,8 @@
       }
     });
 
-    // Signup submit — creates the account then logs straight in
+    // Signup submit — creates the account, then asks the user to confirm
+    // their email (Supabase mails the link; login is gated on it).
     el('lp-signup-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = el('lp-signup-btn');
@@ -183,20 +254,13 @@
         const json = await res.json();
         if (!res.ok || !json.success) throw new Error(json.error || 'Signup failed');
 
-        // Auto-login after successful signup
+        // Confirmation required — park the email in the login form and
+        // offer the resend link for when the mail doesn't arrive.
         status.className = 'lp-status success';
-        status.textContent = '✓ Account created! Logging you in...';
-        const loginRes = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: el('lp-signup-email').value.trim(), password: el('lp-signup-password').value })
-        });
-        const loginJson = await loginRes.json();
-        if (!loginRes.ok || !loginJson.success) throw new Error('Account created — please log in.');
-        await persistSession(loginJson.session);
-        loggedIn = true;
-        status.textContent = '✓ Welcome! Reloading...';
-        setTimeout(() => location.reload(), 600);
+        status.textContent = '✓ Account created! Check your inbox and click the confirmation link, then log in.';
+        el('lp-login-email').value = el('lp-signup-email').value.trim();
+        el('lp-resend-row').style.display = '';
+        setTimeout(() => switchForm('login'), 2500);
       } catch (err) {
         status.className = 'lp-status error';
         status.textContent = err.message || 'Signup failed. Please try again.';
@@ -237,11 +301,14 @@
     el('lp-login-form').style.display = which === 'login' ? '' : 'none';
     el('lp-signup-form').style.display = which === 'signup' ? '' : 'none';
     el('lp-reset-form').style.display = which === 'reset' ? '' : 'none';
+    el('lp-magic-form').style.display = which === 'magic' ? '' : 'none';
+    el('lp-resend-row').style.display = 'none';
     const status = el('lp-status');
     status.className = 'lp-status';
     status.textContent = '';
     const first = which === 'login' ? el('lp-login-email')
       : which === 'signup' ? el('lp-signup-name')
+      : which === 'magic' ? el('lp-magic-email')
       : el('lp-reset-email');
     if (first) first.focus();
   }
@@ -290,6 +357,9 @@
     } else if (context === 'lab') {
       title.textContent = 'Login to use the Lab';
       sub.textContent = 'Create a free account or log in to use the Code Lab — run code, save your files and track your progress.';
+    } else if (context === 'dashboard') {
+      title.textContent = 'Login to view your dashboard';
+      sub.textContent = 'Log in to see your courses, progress and coins — or create a free account in seconds.';
     } else {
       title.textContent = 'Login to continue';
       sub.textContent = 'Create a free account or log in to use this feature.';

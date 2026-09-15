@@ -9,17 +9,26 @@ const { adminClient, anonClient } = require('../config/database');
 
 class AuthService {
   /**
-   * Register a new user
+   * Register a new user.
+   *
+   * Uses the PUBLIC signUp endpoint (not admin.createUser) so Supabase
+   * sends the confirmation email natively — admin.createUser never mails
+   * anyone. The user must click that link before they can log in
+   * (login() refuses unconfirmed accounts).
    */
-  async signup(email, password, metadata = {}) {
+  async signup(email, password, metadata = {}, redirectBase = '') {
     const { data, error } = await Promise.race([
-      adminClient.auth.admin.createUser({
+      anonClient.auth.signUp({
         email,
         password,
-        email_confirm: true,
-        user_metadata: {
-          full_name: metadata.full_name || '',
-          ...metadata
+        options: {
+          data: {
+            full_name: metadata.full_name || '',
+            policy_version: metadata.policy_version || '1.0'
+          },
+          // Confirmation link lands on our callback, which exchanges
+          // the code for a session and continues to the dashboard.
+          ...(redirectBase ? { emailRedirectTo: `${redirectBase}/api/auth/callback` } : {})
         }
       }),
       new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase connection timed out')), 10000))
@@ -29,22 +38,60 @@ class AuthService {
 
     // Log terms acceptance
     try {
-      await adminClient.from('terms_acceptance').insert({
-        user_id: data.user.id,
-        policy_version: metadata.policy_version || '1.0'
-      });
+      if (data.user?.id) {
+        await adminClient.from('terms_acceptance').insert({
+          user_id: data.user.id,
+          policy_version: metadata.policy_version || '1.0'
+        });
+      }
     } catch (e) {
       console.warn('[AUTH] Could not log terms acceptance:', e.message);
     }
 
     return {
+      email_confirmation_required: true,
       user: {
-        id: data.user.id,
-        email: data.user.email,
-        full_name: data.user.user_metadata?.full_name || '',
-        user_metadata: data.user.user_metadata || {}
+        id: data.user?.id,
+        email: data.user?.email,
+        full_name: data.user?.user_metadata?.full_name || '',
+        user_metadata: data.user?.user_metadata || {}
       }
     };
+  }
+
+  /**
+   * Re-send the signup confirmation email.
+   * Generic success even for unknown/confirmed emails (no account
+   * enumeration); errors are logged, not surfaced.
+   */
+  async resendConfirmationEmail(email, redirectBase = '') {
+    const { error } = await anonClient.auth.resend({
+      type: 'signup',
+      email,
+      ...(redirectBase ? { options: { emailRedirectTo: `${redirectBase}/api/auth/callback` } } : {})
+    });
+    if (error) {
+      // Already-confirmed or unknown email — nothing to do; stay silent.
+      console.warn('[AUTH] Resend confirmation skipped:', error.message);
+    }
+    return true;
+  }
+
+  /**
+   * Send a magic link — passwordless sign-in by email.
+   * Works for existing accounts AND creates new ones (shouldCreateUser),
+   * so a visitor without an account can sign up with just their email.
+   */
+  async sendMagicLink(email, redirectBase = '') {
+    const { error } = await anonClient.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: true,
+        ...(redirectBase ? { emailRedirectTo: `${redirectBase}/api/auth/callback` } : {})
+      }
+    });
+    if (error) throw error;
+    return true;
   }
 
   /**
@@ -57,6 +104,16 @@ class AuthService {
     ]);
 
     if (error) throw error;
+
+    // Email-confirmation gate: no login until the address is verified.
+    // (Safe to check AFTER the password validated — the caller just
+    // proved they own the credentials for this address.)
+    if (!data.user?.email_confirmed_at) {
+      const err = new Error('Please confirm your email first — check your inbox for the verification link.');
+      err.code = 'email_not_confirmed';
+      err.email = email;
+      throw err;
+    }
 
     // Get role from profiles table
     let role = 'student';
@@ -100,12 +157,14 @@ class AuthService {
   }
 
   /**
-   * Send a password reset link only for existing accounts.
+   * Send a password reset email.
+   * Uses the PUBLIC endpoint so Supabase actually sends the mail
+   * (admin.generateLink only RETURNS a link — it never sends email).
+   * The controller pre-checks existence to give a friendly 404.
    */
-  async requestPasswordReset(email) {
-    const { error } = await adminClient.auth.admin.generateLink({
-      type: 'recovery',
-      email
+  async requestPasswordReset(email, redirectBase = '') {
+    const { error } = await anonClient.auth.resetPasswordForEmail(email, {
+      ...(redirectBase ? { redirectTo: `${redirectBase}/reset-password` } : {})
     });
     if (error) throw error;
     return true;

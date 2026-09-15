@@ -471,6 +471,15 @@
       </div>
       <div class="form-actions"><button type="submit" class="btn btn-primary btn-lg">Log In</button></div>
       <div class="form-status" id="login-status"></div>
+      <div style="text-align:center;font-size:13px;margin-top:10px;"><a href="#" id="magic-link-open" style="color:var(--primary);font-weight:600;text-decoration:none;">✨ Log in with a magic link</a> (no password)</div>
+    </form>
+    <form class="auth-form" id="magic-form" style="display:none;">
+      <p style="font-size:13px;color:var(--text-muted);line-height:1.55;">Enter your email and we'll send you a one-tap login link — no password needed.</p>
+      <label for="magic-email">Email</label>
+      <input type="email" id="magic-email" placeholder="you@example.com" required>
+      <div class="form-actions"><button type="submit" class="btn btn-primary btn-lg">Send Magic Link</button></div>
+      <div class="form-status" id="magic-status"></div>
+      <div style="text-align:center;font-size:13px;margin-top:10px;"><a href="#" id="magic-back" style="color:var(--primary);font-weight:600;text-decoration:none;">← Back to password login</a></div>
     </form>
     <form class="auth-form" id="signup-form" style="display:none;">
       <label for="signup-name">Full Name</label>
@@ -478,7 +487,7 @@
       <label for="signup-email">Email</label>
       <input type="email" id="signup-email" placeholder="you@example.com" required>
       <label for="signup-password">Password</label>
-      <input type="password" id="signup-password" placeholder="Min 6 characters" required minlength="6">
+      <input type="password" id="signup-password" placeholder="Min 8 characters" required minlength="8">
       <div class="checkbox-row">
         <input type="checkbox" id="accept-terms" required>
         <label for="accept-terms">I agree to the <a href="#" data-modal="terms-modal">Terms</a> and <a href="#" data-modal="privacy-modal">Privacy Policy</a></label>
@@ -630,15 +639,57 @@ document.addEventListener('DOMContentLoaded', async () => {
       const json = await res.json();
       if (json.success) {
         status.style.color = 'var(--success)';
-        status.textContent = 'Account created! Redirecting to dashboard...';
-        if (supabaseClient && json.session) {
-          await supabaseClient.auth.setSession({ access_token: json.session.access_token, refresh_token: json.session.refresh_token });
-        }
-        const _isLearn2 = location.hostname === 'learn.1percent.rw';
-        setTimeout(() => { window.location.href = _isLearn2 ? '/dashboard' : '/learn/dashboard'; }, 1000);
+        status.textContent = 'Account created! Check your inbox — confirm your email, then log in.';
+        document.getElementById('login-email').value = email;
+        setTimeout(() => {
+          tabs.forEach(t => t.classList.remove('active'));
+          document.querySelector('.auth-tab[data-tab="login"]')?.classList.add('active');
+          loginForm.style.display = '';
+          signupForm.style.display = 'none';
+          document.getElementById('auth-modal-title').textContent = 'Student Login';
+          status.textContent = '';
+        }, 2500);
       } else {
         status.style.color = 'var(--danger)';
         status.textContent = json.error || 'Signup failed';
+      }
+    } catch {
+      status.style.color = 'var(--danger)';
+      status.textContent = 'Network error. Please try again.';
+    }
+  });
+
+  // ── Magic-link login ──
+  const magicForm = document.getElementById('magic-form');
+  document.getElementById('magic-link-open')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    loginForm.style.display = 'none';
+    signupForm.style.display = 'none';
+    magicForm.style.display = '';
+    document.getElementById('auth-modal-title').textContent = 'Log in with email';
+    document.getElementById('magic-email').focus();
+  });
+  document.getElementById('magic-back')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    magicForm.style.display = 'none';
+    loginForm.style.display = '';
+    document.getElementById('auth-modal-title').textContent = 'Student Login';
+  });
+  magicForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('magic-status');
+    status.style.display = 'block';
+    status.style.color = 'var(--text-muted)';
+    status.textContent = 'Sending magic link...';
+    try {
+      const res = await fetch('/api/auth/magic-link', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: document.getElementById('magic-email').value.trim() }) });
+      const json = await res.json();
+      if (json.success) {
+        status.style.color = 'var(--success)';
+        status.textContent = '✓ Magic link sent! Check your inbox and click the link to log in.';
+      } else {
+        status.style.color = 'var(--danger)';
+        status.textContent = json.error || 'Failed to send magic link';
       }
     } catch {
       status.style.color = 'var(--danger)';
