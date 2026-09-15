@@ -26,6 +26,7 @@ create extension if not exists "uuid-ossp";
 create table public.profiles (
   id          uuid primary key references auth.users(id) on delete cascade,
   full_name   text not null default '',
+  email       text not null default '',      -- synced from auth.users (see migrations/add_profiles_email.sql)
   avatar_url  text,
   role        text not null default 'student' check (role in ('student', 'mentor', 'admin')),
   country     text default 'Rwanda',

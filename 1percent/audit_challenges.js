@@ -1,102 +1,81 @@
 /* ============================================================
    Challenge grading audit — run: node audit_challenges.js
    Fetches every active challenge from Supabase and classifies
-   how it is graded today, flagging weak/superficial paths so
-   you can prioritize hardening them.
+   how it is graded today, flagging weak/superficial paths.
    Needs SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in .env.
    ============================================================ */
-
 require('dotenv').config();
 const { adminClient } = require('./backend/config/database');
 
-/* How the grader treats each challenge_type today (post-fix):
-   - EXECUTED   → real runtime result decides pass/fail (strong)
-   - SEMANTIC   → executed against a schema + task assertions (strong)
-   - REVIEW     → structural review + task assertions (medium)
-   - WEAK       → structural review only (flagged) */
-const GRADE_PATH = {
-  javascript: 'EXECUTED (VM worker / DOM tests / output match)',
-  python: 'EXECUTED (python3 subprocess, stdout compare)',
-  sql: 'SEMANTIC (in-memory SQLite + composite-index/task assertions)',
-  linux: 'REVIEW (command-line pattern match)',
-  git: 'REVIEW (command-line pattern match)',
-  docker: 'REVIEW (Dockerfile structure)',
-  nginx: 'REVIEW (config structure)',
-  yaml: 'REVIEW (key structure)',
-  html: 'REVIEW (element structure)',
-  css: 'REVIEW (rule structure)',
-  markdown: 'REVIEW (headings + length)'
-};
+const WEAK_LEVELS = { OK: 0, SOFT: 1, WEAK: 2 };
 
-const EXECUTED = new Set(['javascript', 'python', 'sql']);
+function classify(ch) {
+  const hasTests = Array.isArray(ch.test_cases) && ch.test_cases.length > 0;
+  const hasExpected = !!ch.expected_output && String(ch.expected_output).trim().length > 0;
+  const lang = (ch.language || ch.challenge_type || '').toLowerCase();
+  const desc = `${ch.title || ''} ${ch.description || ''}`.toLowerCase();
 
-async function main() {
-  const { data: challenges, error } = await adminClient
-    .from('challenges')
-    .select('id, title, description, challenge_type, difficulty, coins_reward, is_active, test_cases, expected_output, starter_code, course_id, courses(title)')
-    .eq('is_active', true)
-    .order('course_id');
+  const flags = [];
+  let level = 'OK';
 
-  if (error) { console.error('Query failed:', error.message); process.exit(1); }
-
-  const rows = [];
-  let weak = 0;
-
-  for (const ch of challenges || []) {
-    let testCases = ch.test_cases;
-    if (typeof testCases === 'string') { try { testCases = JSON.parse(testCases); } catch { testCases = []; } }
-    if (!Array.isArray(testCases)) testCases = [];
-
-    const type = ch.challenge_type || 'javascript';
-    const hasTests = testCases.length > 0;
-    const hasExpected = String(ch.expected_output || '').trim().length > 0;
-    const gradedBy = GRADE_PATH[type] || 'UNKNOWN TYPE — falls to generic length check (WEAK)';
-    const text = `${ch.title} ${ch.description}`.toLowerCase();
-
-    // Weakness detection
-    const flags = [];
-    if (!EXECUTED.has(type)) flags.push('not executed — review-only');
-    if (EXECUTED.has(type) && type !== 'sql' && !hasTests && !hasExpected) flags.push('no test_cases AND no expected_output — structure only');
-    if (type === 'javascript' && hasExpected && hasTests) flags.push('both output+tests defined (tests win) — OK but consider removing output');
-    if (type === 'javascript' && hasExpected && hasExpected.length >= 8 && !hasTests) {
-      // Expected output present → echo-guard applies, but plain "print X" tasks are inherently weak
-      if (/print|display|output/.test(text) && !/compute|calculate|loop|function/.test(text)) {
-        flags.push('echo-prone: task is "print X" — trivially satisfiable');
-      }
-    }
-    if (type === 'linux' || type === 'git') flags.push('command-pattern only — can be gamed by listing commands');
-    if (!flags.length) flags.push('OK');
-
-    const isWeak = flags.some(f => f.includes('review-only') || f.includes('structure only') || f.includes('gamed') || f.includes('trivially') || f.includes('UNKNOWN'));
-
-    const row = {
-      title: ch.title,
-      course: ch.courses?.title || ch.course_id || '—',
-      type,
-      difficulty: ch.difficulty,
-      coins: ch.coins_reward,
-      gradedBy,
-      flags: flags.join('; ')
-    };
-    rows.push(row);
-    if (isWeak) weak++;
+  if (!hasTests && !hasExpected) {
+    flags.push('no test_cases AND no expected_output → review-only grading');
+    level = 'WEAK';
+  } else if (!hasTests && hasExpected && lang.includes('sql')) {
+    flags.push('expected_output only → old SQL grader checked surface keywords only');
+    level = 'WEAK';
+  } else if (!hasTests && hasExpected) {
+    flags.push('expected_output only → vulnerable to echo-trick (mitigated by anti-echo guard)');
+    level = 'SOFT';
   }
 
-  console.log(`\nScanned ${rows.length} active challenges — ${weak} flagged as weak.\n`);
-  console.log('=== FLAGGED (prioritize) ===\n');
-  rows.filter(r => r.gradedBy.includes('UNKNOWN') || r.flags.includes('review-only') || r.flags.includes('structure only') || r.flags.includes('gamed') || r.flags.includes('trivially'))
-    .forEach(r => {
-      console.log(`• [${r.type}/${r.difficulty}] ${r.title}`);
-      console.log(`  course: ${r.course} · reward: ${r.coins} coins`);
-      console.log(`  graded by: ${r.gradedBy}`);
-      console.log(`  flags: ${r.flags}\n`);
-    });
+  if (lang.includes('sql') && !/explain|index|join|group by|where/.test(desc)) {
+    flags.push('SQL challenge with no semantic target in description');
+    level = WEAK_LEVELS[level] >= WEAK_LEVELS.WEAK ? level : 'SOFT';
+  }
 
-  console.log('=== OK / ACCEPTABLE ===\n');
-  rows.filter(r => !(r.gradedBy.includes('UNKNOWN') || r.flags.includes('review-only') || r.flags.includes('structure only') || r.flags.includes('gamed') || r.flags.includes('trivially')))
-    .forEach(r => console.log(`✓ [${r.type}] ${r.title} — ${r.gradedBy}`));
-
-  process.exit(0);
+  return { level, flags };
 }
 
-main().catch(e => { console.error('Audit error:', e.message); process.exit(1); });
+(async () => {
+  try {
+    const { data, error } = await adminClient
+      .from('challenges')
+      .select('id, title, challenge_type, language, difficulty, test_cases, expected_output, description, courses(title)')
+      .eq('is_active', true)
+      .order('course_id')
+      .order('order_index');
+
+    if (error) throw error;
+
+    const counts = { OK: 0, SOFT: 0, WEAK: 0 };
+    const byCourse = {};
+
+    for (const ch of data || []) {
+      const { level, flags } = classify(ch);
+      counts[level]++;
+      if (level !== 'OK') {
+        const course = ch.courses?.title || 'No course';
+        (byCourse[course] = byCourse[course] || []).push({ ch, level, flags });
+      }
+    }
+
+    console.log(`\n=== CHALLENGE GRADING AUDIT — ${data?.length || 0} active challenges ===`);
+    console.log(`OK: ${counts.OK}   SOFT: ${counts.SOFT}   WEAK: ${counts.WEAK}\n`);
+
+    for (const [course, items] of Object.entries(byCourse)) {
+      console.log(`\n── ${course} ──`);
+      for (const { ch, level, flags } of items) {
+        console.log(`  [${level}] #${ch.id} ${ch.title} (${ch.challenge_type || ch.language || '?'})`);
+        for (const f of flags) console.log(`        • ${f}`);
+      }
+    }
+
+    if (counts.WEAK) {
+      console.log(`\n⚠️  ${counts.WEAK} challenges still grade on structure only — add test_cases or semantic checks.`);
+    }
+  } catch (err) {
+    console.error('Audit failed:', err.message);
+    process.exit(1);
+  }
+})();
