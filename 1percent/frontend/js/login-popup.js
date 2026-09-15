@@ -144,8 +144,15 @@
         await persistSession(json.session);
         loggedIn = true;
         status.className = 'lp-status success';
+        // MCP consent return: after connecting Claude, the consent page parks
+        // its URL here — resume the flow instead of a plain reload.
+        let consentReturn = null;
+        try {
+          consentReturn = sessionStorage.getItem('mcpConsentReturn');
+          sessionStorage.removeItem('mcpConsentReturn');
+        } catch {}
         status.textContent = '✓ Logged in! Reloading...';
-        setTimeout(() => location.reload(), 600);
+        setTimeout(() => { location.href = consentReturn || location.href; }, 600);
       } catch (err) {
         status.className = 'lp-status error';
         status.textContent = err.message || 'Login failed. Please try again.';

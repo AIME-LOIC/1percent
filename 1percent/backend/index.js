@@ -63,8 +63,10 @@ const { adminLogRoutes } = require('./routes/logRoutes');
 const sitemapRoutes = require('./routes/sitemapRoutes');
 const mcpRoutes = require('./routes/mcpRoutes');
 const { studentMcpTokenRoutes, studentMcpRpcRoutes } = require('./routes/studentMcpRoutes');
+const mcpOAuthRoutes = require('./routes/mcpOAuthRoutes');
 const testimonialRoutes = require('./routes/testimonialRoutes');
 const { adminTestimonialRoutes } = require('./routes/testimonialRoutes');
+const { mentorRoutes, adminMentorRoutes } = require('./routes/mentorRoutes');
 
 // Middlewares
 const { requestLogger } = require('./middlewares/requestLogger');
@@ -367,12 +369,54 @@ app.use('/api/ratings', ratingRoutes);
 app.use('/api/admin/ratings', adminRatingRoutes);
 app.use('/api/testimonials', testimonialRoutes);
 app.use('/api/admin/testimonials', adminTestimonialRoutes);
+app.use('/api/mentor', mentorRoutes);               // mentor: learner progress + weekly shares
+app.use('/api/admin/mentor', adminMentorRoutes);   // admin: roles, assignments, weekly share
 app.use('/api/logs', logRoutes);
 app.use('/api/admin/logs', adminLogRoutes);
 app.use('/api/docs', docsRoutes);
 app.use('/api/mcp', studentMcpTokenRoutes);
 
+app.get('/.well-known/oauth-protected-resource', (req, res) => {
+  const proto = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+  const host = req.headers['x-forwarded-host'] || req.headers.host || 'learn.1percent.rw';
+  const base = `${proto}://${host}`;
+  res.setHeader('Cache-Control', 'public, max-age=300');
+  res.json({
+    resource: `${base}/mcp/student`,
+    authorization_servers: [base],
+    bearer_methods_supported: ['header'],
+    scopes_supported: ['read', 'grade'],
+    resource_documentation: `${base}/docs`
+  });
+});
+
+app.get('/.well-known/oauth-authorization-server', (req, res) => {
+  const proto = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+  const host = req.headers['x-forwarded-host'] || req.headers.host || 'learn.1percent.rw';
+  const base = `${proto}://${host}`;
+  res.setHeader('Cache-Control', 'public, max-age=300');
+  res.json({
+    issuer: base,
+    authorization_endpoint: `${base}/mcp/oauth/authorize`,
+    token_endpoint: `${base}/mcp/oauth/token`,
+    response_types_supported: ['code'],
+    grant_types_supported: ['authorization_code', 'refresh_token'],
+    code_challenge_methods_supported: ['S256'],
+    token_endpoint_auth_methods_supported: ['client_secret_post', 'none'],
+    scopes_supported: ['read', 'grade']
+  });
+});
+
 // MCP over Streamable HTTP — remote server for claude.ai (token in URL path or Bearer).
+
+// OAuth discovery documents for claude.ai custom connectors (RFC 9728 /
+// OAuth authorization server metadata). Root-level so clients can find them
+// without guessing the protected-resource path.
+
+// MCP OAuth — account-based "Connect to Claude" (authorize + consent + token).
+// Mounted BEFORE the student/admin MCP mounts so /mcp/oauth/* is never
+// treated as a token path.
+app.use('/mcp/oauth', mcpOAuthRoutes);
 
 // Student MCP — "Connect to Claude" for students. Mount BEFORE the /mcp/:token?
 // catch-all so the 'student' path segment is never treated as an admin token.
@@ -425,6 +469,7 @@ const htmlRoutes = {
   '/privacy': 'privacy.html',
   '/contact': 'contact.html',
   '/onboarding': 'onboarding.html',
+  '/mentors': 'mentors.html',
 };
 
 // Learn subdomain routes — same pages, no /learn prefix

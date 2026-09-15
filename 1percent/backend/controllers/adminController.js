@@ -193,7 +193,7 @@ class AdminController {
       const enriched = await Promise.all((data || []).map(async (e) => {
         try {
           const [profileRes, courseRes] = await Promise.all([
-            e.user_id ? adminClient.from('profiles').select('full_name, email').eq('id', e.user_id).single() : null,
+            e.user_id ? adminClient.from('profiles').select('full_name, email, role').eq('id', e.user_id).single() : null,
             e.course_id ? adminClient.from('courses').select('title, slug').eq('id', e.course_id).single() : null
           ]);
           return { ...e, profiles: profileRes?.data || null, courses: courseRes?.data || null };

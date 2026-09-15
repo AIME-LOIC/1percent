@@ -17,6 +17,8 @@ const express = require('express');
 const { adminClient } = require('../config/database');
 const { authenticate } = require('../middlewares/auth');
 const studentMcpService = require('../services/studentMcpService');
+const mcpOAuthService = require('../services/mcpOAuthService');
+const logService = require('../services/logService');
 const { handleStudentRpcMessage, SERVER_INFO } = require('../mcp/studentCore');
 
 const router = express.Router();
@@ -43,8 +45,11 @@ const tokenRouter = express.Router();
  */
 tokenRouter.get('/student/status', authenticate, async (req, res) => {
   try {
-    const status = await studentMcpService.getStatus(req.user.id);
-    res.json({ success: true, status });
+    const [status, oauth] = await Promise.all([
+      studentMcpService.getStatus(req.user.id),
+      mcpOAuthService.getStatus(req.user.id).catch(() => ({ connected: false }))
+    ]);
+    res.json({ success: true, status: { ...status, oauth } });
   } catch (err) {
     console.error('[STUDENT-MCP] Status error:', err.message);
     res.status(500).json({ error: 'Failed to load connection status.' });
@@ -115,19 +120,54 @@ function resolveStudentToken(req) {
 async function requireStudentToken(req, res, next) {
   const token = resolveStudentToken(req);
   if (!token) {
+    // Point OAuth-capable clients (claude.ai) at the authorization metadata.
+    res.setHeader('WWW-Authenticate', 'Bearer realm="mcp", resource_metadata="/.well-known/oauth-protected-resource"');
     return res.status(401).json({ error: 'Missing student MCP token' });
   }
   try {
+    // OAuth (account-based "Connect to Claude") — Bearer tokens whose
+    // value does NOT carry the legacy key prefix are OAuth access tokens.
+    if (!token.startsWith('sk-mcp-')) {
+      const auth = await mcpOAuthService.verifyAccessToken(token);
+      if (auth) {
+        req.mcpUserId = auth.userId;
+        req.mcpScope = auth.scope;       // e.g. ['read'] or ['read','grade']
+        req.mcpAuthKind = 'oauth';
+        req.mcpAuthToken = token;        // for last_used stamping
+        return next();
+      }
+      return res.status(401).json({ error: 'Invalid or revoked MCP access token' });
+    }
+
+    // Legacy per-user paste tokens (sk-mcp-…) — full student scope.
     const userId = await studentMcpService.verifyToken(token);
     if (!userId) {
       return res.status(401).json({ error: 'Invalid or revoked student MCP token' });
     }
     req.mcpUserId = userId;
+    req.mcpScope = ['read', 'grade'];    // legacy tokens keep the old capabilities
+    req.mcpAuthKind = 'paste-token';
     next();
   } catch (err) {
     console.error('[STUDENT-MCP] Verify error:', err.message);
     res.status(500).json({ error: 'Token verification failed.' });
   }
+}
+
+/** Tool invocation audit trail (fire-and-forget). */
+function logToolUse(req, toolName) {
+  logService.logEvent({
+    level: 'info',
+    event: 'mcp_tool_invoked',
+    message: `MCP tool '${toolName}' called`,
+    userId: req.mcpUserId || null,
+    metadata: {
+      tool: toolName,
+      server: 'student',
+      auth_kind: req.mcpAuthKind || 'unknown',
+      scope: Array.isArray(req.mcpScope) ? req.mcpScope.join(' ') : null
+    }
+  }).catch(() => {});
 }
 
 /* GET → 405 (stateless mode, no SSE stream) */
@@ -154,6 +194,24 @@ rpcRouter.post('/', requireStudentToken, async (req, res) => {
         });
         continue;
       }
+
+      // Per-tool scope gate: the grader dry-run needs the 'grade' scope,
+      // which a user may not have approved on the consent page.
+      if (msg.method === 'tools/call') {
+        const toolName = msg.params?.name;
+        if (toolName === 'check_my_code' && !(req.mcpScope || []).includes('grade')) {
+          responses.push({
+            jsonrpc: '2.0', id: msg.id ?? null,
+            error: {
+              code: -32003,
+              message: "This Claude connection was approved without the 'grade' scope. Reconnect from Settings → Connect to Claude to enable code checking."
+            }
+          });
+          continue;
+        }
+        if (toolName) logToolUse(req, toolName);
+      }
+
       const result = await handleStudentRpcMessage(msg, req.mcpUserId);
       if (!result.notification) responses.push(result.response);
     }
@@ -164,7 +222,11 @@ rpcRouter.post('/', requireStudentToken, async (req, res) => {
     res.json(responses.length === 1 ? responses[0] : responses);
 
     // Fire-and-forget usage stamp (after the response is on the wire)
-    studentMcpService.touchLastUsed(req.mcpUserId).catch(() => {});
+    if (req.mcpAuthKind === 'oauth') {
+      mcpOAuthService.touchLastUsed(req.mcpAuthToken).catch(() => {});
+    } else {
+      studentMcpService.touchLastUsed(req.mcpUserId).catch(() => {});
+    }
   } catch (err) {
     console.error('[STUDENT-MCP] RPC error:', err.message);
     res.status(500).json({ error: 'MCP request failed.' });

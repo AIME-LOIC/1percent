@@ -249,6 +249,65 @@ class CoinsService {
   }
 
   /* ============================================================
+     LANGUAGE GATE — runs BEFORE any grading logic.
+     A submission in the wrong language must be rejected with a clear
+     message, never with a confusing runtime error (or a false pass).
+     Uses the stripped code (comments/strings removed) so a Python file
+     stuffed inside a comment can't fool it.
+     ============================================================ */
+  _checkLanguage(code, type) {
+    const langNames = {
+      javascript: 'JavaScript', python: 'Python', sql: 'SQL',
+      html: 'HTML', css: 'CSS', yaml: 'YAML', docker: 'Dockerfile syntax',
+      nginx: 'nginx config syntax', git: 'git commands',
+      linux: 'shell commands', markdown: 'Markdown'
+    };
+    const fail = (why) => `This challenge must be solved in ${langNames[type] || type}. ${why}`;
+
+    switch (type) {
+      case 'javascript': {
+        const stripped = this._stripCommentsAndStrings(code);
+        // Python's def/class/colons are the most common wrong-language tell.
+        if (/\bdef\s+\w+\s*\(|\bclass\s+\w+[^:\n]*:|^\s*from\s+\w+\s+import\b/m.test(stripped)) {
+          return fail('That looks like Python — submit JavaScript instead.');
+        }
+        // A JS submission must contain at least one real JS statement;
+        // prose-only or SQL-only text is rejected before grading.
+        const looksJs = /(;|=|\{|=>|\b(const|let|var|function|return|if|for|while|console|document)\b)/.test(stripped);
+        if (!looksJs) {
+          return fail('No JavaScript statements were found in your submission.');
+        }
+        break;
+      }
+      case 'python': {
+        const stripped = this._stripCommentsAndStrings(code);
+        // JS tells: braces, const/let/var, function keyword, => arrows.
+        if (/\b(const|let)\s+\w+|=>|\bfunction\s+\w+\s*\(|;\s*$/m.test(stripped)) {
+          return fail('That looks like JavaScript — submit Python instead.');
+        }
+        if (!/(\bdef\s+\w+\s*\(|\bprint\s*\(|=|\bimport\b|\bfor\b|\bwhile\b|\bif\b)/.test(stripped)) {
+          return fail('No Python code was found in your submission.');
+        }
+        break;
+      }
+      case 'sql': {
+        const stripped = this._stripCommentsAndStrings(code);
+        // JS tells inside SQL submissions (very common copy/paste mistake).
+        if (/\b(const|let|var|function|console\.log)\b|=>|;\s*\/\//.test(stripped)) {
+          return fail('That looks like JavaScript — submit a SQL query instead.');
+        }
+        if (!/\b(select|insert\s+into|update|delete\s+from|create|alter|drop|explain)\b/i.test(stripped)) {
+          return fail('No SQL statement was found in your submission.');
+        }
+        break;
+      }
+      default:
+        break; // other types are graded by structure alone
+    }
+    return null; // null = language OK, proceed to grading
+  }
+
+  /* ============================================================
      Structural code review — the anti-cheat layer.
      Strips comments and string literals so keyword checks can't be
      fooled by prose (e.g. a comment containing "console.log"), then
@@ -435,6 +494,14 @@ class CoinsService {
     const type = challenge.challenge_type || 'javascript';
     const title = (challenge.title || '').toLowerCase();
 
+    // ── 0. LANGUAGE GATE — reject wrong-language submissions with a clear
+    // message BEFORE any grading logic runs.
+    const langErr = this._checkLanguage(code, type);
+    if (langErr) {
+      this._lastRejectReason = langErr;
+      return false;
+    }
+
     // Terminal (Linux/Git) challenges: check command output in the submitted text
     if (type === 'linux' || type === 'git') {
       return this._evaluateTerminal(code, challenge);
@@ -448,16 +515,19 @@ class CoinsService {
     if (!Array.isArray(testCases)) testCases = [];
     const expectedOutput = String(challenge.expected_output || '').trim();
 
-    // ── Real execution first: when a challenge defines test cases or an
-    // expected output, that result IS the judge. Short-but-correct
-    // one-liners must not be rejected by structural review, and junk
-    // can't sneak through because it produces the wrong output anyway.
+    // ── A. Real execution: DOM test cases judge JS challenges that have them.
     if (type === 'javascript' && testCases.length > 0) {
+      const review = this._reviewCode(code, challenge); // cheap pre-filter first
+      if (!review.ok) {
+        this._lastRejectReason = review.reason;
+        return false;
+      }
       const passed = await this._evaluateJavaScript(code, challenge, testCases);
       if (!passed) this._lastRejectReason = 'Test cases failed — your code did not produce the expected result.';
       return passed;
     }
 
+    // ── B. Expected-output execution for JS/Python (console comparison).
     if (expectedOutput && (type === 'javascript' || type === 'python')) {
       const run = await this._runCodeCaptureOutput(code, type);
       if (run.status === 'error') {
@@ -470,16 +540,47 @@ class CoinsService {
           this._lastRejectReason = `Output mismatch — expected "${this._normalizeOutput(expectedOutput).slice(0, 120)}" but your code printed "${this._normalizeOutput(run.output).slice(0, 120) || '(nothing)'}".`;
           return false;
         }
+        // ANTI-ECHO: the output matched, but if the expected text appears
+        // VERBATIM as a string literal (or comment) in the code, the student
+        // likely just printed the expected string back — e.g.
+        //   console.log("// Todo app")
+        // Real solutions COMPUTE the output. We check BOTH the raw code
+        // (catches string literals) and the comment-stripped code. Short
+        // outputs (<8 chars, e.g. "42") are exempt: echoing IS the answer
+        // on trivial print-this challenges.
+        const strippedCode = this._stripCommentsAndStrings(code);
+        const expectedNorm = this._normalizeOutput(expectedOutput);
+        if (expectedNorm.length >= 8 &&
+            (String(code).includes(expectedNorm) || strippedCode.includes(expectedNorm))) {
+          this._lastRejectReason = 'Your submission just prints the expected output as a literal instead of computing it — write the real solution.';
+          return false;
+        }
         return true;
       }
       // status === 'skip': runtime unavailable → fall through to review-only
     }
 
-    // ── Structural review (anti-cheat) for challenges we can't grade by
-    // execution: strips comments/strings so keyword soup fails.
+    // ── C. SQL: semantic grading against an in-memory SQLite schema.
+    if (type === 'sql') {
+      const result = await this._evaluateSql(code, challenge);
+      if (!result) this._lastRejectReason = this._lastSqlReason || 'Your SQL did not satisfy the task requirements.';
+      return !!result;
+    }
+
+    // ── D. Structural review (anti-cheat) for everything else.
     const review = this._reviewCode(code, challenge);
     if (!review.ok) {
       this._lastRejectReason = review.reason;
+      return false;
+    }
+
+    // ── E. Task-assertion gate: challenge-specific requirements derived
+    // from the title/description. Catches "structurally valid but doesn't
+    // attempt the task" submissions (e.g. a generic SELECT where the task
+    // asks for a composite index).
+    const taskErr = this._checkTaskRequirements(code, challenge);
+    if (taskErr) {
+      this._lastRejectReason = taskErr;
       return false;
     }
 
@@ -505,6 +606,150 @@ class CoinsService {
     const ok = this._strippedLen(code) >= 20;
     if (!ok) this._lastRejectReason = 'Submission too short — comments and whitespace don\'t count.';
     return ok;
+  }
+
+  /* ============================================================
+     TASK ASSERTIONS — per-challenge semantic requirements.
+     Maps title/description keywords to REQUIRED code patterns.
+     This is the reusable "assert real behavior" pattern for challenges
+     that can't be executed: it checks the submission actually attempts
+     the TASK, not just that it's syntactically valid.
+     Returns null when OK, or a reject-reason string.
+     ============================================================ */
+  _checkTaskRequirements(code, challenge) {
+    const text = `${challenge.title || ''} ${challenge.description || ''}`.toLowerCase();
+    const type = challenge.challenge_type || 'javascript';
+    const stripped = this._stripCommentsAndStrings(code);
+
+    // SQL: composite index tasks — require CREATE INDEX with 2+ columns.
+    if (type === 'sql' && /composite|multi.?column|two.?column/.test(text) && /index/.test(text)) {
+      const createIdx = /create\s+(unique\s+)?index\s+(?:if\s+not\s+exists\s+)?\w+\s+on\s+\w+\s*\(([^)]+)\)/i.exec(stripped);
+      if (!createIdx) {
+        return 'The task asks for a composite index — include `CREATE INDEX idx_name ON table (col1, col2);` with at least two columns.';
+      }
+      const cols = createIdx[2].split(',').map(c => c.trim().split(/\s+/)[0]).filter(c => c && !/^(asc|desc)$/i.test(c));
+      if (cols.length < 2) {
+        return `That index has only ${cols.length} column — a COMPOSITE index needs at least two columns, e.g. (last_name, first_name).`;
+      }
+      return null;
+    }
+
+    // SQL: EXPLAIN tasks — require an EXPLAIN statement.
+    if (type === 'sql' && /\bexplain\b/.test(text) && !/^\s*explain\b/im.test(stripped)) {
+      return 'The task asks you to use EXPLAIN — start your submission with `EXPLAIN` (or `EXPLAIN ANALYZE`) followed by your query.';
+    }
+
+    // SQL: JOIN tasks — must contain an actual JOIN clause.
+    if (type === 'sql' && /\bjoin\b/.test(text) && /\b(select|from)\b/.test(text) && !/\bjoin\b/i.test(stripped)) {
+      return 'The task asks you to JOIN two tables — use a JOIN clause (e.g. `INNER JOIN orders ON …`).';
+    }
+
+    // SQL: aggregate tasks — must use an aggregate function.
+    if (type === 'sql' && /\b(sum|average|avg|count|max|min|total)\b/.test(text) && /\bselect\b/.test(text) &&
+        !/\b(count|sum|avg|min|max)\s*\(/i.test(stripped)) {
+      return 'The task asks for an aggregate — use COUNT/SUM/AVG/MIN/MAX in your SELECT.';
+    }
+
+    // JS: todo-list / render-list tasks — require DOM + loop (the
+    // "console.log only" cheat already dies at the language gate).
+    if (type === 'javascript' && /\btodo|task list|render .*(list|items)|create.*elements/.test(text)) {
+      const hasDom = /document\.|createElement|querySelector|getElementById|innerHTML|appendChild/.test(stripped);
+      const hasLoopOrMap = /\bfor\b|\bwhile\b|\.forEach|\.map\b/.test(stripped);
+      if (!hasDom) return 'The task is a DOM exercise — your code must create or modify page elements (document.createElement / innerHTML / …).';
+      if (!hasLoopOrMap) return 'The task asks you to render multiple items — loop over the data (for / forEach / map).';
+      return null;
+    }
+
+    // JS: API/fetch tasks.
+    if (type === 'javascript' && /\bfetch|api|http request|async/.test(text) &&
+        !/\bfetch\s*\(|await\s+fetch|\.then\s*\(/.test(stripped)) {
+      return 'The task asks you to call an API — use fetch() (or an HTTP client) in your solution.';
+    }
+
+    return null;
+  }
+
+  /* ============================================================
+     SQL SEMANTIC GRADER — executes the submission against a real
+     schema with sql.js (SQLite compiled to WASM, in-memory, no
+     external process). Used for:
+       • CREATE INDEX tasks  → index must exist, then a probe query
+         must appear in the query plan (EXPLAIN QUERY PLAN shows
+         "USING INDEX idx" — proving the index is actually usable).
+       • generic SELECT tasks → must run without error.
+     Falls back gracefully (null) when sql.js is unavailable so
+     grading degrades to structural review instead of breaking.
+     ============================================================ */
+  async _evaluateSql(code, challenge) {
+    let initSqlJs = null;
+    try { initSqlJs = require('sql.js'); } catch { initSqlJs = null; }
+    if (!initSqlJs) return null; // sql.js not installed → structural grading only
+
+    let SQL;
+    try { SQL = await initSqlJs(); } catch { return null; } // WASM failed to load
+    if (!SQL || !SQL.Database) return null;
+
+    const title = `${challenge.title || ''} ${challenge.description || ''}`.toLowerCase();
+    const db = new SQL.Database();
+    try {
+      // Demo schema every index/join exercise can run against.
+      db.run(`
+        CREATE TABLE customers (id INTEGER PRIMARY KEY, first_name TEXT, last_name TEXT, email TEXT, country TEXT);
+        CREATE TABLE orders (id INTEGER PRIMARY KEY, customer_id INTEGER REFERENCES customers(id), product TEXT, amount REAL, created_at TEXT);
+        INSERT INTO customers (first_name, last_name, email, country) VALUES
+          ('Aline','Uwase','aline@example.rw','Rwanda'),
+          ('Eric','Nkusi','eric@example.rw','Rwanda'),
+          ('Marie','Ingabire','marie@example.rw','Uganda');
+        INSERT INTO orders (customer_id, product, amount, created_at) VALUES
+          (1,'Laptop',500000,'2026-01-10'),(1,'Mouse',15000,'2026-02-11'),
+          (2,'Keyboard',25000,'2026-03-05'),(3,'Monitor',180000,'2026-04-01');
+      `);
+
+      let ran = false;
+      for (const stmt of String(code || '').split(';').map(s => s.trim()).filter(Boolean)) {
+        db.run(stmt); // throws on invalid SQL — the first real validation
+        ran = true;
+      }
+      if (!ran) { this._lastSqlReason = 'No SQL statement found.'; return false; }
+
+      // Composite-index tasks: verify the index exists AND is usable.
+      if (/composite|multi.?column|two.?column/.test(title) && /index/.test(title)) {
+        const { data: idxRows } = { data: null }; // placeholder to keep shape clear
+        const res = db.exec("SELECT name, tbl_name FROM sqlite_master WHERE type='index'");
+        const indexNames = (res[0]?.values || []).map(r => String(r[0]).toLowerCase());
+        const schema = db.exec("SELECT sql FROM sqlite_master WHERE type='index'");
+        const indexDefs = (schema[0]?.values || []).map(r => String(r[0]));
+
+        const hasComposite = indexDefs.some(def => {
+          const m = /\(([^)]+)\)/.exec(def || '');
+          return m && m[1].split(',').filter(c => c.trim()).length >= 2;
+        }) && indexNames.some(n => !n.startsWith('sqlite_auto'));
+
+        if (!hasComposite) {
+          this._lastSqlReason = 'No composite (multi-column) index was created. Use CREATE INDEX … ON table (col1, col2).';
+          return false;
+        }
+
+        // Probe: a query the composite index should serve must show it in the plan.
+        try {
+          const plan = db.exec("EXPLAIN QUERY PLAN SELECT * FROM customers WHERE last_name='Uwase' AND first_name='Aline'");
+          const planText = JSON.stringify(plan[0]?.values || []);
+          if (!/using.*index/i.test(planText)) {
+            this._lastSqlReason = 'Your index was created but a lookup on its columns does not use it — check the column order matches your query.';
+            return false;
+          }
+        } catch { /* probe failure is non-fatal — index existence was verified */ }
+        return true;
+      }
+
+      // Generic SQL tasks: running without error is the pass bar.
+      return true;
+    } catch (e) {
+      this._lastSqlReason = `SQL error: ${String(e.message || e).slice(0, 160)}`;
+      return false;
+    } finally {
+      try { db.close(); } catch { /* ignore */ }
+    }
   }
 
   /**

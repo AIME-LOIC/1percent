@@ -281,6 +281,10 @@ tr.log-fatal:hover td{background:#feeeee !important;}
         <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
         Enrollments
       </a>
+      <a class="sidebar-item" data-panel="mentors" onclick="showPanel('mentors')">
+        <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></span>
+        Mentors
+      </a>
       <a class="sidebar-item" data-panel="notifications" onclick="showPanel('notifications')">
         <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
         Notifications
@@ -428,6 +432,31 @@ tr.log-fatal:hover td{background:#feeeee !important;}
       <div class="card">
         <div class="card-header"><h2>All Enrollments</h2></div>
         <table class="data-table"><thead><tr><th>Student</th><th>Email</th><th>Course</th><th>Enrolled</th><th>Completed</th></tr></thead><tbody id="enrollments-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- Mentors Panel -->
+    <div class="panel" id="panel-mentors">
+      <h1>Mentors</h1>
+      <p class="subtitle">Promote users to mentor on the Enrollments page (click a user's role badge), assign learners, and share the weekly course + activity.</p>
+
+      <div class="card">
+        <div class="card-header"><h2>Weekly Share</h2></div>
+        <div class="card-body">
+          <div class="form-group"><label>Title</label><input id="ws-title" placeholder="Week 3 — focus on loops"></div>
+          <div class="form-row">
+            <div class="form-group"><label>Course (optional)</label><select id="ws-course"><option value="">— none —</option></select></div>
+            <div class="form-group"><label>Recipients</label><select id="ws-recipients"><option value="all">All mentors</option><option value="pick">Pick mentors…</option></select></div>
+          </div>
+          <div class="form-group" id="ws-mentor-pick" style="display:none;"><label>Mentors</label><div id="ws-mentor-list" style="max-height:160px;overflow-y:auto;border:1px solid var(--admin-border);border-radius:6px;padding:8px;"></div></div>
+          <div class="form-group"><label>Message / activity for this week</label><textarea id="ws-message" rows="3" placeholder="What should mentors focus on with their learners this week?"></textarea></div>
+          <button class="btn-admin primary" onclick="sendWeeklyShare()">Share with mentors</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2>Current Mentors</h2><button class="btn-admin outline" onclick="loadMentors()">Refresh</button></div>
+        <table class="data-table"><thead><tr><th>Name</th><th>Email</th><th style="text-align:right;">Assignments</th></tr></thead><tbody id="mentors-tbody"><tr><td colspan="3" class="empty">Loading…</td></tr></tbody></table>
       </div>
     </div>
 
@@ -1257,11 +1286,12 @@ function showPanel(name){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById(`panel-${name}`).classList.add('active');
   document.querySelectorAll('.sidebar-item').forEach(a=>{a.classList.toggle('active',a.dataset.panel===name);});
-  const titles={dashboard:'Dashboard',courses:'Courses',lessons:'Lessons',quizzes:'Quizzes',challenges:'Challenges',aiReviews:'AI Reviews',enrollments:'Enrollments',logs:'Logs & Errors',notifications:'Notifications',testimonials:'Testimonials'};
+  const titles={dashboard:'Dashboard',courses:'Courses',lessons:'Lessons',quizzes:'Quizzes',challenges:'Challenges',aiReviews:'AI Reviews',enrollments:'Enrollments',mentors:'Mentors',logs:'Logs & Errors',notifications:'Notifications',testimonials:'Testimonials'};
   document.getElementById('topbar-section-title').textContent=titles[name]||name;
   if(name==='quizzes')loadQuizzes();
   if(name==='ai-reviews')loadAiReviews();
   if(name==='testimonials')loadTestimonials();
+  if(name==='mentors')loadMentors();
   if(name==='lessons'){const sel=document.getElementById('lesson-course-select');if(sel.options.length>1&&!sel.value){sel.value=sel.options[1].value;}if(sel.value)loadLessons();}
   if(name==='logs')loadLogsPanel();
 }
@@ -1671,15 +1701,103 @@ async function deleteChallenge(id){
   toast('Delete requires admin API endpoint.','error');
 }
 
-// ── Enrollments ────────────────────────────────────
+// ── Enrollments (with role management) ────────────
 function renderEnrollments(enrollments){
-  document.getElementById('enrollments-tbody').innerHTML=enrollments.length?enrollments.map(e=>`<tr>
+  document.getElementById('enrollments-tbody').innerHTML=enrollments.length?enrollments.map(e=>{
+    const role=e.profiles?.role||'student';
+    const roleCls=role==='admin'?'badge-red':role==='mentor'?'badge-purple':'badge-blue';
+    return `<tr>
     <td>${esc(e.profiles?.full_name||'—')}</td>
     <td>${esc(e.profiles?.email||'—')}</td>
+    <td><button class="badge ${roleCls}" style="border:none;cursor:pointer;" title="Click to change role" onclick="cycleUserRole('${e.user_id}','${role}',this)">${esc(role)} ▾</button></td>
     <td>${esc(e.courses?.title||'—')}</td>
     <td>${new Date(e.enrolled_at).toLocaleDateString()}</td>
     <td>${e.completed_at?'<span class="badge badge-green">Completed</span>':'<span class="badge badge-yellow">In Progress</span>'}</td>
-  </tr>`).join(''):'<tr><td colspan="5" class="empty">No enrollments yet.</td></tr>';
+  </tr>`;}).join(''):'<tr><td colspan="6" class="empty">No enrollments yet.</td></tr>';
+}
+
+/* Click a user's role badge → cycle student → mentor → admin (admin-only action).
+   Uses the mentor-program endpoint; the backend refuses self-role-changes. */
+async function cycleUserRole(userId, currentRole, btn){
+  const order=['student','mentor','admin'];
+  const next=order[(order.indexOf(currentRole)+1)%order.length];
+  const confirmed=await Toast.confirm({
+    title:'Change user role',
+    message:`Set this user's role to “${next}”?` + (next==='admin'?' Admins have full panel access.':'') + (next==='mentor'?' Mentors can see their assigned learners\' progress in the Mentors page.':''),
+    confirmText:'Set '+next,
+    confirmClass: next==='admin'?'danger':''
+  });
+  if(!confirmed)return;
+  btn.disabled=true;
+  try{
+    const res=await apiFetch(`/api/admin/mentor/users/${userId}/role`,{method:'PUT',body:JSON.stringify({role:next})});
+    const json=await res.json();
+    if(!res.ok||!json.success)throw new Error(json.error||'Failed');
+    toast(`Role updated to ${next}`);
+    const enr=await apiFetch('/api/admin/enrollments');const j=await enr.json();
+    lastEnrollments=j.enrollments||[];renderEnrollments(lastEnrollments);
+  }catch(e){toast('Failed: '+e.message,'error');btn.disabled=false;}
+}
+
+// ── Mentors panel ─────────────────────────────────
+let mentorPickState=new Set();
+
+async function loadMentors(){
+  try{
+    // Fill course select
+    const csel=document.getElementById('ws-course');
+    if(!csel.options.length)csel.innerHTML='<option value="">— none —</option>'+allCourses.map(c=>`<option value="${c.id}">${esc(c.title)}</option>`).join('');
+
+    const res=await apiFetch('/api/admin/mentor/learners');
+    const json=await res.json();
+    if(!json.success)throw new Error(json.error||'Failed');
+    const mentors=json.mentors||[];
+    const tb=document.getElementById('mentors-tbody');
+    tb.innerHTML=mentors.length?mentors.map(m=>`<tr><td><strong>${esc(m.full_name||'—')}</strong></td><td>${esc(m.email||'')}</td><td style="text-align:right;"><button class="btn-admin outline" onclick="assignLearnerPrompt('${m.id}')">Assign learner</button></td></tr>`).join(''):'<tr><td colspan="3" class="empty">No mentors yet — promote a user on the Enrollments page (click their role badge).</td></tr>';
+
+    // Recipients picker
+    const list=document.getElementById('ws-mentor-list');
+    if(list)list.innerHTML=mentors.length?mentors.map(m=>`<label style="display:flex;align-items:center;gap:8px;padding:4px 2px;font-size:12px;cursor:pointer;"><input type="checkbox" value="${m.id}" onchange="toggleMentorPick('${m.id}',this.checked)" style="accent-color:var(--admin-accent);"> ${esc(m.full_name||m.email)}</label>`).join(''):'<span style="font-size:12px;color:var(--admin-muted);">No mentors yet.</span>';
+  }catch(e){toast('Failed to load mentors: '+e.message,'error');}
+}
+
+function toggleMentorPick(id,checked){checked?mentorPickState.add(id):mentorPickState.delete(id);}
+
+document.getElementById('ws-recipients')?.addEventListener('change',function(){
+  document.getElementById('ws-mentor-pick').style.display=this.value==='pick'?'block':'none';
+});
+
+async function assignLearnerPrompt(mentorId){
+  const learnerEmail=prompt("Learner's email to assign to this mentor:");
+  if(!learnerEmail)return;
+  try{
+    // Find learner by email from enrollments cache, else ask the API
+    const enr=await apiFetch('/api/admin/enrollments');const j=await enr.json();
+    const match=(j.enrollments||[]).find(e=>(e.profiles?.email||'').toLowerCase()===learnerEmail.trim().toLowerCase());
+    if(!match){toast('Learner not found in enrollments — they must have enrolled first.','error');return;}
+    const res=await apiFetch('/api/admin/mentor/assignments',{method:'POST',body:JSON.stringify({mentor_id:mentorId,learner_id:match.user_id})});
+    const json=await res.json();
+    if(!res.ok||!json.success)throw new Error(json.error||'Failed');
+    toast('Learner assigned');
+  }catch(e){toast('Failed: '+e.message,'error');}
+}
+
+async function sendWeeklyShare(){
+  const title=document.getElementById('ws-title').value.trim();
+  const message=document.getElementById('ws-message').value.trim();
+  const course_id=document.getElementById('ws-course').value;
+  const mode=document.getElementById('ws-recipients').value;
+  if(!title){toast('Title is required','error');return;}
+  const mentor_ids=mode==='pick'?Array.from(mentorPickState):[]; // [] = all mentors
+  if(mode==='pick'&&!mentor_ids.length){toast('Pick at least one mentor','error');return;}
+  try{
+    const res=await apiFetch('/api/admin/mentor/weekly-share',{method:'POST',body:JSON.stringify({title,message,course_id,mentor_ids})});
+    const json=await res.json();
+    if(!res.ok||!json.success)throw new Error(json.error||'Failed');
+    toast(`Shared with ${json.recipients} mentor${json.recipients===1?'':'s'}!`);
+    document.getElementById('ws-title').value='';document.getElementById('ws-message').value='';
+    mentorPickState.clear();loadMentors();
+  }catch(e){toast('Failed: '+e.message,'error');}
 }
 
 // ── Logout ─────────────────────────────────────────

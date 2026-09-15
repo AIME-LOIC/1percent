@@ -469,27 +469,29 @@
           </div>
           <div class="settings-field" style="border-bottom:none;">
             <div>
-              <div class="settings-field-label">Connection Token</div>
-              <div class="settings-field-desc" id="mcp-token-meta"></div>
+              <div class="settings-field-label">Connection</div>
+              <div class="settings-field-desc" id="mcp-token-meta">Approve with your account — no tokens to copy. Claude gets scoped read access; you can disconnect anytime.</div>
             </div>
             <div class="settings-field-action" style="display:flex;gap:8px;">
-              <button class="settings-btn primary" id="mcp-generate-btn">Generate Token</button>
-              <button class="settings-btn danger" id="mcp-revoke-btn" style="display:none;">Revoke</button>
+              <button class="settings-btn primary" id="mcp-oauth-btn">Connect to Claude</button>
+              <button class="settings-btn danger" id="mcp-revoke-btn" style="display:none;">Disconnect</button>
             </div>
           </div>
         </div>
 
-        <div class="settings-section" id="mcp-token-result" style="display:none;">
+        <div class="settings-section" id="mcp-oauth-manual" style="display:none;">
           <div class="settings-section-header">
-            <h2>⚠️ Copy your token now</h2>
-            <p>For security it is shown <strong>only this once</strong> — we store just a hash of it.</p>
+            <h2>Manual setup (if the button didn't open claude.ai)</h2>
+            <p>Custom connector flow — still no secret keys needed</p>
           </div>
-          <div style="padding:0 24px 8px;">
-            <div class="mcp-token-box">
-              <code id="mcp-token-value"></code>
-              <button class="mcp-copy-btn" id="mcp-copy-token" type="button">Copy</button>
-            </div>
-            <div class="mcp-warning">Anyone with this token can read your learning data. Treat it like a password.</div>
+          <div class="mcp-steps">
+            <ol>
+              <li>Go to <strong>claude.ai → Settings → Connectors → Add custom connector</strong>.</li>
+              <li>Name it <code>1% Learn</code> and paste this URL:
+                <div class="mcp-token-box mcp-url" style="margin-top:6px;"><code id="mcp-connector-url">https://learn.1percent.rw/mcp/student</code><button class="mcp-copy-btn" id="mcp-copy-url" type="button">Copy</button></div>
+              </li>
+              <li>Click <strong>Add connector</strong> — Claude will send you here to sign in and approve access.</li>
+            </ol>
           </div>
         </div>
 
@@ -500,12 +502,10 @@
           </div>
           <div class="mcp-steps">
             <ol>
-              <li>Click <strong>Generate Token</strong> above and copy the token.</li>
-              <li>Go to <strong>claude.ai → Settings → Connectors → Add custom connector</strong>.</li>
-              <li>Name it <code>1% Learn</code> and paste this URL:
-                <div class="mcp-token-box mcp-url" style="margin-top:6px;"><code id="mcp-connector-url">Generate a token to fill in your URL</code><button class="mcp-copy-btn" id="mcp-copy-url" type="button">Copy</button></div>
-              </li>
-              <li>Click <strong>Add connector</strong>, then open any chat → tools menu → pick <strong>1% Learn</strong> and ask things like <em>"What should I work on next?"</em> or <em>"Why does my code fail the grader?"</em></li>
+              <li>Click <strong>Connect to Claude</strong> above — it opens claude.ai and asks you to approve access with your 1% Learn account. No keys to copy.</li>
+              <li>On claude.ai, click <strong>Connect</strong> / <strong>Allow</strong> when prompted.</li>
+              <li>Open any Claude chat → tools menu → pick <strong>1% Learn</strong> and ask things like <em>"What should I work on next?"</em> or <em>"Why does my code fail the grader?"</em></li>
+              <li>To revoke, click <strong>Disconnect</strong> here — Claude immediately loses access.</li>
             </ol>
           </div>
         </div>
@@ -873,6 +873,11 @@ document.getElementById('testimonial-quote')?.addEventListener('input', (e) => {
 // ── Init ─────────────────────────────────────────────
 async function initSettings() {
   try {
+    // Return landing from the OAuth consent page (no-redirect_uri connect)
+    if (new URLSearchParams(location.search).get('claude') === 'connected') {
+      try { history.replaceState(null, '', '/settings'); } catch {}
+      setTimeout(() => Toast.success('Claude connected — open any Claude chat and pick 1% Learn.'), 400);
+    }
     const res = await fetch('/api/config');
     const config = await res.json();
     if (config.supabaseUrl && config.supabaseAnonKey) {
@@ -1128,23 +1133,51 @@ function renderMcpStatus(status) {
   const text = document.getElementById('mcp-status-text');
   const meta = document.getElementById('mcp-token-meta');
   const revokeBtn = document.getElementById('mcp-revoke-btn');
-  const genBtn = document.getElementById('mcp-generate-btn');
+  const connectBtn = document.getElementById('mcp-oauth-btn');
+  const oauth = status.oauth || {};
 
-  if (status.connected) {
+  if (status.connected || oauth.connected) {
     pill.className = 'mcp-status-pill connected';
     text.textContent = 'Connected';
-    const lastUsed = status.last_used_at ? new Date(status.last_used_at).toLocaleDateString() : 'never';
-    meta.textContent = `Token ${status.token_prefix}… · created ${new Date(status.created_at).toLocaleDateString()} · last used ${lastUsed}`;
+    const lastUsed = (oauth.last_used_at || status.last_used_at)
+      ? new Date(oauth.last_used_at || status.last_used_at).toLocaleDateString() : 'never';
+    const since = (oauth.created_at || status.created_at)
+      ? new Date(oauth.created_at || status.created_at).toLocaleDateString() : '';
+    const kind = oauth.connected ? 'Account connection' : `Token ${status.token_prefix}…`;
+    meta.textContent = `${kind} · connected ${since} · last used ${lastUsed}`;
     revokeBtn.style.display = '';
-    genBtn.textContent = 'Regenerate Token';
+    revokeBtn.textContent = oauth.connected ? 'Disconnect' : 'Revoke';
+    connectBtn.style.display = 'none';
   } else {
     pill.className = 'mcp-status-pill disconnected';
-    text.textContent = status.revoked ? 'Revoked' : 'Not connected';
-    meta.textContent = status.revoked ? 'Your previous token was revoked — generate a new one to reconnect.' : '';
+    text.textContent = (status.revoked || oauth.connected === false) ? 'Not connected' : 'Not connected';
+    meta.textContent = 'Approve with your account — no tokens to copy. Claude gets scoped read access; you can disconnect anytime.';
     revokeBtn.style.display = 'none';
-    genBtn.textContent = 'Generate Token';
+    connectBtn.style.display = '';
   }
 }
+
+/* ── Account-based connect: PKCE starts HERE so the consent page already
+   has a code_challenge; if the visitor isn't logged in, the consent page
+   stores mcpConsentReturn and the login popup returns them automatically. */
+document.getElementById('mcp-oauth-btn')?.addEventListener('click', async () => {
+  const b64url = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const verifierBytes = crypto.getRandomValues(new Uint8Array(32));
+  const verifier = b64url(verifierBytes);
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
+  const challenge = b64url(digest);
+  sessionStorage.setItem('mcp_pkce_verifier', verifier);
+
+  const params = new URLSearchParams({
+    client_id: 'claude-ai-connector',
+    response_type: 'code',
+    scope: 'read grade',
+    code_challenge: challenge,
+    code_challenge_method: 'S256'
+  });
+  window.location.href = '/mcp/oauth/authorize?' + params.toString();
+});
 
 document.getElementById('mcp-generate-btn')?.addEventListener('click', async () => {
   const btn = document.getElementById('mcp-generate-btn');
@@ -1193,18 +1226,20 @@ bindCopy('mcp-copy-url', () => mcpConnectorUrl);
 
 document.getElementById('mcp-revoke-btn')?.addEventListener('click', async () => {
   const confirmed = await Toast.confirm({
-    title: 'Revoke token?',
+    title: 'Disconnect Claude?',
     message: 'Claude will immediately lose access to your learning data.',
-    confirmText: 'Revoke',
+    confirmText: 'Disconnect',
     confirmClass: 'danger'
   });
   if (!confirmed) return;
 
   try {
-    const res = await apiFetch('/api/mcp/student/token', { method: 'DELETE' });
-    const json = await res.json();
-    if (!json.success) throw new Error(json.error || 'Failed');
-    Toast.success('Token revoked');
+    const res = await apiFetch('/mcp/oauth/revoke', { method: 'POST' });
+    if (res.status === 404) {
+      // OAuth not active — fall back to legacy token revoke
+      await apiFetch('/api/mcp/student/token', { method: 'DELETE' });
+    }
+    Toast.success('Disconnected');
     document.getElementById('mcp-token-result').style.display = 'none';
     await loadMcpStatus();
   } catch (e) {

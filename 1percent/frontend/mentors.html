@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mentors — 1percent Rwanda</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/js/error-reporter.js" defer></script>
+<style>
+:root{--bg:#f8f9fa;--card:#fff;--border:#e5e7eb;--text:#111827;--muted:#6b7280;--green:#059669;--blue:#2563eb;--yellow:#d97706;--red:#dc2626;--purple:#7c3aed;--accent:#0d6e3f;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;background:#fff;border-bottom:1px solid var(--border);}
+.topbar-logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px;text-decoration:none;color:var(--text);}
+.topbar-logo .mark{background:var(--accent);color:#fff;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;width:24px;height:24px;border-radius:4px;display:flex;align-items:center;justify-content:center;}
+.topbar-user{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);}
+.topbar-avatar{width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;}
+.main{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}
+.main h1{font-size:24px;font-weight:800;margin-bottom:4px;}
+.main .subtitle{color:var(--muted);font-size:14px;margin-bottom:24px;}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px;}
+.stat-card .stat-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;}
+.stat-card .stat-value{font-size:26px;font-weight:800;}
+.card{background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px;}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:15px 20px;border-bottom:1px solid var(--border);}
+.card-header h2{font-size:15px;font-weight:700;}
+.data-table{width:100%;border-collapse:collapse;}
+.data-table th{text-align:left;padding:10px 16px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);background:#f9fafb;border-bottom:1px solid var(--border);}
+.data-table td{padding:12px 16px;font-size:13px;border-bottom:1px solid #f3f4f6;vertical-align:top;}
+.data-table tr:last-child td{border-bottom:none;}
+.badge{display:inline-block;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;text-transform:uppercase;letter-spacing:.5px;}
+.badge-green{background:#ecfdf5;color:var(--green);}
+.badge-yellow{background:#fffbeb;color:var(--yellow);}
+.badge-blue{background:#eff6ff;color:var(--blue);}
+.badge-purple{background:#f5f3ff;color:var(--purple);}
+.progress{height:8px;background:#e5e7eb;border-radius:100px;overflow:hidden;min-width:120px;}
+.progress > div{height:100%;background:var(--accent);border-radius:100px;transition:width .4s;}
+.pbar-cell{display:flex;align-items:center;gap:10px;}
+.pbar-cell .pct{font-size:12px;font-weight:700;color:var(--muted);min-width:36px;text-align:right;}
+.share{padding:16px 20px;border-bottom:1px solid #f3f4f6;}
+.share:last-child{border-bottom:none;}
+.share h3{font-size:14px;font-weight:700;margin-bottom:4px;}
+.share .meta{font-size:11.5px;color:var(--muted);margin-bottom:8px;}
+.share p{font-size:13px;color:#374151;line-height:1.65;white-space:pre-wrap;}
+.share .course-tag{display:inline-block;margin-bottom:6px;}
+.empty{text-align:center;padding:36px;color:var(--muted);font-size:14px;}
+.auth-loading{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;}
+.auth-loading.hidden{display:none;}
+.auth-loading .spinner{width:36px;height:36px;border:3px solid #e5e7eb;border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:16px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.denied{text-align:center;padding:80px 24px;}
+.denied h1{font-size:24px;margin-bottom:8px;}
+.denied p{color:var(--muted);margin-bottom:24px;}
+.denied a{display:inline-block;padding:10px 24px;border-radius:8px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600;font-size:14px;}
+.toast{position:fixed;top:20px;right:20px;z-index:1000;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.12);}
+.toast.success{background:#ecfdf5;color:var(--green);border:1px solid #a7f3d0;}
+.toast.error{background:#fef2f2;color:var(--red);border:1px solid #fecaca;}
+@media(max-width:700px){.stats-row{grid-template-columns:1fr;}.data-table th,.data-table td{padding:8px 10px;}}
+</style>
+</head>
+<body>
+<div class="auth-loading" id="auth-loading"><div class="spinner"></div><p>Verifying access...</p></div>
+
+<div class="topbar" style="display:none;">
+  <a href="/dashboard" class="topbar-logo"><div class="mark">1%</div> Mentor Hub</a>
+  <div class="topbar-user"><span class="topbar-avatar" id="m-avatar">M</span><span id="m-name">Mentor</span></div>
+</div>
+
+<main class="main" id="main-content" style="display:none;">
+  <h1>Mentor Hub</h1>
+  <p class="subtitle">Your learners' progress and this week's course &amp; activity from the admins.</p>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">My Learners</div><div class="stat-value" id="stat-learners">0</div></div>
+    <div class="stat-card"><div class="stat-label">Avg Course Progress</div><div class="stat-value" id="stat-avg">0%</div></div>
+    <div class="stat-card"><div class="stat-label">Challenges Passed</div><div class="stat-value" id="stat-ch">0</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h2>This Week from Admins</h2><button class="btn-admin outline" onclick="loadShares()" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:12px;font-weight:600;">Refresh</button></div>
+    <div id="shares-list"><div class="empty">Loading…</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h2>Learner Progress</h2></div>
+    <div style="overflow-x:auto;">
+      <table class="data-table">
+        <thead><tr><th>Learner</th><th>Courses &amp; Progress</th><th>Challenges</th><th>Last Active</th></tr></thead>
+        <tbody id="learners-tbody"><tr><td colspan="4" class="empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<div class="denied" id="denied" style="display:none;">
+  <h1>Mentor access required</h1>
+  <p>This page is for mentors. Ask an admin to promote your account on the Enrollments page.</p>
+  <a href="/dashboard">Back to Dashboard</a>
+</div>
+
+<script>
+let supabaseClient=null, token='';
+
+function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function toast(msg,type='success'){const t=document.createElement('div');t.className=`toast ${type}`;t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3200);}
+function timeAgo(s){if(!s)return'—';const d=new Date(s),sec=Math.floor((Date.now()-d)/1000);if(sec<60)return'just now';if(sec<3600)return Math.floor(sec/60)+'m ago';if(sec<86400)return Math.floor(sec/3600)+'h ago';return d.toLocaleDateString();}
+
+async function apiFetch(url,opts={}){
+  const res=await fetch(url,{...opts,headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`,...(opts.headers||{})}});
+  if(res.status===401&&supabaseClient){
+    try{
+      const{data:{session}}=await supabaseClient.auth.getSession();
+      if(session?.access_token&&session.access_token!==token){
+        token=session.access_token;
+        return fetch(url,{...opts,headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`,...(opts.headers||{})}});
+      }
+    }catch{}
+  }
+  return res;
+}
+
+async function init(){
+  try{
+    const cfgRes=await fetch('/api/config');const config=await cfgRes.json();
+    if(config.supabaseUrl&&config.supabaseAnonKey&&typeof supabase!=='undefined'){
+      supabaseClient=supabase.createClient(config.supabaseUrl,config.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
+      const{data:{session}}=await supabaseClient.auth.getSession();
+      if(!session?.access_token){return denied();}
+      token=session.access_token;
+
+      const meRes=await apiFetch('/api/auth/me');
+      if(!meRes.ok)return denied();
+      const me=await meRes.json();
+      const role=me.user?.role;
+      if(!me.success||(role!=='mentor'&&role!=='admin'))return denied();
+
+      const name=me.user.full_name||me.user.email||'Mentor';
+      document.getElementById('m-name').textContent=name;
+      document.getElementById('m-avatar').textContent=name[0].toUpperCase();
+
+      document.getElementById('auth-loading').classList.add('hidden');
+      document.querySelector('.topbar').style.display='';
+      document.getElementById('main-content').style.display='';
+      await Promise.all([loadLearners(),loadShares()]);
+    }else{denied();}
+  }catch(e){console.error('[MENTORS] init error:',e);denied();}
+}
+
+function denied(){
+  document.getElementById('auth-loading').classList.add('hidden');
+  document.getElementById('denied').style.display='';
+}
+
+async function loadLearners(){
+  const tb=document.getElementById('learners-tbody');
+  try{
+    const res=await apiFetch('/api/mentor/learners');
+    const json=await res.json();
+    if(!json.success)throw new Error(json.error||'Failed');
+    const learners=json.learners||[];
+    document.getElementById('stat-learners').textContent=learners.length;
+
+    const allPct=learners.flatMap(l=>(l.courses||[]).map(c=>c.percent));
+    document.getElementById('stat-avg').textContent=(allPct.length?Math.round(allPct.reduce((a,b)=>a+b,0)/allPct.length):0)+'%';
+    document.getElementById('stat-ch').textContent=learners.reduce((a,l)=>a+(l.challenges_passed||0),0);
+
+    if(!learners.length){tb.innerHTML='<tr><td colspan="4" class="empty">No learners assigned yet — an admin assigns learners to you from the Mentors panel.</td></tr>';return;}
+
+    tb.innerHTML=learners.map(l=>{
+      const courses=(l.courses||[]).map(c=>{
+        const badge=c.completed?'<span class="badge badge-green">done</span>':c.percent>=50?'<span class="badge badge-blue">active</span>':'<span class="badge badge-yellow">starting</span>';
+        return `<div style="margin-bottom:6px;"><strong style="font-size:12.5px;">${esc(c.title)}</strong> ${badge}<div class="pbar-cell" style="margin-top:3px;"><div class="progress" style="flex:1;"><div style="width:${c.percent}%"></div></div><span class="pct">${c.percent}%</span></div><div style="font-size:11px;color:var(--muted);margin-top:2px;">${c.lessons_done}/${c.lessons_total} lessons</div></div>`;
+      }).join('')||'<span style="color:var(--muted);font-size:12px;">No enrollments</span>';
+      return `<tr>
+        <td><strong>${esc(l.full_name)}</strong><div style="font-size:11px;color:var(--muted);">${esc(l.email||'')}</div></td>
+        <td style="max-width:260px;">${courses}</td>
+        <td>${l.challenges_passed}/${l.challenges_attempted} passed</td>
+        <td>${timeAgo(l.last_activity)}</td>
+      </tr>`;
+    }).join('');
+  }catch(e){
+    tb.innerHTML='<tr><td colspan="4" class="empty">Could not load learner progress.</td></tr>';
+  }
+}
+
+async function loadShares(){
+  const list=document.getElementById('shares-list');
+  try{
+    const res=await apiFetch('/api/mentor/shares');
+    const json=await res.json();
+    if(!json.success)throw new Error(json.error||'Failed');
+    const shares=json.shares||[];
+    if(!shares.length){list.innerHTML='<div class="empty">No weekly shares yet — admins post the weekly course &amp; activity here.</div>';return;}
+    list.innerHTML=shares.map(s=>`
+      <div class="share">
+        <h3>${esc(s.title)}</h3>
+        <div class="meta">by ${esc(s.shared_by||'Admin')} · ${new Date(s.created_at).toLocaleDateString()}${s.course_title?` · course: <strong>${esc(s.course_title)}</strong>`:''}${s.read_at?'':' <span class="badge badge-blue">new</span>'}</div>
+        ${s.message?`<p>${esc(s.message)}</p>`:''}
+        ${!s.read_at?`<button onclick="markRead('${s.id}')" style="margin-top:10px;padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:#fff;font-size:12px;font-weight:600;cursor:pointer;">Mark read</button>`:''}
+      </div>`).join('');
+  }catch(e){
+    list.innerHTML='<div class="empty">Could not load weekly shares.</div>';
+  }
+}
+
+async function markRead(id){
+  try{await apiFetch(`/api/mentor/shares/${id}/read`,{method:'POST'});loadShares();}catch{}
+}
+
+document.addEventListener('DOMContentLoaded',init);
+if(document.readyState!=='loading')init();
+</script>
+</body>
+</html>
