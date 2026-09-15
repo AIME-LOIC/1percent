@@ -61,11 +61,86 @@ class StreakController {
         currentUserRank = (count || 0) + 1;
       }
 
-      res.json({ success: true, leaderboard: board, currentUserRank, type });
+      // ---- Rank movement (green ▲ / red ▼ vs the last snapshot) ----
+      let movementByUser = new Map();
+      try {
+        movementByUser = await this._withRankMovement(board, type, column, req.user?.id, currentUserRank);
+      } catch (mvErr) {
+        // Movement is cosmetic — never fail the leaderboard over it.
+        console.error('[LEADERBOARD] movement:', mvErr.message);
+      }
+
+      const boardWithMovement = board.map(u => ({
+        ...u,
+        rank_change: movementByUser.get(u.id) ?? null
+      }));
+
+      res.json({ success: true, leaderboard: boardWithMovement, currentUserRank, type });
     } catch (err) {
       console.error('[LEADERBOARD]', err.message);
       res.json({ success: true, leaderboard: [], currentUserRank: null });
     }
+  }
+
+  /**
+   * Persist today's ranks as a snapshot, then compute each user's
+   * movement vs their most recent snapshot from a PREVIOUS day.
+   * rank_change > 0 → climbed (green ▲), < 0 → dropped (red ▼).
+   */
+  async _withRankMovement(board, type, column, currentUserId, currentUserRank) {
+    const today = new Date().toISOString().slice(0, 10);
+    const movement = new Map();
+
+    // 1. Upsert today's snapshot for everyone currently on the board.
+    const rows = board.map(u => ({
+      user_id: u.id,
+      board_type: type,
+      rank: u.rank,
+      score: u[column] || 0,
+      snapshot_date: today
+    }));
+    // Include the current user even when outside the visible top N,
+    // so their arrow works from day two.
+    if (currentUserId && currentUserRank && !rows.some(r => r.user_id === currentUserId)) {
+      const { data: me } = await adminClient.from('profiles').select(column).eq('id', currentUserId).single();
+      rows.push({
+        user_id: currentUserId,
+        board_type: type,
+        rank: currentUserRank,
+        score: me?.[column] || 0,
+        snapshot_date: today
+      });
+    }
+    if (rows.length) {
+      const { error: upErr } = await adminClient
+        .from('leaderboard_rank_snapshots')
+        .upsert(rows, { onConflict: 'user_id,board_type,snapshot_date' });
+      if (upErr) throw upErr;
+    }
+
+    // 2. Latest snapshot per user from a previous day (batched, bounded).
+    const userIds = rows.map(r => r.user_id);
+    if (!userIds.length) return movement;
+    const { data: history, error: hErr } = await adminClient
+      .from('leaderboard_rank_snapshots')
+      .select('user_id, rank, snapshot_date')
+      .eq('board_type', type)
+      .in('user_id', userIds)
+      .lt('snapshot_date', today)
+      .order('snapshot_date', { ascending: false })
+      .limit(1000);
+    if (hErr) throw hErr;
+
+    // Rows come sorted by date desc → the first row seen per user is
+    // their most recent previous-day rank.
+    const seen = new Set();
+    for (const h of history || []) {
+      if (seen.has(h.user_id)) continue;
+      seen.add(h.user_id);
+      const current = rows.find(r => r.user_id === h.user_id);
+      if (current) movement.set(h.user_id, current.rank - h.rank);
+    }
+    return movement;
   }
 
   // Called by a daily cron — deduct coins from users who broke streak

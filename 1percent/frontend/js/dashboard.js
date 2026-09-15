@@ -565,6 +565,17 @@ const Dashboard = {
     if (!list && !mobileList) return;
     let lbType = 'coins';
 
+    // Rank movement vs yesterday: +N = climbed (green ▲), -N = dropped (red ▼)
+    const lbMovement = (change) => {
+      if (typeof change !== 'number' || change === 0) {
+        return { html: '<span class="dash-lb-move flat" title="No change since yesterday">—</span>', cls: 'flat' };
+      }
+      if (change > 0) {
+        return { html: `<span class="dash-lb-move up" title="Up ${change} since yesterday">▲${change}</span>`, cls: 'up' };
+      }
+      return { html: `<span class="dash-lb-move down" title="Down ${Math.abs(change)} since yesterday">▼${Math.abs(change)}</span>`, cls: 'down' };
+    };
+
     const renderList = (target, leaderboard, currentUserRank) => {
       if (!target) return;
       if (!leaderboard || !leaderboard.length) {
@@ -579,10 +590,12 @@ const Dashboard = {
       target.innerHTML = leaderboard.map(u => {
         const initials = (u.name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
         const score = lbType === 'coins' ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><circle cx="12" cy="12" r="8"/><path d="M12 8v8"/><path d="M9.5 10.5c0-1 1-1.5 2.5-1.5s2.5.5 2.5 1.5-1 1.5-2.5 1.5-2.5.5-2.5 1.5 1 1.5 2.5 1.5 2.5-.5 2.5-1.5"/></svg> ${u.coins} coins` : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> ${u.streak}d`;
+        const move = lbMovement(u.rank_change);
         return `<div class="dash-lb-item${u.isCurrentUser ? ' me' : ''}${u.is_premium ? ' is-pro' : ''}">
           <div class="dash-lb-rank ${rankClass(u.rank)}">${rankIcon(u.rank)}</div>
           <div class="dash-lb-avatar">${u.avatar ? `<img src="${u.avatar}" alt="">` : initials}</div>
           <div class="dash-lb-info"><div class="dash-lb-name">${escapeHTML(u.name)}${u.is_premium ? crown : ''}</div><div class="dash-lb-score">${score}</div></div>
+          ${move.html}
           ${u.isCurrentUser ? '<span class="dash-lb-you">YOU</span>' : ''}
         </div>`;
       }).join('');

@@ -376,3 +376,10 @@
   .dash-courses{grid-template-columns:1fr;}
   .dashboard-shell{padding-bottom:80px;}
 }
+
+/* Leaderboard movement arrows (▲ green up / ▼ red down vs yesterday) */
+.dash-lb-move{font-size:10px;font-weight:800;padding:2px 6px;border-radius:100px;flex-shrink:0;line-height:1.4;letter-spacing:.2px;}
+.dash-lb-move.up{color:#059669;background:#ecfdf5;border:1px solid #a7f3d0;}
+.dash-lb-move.down{color:#dc2626;background:#fef2f2;border:1px solid #fecaca;}
+.dash-lb-move.flat{color:#9ca3af;background:#f3f4f6;border:1px solid #e5e7eb;}
+html.theme-premium .dash-lb-move.up{color:#d97706;background:#fffbeb;border-color:#fde68a;}
