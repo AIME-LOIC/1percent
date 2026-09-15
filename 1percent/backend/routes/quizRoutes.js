@@ -4,6 +4,7 @@
    GET  /api/quizzes/course/:courseId          — Get quiz for course (public)
    GET  /api/quizzes/:quizId/questions         — Get questions (auth)
    POST /api/quizzes/:quizId/submit            — Submit answers (auth)
+   GET  /api/quizzes/:quizId/state             — Attempt state + weak areas (auth)
    GET  /api/quizzes/:quizId/attempts          — View attempts (auth)
    POST /api/admin/quizzes                     — Create quiz (admin)
    POST /api/admin/quizzes/:quizId/questions   — Add question (admin)
@@ -21,6 +22,7 @@ const router = Router();
 router.get('/course/:courseId', (req, res, next) => quizController.getByCourse(req, res, next));
 
 // Auth required
+router.get('/:quizId/state', authenticate, (req, res, next) => quizController.getState(req, res, next));
 router.get('/:quizId/questions', authenticate, (req, res, next) => quizController.getQuestions(req, res, next));
 router.post('/:quizId/submit', authenticate, sanitizeStrings(2000), (req, res, next) => quizController.submit(req, res, next));
 router.get('/:quizId/attempts', authenticate, (req, res, next) => quizController.getAttempts(req, res, next));

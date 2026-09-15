@@ -33,20 +33,49 @@ class QuizController {
   }
 
   /**
+   * GET /api/quizzes/:quizId/state
+   * Attempt policy state: attempts remaining, cooldown countdown,
+   * whether the user already passed + weak areas. Powers the UI.
+   */
+  async getState(req, res) {
+    try {
+      const quiz = await quizService.getQuizById(req.params.quizId);
+      const state = await quizService.getAttemptState(req.user.id, quiz);
+      const weak = await quizService.getWeakAreas(req.user.id, req.params.quizId);
+      res.json({ success: true, state, weak_areas: weak });
+    } catch (err) {
+      console.error('[QUIZ] State error:', err.message);
+      res.status(500).json({ error: 'Failed to load quiz state.' });
+    }
+  }
+
+  /**
    * POST /api/quizzes/:quizId/submit
-   * Submit quiz answers (auth required)
+   * Submit quiz answers (auth required). Client reports integrity
+   * telemetry (flags, time spent); the server adds its own heuristics.
    */
   async submit(req, res) {
     try {
-      const { answers } = req.body;
+      const { answers, meta } = req.body;
       if (!answers || typeof answers !== 'object') {
         return res.status(400).json({ error: 'Answers object required.' });
       }
 
-      const result = await quizService.submitAttempt(req.user.id, req.params.quizId, answers);
+      const result = await quizService.submitAttempt(req.user.id, req.params.quizId, answers, {
+        flags: Array.isArray(meta?.flags) ? meta.flags : [],
+        time_spent_sec: Number(meta?.time_spent_sec) || 0,
+        started_at: meta?.started_at || null,
+        time_limit_min: Number(meta?.time_limit_min) || 0
+      });
       res.json({ success: true, result });
     } catch (err) {
       console.error('[QUIZ] Submit error:', err.message);
+      if (err.code === 'cooldown') {
+        return res.status(429).json({ error: err.message, code: 'cooldown', retry_at: err.retry_at, attempts_used: err.attempts_used });
+      }
+      if (err.code === 'already_passed') {
+        return res.status(409).json({ error: err.message, code: 'already_passed' });
+      }
       res.status(500).json({ error: 'Failed to submit quiz.' });
     }
   }
@@ -64,6 +93,8 @@ class QuizController {
       res.status(500).json({ error: 'Failed to load attempts.' });
     }
   }
+
+  /* (state endpoint defined above with submit) */
 
   /**
    * POST /api/admin/quizzes

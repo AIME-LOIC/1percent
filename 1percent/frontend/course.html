@@ -1083,6 +1083,8 @@ function stopStudyTimer(){
 
 let currentQuizData=null;
 
+let quizState=null; // attempt policy state from the server
+
 async function loadQuizInfo(){
   if(!currentUser)return;
   const bottom=document.getElementById('sidebar-bottom');
@@ -1091,25 +1093,53 @@ async function loadQuizInfo(){
     const res=await fetch(`/api/quizzes/course/${courseData.id}`);const json=await res.json();
     if(!json.success||!json.quiz){document.getElementById('take-quiz-btn').disabled=true;document.getElementById('quiz-status').textContent='No quiz available';return;}
     currentQuizData=json.quiz;
-    // Check if user already passed this quiz
+    // Attempt policy + weak areas (server-verified)
     try{
-      const attRes=await apiFetch(`/api/quizzes/${json.quiz.id}/attempts`);
-      const attJson=await attRes.json();
-      if(attJson.success&&attJson.attempts){
-        const passedAttempt=attJson.attempts.find(a=>a.passed);
-        if(passedAttempt){
-          document.getElementById('take-quiz-btn').disabled=true;
-          document.getElementById('take-quiz-btn').textContent='✓ Quiz Passed';
-          document.getElementById('take-quiz-btn').style.background='var(--c-green)';
-          document.getElementById('take-quiz-btn').style.borderColor='var(--c-green)';
-          document.getElementById('quiz-status').textContent=`Passed with ${passedAttempt.percentage}%`;
-          document.getElementById('quiz-status').classList.add('pass');
-          return;
-        }
-      }
+      const stRes=await apiFetch(`/api/quizzes/${json.quiz.id}/state`);
+      const stJson=await stRes.json();
+      if(stJson.success){quizState=stJson.state;renderQuizStatus();return;}
     }catch{}
     document.getElementById('quiz-status').textContent=`${json.quiz.questions_count||0} questions · ${json.quiz.passing_score}% to pass`;
   }catch{document.getElementById('take-quiz-btn').disabled=true;}
+}
+
+function renderQuizStatus(){
+  const btn=document.getElementById('take-quiz-btn');
+  const status=document.getElementById('quiz-status');
+  if(!btn||!status||!quizState)return;
+  btn.classList.remove('pass');
+  if(quizState.passed){
+    btn.disabled=true;btn.textContent='✓ Quiz Passed';
+    btn.style.background='var(--c-green)';btn.style.borderColor='var(--c-green)';
+    status.textContent=`Passed with ${quizState.percentage}%`;
+    status.classList.add('pass');
+    return;
+  }
+  btn.style.background='';btn.style.borderColor='';
+  if(!quizState.allowed&&quizState.reason==='cooldown'){
+    btn.disabled=true;btn.textContent='Quiz Locked';
+    status.textContent=`No attempts left — retry in ${formatCooldown(quizState.seconds_remaining)}`;
+    // Live countdown
+    let secs=quizState.seconds_remaining;
+    clearInterval(window.__quizCooldownTimer);
+    window.__quizCooldownTimer=setInterval(()=>{
+      secs-=60;
+      if(secs<=0){clearInterval(window.__quizCooldownTimer);loadQuizInfo();return;}
+      status.textContent=`No attempts left — retry in ${formatCooldown(secs)}`;
+    },60000);
+    return;
+  }
+  btn.disabled=false;btn.textContent='Take Quiz';
+  const left=quizState.attempts_remaining??3;
+  status.textContent=`${left} attempt${left===1?'':'s'} remaining · ${currentQuizData.passing_score}% to pass`;
+  status.classList.remove('pass');
+}
+
+function formatCooldown(secs){
+  if(!secs||secs<60)return'less than a minute';
+  const h=Math.floor(secs/3600),m=Math.floor((secs%3600)/60);
+  if(h>=24)return`${Math.floor(h/24)}d ${h%24}h`;
+  return h>0?`${h}h ${m}m`:`${m}m`;
 }
 
 async function openQuizModal(){
@@ -1120,34 +1150,100 @@ async function openQuizModal(){
     Toast.warning('Please complete all lessons before taking the quiz. ('+completedIds.size+'/'+totalLessons+' done)');
     return;
   }
+  // Server-verified attempt gate (cooldown/attempts/passed)
+  try{
+    const stRes=await apiFetch(`/api/quizzes/${currentQuizData.id}/state`);
+    const stJson=await stRes.json();
+    if(stJson.success){
+      quizState=stJson.state;
+      if(!quizState.allowed){
+        if(quizState.reason==='cooldown'){Toast.warning('No attempts left — retry in '+formatCooldown(quizState.seconds_remaining));renderQuizStatus();}
+        else if(quizState.reason==='passed'){renderQuizStatus();}
+        return;
+      }
+    }
+  }catch{}
   const qRes=await apiFetch(`/api/quizzes/${currentQuizData.id}/questions`);const qJson=await qRes.json();
   if(!qJson.success||!qJson.questions?.length){Toast.error('No questions available');return;}
+  const questions=qJson.questions;
 
   const overlay=document.createElement('div');
   overlay.className='quiz-modal-overlay';
-  overlay.onclick=e=>{if(e.target===overlay)overlay.remove();};
+  overlay.onclick=e=>{if(e.target===overlay)closeQuizModal();};
+  const limitMin=currentQuizData.time_limit_min;
+  const hasTimer=!!limitMin;
+  startQuizWatch();
   overlay.innerHTML=`
     <div class="quiz-modal">
       <div class="quiz-modal-header">
         <h3>End-of-Course Quiz</h3>
-        <button class="close-btn" onclick="this.closest('.quiz-modal-overlay').remove()">&times;</button>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span id="quiz-timer" style="display:${hasTimer?'inline-flex':'none'};align-items:center;gap:6px;font-size:13px;font-weight:800;background:#fff;border:1px solid var(--c-border);border-radius:100px;padding:6px 12px;font-variant-numeric:tabular-nums;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span id="quiz-timer-text">--:--</span>
+          </span>
+          <button class="close-btn" onclick="closeQuizModal()">&times;</button>
+        </div>
       </div>
       <div class="quiz-modal-body">
-        <p style="font-size:13px;color:var(--c-muted);margin-bottom:20px;">${qJson.questions.length} questions · ${currentQuizData.passing_score}% to pass</p>
+        <p style="font-size:13px;color:var(--c-muted);margin-bottom:20px;">${questions.length} questions · ${currentQuizData.passing_score}% to pass${hasTimer?` · ${limitMin} min limit`:''}${quizState&&quizState.attempts_remaining!=null?` · ${quizState.attempts_remaining} attempt${quizState.attempts_remaining===1?'':'s'} left`:''}</p>
         <div id="quiz-modal-questions"></div>
       </div>
       <div class="quiz-modal-footer">
-        <button class="footer-btn outline" onclick="this.closest('.quiz-modal-overlay').remove()">Cancel</button>
+        <button class="footer-btn outline" onclick="closeQuizModal()">Cancel</button>
         <button class="footer-btn primary" id="submit-quiz-modal" onclick="submitQuizModal('${currentQuizData.id}')">Submit Quiz</button>
+        <span id="quiz-timer-note" style="display:${hasTimer?'block':'none'};font-size:11px;color:var(--c-muted);margin-right:8px;">Quiz auto-submits when time runs out.</span>
       </div>
     </div>`;
   document.body.appendChild(overlay);
 
-  document.getElementById('quiz-modal-questions').innerHTML=qJson.questions.map((q,i)=>`
+  document.getElementById('quiz-modal-questions').innerHTML=questions.map((q,i)=>`
     <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--c-border);" data-qid="${q.id}">
       <p style="font-size:14px;font-weight:600;margin:0 0 10px;">${i+1}. ${escapeHTML(q.question)}</p>
       ${(q.options||[]).map(o=>`<button class="quiz-option" data-qid="${q.id}" data-aid="${o.id}" onclick="selectAnswer('${q.id}','${o.id}')" style="margin-bottom:6px;">${escapeHTML(o.text)}</button>`).join('')}
     </div>`).join('');
+
+  // Countdown timer (from quizzes.time_limit_min — set 10 for a 10-min quiz)
+  if(hasTimer){
+    let remaining=limitMin*60;
+    const tick=()=>{
+      remaining--;
+      const el=document.getElementById('quiz-timer-text');
+      if(!el){clearInterval(window.__quizTimer);return;}
+      const m=Math.floor(remaining/60),s=remaining%60;
+      el.textContent=m+':'+String(s).padStart(2,'0');
+      el.parentElement.style.color=remaining<=60?'var(--c-red)':remaining<=180?'#d97706':'var(--c-text)';
+      if(remaining<=0){clearInterval(window.__quizTimer);Toast.warning('Time is up — submitting your quiz.');submitQuizModal(currentQuizData.id);}
+    };
+    document.getElementById('quiz-timer-text').textContent=limitMin+':00';
+    window.__quizTimer=setInterval(tick,1000);
+  }
+}
+
+/* ── Quiz integrity watchdog ───────────────────────────────
+   Tracks focus loss (tab/window switching) while the quiz modal
+   is open; reported with the submission for server evaluation. */
+let quizWatch={cleanup:null,flags:[],blurCount:0,startedAt:null};
+function startQuizWatch(){
+  if(quizWatch.cleanup)quizWatch.cleanup();
+  quizWatch={cleanup:null,flags:[],blurCount:0,startedAt:Date.now()};
+  const onBlur=()=>{quizWatch.blurCount++;};
+  window.addEventListener('blur',onBlur);
+  quizWatch.cleanup=()=>{window.removeEventListener('blur',onBlur);};
+}
+function stopQuizWatchAndCollect(){
+  if(quizWatch.cleanup)quizWatch.cleanup();
+  const flags=[];
+  if(quizWatch.blurCount>=4)flags.push('tab_switching');
+  else if(quizWatch.blurCount>=1)flags.push('window_blur');
+  const spent=Math.round((Date.now()-quizWatch.startedAt)/1000);
+  return {flags:flags,time_spent_sec:spent,started_at:new Date(quizWatch.startedAt).toISOString()};
+}
+
+function closeQuizModal(){
+  if(quizWatch.cleanup)quizWatch.cleanup();
+  clearInterval(window.__quizTimer);
+  document.querySelector('.quiz-modal-overlay')?.remove();
 }
 
 const selectedAnswers={};
@@ -1158,10 +1254,31 @@ function selectAnswer(qid,aid){
 }
 
 async function submitQuizModal(quizId){
-  const res=await apiFetch(`/api/quizzes/${quizId}/submit`,{method:'POST',body:JSON.stringify({answers:selectedAnswers})});
-  const json=await res.json();if(!json.success)return;
+  const btn=document.getElementById('submit-quiz-modal');
+  if(btn){btn.disabled=true;btn.textContent='Submitting...';}
+  const meta=stopQuizWatchAndCollect();
+  meta.time_limit_min=currentQuizData.time_limit_min||0;
+  const res=await apiFetch(`/api/quizzes/${quizId}/submit`,{method:'POST',body:JSON.stringify({answers:selectedAnswers,meta:meta})});
+  let json;
+  try{json=await res.json();}catch(e){json={};}
+  if(!json.success){
+    if(json.code==='cooldown'){
+      Toast.error(json.error||'No attempts left.');
+      if(json.retry_at)quizState={allowed:false,reason:'cooldown',seconds_remaining:Math.max(0,Math.floor((new Date(json.retry_at)-Date.now())/1000))};
+      renderQuizStatus();closeQuizModal();return;
+    }
+    if(json.code==='already_passed'){renderQuizStatus();closeQuizModal();return;}
+    Toast.error(json.error||'Failed to submit quiz.');
+    if(btn){btn.disabled=false;btn.textContent='Submit Quiz';}
+    return;
+  }
   const r=json.result;
+  quizState={allowed:r.passed,passed:r.passed,percentage:r.percentage,attempts_remaining:r.attempts_remaining};
+  if(!r.passed)quizState.allowed=true;
+  renderQuizStatus();
+
   const modal=document.querySelector('.quiz-modal-body');
+  const weak=(r.weak_areas&&r.weak_areas.lessons)||[];
   if(modal){
     modal.innerHTML=`
       <div style="text-align:center;padding:20px 0;">
@@ -1171,12 +1288,19 @@ async function submitQuizModal(quizId){
         <h3 style="font-size:20px;font-weight:800;margin-bottom:4px;">${r.passed?'Congratulations!':'Not Quite There'}</h3>
         <p style="font-size:14px;color:var(--c-muted);margin-bottom:16px;">${r.passed?'You passed the end-of-course quiz!':'Keep studying and try again.'}</p>
         <div style="font-size:28px;font-weight:800;color:${r.passed?'var(--c-green)':'var(--c-red)'};margin-bottom:4px;">${r.percentage}%</div>
-        <p style="font-size:13px;color:var(--c-muted);">${r.score}/${r.max_score} correct</p>
-        ${r.passed?'<p style="font-size:13px;color:var(--c-green);margin-top:12px;font-weight:600;">Your certificate is ready!</p>':''}
-      </div>`;
-    document.querySelector('.quiz-modal-footer').innerHTML=`
-      <button class="footer-btn outline" onclick="this.closest('.quiz-modal-overlay').remove()">Close</button>
-      ${r.passed?'<button class="footer-btn primary" onclick="this.closest(\'.quiz-modal-overlay\').remove();checkCertificate();">View Certificate</button>':''}`;
+        <p style="font-size:13px;color:var(--c-muted);">${r.score}/${r.max_score} correct${r.flagged?' · <span style="color:var(--c-red);font-weight:700;">reviewed for integrity</span>':''}</p>
+        ${r.attempts_remaining!=null?'<p style="font-size:12px;color:var(--c-muted);margin-top:6px;">'+r.attempts_remaining+' attempt'+(r.attempts_remaining===1?'':'s')+' remaining</p>':''}
+      </div>
+      ${weak.length?`
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:14px 16px;margin-top:6px;">
+        <p style="font-size:13px;font-weight:700;margin:0 0 8px;">📚 Revisit these lessons before retrying:</p>
+        ${weak.map(l=>`<button class="footer-btn outline" style="display:block;width:100%;margin-bottom:6px;text-align:left;" onclick="reopenLessonFromQuiz('${l.id}')">${escapeHTML(l.title)}</button>`).join('')}
+        <p style="font-size:11px;color:var(--c-muted);margin:6px 0 0;">Quiz retries unlock 24h after your last attempt${r.retry_at?' ('+new Date(r.retry_at).toLocaleString()+')':''}.</p>
+      </div>`:''}
+    `;
+    document.querySelector('.quiz-modal-footer').innerHTML=`<button class="footer-btn outline" onclick="closeQuizModal()">Close</button>`+
+      (r.passed?`<button class="footer-btn primary" onclick="closeQuizModal();checkCertificate();">View Certificate</button>`
+               :`<button class="footer-btn primary" onclick="closeQuizModal();reopenLessonFromQuiz(null)">Review Lessons</button>`);
   }
   if(r.passed){
     await checkCertificate();
@@ -1185,26 +1309,13 @@ async function submitQuizModal(quizId){
   }
 }
 
-async function checkExistingCertificate(){
-  const res=await apiFetch('/api/certificates/mine');const json=await res.json();
-  if(json.success&&json.certificates){
-    const cert=json.certificates.find(c=>c.courses?.slug===slug);
-    if(cert)renderCertificate(cert);
-  }
-}
-
-function renderCertificate(cert){
-  const date=cert.completed_at?new Date(cert.completed_at).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}):cert.issued_at?new Date(cert.issued_at).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}):'';
-  document.getElementById('cert-section').innerHTML=`
-    <a href="/certificate?number=${cert.certificate_number}" class="sidebar-cert-btn">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15v2m-6 4h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2zm10-10V7a4 4 0 0 0-8 0v4h8z"/></svg>
-      View Certificate
-    </a>
-    <div style="text-align:center;margin-top:6px;">
-      <button class="footer-btn outline" onclick="downloadCertPdf('${courseData.id}')" style="font-size:11px;padding:4px 10px;">Download PDF</button>
-    </div>`;
-  const statusEl=document.getElementById('quiz-status');
-  if(statusEl){statusEl.textContent='Completed';statusEl.classList.add('pass');}
+/* Reopen the lesson teaching a failed question (or first uncompleted).
+   Called from the result screen's lesson buttons. */
+function reopenLessonFromQuiz(lessonId){
+  closeQuizModal();
+  const lessons=courseData.lessons||[];
+  const target=lessonId?lessons.find(l=>l.id===lessonId):(lessons.find(l=>!completedIds.has(l.id))||lessons[0]);
+  if(target&&typeof openLesson==='function'){openLesson(target.id);}
 }
 
 async function checkCertificate(){
