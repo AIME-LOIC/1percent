@@ -252,7 +252,17 @@
           })
         });
         const json = await res.json();
-        if (!res.ok || !json.success) throw new Error(json.error || 'Signup failed');
+        if (!res.ok || !json.success) {
+          // Account already exists → jump to login with the email prefilled.
+          if (json.code === 'email_exists') {
+            status.className = 'lp-status error';
+            status.textContent = json.error || 'An account with this email already exists.';
+            el('lp-login-email').value = el('lp-signup-email').value.trim();
+            setTimeout(() => switchForm('login'), 1200);
+            return;
+          }
+          throw new Error(json.error || 'Signup failed');
+        }
 
         // Confirmation required — park the email in the login form and
         // offer the resend link for when the mail doesn't arrive.

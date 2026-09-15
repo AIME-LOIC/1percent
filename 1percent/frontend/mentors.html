@@ -10,12 +10,21 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/js/icons.js"></script>
+<script src="/js/session.js" defer></script>
+<script src="/js/nav.js" defer></script>
+<script src="/js/toast.js"></script>
 <script src="/js/error-reporter.js" defer></script>
 <style>
 :root{--bg:#f8f9fa;--card:#fff;--border:#e5e7eb;--text:#111827;--muted:#6b7280;--green:#059669;--blue:#2563eb;--yellow:#d97706;--red:#dc2626;--purple:#7c3aed;--accent:#0d6e3f;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);}
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;background:#fff;border-bottom:1px solid var(--border);}
+.topbar .nav-shell{display:flex;align-items:center;gap:18px;flex:1;justify-content:flex-end;}
+.topbar #main-nav{display:flex;align-items:center;gap:14px;}
+.topbar #main-nav a{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:8px;}
+.topbar #main-nav a:hover{color:var(--text);background:#f3f4f6;}
+.topbar #main-nav a.active{color:var(--accent);background:#f0fdf4;}
 .topbar-logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px;text-decoration:none;color:var(--text);}
 .topbar-logo .mark{background:var(--accent);color:#fff;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;width:24px;height:24px;border-radius:4px;display:flex;align-items:center;justify-content:center;}
 .topbar-user{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);}
@@ -58,6 +67,18 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--bg);co
 .denied h1{font-size:24px;margin-bottom:8px;}
 .denied p{color:var(--muted);margin-bottom:24px;}
 .denied a{display:inline-block;padding:10px 24px;border-radius:8px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600;font-size:14px;}
+/* User menu (nav.js injects .user-menu into #main-nav; mentors page ships its own styles) */
+.user-menu{position:relative;}
+.user-menu-trigger{display:flex;align-items:center;background:none;border:none;cursor:pointer;padding:2px;}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;}
+.user-menu-dropdown{display:none;position:absolute;right:0;top:calc(100% + 8px);background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 16px 40px rgba(15,23,42,.14);min-width:200px;padding:8px;z-index:500;}
+.user-menu-dropdown.open{display:block;}
+.user-menu-info{display:flex;flex-direction:column;padding:8px 10px 10px;border-bottom:1px solid #f3f4f6;margin-bottom:6px;}
+.user-menu-info b{font-size:13px;color:var(--text);}
+.user-menu-info span{font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;}
+.user-menu-dropdown a,.user-menu-dropdown button{display:block;width:100%;text-align:left;padding:9px 10px;font-size:13px;font-weight:600;color:#374151;text-decoration:none;background:none;border:none;border-radius:8px;cursor:pointer;font-family:inherit;}
+.user-menu-dropdown a:hover,.user-menu-dropdown button:hover{background:#f3f4f6;color:var(--text);}
+.user-menu-dropdown button{color:var(--red);}
 .toast{position:fixed;top:20px;right:20px;z-index:1000;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.12);}
 .toast.success{background:#ecfdf5;color:var(--green);border:1px solid #a7f3d0;}
 .toast.error{background:#fef2f2;color:var(--red);border:1px solid #fecaca;}
@@ -67,9 +88,11 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--bg);co
 <body>
 <div class="auth-loading" id="auth-loading"><div class="spinner"></div><p>Verifying access...</p></div>
 
-<div class="topbar" style="display:none;">
+<div class="topbar">
   <a href="/dashboard" class="topbar-logo"><div class="mark">1%</div> Mentor Hub</a>
-  <div class="topbar-user"><span class="topbar-avatar" id="m-avatar">M</span><span id="m-name">Mentor</span></div>
+  <div class="nav-shell">
+    <nav id="main-nav" aria-label="Primary"></nav>
+  </div>
 </div>
 
 <main class="main" id="main-content" style="display:none;">
@@ -140,12 +163,13 @@ async function init(){
       const role=me.user?.role;
       if(!me.success||(role!=='mentor'&&role!=='admin'))return denied();
 
-      const name=me.user.full_name||me.user.email||'Mentor';
-      document.getElementById('m-name').textContent=name;
-      document.getElementById('m-avatar').textContent=name[0].toUpperCase();
+      // Nav.js renders the user menu (name, avatar, settings, logout);
+      // seed the shared session so it renders the same user.
+      if (window.OPSession) {
+        try { await window.OPSession.getUser(); } catch {}
+      }
 
       document.getElementById('auth-loading').classList.add('hidden');
-      document.querySelector('.topbar').style.display='';
       document.getElementById('main-content').style.display='';
       await Promise.all([loadLearners(),loadShares()]);
     }else{denied();}
@@ -155,6 +179,7 @@ async function init(){
 function denied(){
   document.getElementById('auth-loading').classList.add('hidden');
   document.getElementById('denied').style.display='';
+  // Keep the topbar nav visible (guests get the login button there).
 }
 
 async function loadLearners(){

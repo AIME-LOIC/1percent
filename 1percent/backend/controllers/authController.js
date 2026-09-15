@@ -10,8 +10,9 @@ class AuthController {
   /**
    * POST /api/auth/signup
    * Creates the account and sends the confirmation email. The user MUST
-   * click that link before logging in — the session object is intentionally
-   * NOT returned here.
+   * click that link before logging in — no session is returned (unless
+   * the project has "Confirm email" disabled, in which case Supabase
+   * hands back a session and we pass it through).
    */
   async signup(req, res) {
     try {
@@ -32,6 +33,17 @@ class AuthController {
         policy_version: '1.0'
       }, this._redirectBase(req));
 
+      // Project has "Confirm email" disabled → Supabase returned a live
+      // session. Log the user straight in instead of asking for a link.
+      if (result.session) {
+        return res.status(201).json({
+          success: true,
+          message: 'Account created! Logging you in...',
+          user: result.user,
+          session: result.session
+        });
+      }
+
       res.status(201).json({
         success: true,
         message: 'Account created! Check your inbox — confirm your email, then log in.',
@@ -41,8 +53,14 @@ class AuthController {
     } catch (err) {
       console.error('[AUTH] Signup error:', err.message);
 
+      if (err.code === 'email_exists') {
+        return res.status(409).json({
+          error: 'An account with this email already exists. Please log in instead.',
+          code: 'email_exists'
+        });
+      }
       if (err.message?.includes('already registered')) {
-        return res.status(409).json({ error: 'An account with this email already exists.' });
+        return res.status(409).json({ error: 'An account with this email already exists. Please log in instead.' });
       }
       if (err.message?.includes('password')) {
         return res.status(400).json({ error: 'Password must be between 8 and 128 characters.' });

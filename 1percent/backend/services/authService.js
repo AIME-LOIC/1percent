@@ -15,8 +15,25 @@ class AuthService {
    * sends the confirmation email natively — admin.createUser never mails
    * anyone. The user must click that link before they can log in
    * (login() refuses unconfirmed accounts).
+   *
+   * CHECKS BEFORE GREEN:
+   *   1. an account with this email already exists → error (Supabase's
+   *      signUp is a silent no-op for existing emails — no error, no
+   *      email, no new user — so we must detect it ourselves);
+   *   2. Supabase returned a "fake user" (identities: []) → same as (1);
+   *   3. no user object at all → error, never report success;
+   *   4. the profiles row exists (writes it if the signup trigger
+   *      didn't) so the user really lands in the database.
    */
   async signup(email, password, metadata = {}, redirectBase = '') {
+    // ── Check 1: existing account? ────────────────────────────
+    const existing = await this.userExistsByEmail(email);
+    if (existing) {
+      const err = new Error('An account with this email already exists. Please log in instead.');
+      err.code = 'email_exists';
+      throw err;
+    }
+
     const { data, error } = await Promise.race([
       anonClient.auth.signUp({
         email,
@@ -36,27 +53,79 @@ class AuthService {
 
     if (error) throw error;
 
+    // ── Check 2: Supabase's "fake user" for a duplicate email ─
+    // When email confirmation is ON, signUp for an ALREADY-registered
+    // email returns a user object with an empty identities array and
+    // sends nothing. Treat it as "account exists".
+    if (Array.isArray(data.user?.identities) && data.user.identities.length === 0) {
+      const err = new Error('An account with this email already exists. Please log in instead.');
+      err.code = 'email_exists';
+      throw err;
+    }
+
+    // ── Check 3: no user created → never report success ───────
+    if (!data.user?.id) {
+      throw new Error('Account creation failed — please try again.');
+    }
+
+    // ── Check 4: make sure the profile row really exists ──────
+    // The handle_new_user trigger normally inserts it; verify and
+    // repair so a missing/broken trigger can't drop the user.
+    await this._ensureProfileRow(data.user.id, {
+      full_name: data.user.user_metadata?.full_name || metadata.full_name || '',
+      email: data.user.email || email
+    });
+
     // Log terms acceptance
     try {
-      if (data.user?.id) {
-        await adminClient.from('terms_acceptance').insert({
-          user_id: data.user.id,
-          policy_version: metadata.policy_version || '1.0'
-        });
-      }
+      await adminClient.from('terms_acceptance').insert({
+        user_id: data.user.id,
+        policy_version: metadata.policy_version || '1.0'
+      });
     } catch (e) {
       console.warn('[AUTH] Could not log terms acceptance:', e.message);
     }
 
     return {
-      email_confirmation_required: true,
+      // If the project has "Confirm email" disabled, Supabase returns a
+      // session right away — pass it through so the user is logged in.
+      ...(data.session ? { session: {
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+        expires_at: data.session.expires_at
+      } } : {}),
+      email_confirmation_required: !data.session,
       user: {
-        id: data.user?.id,
-        email: data.user?.email,
-        full_name: data.user?.user_metadata?.full_name || '',
-        user_metadata: data.user?.user_metadata || {}
+        id: data.user.id,
+        email: data.user.email,
+        full_name: data.user.user_metadata?.full_name || '',
+        user_metadata: data.user.user_metadata || {}
       }
     };
+  }
+
+  /**
+   * Guarantee a profiles row exists for a fresh auth user. Repairs the
+   * rare case where the handle_new_user trigger didn't fire — without
+   * this the user can log in but "doesn't exist" in the database.
+   */
+  async _ensureProfileRow(userId, { full_name, email }) {
+    try {
+      const { data: profile } = await adminClient
+        .from('profiles')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle();
+      if (profile) return;
+      const { error } = await adminClient
+        .from('profiles')
+        .insert({ id: userId, full_name: full_name || '', email: email || '' });
+      if (error) {
+        console.error('[AUTH] Profile row insert failed for', userId, error.message);
+      }
+    } catch (e) {
+      console.error('[AUTH] Profile row check failed:', e.message);
+    }
   }
 
   /**

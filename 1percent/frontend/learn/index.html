@@ -638,6 +638,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       const res = await fetch('/api/auth/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password, full_name: name }) });
       const json = await res.json();
       if (json.success) {
+        // Confirmed-email disabled → session returned, log straight in.
+        if (json.session && supabaseClient) {
+          await supabaseClient.auth.setSession({ access_token: json.session.access_token, refresh_token: json.session.refresh_token });
+          status.style.color = 'var(--success)';
+          status.textContent = 'Account created! Redirecting to dashboard...';
+          const _isLearn2 = location.hostname === 'learn.1percent.rw';
+          setTimeout(() => { window.location.href = _isLearn2 ? '/dashboard' : '/learn/dashboard'; }, 800);
+          return;
+        }
         status.style.color = 'var(--success)';
         status.textContent = 'Account created! Check your inbox — confirm your email, then log in.';
         document.getElementById('login-email').value = email;
@@ -649,6 +658,18 @@ document.addEventListener('DOMContentLoaded', async () => {
           document.getElementById('auth-modal-title').textContent = 'Student Login';
           status.textContent = '';
         }, 2500);
+      } else if (json.code === 'email_exists') {
+        status.style.color = 'var(--danger)';
+        status.textContent = json.error || 'An account with this email already exists.';
+        document.getElementById('login-email').value = email;
+        setTimeout(() => {
+          tabs.forEach(t => t.classList.remove('active'));
+          document.querySelector('.auth-tab[data-tab="login"]')?.classList.add('active');
+          loginForm.style.display = '';
+          signupForm.style.display = 'none';
+          document.getElementById('auth-modal-title').textContent = 'Student Login';
+          status.textContent = 'Account found — enter your password to log in.';
+        }, 1500);
       } else {
         status.style.color = 'var(--danger)';
         status.textContent = json.error || 'Signup failed';

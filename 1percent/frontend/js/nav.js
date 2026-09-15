@@ -14,6 +14,7 @@
 const Nav = {
   supabase: null,
   user: null,
+  role: 'student', // 'student' | 'mentor' | 'admin' — drives Mentor Hub / Admin links
   _notifications: [],
   _unreadCount: 0,
   _panelOpen: false,
@@ -41,10 +42,28 @@ const Nav = {
       } catch (e) {
         console.warn('[NAV] Init error:', e.message);
       }
+      await this._loadRole();
       this.render();
       this._renderMobileNav();
     })();
     return this._initPromise;
+  },
+
+  /* Resolve the user's role from the backend session (/api/auth/me).
+     Falls back to 'student' — guests and failures just get the base nav. */
+  async _loadRole() {
+    if (!this.user) { this.role = 'student'; return; }
+    try {
+      const token = await this._getToken();
+      if (!token) { this.role = 'student'; return; }
+      const res = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) { this.role = 'student'; return; }
+      const json = await res.json();
+      const r = json.user?.role;
+      this.role = (r === 'mentor' || r === 'admin') ? r : 'student';
+    } catch {
+      this.role = 'student';
+    }
   },
 
   /* Subdomain-aware link rewriting (learn.1percent.rw serves pages at /) */
@@ -117,6 +136,12 @@ const Nav = {
       { href: '/playground', label: 'Challenges' },
       { href: '/lab', label: 'Code Lab' }
     ];
+    if (this.role === 'mentor' || this.role === 'admin') {
+      links.push({ href: '/mentors', label: 'Mentor Hub' });
+    }
+    if (this.role === 'admin') {
+      links.push({ href: '/admin', label: 'Admin' });
+    }
 
     nav.innerHTML = links.map(l => {
       const active = currentPath === l.href || currentPath === l.href + '/';
@@ -387,15 +412,31 @@ const Nav = {
     settingsLink.href = this._url('/settings');
     settingsLink.textContent = 'Settings';
 
+    dropdown.appendChild(info);
+    dropdown.appendChild(dashLink);
+    dropdown.appendChild(settingsLink);
+
+    // Role-aware entries: mentors get the Mentor Hub, admins also the panel.
+    if (this.role === 'mentor' || this.role === 'admin') {
+      const mentorLink = document.createElement('a');
+      mentorLink.href = this._url('/mentors');
+      mentorLink.textContent = 'Mentor Hub';
+      dropdown.appendChild(mentorLink);
+    }
+    if (this.role === 'admin') {
+      const adminLink = document.createElement('a');
+      adminLink.href = this._url('/admin');
+      adminLink.textContent = 'Admin Panel';
+      dropdown.appendChild(adminLink);
+    }
+
     const logoutBtn = document.createElement('button');
     logoutBtn.type = 'button';
     logoutBtn.id = 'user-menu-logout';
     logoutBtn.textContent = 'Log Out';
 
-    dropdown.appendChild(info);
-    dropdown.appendChild(dashLink);
-    dropdown.appendChild(settingsLink);
     dropdown.appendChild(logoutBtn);
+
     menu.appendChild(trigger);
     menu.appendChild(dropdown);
     nav.appendChild(menu);
@@ -457,6 +498,15 @@ const Nav = {
       btn.addEventListener('click', (e) => { e.preventDefault(); action.onClick(); });
       nav.appendChild(btn);
     });
+
+    // Role-aware Mentor Hub entry for mentors/admins.
+    if (this.role === 'mentor' || this.role === 'admin') {
+      const mentorItem = document.createElement('a');
+      mentorItem.href = this._url('/mentors');
+      if (currentPath === '/mentors') mentorItem.className = 'active';
+      mentorItem.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg><span>Mentor</span>`;
+      nav.appendChild(mentorItem);
+    }
 
     // Leaderboard action (opens the page's leaderboard modal if present).
     const lbBtn = document.createElement('button');
