@@ -80,27 +80,34 @@ class StreakController {
 
       const { data, error } = await adminClient
         .from('profiles')
-        .select('id, full_name, coins, streak_count, avatar_url')
+        .select('id, full_name, coins, streak_count, avatar_url, role')
+        .eq('role', 'student') // students only — never admins or mentors
         .order(column, { ascending: false })
+        // Deterministic tie-break: equal scores keep a stable order between
+        // requests, so tied users don't phantom-swap green/red arrows.
+        .order('id', { ascending: true })
         .gt(column, 0)
         .limit(limit);
 
       if (error) throw error;
+      // Defensive filter — never show staff on a student leaderboard
+      const visible = (data || []).filter(u => u.role === 'student');
+      visible.forEach(u => delete u.role);
 
       // Which leaderboard users hold an active paid subscription?
       // (One batched query — powers the crown badge in the UI.)
       let premiumIds = new Set();
-      if (data && data.length) {
+      if (visible.length) {
         const { data: subs } = await adminClient
           .from('user_subscriptions')
           .select('user_id')
-          .in('user_id', data.map(u => u.id))
+          .in('user_id', visible.map(u => u.id))
           .eq('is_active', true)
           .gt('expires_at', new Date().toISOString());
         premiumIds = new Set((subs || []).map(s => s.user_id));
       }
 
-      const board = (data || []).map((u, i) => ({
+      const board = visible.map((u, i) => ({
         rank: i + 1,
         id: u.id,
         name: u.full_name || 'Anonymous',
@@ -111,13 +118,15 @@ class StreakController {
         isCurrentUser: u.id === req.user?.id
       }));
 
-      // Find current user's rank if not in top N
+      // Find current user's rank if not in top N (students only, same as board)
       let currentUserRank = null;
       if (req.user?.id && !board.find(u => u.isCurrentUser)) {
+        const { data: meRow } = await adminClient.from('profiles').select(column).eq('id', req.user.id).single();
         const { count } = await adminClient
           .from('profiles')
           .select('*', { count: 'exact', head: true })
-          .gt(column, (await adminClient.from('profiles').select(column).eq('id', req.user.id).single()).data?.[column] || 0);
+          .eq('role', 'student')
+          .gt(column, meRow?.[column] || 0);
         currentUserRank = (count || 0) + 1;
       }
 

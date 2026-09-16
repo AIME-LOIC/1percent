@@ -74,7 +74,7 @@ select:focus,input[type=text]:focus{border-color:var(--green);box-shadow:0 0 0 4
 <body>
 
 <div class="wrap">
-  <a class="back-link" href="/">← Back to 1percent</a>
+  <a class="back-link" href="/" id="back-link">← Back</a>
 
   <div class="hero">
     <span class="robot" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></span>
@@ -95,16 +95,16 @@ select:focus,input[type=text]:focus{border-color:var(--green);box-shadow:0 0 0 4
 
       <div class="grade-row">
         <div>
-          <label for="grade-input" style="font-size:12px;">Grade / class <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
-          <input type="text" id="grade-input" placeholder="e.g. S5, Senior 6">
+          <label for="grade-input" style="font-size:12px;">Grade / class <span style="color:#dc2626;font-weight:700;">*</span></label>
+          <input type="text" id="grade-input" placeholder="e.g. S5, Senior 6" required>
         </div>
         <div>
-          <label for="full-name-input" style="font-size:12px;">Full name <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
-          <input type="text" id="full-name-input" placeholder="We'll use your account name if empty">
+          <label for="full-name-input" style="font-size:12px;">Full name <span style="color:#dc2626;font-weight:700;">*</span></label>
+          <input type="text" id="full-name-input" placeholder="Your full name" required>
         </div>
       </div>
 
-      <button class="btn" id="join-btn" disabled>Join the Robotics Club →</button>
+      <button class="btn" id="join-btn">Join the Robotics Club →</button>
       <div class="status" id="join-status"></div>
 
       <div class="login-nudge" id="login-nudge">
@@ -210,6 +210,10 @@ select:focus,input[type=text]:focus{border-color:var(--green);box-shadow:0 0 0 4
     }
 
     const btn=$('join-btn');
+    const fullName=$('full-name-input').value.trim();
+    const gradeVal=$('grade-input').value.trim();
+    if(!gradeVal){status.className='status err';status.textContent='Please enter your grade or class.';$('grade-input').focus();return;}
+    if(!fullName){status.className='status err';status.textContent='Please enter your full name.';$('full-name-input').focus();return;}
     btn.disabled=true;btn.textContent='Joining…';
     status.className='status';status.textContent='';
 
@@ -230,7 +234,7 @@ select:focus,input[type=text]:focus{border-color:var(--green);box-shadow:0 0 0 4
       const res=await fetch('/api/robotics-club/join',{
         method:'POST',
         headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},
-        body:JSON.stringify({school_id:selectedSchool,grade:$('grade-input').value.trim()})
+        body:JSON.stringify({school_id:selectedSchool,grade:gradeVal,full_name:fullName})
       });
       const json=await res.json();
 
@@ -261,6 +265,23 @@ select:focus,input[type=text]:focus{border-color:var(--green);box-shadow:0 0 0 4
     e.preventDefault();
     if(window.LoginPopup)window.LoginPopup.show('robotics-club');
   });
+
+  // Smart back link: return to wherever the user came from.
+  // Prefer browser history, then the referrer, then the homepage.
+  (function(){
+    const link=$('back-link');
+    if(!link)return;
+    const ref=document.referrer;
+    let sameOriginRef=null;
+    try{ if(ref&&new URL(ref).origin===location.origin)sameOriginRef=ref; }catch{}
+    if(sameOriginRef){
+      link.href=sameOriginRef;
+      link.addEventListener('click',e=>{
+        // If there is history within our site, use it so the app state is kept
+        if(history.length>1){e.preventDefault();history.back();}
+      });
+    }
+  })();
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
   else init();

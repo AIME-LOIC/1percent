@@ -36,11 +36,14 @@ class RoboticsClubController {
   /** POST /api/robotics-club/join — quick join with a school */
   async join(req, res) {
     try {
-      const { school_id: schoolId, grade } = req.body;
+      const { school_id: schoolId, grade, full_name: fullName } = req.body;
       if (!schoolId) {
         return res.status(400).json({ error: 'Please select your school.' });
       }
-      const membership = await roboticsClubService.join(req.user.id, schoolId, grade);
+      if (!grade || !String(grade).trim()) {
+        return res.status(400).json({ error: 'Please enter your grade or class.' });
+      }
+      const membership = await roboticsClubService.join(req.user.id, schoolId, grade, fullName);
       res.status(201).json({ success: true, membership });
     } catch (err) {
       if (err.code === 'ALREADY_MEMBER') {

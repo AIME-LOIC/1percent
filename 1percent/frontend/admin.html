@@ -47,12 +47,21 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .main h1{font-size:24px;font-weight:800;margin-bottom:4px;}
 .main .subtitle{color:var(--admin-muted);font-size:14px;margin-bottom:24px;}
 
-/* Stats row */
+/* Stats row — small transparent rings with colored borders sweeping toward 360° */
 .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;}
-.stat-card{background:var(--admin-card);border:1px solid var(--admin-border);border-radius:10px;padding:20px;}
-.stat-card .stat-label{font-size:12px;font-weight:600;color:var(--admin-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
-.stat-card .stat-value{font-size:28px;font-weight:800;color:var(--admin-text);}
-.stat-card .stat-sub{font-size:12px;color:var(--admin-muted);margin-top:4px;}
+.stat-card{background:var(--admin-card);border:1px solid var(--admin-border);border-radius:10px;padding:16px;display:flex;align-items:center;gap:14px;}
+.stat-ring{position:relative;width:48px;height:48px;flex-shrink:0;}
+.stat-ring svg{width:48px;height:48px;transform:rotate(-90deg);display:block;}
+.stat-ring .ring-bg{fill:none;stroke:transparent;stroke-width:5;}
+.stat-ring .ring-val{fill:none;stroke-linecap:round;stroke-dasharray:163.36;stroke-dashoffset:163.36;transition:stroke-dashoffset 1s cubic-bezier(.4,0,.2,1);animation:ringStrive 2.2s ease-in-out infinite;}
+.stat-ring.complete .ring-val{animation:none;}
+@keyframes ringStrive{0%,100%{opacity:1}50%{opacity:.5}}
+.stat-ring .ring-txt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;}
+.stat-ring .ring-pct{font-size:11px;font-weight:800;color:var(--admin-text);}
+.stat-ring .ring-cap{font-size:5.5px;font-weight:700;color:var(--admin-muted);text-transform:uppercase;letter-spacing:.4px;margin-top:1px;}
+.stat-card .stat-label{font-size:12px;font-weight:600;color:var(--admin-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.stat-card .stat-value{font-size:20px;font-weight:800;color:var(--admin-text);}
+.stat-card .stat-sub{font-size:11px;color:var(--admin-muted);margin-top:2px;}
 
 /* Card */
 .card{background:#fff;border:1px solid var(--admin-border);border-radius:10px;overflow:hidden;margin-bottom:24px;}
@@ -340,9 +349,11 @@ tr.log-fatal:hover td{background:#feeeee !important;}
             <div class="ring-txt"><span class="ring-pct">0%</span><span class="ring-cap">enrolled</span></div>
           </div>
           <div><div class="stat-label">Students</div><div class="stat-value" id="stat-students">0</div><div class="stat-sub" id="stat-users-sub"></div></div>
-</div>
-        <div class="stat-card"><div class="stat-label">Lessons</div><div class="stat-value" id="stat-lessons">0</div></div>
-        <div class="stat-card"><div class="stat-label">Challenges</div><div class="stat-value" id="stat-challenges">0</div></div>
+        </div>
+
+        <!-- Hidden counters that feed the rings -->
+        <div id="stat-lessons" style="display:none;">0</div>
+        <div id="stat-challenges" style="display:none;">0</div>
         <div class="stat-card">
           <div class="stat-ring" data-ring="enrolled" data-color="#2563eb">
             <svg viewBox="0 0 64 64"><circle class="ring-bg" cx="32" cy="32" r="26"/><circle class="ring-val" cx="32" cy="32" r="26"/></svg>
@@ -357,8 +368,20 @@ tr.log-fatal:hover td{background:#feeeee !important;}
           </div>
           <div><div class="stat-label">Certificates</div><div class="stat-value" id="stat-certificates">0</div></div>
         </div>
-        <div class="stat-card"><div class="stat-label">Active Today</div><div class="stat-value" id="stat-active-today">0</div></div>
-        <div class="stat-card"><div class="stat-label">Submissions</div><div class="stat-value" id="stat-submissions">0</div></div>
+        <div class="stat-card">
+          <div class="stat-ring" data-ring="pass" data-color="#059669">
+            <svg viewBox="0 0 64 64"><circle class="ring-bg" cx="32" cy="32" r="26"/><circle class="ring-val" cx="32" cy="32" r="26"/></svg>
+            <div class="ring-txt"><span class="ring-pct">0%</span><span class="ring-cap">pass rate</span></div>
+          </div>
+          <div><div class="stat-label">Submissions</div><div class="stat-value" id="stat-submissions">0</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-ring" data-ring="active" data-color="#d97706">
+            <svg viewBox="0 0 64 64"><circle class="ring-bg" cx="32" cy="32" r="26"/><circle class="ring-val" cx="32" cy="32" r="26"/></svg>
+            <div class="ring-txt"><span class="ring-pct">0%</span><span class="ring-cap">of students</span></div>
+          </div>
+          <div><div class="stat-label">Active Today</div><div class="stat-value" id="stat-active-today">0</div></div>
+        </div>
       </div>
 
       <!-- Charts -->
@@ -960,8 +983,6 @@ async function loadAnalytics(){
     setStat('stat-challenges',t.challenges??0);
     setStat('stat-enrollments',t.enrollments??0);
     setStat('stat-certificates',t.certificates??0);
-    setStat('stat-active-today',t.active_today??0);
-    setStat('stat-submissions',t.submissions??0);
     const usersSub=document.getElementById('stat-users-sub');
     if(usersSub)usersSub.textContent=t.mentors?`${t.mentors} mentor${t.mentors>1?'s':''}`:'';
     const coursesSub=document.getElementById('stat-courses-sub');
@@ -970,6 +991,13 @@ async function loadAnalytics(){
     renderActivityChart(j.charts||{});
     renderLevelsChart((j.charts||{}).course_levels||{beginner:0,intermediate:0,advanced:0});
     renderTopCourses((j.charts||{}).top_courses||[]);
+    renderStatRings({
+      published:{part:t.published_courses??0,total:t.courses??0},
+      enrolled:{part:t.students??0,total:t.users||t.students||1},
+      certs:{part:t.certificates??0,total:t.enrollments||1},
+      pass:{part:t.passed_submissions??0,total:t.submissions||1},
+      active:{part:t.active_today??0,total:t.students||1}
+    });
 
     document.getElementById('chart-week-now').textContent=j.week_completions??0;
     document.getElementById('chart-week-prev').textContent=j.prev_week_completions??0;
@@ -995,6 +1023,24 @@ function setStat(id,val){
     if(p<1)el._anim=requestAnimationFrame(tick);else el._anim=null;
   };
   el._anim=requestAnimationFrame(tick);
+}
+
+/* ── Circular percentage rings (SVG stroke-dashoffset) ── */
+function renderStatRings(rings){
+  const R=26,CIRC=2*Math.PI*R;
+  document.querySelectorAll('.stat-ring[data-ring]').forEach(el=>{
+    const key=el.dataset.ring,d=rings[key];
+    const pct=d&&d.total>0?Math.min(100,Math.round((d.part/d.total)*100)):0;
+    const circle=el.querySelector('.ring-val');
+    const label=el.querySelector('.ring-pct');
+    if(circle){
+      circle.style.stroke=el.dataset.color||'#059669';
+      circle.style.strokeDasharray=CIRC.toFixed(2);
+      circle.style.strokeDashoffset=(CIRC*(1-pct/100)).toFixed(2);
+      el.classList.toggle('complete',pct>=100);
+    }
+    if(label)label.textContent=pct+'%';
+  });
 }
 
 /* ── SVG line/area chart — 3 series, zero dependencies ── */

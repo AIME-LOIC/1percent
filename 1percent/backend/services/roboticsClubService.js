@@ -49,7 +49,12 @@ class RoboticsClubService {
   }
 
   /** Quick join: creates a membership for the user at the chosen school. */
-  async join(userId, schoolId, grade) {
+  async join(userId, schoolId, grade, fullName) {
+    // Grade/class is required
+    if (!grade || !String(grade).trim()) {
+      const e = new Error('Please enter your grade or class.'); e.status = 400; throw e;
+    }
+
     // School must exist and be active
     const { data: school, error: schoolErr } = await adminClient
       .from('club_schools')
@@ -74,7 +79,7 @@ class RoboticsClubService {
       .insert({
         user_id: userId,
         school_id: schoolId,
-        grade: grade ? String(grade).trim().slice(0, 40) : null,
+        grade: String(grade).trim().slice(0, 40),
         status: 'pending'
       })
       .select()
@@ -98,6 +103,17 @@ class RoboticsClubService {
       });
     } catch (e) {
       console.warn('[CLUB] Welcome notification failed:', e.message);
+    }
+
+    // Best-effort: save the provided full name on the profile if it's empty
+    const cleanName = fullName && String(fullName).trim();
+    if (cleanName) {
+      try {
+        const { data: prof } = await adminClient.from('profiles').select('full_name').eq('id', userId).single();
+        if (prof && !prof.full_name) {
+          await adminClient.from('profiles').update({ full_name: cleanName.trim().slice(0, 80) }).eq('id', userId);
+        }
+      } catch (e) { /* cosmetic — ignore */ }
     }
 
     return data;
