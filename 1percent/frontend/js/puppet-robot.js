@@ -30,13 +30,25 @@
   let three = null;      // three module cache
   let ctx = null;        // { renderer, scene, camera, mixer, actions, parts }
 
-  /* ---------- lazy three.js loader (ES modules from jsdelivr) ----------
-     three r148+ dropped the UMD examples/js builds, so we dynamically
-     import the module build + GLTFLoader addon and stash them on `three`. */
+  /* ---------- lazy three.js loader ----------
+     Uses the page's importmap (bare 'three' specifier). If the page
+     has no importmap, inject one BEFORE any dynamic import happens —
+     a dynamic import of a bare specifier fails permanently otherwise. */
   async function loadThree() {
     if (three) return three;
-    const mod = await import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js');
-    const { GLTFLoader } = await import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js');
+    if (!document.querySelector('script[type="importmap"]')) {
+      const im = document.createElement('script');
+      im.type = 'importmap';
+      im.innerHTML = JSON.stringify({
+        imports: {
+          three: 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js',
+          'three/addons/': 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/'
+        }
+      });
+      document.head.appendChild(im);
+    }
+    const mod = await import('three');
+    const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
     mod.GLTFLoader = GLTFLoader;
     three = mod;
     return three;
@@ -196,8 +208,7 @@
       lastX = p.x; lastY = p.y;
       canvas.style.cursor = 'grabbing';
       setState(STATE.held);
-      // eyes closed while held
-      playOnce('blink', () => {}); // quick close at pickup
+      say(pick(['Up we go! ✋', 'Careful…', '*eyes squeezed shut*']), 1800);
       e.preventDefault();
     };
 
@@ -225,6 +236,8 @@
       if (!dragging) return;
       dragging = false;
       canvas.style.cursor = 'grab';
+      // release the parked blink so eyes can reopen after the drop
+      if (ctx.actions.blink) ctx.actions.blink.stop();
       drop();
     };
 
@@ -254,6 +267,7 @@
     ctx.wrap.style.transition = 'none';
 
     setState(STATE.falling);
+    say(pick(DROP_LINES), 1800);
     ctx.velocity.set((Math.random() - 0.5) * 1.2, 0, 0);
     ctx.spin.set(
       (Math.random() - 0.5) * 4,
@@ -285,6 +299,56 @@
     ctx.target = t;
     setState(STATE.wander);
   }
+
+  /* ---------- speech bubbles ---------- */
+  const SIT_LINES = [
+    'This one looks fun! 📚',
+    'Shall we start here?',
+    'I\'ll wait right here 👀',
+    'You\'ve got this! 💪',
+    'Psst… try a challenge too!',
+    'Learning time! ☕'
+  ];
+  const IDLE_LINES = [
+    'Need a hand? 👋',
+    'Keep that streak alive! 🔥',
+    'One lesson a day! ✨',
+    '*hums robot tune* 🎵'
+  ];
+  const DROP_LINES = ['Wheee! 😵', 'I\'m okay!', 'Nice catch!', '*dizzy* 🌟'];
+
+  function say(text, ms = 2600) {
+    if (!ctx) return;
+    let b = ctx.wrap.querySelector('.puppet-bubble');
+    if (!b) {
+      b = document.createElement('div');
+      b.className = 'puppet-bubble';
+      b.style.cssText = 'position:absolute;left:70%;top:-6px;transform:translateX(-50%);max-width:180px;'
+        + 'background:#fff;border:1.5px solid #0d6e3f;border-radius:12px;padding:7px 11px;font:600 11.5px Inter,sans-serif;'
+        + 'color:#111827;box-shadow:0 4px 14px rgba(13,110,63,.18);pointer-events:none;white-space:nowrap;z-index:2;'
+        + 'transition:opacity .25s, transform .25s;opacity:0;';
+      const tail = document.createElement('span');
+      tail.style.cssText = 'position:absolute;left:18%;bottom:-6px;width:10px;height:10px;background:#fff;'
+        + 'border-left:1.5px solid #0d6e3f;border-bottom:1.5px solid #0d6e3f;transform:rotate(-45deg);';
+      b.appendChild(tail);
+      const span = document.createElement('span');
+      span.className = 'puppet-bubble-text';
+      b.appendChild(span);
+      ctx.wrap.appendChild(b);
+    }
+    b.querySelector('.puppet-bubble-text').textContent = text;
+    requestAnimationFrame(() => {
+      b.style.opacity = '1';
+      b.style.transform = 'translateX(-50%) translateY(-4px)';
+    });
+    clearTimeout(ctx.bubbleTimer);
+    ctx.bubbleTimer = setTimeout(() => {
+      b.style.opacity = '0';
+      b.style.transform = 'translateX(-50%) translateY(0)';
+    }, ms);
+  }
+
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
   /* ============================================================
      Main loop
@@ -318,6 +382,9 @@
         // wander schedule
         ctx.wanderTimer -= dt;
         if (ctx.wanderTimer <= 0) startWander();
+        // occasional idle chatter
+        ctx.chatTimer = (ctx.chatTimer ?? 20) - dt;
+        if (ctx.chatTimer <= 0) { say(pick(IDLE_LINES)); ctx.chatTimer = 25 + Math.random() * 20; }
         break;
       }
 
@@ -337,6 +404,14 @@
           playOnce('sit');
           // sit for a while, then stand back up
           ctx.sitUntil = now + 6 + Math.random() * 6;
+          // greet the card
+          if (ctx.target && ctx.target.el) {
+            const title = ctx.target.el.querySelector('h4')?.textContent
+              || ctx.target.el.querySelector('.ch-title')?.textContent || '';
+            say(title ? `"${title.slice(0, 34)}" — nice pick!` : pick(SIT_LINES));
+          } else {
+            say(pick(SIT_LINES));
+          }
         }
         break;
       }
@@ -353,8 +428,14 @@
       case STATE.held: {
         // gentle dangle sway while carried
         model.rotation.z += (Math.sin(now * 3) * 0.12 - model.rotation.z) * 0.1;
-        ctx.blinkTimer = 0.01; // keep eyes closed while held
-        if (ctx.blinkTimer <= 0) { playOnce('blink'); ctx.blinkTimer = 0.8; }
+        // keep eyes shut the whole time the puppet is carried:
+        // hold the blink clip at its closed pose (time 0.08s = squeezed).
+        if (actions.blink) {
+          actions.blink.setLoop(T.LoopOnce);
+          actions.blink.clampWhenFinished = true;
+          if (!actions.blink.isRunning()) actions.blink.play();
+          if (actions.blink.time >= 0.16) actions.blink.time = 0.08; // park shut
+        }
         break;
       }
 
@@ -423,11 +504,27 @@
     ctx = null;
   }
 
+  /* Milestone celebration — called by dashboard._celebrate() on
+     lesson completion, challenge pass, streak bumps, etc. */
+  function celebrate() {
+    if (!ctx || ctx.state === STATE.held) return;
+    if (ctx.state === STATE.falling) return;
+    playOnce('wave');
+    ctx.waveCooldown = 6;
+    say(pick([
+      'You did it! 🎉',
+      'Amazing work! 🌟',
+      'Level up! 🚀',
+      'So proud of you! 💚',
+      'On a roll! 🔥'
+    ]), 3200);
+  }
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => setTimeout(init, 1500));
   } else {
     setTimeout(init, 1500);
   }
 
-  window.PuppetRobot = { init, teardown };
+  window.PuppetRobot = { init, teardown, celebrate, say: (t, m) => say(t, m) };
 })();
