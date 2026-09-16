@@ -229,7 +229,11 @@ async function getClient() {
     // back here, resuming the consent flow.
     document.getElementById('consent-loading').style.display = 'none';
     const err = document.getElementById('consent-err');
-    err.innerHTML = 'You are not signed in. <a href="/learn"><strong>Log in</strong></a> — you\'ll be brought right back here to finish connecting.';
+    // NOTE: this whole page is a template literal — JS escapes for the
+    // BROWSER must be doubled here (\\' → browser sees \'). A single
+    // \' collapses to a bare ' in the output and SyntaxErrors the page
+    // ("Unexpected identifier 'll'"), leaving consent stuck on loading.
+    err.innerHTML = 'You are not signed in. <a href="/learn"><strong>Log in</strong></a> — you\\'ll be brought right back here to finish connecting.';
     err.style.display = '';
     sessionStorage.setItem('mcpConsentReturn', window.location.href);
     return;

@@ -7,6 +7,7 @@
 
 const { adminClient } = require('../config/database');
 const { ROADMAP, getPhaseById, getTrackById, getTotalLessons, getTotalDuration } = require('../data/roadmap');
+const quizService = require('./quizService');
 
 class CourseService {
   /* Minimum study time (seconds) required before a lesson can be completed */
@@ -215,7 +216,14 @@ class CourseService {
 
     if (!alreadyDone) {
       const studied = Math.max(Number(studySeconds) || 0, elapsed);
-      if (studied < minSeconds) {
+      // Fast track: a recent pass on this lesson's Quick Quiz waives the
+      // 10-minute study gate — mastery proven instead of time served.
+      // hasRecentLessonPass swallows its own errors (missing table, DB
+      // hiccup) and returns false, so this can never break normal completion.
+      const quizPass = studied < minSeconds
+        ? await quizService.hasRecentLessonPass(userId, lessonId)
+        : false;
+      if (studied < minSeconds && !quizPass) {
         const err = new Error(`Study for at least 10 minutes before completing this lesson.`);
         err.status = 422; err.code = 'STUDY_TIME_REQUIRED';
         err.required = minSeconds; err.elapsed = studied;

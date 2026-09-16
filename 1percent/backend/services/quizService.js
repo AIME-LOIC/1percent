@@ -7,6 +7,16 @@
 
 const { adminClient } = require('../config/database');
 
+/** Fisher–Yates shuffle (returns a new array; no mutation). */
+function shuffle(list) {
+  const arr = (list || []).slice();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 /* ── Cheating heuristics ─────────────────────────────────── */
 const FLAG_WEIGHTS = {
   devtools: 50,          // near-certain cheating → instant flag
@@ -18,6 +28,38 @@ const FLAG_WEIGHTS = {
 };
 const FLAG_THRESHOLD = 50;
 const TOO_FAST_AVG_SEC = 1.5;
+
+/* ── Lesson Quick Quiz (fast-track completion) ─────────────
+   Small per-lesson quiz that lets a fast learner complete the
+   lesson without waiting out the 10-minute study gate. Pure
+   constants/helpers first so they are unit-testable. */
+const QUICK = {
+  MIN_QUESTIONS: 4,     // always show at least this many
+  MAX_QUESTIONS: 6,     // hard cap per attempt
+  MIN_PASS_PERCENT: 80, // floor — per-lesson fast track is held to a higher bar
+  PASS_VALID_HOURS: 720 // a pass waives the study gate for this long (30 days)
+};
+
+/** Normalize quiz options for serving: drop the correct flag, keep ids/text. */
+function sanitizeQuickOptions(options) {
+  return (options || []).map(o => ({ id: o.id, text: o.text }));
+}
+
+/**
+ * Score a quick-quiz submission (pure — unit-testable).
+ * Only answers whose question id is in the presented set count;
+ * anything else is ignored (tamper-resistant). Returns percentage.
+ */
+function scoreQuickAttempt(questions, answers) {
+  const safeAnswers = (answers && typeof answers === 'object') ? answers : {};
+  let score = 0;
+  let max = 0;
+  for (const q of questions) {
+    max += q.points || 1;
+    if (safeAnswers[q.id] === q.correct_answer) score += q.points || 1;
+  }
+  return max > 0 ? Math.round((score / max) * 100) : 0;
+}
 
 class QuizService {
   /**
@@ -215,7 +257,6 @@ class QuizService {
   evaluateIntegrity(questions, answers, meta = {}) {
     const flags = [];
     let score = 0;
-
     const clientFlags = Array.isArray(meta.flags) ? meta.flags.slice(0, 10) : [];
     for (const f of clientFlags) {
       if (FLAG_WEIGHTS[f] && !flags.includes(f)) {
@@ -386,6 +427,158 @@ class QuizService {
 
     if (error) throw error;
   }
+
+  /* ─────────────────────────────────────────────────────────
+     Lesson Quick Quiz — fast-track lesson completion
+     ───────────────────────────────────────────────────────── */
+
+  /**
+   * Build the quick-quiz question set for one lesson: questions
+   * mapped to this lesson first, then (if fewer than MIN) other
+   * lessons of the same course as review. Answers are never selected.
+   * Returns null when the course has no published quiz.
+   */
+  async getLessonQuickQuiz(lessonId) {
+    const { data: lesson } = await adminClient
+      .from('lessons')
+      .select('id, course_id, title')
+      .eq('id', lessonId)
+      .single();
+    if (!lesson) return null;
+
+    const { data: quiz } = await adminClient
+      .from('quizzes')
+      .select('id, passing_score')
+      .eq('course_id', lesson.course_id)
+      .eq('is_published', true)
+      .single();
+    if (!quiz) return null;
+
+    // 1) Lesson-specific questions (shuffle → order can't be memorized)
+    const { data: own } = await adminClient
+      .from('quiz_questions')
+      .select('id, question, options, correct_answer, points, lesson_id')
+      .eq('lesson_id', lessonId)
+      .order('sort_order', { ascending: true });
+
+    const picked = (own || []).slice();
+
+    // 2) Fill from other lessons of the same course (review questions)
+    if (picked.length < QUICK.MIN_QUESTIONS) {
+      const { data: others } = await adminClient
+        .from('quiz_questions')
+        .select('id, question, options, correct_answer, points, lesson_id')
+        .in('lesson_id', (await this._lessonIdsInCourse(lesson.course_id, lessonId)))
+        .order('sort_order', { ascending: true });
+      for (const q of shuffle(others || [])) {
+        if (picked.length >= QUICK.MIN_QUESTIONS) break;
+        if (!picked.some(p => p.id === q.id)) picked.push(q);
+      }
+    }
+    if (!picked.length) return null;
+
+    const shown = shuffle(picked).slice(0, QUICK.MAX_QUESTIONS);
+    return {
+      quiz_id: quiz.id,
+      lesson_id: lessonId,
+      lesson_title: lesson.title,
+      passing_score: Math.max(quiz.passing_score || 70, QUICK.MIN_PASS_PERCENT),
+      questions: shown.map(q => ({
+        id: q.id,
+        question: q.question,
+        options: sanitizeQuickOptions(q.options),
+        points: q.points || 1,
+        review: q.lesson_id !== lessonId
+      }))
+    };
+  }
+
+  /** Published lesson ids in a course, excluding one lesson. */
+  async _lessonIdsInCourse(courseId, excludeLessonId) {
+    const { data } = await adminClient
+      .from('lessons')
+      .select('id')
+      .eq('course_id', courseId)
+      .eq('is_published', true)
+      .neq('id', excludeLessonId);
+    return (data || []).map(l => l.id);
+  }
+
+  /**
+   * Grade a quick-quiz submission for one lesson (server-side only).
+   * A pass at ≥ passing score is recorded in lesson_quiz_passes and
+   * waives the 10-minute study gate for QUICK.PASS_VALID_HOURS.
+   */
+  async submitLessonQuickQuiz(userId, lessonId, answers, meta = {}) {
+    const quiz = await this.getLessonQuickQuiz(lessonId);
+    if (!quiz) {
+      const e = new Error('No quick quiz available for this lesson.');
+      e.status = 404; e.code = 'NO_QUIZ';
+      throw e;
+    }
+
+    // Refuse graded questions not in the presented set (tamper guard)
+    const { data: graded } = await adminClient
+      .from('quiz_questions')
+      .select('id, question, options, correct_answer, points, lesson_id')
+      .in('id', quiz.questions.map(q => q.id));
+    const presented = (graded || []).map(q => ({ ...q, points: q.points || 1 }));
+    if (!presented.length) {
+      const e = new Error('No quick quiz available for this lesson.');
+      e.status = 404; e.code = 'NO_QUIZ';
+      throw e;
+    }
+
+    const percentage = scoreQuickAttempt(presented, answers);
+    const passed = percentage >= quiz.passing_score;
+
+    // Reuse the course-quiz integrity heuristics for the pass record.
+    const { flags, flagged } = this.evaluateIntegrity(presented, answers, {
+      flags: Array.isArray(meta.flags) ? meta.flags : [],
+      time_spent_sec: Number(meta.time_spent_sec) || 0,
+      time_limit_min: 0
+    });
+
+    if (passed) {
+      const { error } = await adminClient
+        .from('lesson_quiz_passes')
+        .upsert({
+          user_id: userId,
+          lesson_id: lessonId,
+          quiz_id: quiz.quiz_id,
+          percentage,
+          passed_at: new Date().toISOString()
+        }, { onConflict: 'user_id,lesson_id' });
+      if (error) throw error;
+    }
+
+    return { percentage, passed, passing_score: quiz.passing_score, flagged, cheating_flags: flags };
+  }
+
+  /**
+   * True when the user has a quick-quiz pass for this lesson within
+   * QUICK.PASS_VALID_HOURS. Used by courseService to waive the
+   * 10-minute study gate. Errors here must never block completion —
+   * callers treat exceptions as "no pass".
+   */
+  async hasRecentLessonPass(userId, lessonId) {
+    try {
+      const cutoff = new Date(Date.now() - QUICK.PASS_VALID_HOURS * 3600 * 1000).toISOString();
+      const { data } = await adminClient
+        .from('lesson_quiz_passes')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('lesson_id', lessonId)
+        .gte('passed_at', cutoff)
+        .limit(1);
+      return !!(data && data.length > 0);
+    } catch {
+      return false;
+    }
+  }
 }
 
 module.exports = new QuizService();
+module.exports.QUICK = QUICK;
+module.exports.scoreQuickAttempt = scoreQuickAttempt;
+module.exports.sanitizeQuickOptions = sanitizeQuickOptions;

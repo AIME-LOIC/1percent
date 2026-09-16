@@ -12,12 +12,15 @@
    GET  /api/courses/:courseId/progress       — Course progress (auth required)
    GET  /api/courses/progress/overall         — Overall progress (auth required)
    POST /api/courses/progress/:moduleId/complete — Complete module (auth required)
+   GET  /api/courses/progress/:lessonId/quick-quiz — Fast-track quiz questions (auth)
+   POST /api/courses/progress/:lessonId/quick-quiz — Submit fast-track quiz (auth)
    ============================================================ */
 
 const { Router } = require('express');
 const courseController = require('../controllers/courseController');
 const { authenticate, optionalAuth } = require('../middlewares/auth');
 const { rateLimit } = require('../middlewares/rateLimit');
+const { sanitizeStrings } = require('../middlewares/validate');
 const certificateController = require('../controllers/certificateController');
 
 const router = Router();
@@ -33,6 +36,9 @@ router.get('/courses', rateLimit, (req, res, next) => courseController.getCourse
 // Protected courses routes — named routes BEFORE /:slug
 router.get('/courses/enrollments', authenticate, (req, res, next) => courseController.getMyEnrollments(req, res, next));
 router.get('/courses/progress/overall', authenticate, (req, res, next) => courseController.getOverallProgress(req, res, next));
+// Lesson Quick Quiz (fast-track completion) — named routes BEFORE /:slug
+router.get('/courses/progress/:lessonId/quick-quiz', authenticate, rateLimit, (req, res, next) => courseController.getQuickQuiz(req, res, next));
+router.post('/courses/progress/:lessonId/quick-quiz', authenticate, rateLimit, sanitizeStrings(2000), (req, res, next) => courseController.submitQuickQuiz(req, res, next));
 router.post('/courses/progress/:lessonId/complete', authenticate, (req, res, next) => courseController.completeLesson(req, res, next));
 router.post('/courses/:courseId/enroll', authenticate, (req, res, next) => courseController.enroll(req, res, next));
 router.get('/courses/:courseId/progress', authenticate, (req, res, next) => courseController.getCourseProgress(req, res, next));

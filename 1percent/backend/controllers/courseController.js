@@ -6,6 +6,7 @@
 
 const courseService = require('../services/courseService');
 const premiumService = require('../services/premiumService');
+const quizService = require('../services/quizService');
 const { adminClient } = require('../config/database');
 
 class CourseController {
@@ -124,6 +125,52 @@ class CourseController {
     } catch (err) {
       console.error('[COURSE] Enrollments error:', err.message);
       res.status(500).json({ error: 'Failed to load enrollments.' });
+    }
+  }
+
+  /**
+   * GET /api/courses/progress/:lessonId/quick-quiz
+   * Per-lesson fast-track quiz (questions only — no answers).
+   * Lets a fast learner prove mastery instead of waiting out the
+   * 10-minute study gate. Must be declared BEFORE /:courseId routes.
+   */
+  async getQuickQuiz(req, res) {
+    try {
+      const quiz = await quizService.getLessonQuickQuiz(req.params.lessonId);
+      if (!quiz) {
+        return res.json({ success: true, quiz: null });
+      }
+      res.json({ success: true, quiz });
+    } catch (err) {
+      console.error('[COURSE] Quick quiz error:', err.message);
+      res.status(500).json({ error: 'Failed to load quick quiz.' });
+    }
+  }
+
+  /**
+   * POST /api/courses/progress/:lessonId/quick-quiz
+   * Grade the quick quiz server-side. A pass (≥ max(course passing_score, 80))
+   * is recorded and waives the study-time gate for this lesson.
+   */
+  async submitQuickQuiz(req, res) {
+    try {
+      const { answers, meta } = req.body || {};
+      const result = await quizService.submitLessonQuickQuiz(
+        req.user.id,
+        req.params.lessonId,
+        (answers && typeof answers === 'object') ? answers : {},
+        {
+          flags: Array.isArray(meta?.flags) ? meta.flags : [],
+          time_spent_sec: Number(meta?.time_spent_sec) || 0
+        }
+      );
+      res.json({ success: true, result });
+    } catch (err) {
+      console.error('[COURSE] Quick quiz submit error:', err.message);
+      if (err.code === 'NO_QUIZ') {
+        return res.status(404).json({ error: err.message, code: err.code });
+      }
+      res.status(500).json({ error: 'Failed to submit quick quiz.' });
     }
   }
 

@@ -83,6 +83,29 @@ const check = (name, cond, extra) => {
   check('migration creates mcp_oauth_clients', mig.includes('create table if not exists public.mcp_oauth_clients'));
   check('migration seeds claude-ai-connector', mig.includes("'claude-ai-connector'"));
 
+  /* ── 7. Consent page inline script must PARSE in a browser ──
+     The page is a JS template literal inside mcpOAuthRoutes.js, so
+     every browser-side escape must be doubled there. A single \'
+     collapses to a bare ' in the served HTML and SyntaxErrors the
+     whole init script → consent stuck on "Checking your sign-in…". */
+  const tplStart = routesSrc.indexOf('`<!DOCTYPE html>');
+  const tplEnd = routesSrc.indexOf('`;', tplStart);
+  check('consent template found in routes', tplStart > 0 && tplEnd > tplStart);
+  if (tplStart > 0 && tplEnd > tplStart) {
+    const render = new Function('payload', 'return ' + routesSrc.slice(tplStart, tplEnd + 1));
+    const html = render(Buffer.from(JSON.stringify({
+      client_id: 'claude-ai-connector',
+      redirect_uri: 'https://claude.ai/api/mcp/auth_callback',
+      scope: 'read grade', state: '', code_challenge: 'x'.repeat(43)
+    })).toString('base64url'));
+    const inline = [...html.matchAll(/<script(?![^>]*src)[^>]*>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+    check('consent page has an inline script', inline.length === 1, inline.length + ' scripts');
+    let parsed = true, parseErr = '';
+    try { new Function(inline[0]); } catch (e) { parsed = false; parseErr = e.message; }
+    check('consent inline script parses in browser', parsed, parseErr);
+    check('login hint keeps escaped apostrophe', html.includes("you\\'ll"));
+  }
+
   console.log(failures === 0 ? '\nALL REGISTRATION TESTS PASSED' : `\n${failures} TEST(S) FAILED`);
   process.exit(failures === 0 ? 0 : 1);
 })().catch(e => { console.error('TEST FAIL', e); process.exit(1); });

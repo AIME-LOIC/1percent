@@ -973,7 +973,8 @@ async function doOpenLesson(lessonId){
       <div class="footer-actions" id="lesson-footer-right">
         ${isCompleted
           ?`<span class="completed-badge">${Icons.get('check-circle',14)} Completed</span>`
-          :`<button class="footer-btn primary" onclick="markLessonComplete('${lessonId}')">Mark Complete</button>`}
+          :`<button class="footer-btn primary" onclick="markLessonComplete('${lessonId}')">Mark Complete</button>
+            <button class="footer-btn outline" id="quick-quiz-btn" onclick="openQuickQuiz('${lessonId}')" title="Know this already? Prove it and complete instantly">⚡ Quick Quiz</button>`}
         <button class="footer-btn outline" onclick="downloadLessonPdf('${lessonId}')">${Icons.get('download',12)} PDF</button>
       </div>
     </div>`;
@@ -1388,6 +1389,131 @@ async function submitQuizModal(quizId){
 
 /* Reopen the lesson teaching a failed question (or first uncompleted).
    Called from the result screen's lesson buttons. */
+function reopenLessonFromQuiz(lessonId){
+  closeQuizModal();
+  const lessons=courseData.lessons||[];
+  const target=lessonId?lessons.find(l=>l.id===lessonId):(lessons.find(l=>!completedIds.has(l.id))||lessons[0]);
+  if(target&&typeof openLesson==='function'){openLesson(target.id);}
+}
+
+/* ── Lesson Quick Quiz — fast-track completion ──────────────────
+   A fast learner proves mastery on a short per-lesson quiz and the
+   lesson completes instantly — no waiting out the 10-minute study
+   timer. Questions come from the course quiz bank (server-side
+   grading; correct answers never reach the browser). */
+let quickQuiz=null;            // current lesson's quick quiz payload
+let quickSelected={};          // {questionId: optionId}
+let quickWatch={cleanup:null,startedAt:0};
+
+async function openQuickQuiz(lessonId){
+  if(!currentUser){Toast.warning('Log in to take the quick quiz.');return;}
+  if(quickWatch.cleanup)quickWatch.cleanup();
+  quickSelected={};
+  const overlay=document.createElement('div');
+  overlay.className='quiz-modal-overlay';
+  overlay.id='quick-quiz-overlay';
+  overlay.onclick=e=>{if(e.target===overlay)closeQuickQuiz();};
+  overlay.innerHTML=`
+    <div class="quiz-modal">
+      <div class="quiz-modal-header">
+        <h3>⚡ Quick Quiz — prove it and continue</h3>
+        <button class="close-btn" onclick="closeQuickQuiz()">&times;</button>
+      </div>
+      <div class="quiz-modal-body" id="quick-quiz-body">
+        <p style="font-size:13px;color:var(--c-muted);">Loading questions…</p>
+      </div>
+      <div class="quiz-modal-footer">
+        <button class="footer-btn outline" onclick="closeQuickQuiz()">Cancel</button>
+        <button class="footer-btn primary" id="quick-quiz-submit" onclick="submitQuickQuiz('${lessonId}')" disabled>Submit</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  try{
+    const res=await apiFetch(`/api/courses/progress/${lessonId}/quick-quiz`);
+    const json=await res.json();
+    if(!json.success){throw new Error(json.error||'Failed to load');}
+    if(!json.quiz){
+      document.getElementById('quick-quiz-body').innerHTML=`
+        <p style="font-size:14px;color:var(--c-muted);text-align:center;padding:20px 0;">
+          No quick quiz is available for this lesson yet — ask your admin to add
+          quiz questions linked to this lesson, or complete the lesson by studying.
+        </p>`;
+      document.getElementById('quick-quiz-submit').style.display='none';
+      return;
+    }
+    quickQuiz=json.quiz;
+    quickWatch.startedAt=Date.now();
+    document.getElementById('quick-quiz-body').innerHTML=`
+      <p style="font-size:13px;color:var(--c-muted);margin-bottom:16px;">${quickQuiz.questions.length} questions · ${quickQuiz.passing_score}% to pass · pass it and this lesson completes instantly</p>
+      ${quickQuiz.questions.map((q,i)=>`
+        <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--c-border);" data-qqid="${q.id}">
+          <p style="font-size:14px;font-weight:600;margin:0 0 10px;">${i+1}. ${escapeHTML(q.question)}${q.review?' <span style="font-size:10px;font-weight:700;color:#d97706;background:#fffbeb;border:1px solid #fde68a;border-radius:100px;padding:1px 8px;vertical-align:2px;">review</span>':''}</p>
+          ${(q.options||[]).map(o=>`<button class="quiz-option" data-qqid="${q.id}" data-qaid="${o.id}" onclick="selectQuickAnswer('${q.id}','${o.id}')" style="margin-bottom:6px;">${escapeHTML(o.text)}</button>`).join('')}
+        </div>`).join('')}`;
+  }catch(e){
+    document.getElementById('quick-quiz-body').innerHTML='<p style="font-size:13px;color:var(--c-red);">Could not load the quick quiz. Try again.</p>';
+    document.getElementById('quick-quiz-submit').style.display='none';
+  }
+}
+
+function selectQuickAnswer(qid,aid){
+  quickSelected[qid]=aid;
+  document.querySelectorAll(`[data-qqid="${qid}"].quiz-option`).forEach(b=>b.classList.remove('selected'));
+  const btn=document.querySelector(`[data-qqid="${qid}"][data-qaid="${aid}"]`);
+  if(btn)btn.classList.add('selected');
+  const submit=document.getElementById('quick-quiz-submit');
+  if(submit)submit.disabled=Object.keys(quickSelected).length<((quickQuiz&&quickQuiz.questions)||[]).length;
+}
+
+async function submitQuickQuiz(lessonId){
+  const btn=document.getElementById('quick-quiz-submit');
+  if(btn){btn.disabled=true;btn.textContent='Grading…';}
+  const spent=quickWatch.startedAt?Math.round((Date.now()-quickWatch.startedAt)/1000):0;
+  try{
+    const res=await apiFetch(`/api/courses/progress/${lessonId}/quick-quiz`,{method:'POST',body:JSON.stringify({answers:quickSelected,meta:{time_spent_sec:spent}})});
+    const json=await res.json();
+    if(!json.success){throw new Error(json.error||'Failed to grade');}
+    const r=json.result;
+    const body=document.getElementById('quick-quiz-body');
+    if(body){
+      body.innerHTML=`
+        <div style="text-align:center;padding:20px 0;">
+          <div style="width:64px;height:64px;border-radius:50%;background:${r.passed?'#ecfdf5':'#fef2f2'};display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="${r.passed?'var(--c-green)':'var(--c-red)'}" stroke-width="2">${r.passed?'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>':'<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'}</svg>
+          </div>
+          <h3 style="font-size:20px;font-weight:800;margin-bottom:4px;">${r.passed?'Nice — mastery proven!':'Not quite'}</h3>
+          <div style="font-size:28px;font-weight:800;color:${r.passed?'var(--c-green)':'var(--c-red)'};margin:8px 0;">${r.percentage}%</div>
+          <p style="font-size:13px;color:var(--c-muted);">${r.passed?'Lesson unlocked instantly. You can close and continue.':'You need '+r.passing_score+'% to fast-track. Study a little and retry — there is no attempt limit.'}</p>
+        </div>`;
+    }
+    if(r.passed){
+      // Study timer no longer needed — the pass waived the gate.
+      studyComplete=true;studySeconds=MIN_STUDY_SECONDS;saveStudyTime(lessonId,MIN_STUDY_SECONDS);updateStudyTimerDisplay();
+      try{stopStudyTimer();}catch{}
+      // Complete the lesson server-side (the study gate now accepts the pass).
+      const cRes=await apiFetch(`/api/courses/progress/${lessonId}/complete`,{method:'POST',body:JSON.stringify({study_seconds:studySeconds})});
+      const cJson=await cRes.json().catch(()=>({}));
+      if(cJson.success){
+        await loadProgress();
+        if(body){body.innerHTML+=`<p style="font-size:13px;color:var(--c-green);font-weight:700;text-align:center;">✓ Lesson completed — next lesson is unlocked.</p>`;}
+      }else if(cJson.code==='PREVIOUS_LESSON_INCOMPLETE'){
+        if(body){body.innerHTML+=`<p style="font-size:13px;color:#d97706;font-weight:700;text-align:center;">Pass recorded — but finish the previous lesson first, then Mark Complete.</p>`;}
+      }
+    }
+    const footer=document.querySelector('#quick-quiz-overlay .quiz-modal-footer');
+    if(footer)footer.innerHTML=`<button class="footer-btn outline" onclick="closeQuickQuiz()">Close</button>`;
+  }catch(e){
+    Toast.error(e.message||'Failed to grade quiz.');
+    if(btn){btn.disabled=false;btn.textContent='Submit';}
+  }
+}
+
+function closeQuickQuiz(){
+  if(quickWatch.cleanup)quickWatch.cleanup();
+  document.getElementById('quick-quiz-overlay')?.remove();
+}
+
 function reopenLessonFromQuiz(lessonId){
   closeQuizModal();
   const lessons=courseData.lessons||[];
