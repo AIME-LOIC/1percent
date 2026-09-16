@@ -1271,6 +1271,58 @@ document.getElementById('mcp-revoke-btn')?.addEventListener('click', async () =>
   }
 });
 
+/* ── Same-origin connect completion ─────────────────────
+   After approving on the consent page, the user is sent back here as
+   /settings?claude=connected&code=… — that code must be exchanged at
+   /mcp/oauth/token (with the PKCE verifier stored when Connect was
+   clicked) to activate the server-side connection row. This handler
+   was MISSING, so approvals silently did nothing: the code expired
+   after 10 minutes and the status pill stayed "Not connected". */
+(async function completeMcpConnect() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    if (!code) return; // normal page load — nothing to complete
+
+    // Clean the URL FIRST so a refresh can never re-submit the code.
+    window.history.replaceState({}, '', '/settings' + (window.location.hash || ''));
+
+    if (params.get('error')) {
+      Toast.warning('Connection cancelled — nothing was changed.');
+      return;
+    }
+
+    const verifier = sessionStorage.getItem('mcp_pkce_verifier');
+    sessionStorage.removeItem('mcp_pkce_verifier');
+    if (!verifier) {
+      Toast.error('Connection session lost — click "Connect to Claude" again.');
+      return;
+    }
+
+    const res = await fetch('/mcp/oauth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        grant_type: 'authorization_code',
+        code,
+        client_id: 'claude-ai-connector',
+        code_verifier: verifier
+      })
+    });
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}));
+      Toast.error(j.error_description || j.error || 'Could not finish connecting. Please try again.');
+      return;
+    }
+    // The token row now exists server-side (hashed at rest); the browser
+    // deliberately keeps nothing — Claude uses its own OAuth connection.
+    Toast.success('Claude is connected to your account!');
+    await loadMcpStatus();
+  } catch (e) {
+    console.error('[SETTINGS] MCP connect completion failed:', e);
+  }
+})();
+
 initSettings();
 </script>
 </body>

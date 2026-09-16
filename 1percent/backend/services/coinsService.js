@@ -660,20 +660,45 @@ class CoinsService {
           this._lastRejectReason = `Output mismatch — expected "${this._normalizeOutput(expectedOutput).slice(0, 120)}" but your code printed "${this._normalizeOutput(run.output).slice(0, 120) || '(nothing)'}".`;
           return false;
         }
-        // ANTI-ECHO: the output matched, but if the expected text appears
-        // VERBATIM as a string literal (or comment) in the code, the student
-        // likely just printed the expected string back — e.g.
-        //   console.log("// Todo app")
-        // Real solutions COMPUTE the output. We check BOTH the raw code
-        // (catches string literals) and the comment-stripped code. Short
-        // outputs (<8 chars, e.g. "42") are exempt: echoing IS the answer
-        // on trivial print-this challenges.
+        // ANTI-ECHO (line-aware): the output matched — but did the code
+        // COMPUTE it, or just print the expected lines back as literals?
+        //
+        //   Pure echo cheat:   console.log("// Todo app") alone          → reject
+        //   Real solution:     builds the whole poll API AND prints the
+        //                      required "// Polling app" banner          → allow
+        //
+        // Rule: count how many expected-output lines appear verbatim in the
+        // code (raw AND comment/string-stripped). Fewer than 70% → the
+        // dynamic parts were computed; allow. When most/all lines echo:
+        //   • single-line output → cheating UNLESS the rest of the code
+        //     (minus the echoed line) is a real implementation — the echoed
+        //     line is then a required banner, not the whole answer;
+        //   • multi-line output  → hardcoding most lines is always cheating.
+        // Short outputs (<8 chars, e.g. "42") stay exempt: echoing IS the
+        // answer on trivial print-this challenges.
+        const raw = String(code);
         const strippedCode = this._stripCommentsAndStrings(code);
         const expectedNorm = this._normalizeOutput(expectedOutput);
-        if (expectedNorm.length >= 8 &&
-            (String(code).includes(expectedNorm) || strippedCode.includes(expectedNorm))) {
-          this._lastRejectReason = 'Your submission just prints the expected output as a literal instead of computing it — write the real solution.';
-          return false;
+        const expectedLines = expectedNorm.split('\n').map(l => l.trim()).filter(Boolean);
+        const echoedCount = expectedLines.filter(l => raw.includes(l) || strippedCode.includes(l)).length;
+        const echoedRatio = expectedLines.length ? echoedCount / expectedLines.length : 0;
+
+        if (expectedLines.length > 0 && expectedNorm.length >= 8 && echoedRatio >= 0.7) {
+          let isEchoCheat = true;
+          if (expectedLines.length === 1) {
+            // The single echoed line may be a required banner/header —
+            // allow it when the REST of the code is a real implementation.
+            const restLines = raw.split('\n').filter(l => !l.includes(expectedLines[0]));
+            const rest = this._stripCommentsAndStrings(restLines.join('\n'));
+            const restLen = rest.replace(/\s+/g, '').length;
+            const hasRealLogic = restLen >= 40 &&
+              /(function\b|=>|\bfor\b|\bwhile\b|\bif\b|\bclass\b|\breturn\b|\b(const|let)\b)/.test(rest);
+            isEchoCheat = !hasRealLogic;
+          }
+          if (isEchoCheat) {
+            this._lastRejectReason = 'Your submission just prints the expected output as a literal instead of computing it — write the real solution.';
+            return false;
+          }
         }
         return true;
       }
