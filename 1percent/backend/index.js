@@ -67,6 +67,7 @@ const mcpOAuthRoutes = require('./routes/mcpOAuthRoutes');
 const testimonialRoutes = require('./routes/testimonialRoutes');
 const { adminTestimonialRoutes } = require('./routes/testimonialRoutes');
 const { mentorRoutes, adminMentorRoutes } = require('./routes/mentorRoutes');
+const { roboticsClubRouter, roboticsClubAdminRouter } = require('./controllers/roboticsClubController');
 
 // Middlewares
 const { requestLogger } = require('./middlewares/requestLogger');
@@ -409,6 +410,8 @@ app.use('/api/mentor', mentorRoutes);               // mentor: learner progress 
 app.use('/api/admin/mentor', adminMentorRoutes);   // admin: roles, assignments, weekly share
 app.use('/api/logs', logRoutes);
 app.use('/api/admin/logs', adminLogRoutes);
+app.use('/api/robotics-club', roboticsClubRouter);            // student: schools, join, me
+app.use('/api/robotics-club/admin', roboticsClubAdminRouter); // admin: members, notify
 app.use('/api/docs', docsRoutes);
 app.use('/api/mcp', studentMcpTokenRoutes);
 
@@ -508,6 +511,7 @@ const htmlRoutes = {
   '/contact': 'contact.html',
   '/onboarding': 'onboarding.html',
   '/mentors': 'mentors.html',
+  '/robotics-club': 'robotics-club.html',
 };
 
 // Learn subdomain routes — same pages, no /learn prefix
@@ -540,6 +544,7 @@ const learnSubdomainRoutes = {
   '/contact': 'contact.html',
   '/onboarding': 'onboarding.html',
   '/mentors': 'mentors.html',
+  '/robotics-club': 'robotics-club.html',
 };
 
 /* ============================================================

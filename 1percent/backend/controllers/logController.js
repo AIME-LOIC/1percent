@@ -92,6 +92,62 @@ class LogController {
     }
   }
 
+  /**
+   * POST /api/logs/bug
+   * User-submitted bug report from the "Report a Bug" UI. Filed as a
+   * client-reported error log + a medium-severity admin alert so it
+   * surfaces in the admin panel immediately (not buried in errors).
+   */
+  async reportBug(req, res) {
+    try {
+      const { description, page = null, expected = null, actual = null } = req.body || {};
+
+      if (!description || typeof description !== 'string' || description.trim().length < 5) {
+        return res.status(400).json({ error: 'Please describe the bug (at least a few words).' });
+      }
+
+      const userEmail = req.user?.email || null;
+      const rows = [
+        `What happened: ${description.trim()}`,
+        expected ? `Expected: ${expected}` : null,
+        actual ? `Actual result: ${actual}` : null,
+        `Page: ${page || req.get('referer') || req.headers.origin || 'unknown'}`
+      ].filter(Boolean);
+
+      const message = `🐞 Bug report: ${description.trim().slice(0, 300)}`;
+
+      const [row] = await Promise.all([
+        logService.logError({
+          level: 'warning',
+          source: 'frontend',
+          message,
+          path: page || req.path,
+          url: req.get('referer') || null,
+          userAgent: req.headers['user-agent'] || null,
+          ipAddress: logService.clientIp(req),
+          userId: req.user?.id || null,
+          userEmail,
+          context: { expected, actual, page },
+          isClientReported: true
+        }),
+        logService.createAdminAlert({
+          title: `🐞 Bug report${userEmail ? ` — ${logService.maskEmail(userEmail)}` : ''}`,
+          message: rows.join('\n'),
+          type: 'warning',
+          severity: 'medium',
+          link: page || null,
+          source: 'user-report',
+          metadata: { userId: req.user?.id || null, page }
+        })
+      ]);
+
+      res.status(201).json({ success: true, id: row?.id || null });
+    } catch (err) {
+      console.error('[LOGS] reportBug error:', err.message);
+      res.status(500).json({ error: 'Failed to submit bug report. Please try again.' });
+    }
+  }
+
   /* ==========================================================
      ADMIN — ERRORS
      ========================================================== */

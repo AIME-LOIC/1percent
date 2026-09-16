@@ -23,6 +23,14 @@ router.post(
   (req, res, next) => logController.reportClientError(req, res, next)
 );
 
+// A user files a bug report from the "Report a Bug" UI.
+router.post(
+  '/bug',
+  optionalAuth,
+  sanitizeStrings(8000),
+  (req, res, next) => logController.reportBug(req, res, next)
+);
+
 // A client reports a notable event / activity.
 router.post(
   '/event',

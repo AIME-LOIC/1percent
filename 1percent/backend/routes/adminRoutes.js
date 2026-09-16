@@ -6,6 +6,7 @@
 
 const { Router } = require('express');
 const adminController = require('../controllers/adminController');
+const analyticsController = require('../controllers/analyticsController');
 const { authenticate, requireRole } = require('../middlewares/auth');
 const { sanitizeStrings } = require('../middlewares/validate');
 
@@ -13,6 +14,9 @@ const router = Router();
 
 // All admin routes require auth + admin role
 router.use(authenticate, requireRole('admin'));
+
+// Analytics (dashboard charts)
+router.get('/analytics', (req, res, next) => analyticsController.getOverview(req, res, next));
 
 // Courses
 router.get('/courses', (req, res, next) => adminController.getAllCourses(req, res, next));

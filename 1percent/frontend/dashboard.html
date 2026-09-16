@@ -177,11 +177,27 @@
 
         <div class="dash-lb-section">
           <div class="dash-lb-section-head">
-            <span>Weekly Goal</span>
+            <span>This Week's Goal</span>
             <strong id="weekly-goal-progress">0/6</strong>
           </div>
           <div class="dash-weekdays" id="weekly-goal-days"></div>
           <div class="dash-goal-bar"><span id="weekly-goal-fill"></span></div>
+          <div id="goal-encouragement" style="font-size:11px;color:var(--text-muted);margin-top:8px;text-align:center;"></div>
+        </div>
+
+        <div class="dash-lb-section">
+          <div class="dash-lb-section-head"><span>Last 14 Days</span></div>
+          <div id="dash-activity-chart" style="min-height:70px;"></div>
+        </div>
+
+        <div class="dash-lb-section" id="dash-club-promo" style="display:none;">
+          <a href="/robotics-club" style="display:block;text-decoration:none;">
+            <div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1px solid #a7f3d0;border-radius:12px;padding:14px;transition:transform .15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+              <div style="font-size:22px;line-height:1;">🤖</div>
+              <div style="font-weight:800;font-size:13px;color:#065f46;margin-top:6px;">Join the Robotics Club!</div>
+              <div style="font-size:11px;color:#047857;margin-top:3px;line-height:1.5;">Build robots with students across Rwanda. Pick your school →</div>
+            </div>
+          </a>
         </div>
 
         <div class="dash-lb-footer" id="dash-lb-footer"></div>

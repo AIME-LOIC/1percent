@@ -220,6 +220,13 @@ class AuthController {
    */
   async getMe(req, res) {
     try {
+      // Fire-and-forget daily check-in: every authenticated /api/auth/me
+      // call (dashboard, settings, nav…) counts the user as active today.
+      // Idempotent per calendar day; never blocks or fails the request.
+      try {
+        require('../services/streakService').checkIn(req.user.id).catch(() => {});
+      } catch { /* service unavailable — ignore */ }
+
       const profile = await authService.getProfile(req.user.id);
       res.json({ success: true, user: profile });
     } catch (err) {

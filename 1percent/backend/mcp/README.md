@@ -81,6 +81,23 @@ If claude.ai ever says *"Automatic client registration isn't supported"*, the de
 > is replaced). Revoking disconnects Claude immediately. Tokens can only be
 > generated for one's own account (JWT-authenticated endpoints).
 
+### How to tell you're actually connected
+
+After clicking **Approve** on the consent page you're returned to
+Settings, where a toast confirms it — **"Claude is connected to your
+account!"** — and the status pill flips to **Connected**. That toast is
+not cosmetic: it only appears after Settings exchanged the one-time
+code at `/mcp/oauth/token`, which is what creates the server-side
+connection (hashed bearer tokens bound to your user). If you reached
+Settings and saw **no toast and the pill still says "Not connected"**, the
+exchange failed (e.g. the code sat longer than 10 minutes, or the PKCE
+verifier was lost by a different-browser round-trip) — just click
+**Connect to Claude** again; the old code is single-use and burns itself.
+
+You can also verify independently in claude.ai: open a chat → tools menu
+→ **1% Learn** → ask *"What should I work on next?"* — a real answer with
+your courses proves the bearer token works end-to-end.
+
 ## Tools
 
 | Tool | What it does |

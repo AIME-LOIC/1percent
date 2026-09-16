@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Join the Robotics Club — 1percent Rwanda</title>
+<meta name="description" content="Join the 1percent Rwanda Robotics Club — pick your school and start building robots with students across Rwanda.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+<script src="/js/icons.js" defer></script>
+<script src="/js/session.js" defer></script>
+<script src="/js/nav.js" defer></script>
+<script src="/js/login-popup.js" defer></script>
+<style>
+:root{--green:#0d6e3f;--green-dark:#0a5c34;--text:#111827;--muted:#6b7280;--border:#e5e7eb;--surface:#fff;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:
+  radial-gradient(1000px 500px at 85% -10%, rgba(13,110,63,.10), transparent 60%),
+  radial-gradient(800px 400px at 0% 110%, rgba(37,99,235,.08), transparent 60%),
+  #f8fafc;color:var(--text);min-height:100vh;}
+.wrap{max-width:760px;margin:0 auto;padding:40px 20px 80px;}
+.hero{text-align:center;margin-bottom:32px;}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:100px;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:16px;}
+.hero h1{font-size:clamp(28px,5vw,42px);font-weight:900;letter-spacing:-1.5px;line-height:1.1;}
+.hero h1 .accent{color:var(--green);}
+.hero p{color:var(--muted);font-size:15px;margin-top:12px;max-width:520px;margin-left:auto;margin-right:auto;line-height:1.6;}
+.robot{font-size:64px;line-height:1;margin-bottom:12px;display:inline-block;animation:bob 3s ease-in-out infinite;}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;box-shadow:0 8px 30px rgba(17,24,39,.06);}
+.card h2{font-size:18px;font-weight:800;margin-bottom:4px;}
+.card .sub{font-size:13px;color:var(--muted);margin-bottom:20px;}
+label{display:block;font-size:13px;font-weight:700;margin-bottom:8px;}
+select,input[type=text]{width:100%;padding:13px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;font-family:inherit;background:#fff;outline:none;transition:border .15s, box-shadow .15s;}
+select:focus,input[type=text]:focus{border-color:var(--green);box-shadow:0 0 0 4px rgba(13,110,63,.10);}
+.schools{display:grid;gap:10px;margin-bottom:18px;}
+.school-option{display:flex;align-items:center;gap:12px;padding:14px 16px;border:1.5px solid var(--border);border-radius:14px;cursor:pointer;transition:all .15s;background:#fff;}
+.school-option:hover{border-color:#a7f3d0;background:#f6fef9;}
+.school-option input{accent-color:var(--green);width:18px;height:18px;flex-shrink:0;}
+.school-option.selected{border-color:var(--green);background:#ecfdf5;box-shadow:0 0 0 3px rgba(13,110,63,.10);}
+.school-option .school-icon{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#d1fae5,#a7f3d0);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.school-option b{font-size:14px;display:block;}
+.school-option span.district{font-size:12px;color:var(--muted);}
+.grade-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:15px 20px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s;margin-top:20px;}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(13,110,63,.30);}
+.btn:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none;}
+.status{text-align:center;font-size:13px;margin-top:12px;min-height:18px;font-weight:600;}
+.status.ok{color:#059669;}.status.err{color:#dc2626;}
+.perks{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:24px;}
+.perk{background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center;}
+.perk .ic{font-size:24px;margin-bottom:6px;}
+.perk b{font-size:12px;display:block;}
+.perk span{font-size:11px;color:var(--muted);}
+.success-box{text-align:center;padding:20px 0 6px;display:none;}
+.success-box .big{font-size:52px;margin-bottom:10px;}
+.success-box h2{font-size:22px;margin-bottom:8px;}
+.success-box p{color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:18px;}
+.login-nudge{margin-top:18px;padding:14px 16px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;font-size:13px;color:#92400e;display:none;line-height:1.6;}
+.login-nudge a{color:#92400e;font-weight:700;}
+.back-link{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:13px;font-weight:600;text-decoration:none;margin-bottom:18px;}
+.back-link:hover{color:var(--text);}
+@media(max-width:560px){.grade-row{grid-template-columns:1fr;}.perks{grid-template-columns:1fr 1fr;}.card{padding:20px;}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <a class="back-link" href="/">← Back to 1percent</a>
+
+  <div class="hero">
+    <span class="robot">🤖</span>
+    <div class="hero-badge">Robotics Club · Free to join</div>
+    <h1>Build robots with <span class="accent">students across Rwanda</span></h1>
+    <p>Pick the school you study at and you're in. Meetups, build sessions, competitions — no experience needed.</p>
+  </div>
+
+  <div class="card">
+    <div id="join-form-view">
+      <h2>Quick join</h2>
+      <p class="sub">Two taps and you're a member.</p>
+
+      <label>Where do you study?</label>
+      <div class="schools" id="schools-list">
+        <div class="school-option skeleton-opt" style="opacity:.5;">🏫 Loading schools…</div>
+      </div>
+
+      <div class="grade-row">
+        <div>
+          <label for="grade-input" style="font-size:12px;">Grade / class <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
+          <input type="text" id="grade-input" placeholder="e.g. S5, Senior 6">
+        </div>
+        <div>
+          <label for="full-name-input" style="font-size:12px;">Full name <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
+          <input type="text" id="full-name-input" placeholder="We'll use your account name if empty">
+        </div>
+      </div>
+
+      <button class="btn" id="join-btn" disabled>Join the Robotics Club →</button>
+      <div class="status" id="join-status"></div>
+
+      <div class="login-nudge" id="login-nudge">
+        ⚡ You need a free account to join. <a href="#" id="nudge-login-link">Log in or create one</a> — it takes 30 seconds, then come right back.
+      </div>
+    </div>
+
+    <div class="success-box" id="success-view">
+      <div class="big">🎉</div>
+      <h2>You're in!</h2>
+      <p id="success-copy">Welcome to the Robotics Club. Your club admin will approve your membership shortly — watch your dashboard notifications for meetup announcements.</p>
+      <a class="btn" style="text-decoration:none;" href="/dashboard">Go to my dashboard</a>
+    </div>
+  </div>
+
+  <div class="perks">
+    <div class="perk"><div class="ic">🛠️</div><b>Hands-on builds</b><span>Arduino, sensors, motors</span></div>
+    <div class="perk"><div class="ic">🏆</div><b>Competitions</b><span>Represent your school</span></div>
+    <div class="perk"><div class="ic">🤝</div><b>Mentors</b><span>Guidance from engineers</span></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  let schools=[],selectedSchool=null,isLoggedIn=false;
+
+  function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+  async function init(){
+    // Session (shared persistent session when available)
+    try{
+      if(typeof OPSession!=='undefined'){
+        const user=await OPSession.getUser();
+        isLoggedIn=!!user;
+      } else if(typeof supabase!=='undefined'){
+        const res=await fetch('/api/config');const cfg=await res.json();
+        if(cfg.supabaseUrl&&cfg.supabaseAnonKey){
+          const client=supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey);
+          const{data:{session}}=await client.auth.getSession();
+          isLoggedIn=!!session?.user;
+          if(isLoggedIn&&session.user.user_metadata?.full_name&&!$('full-name-input').value){
+            $('full-name-input').value=session.user.user_metadata.full_name;
+          }
+        }
+      }
+    }catch{ isLoggedIn=false; }
+    if(!isLoggedIn)$('login-nudge').style.display='block';
+
+    // Shared nav for logged-in users
+    if(isLoggedIn&&typeof Nav!=='undefined'){
+      try{
+        Nav.supabase=(typeof OPSession!=='undefined')?await OPSession.getClient():null;
+        Nav.user=Nav.supabase?(await Nav.supabase.auth.getSession()).data.session?.user:null;
+        if(Nav.user)Nav.init();
+      }catch{}
+    }
+
+    await loadSchools();
+  }
+
+  async function loadSchools(){
+    try{
+      const res=await fetch('/api/robotics-club/schools');
+      const json=await res.json();
+      schools=json.schools||[];
+    }catch{ schools=[]; }
+
+    const list=$('schools-list');
+    if(!schools.length){
+      list.innerHTML='<div style="padding:14px;color:#6b7280;font-size:13px;">No schools listed yet — check back soon!</div>';
+      return;
+    }
+    list.innerHTML=schools.map(s=>`
+      <label class="school-option" data-id="${esc(s.id)}">
+        <input type="radio" name="school" value="${esc(s.id)}">
+        <span class="school-icon">🏫</span>
+        <span><b>${esc(s.name)}</b><span class="district">${esc(s.district||'Rwanda')}</span></span>
+      </label>`).join('');
+
+    list.querySelectorAll('.school-option').forEach(opt=>{
+      opt.addEventListener('click',()=>{
+        list.querySelectorAll('.school-option').forEach(o=>o.classList.remove('selected'));
+        opt.classList.add('selected');
+        opt.querySelector('input').checked=true;
+        selectedSchool=opt.dataset.id;
+        $('join-btn').disabled=false;
+        $('join-status').textContent='';
+        $('join-status').className='status';
+      });
+    });
+  }
+
+  $('join-btn').addEventListener('click',async ()=>{
+    const status=$('join-status');
+    if(!selectedSchool){status.className='status err';status.textContent='Please select your school first.';return;}
+    if(!isLoggedIn){
+      status.className='status err';
+      status.textContent='Please log in first to join the club.';
+      $('login-nudge').style.display='block';
+      if(window.LoginPopup)window.LoginPopup.show('robotics-club');
+      return;
+    }
+
+    const btn=$('join-btn');
+    btn.disabled=true;btn.textContent='Joining…';
+    status.className='status';status.textContent='';
+
+    try{
+      let token=null;
+      if(typeof OPSession!=='undefined'){
+        const client=await OPSession.getClient();
+        token=(await client.auth.getSession()).data.session?.access_token;
+      }
+      if(!token&&typeof supabase!=='undefined'){
+        const res=await fetch('/api/config');const cfg=await res.json();
+        const client=supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey);
+        token=(await client.auth.getSession()).data.session?.access_token;
+      }
+      if(!token)throw new Error('Please log in first.');
+
+      const school=schools.find(s=>s.id===selectedSchool);
+      const res=await fetch('/api/robotics-club/join',{
+        method:'POST',
+        headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},
+        body:JSON.stringify({school_id:selectedSchool,grade:$('grade-input').value.trim()})
+      });
+      const json=await res.json();
+
+      if(json.success){
+        // Save name if they typed one (best-effort, never blocks success)
+        const name=$('full-name-input').value.trim();
+        if(name){ try{ await fetch('/api/auth/profile',{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({full_name:name})}); }catch{} }
+
+        $('join-form-view').style.display='none';
+        $('success-view').style.display='block';
+        $('success-copy').textContent=`Welcome to the Robotics Club${school?` — ${school.name}`:''}! Your club admin will approve your membership shortly. Watch your dashboard notifications for meetup announcements.`;
+      } else if(res.status===409){
+        // Already a member — treat as success with different copy
+        $('join-form-view').style.display='none';
+        $('success-view').style.display='block';
+        $('success-copy').textContent='You are already a member of the Robotics Club. See you at the next build session! 🤖';
+      } else {
+        throw new Error(json.error||'Failed to join.');
+      }
+    }catch(err){
+      status.className='status err';
+      status.textContent=err.message||'Something went wrong. Please try again.';
+      btn.disabled=false;btn.textContent='Join the Robotics Club →';
+    }
+  });
+
+  $('nudge-login-link').addEventListener('click',e=>{
+    e.preventDefault();
+    if(window.LoginPopup)window.LoginPopup.show('robotics-club');
+  });
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
+  else init();
+})();
+</script>
+</body>
+</html>

@@ -124,6 +124,61 @@ class StreakService {
   }
 
   /**
+   * Called on ANY authenticated app visit (login, dashboard load, etc.).
+   * Fixes the "I use the app every day but my streak shows 0" bug:
+   * previously the streak only moved when a lesson was COMPLETED, so
+   * reading, revisiting and even passing challenges never counted.
+   *
+   * Idempotent per Rwanda-calendar-day: repeat calls on the same day are
+   * no-ops, so it's safe to fire on every request. Coins are awarded only
+   * for showing up on a NEW day (+2) — lesson completion keeps its own
+   * +4 via updateStreak, which no-ops once checkIn already ran today.
+   */
+  async checkIn(userId) {
+    try {
+      const today = this._today();
+
+      const { data: profile, error } = await adminClient
+        .from('profiles')
+        .select('streak_count, last_active_date')
+        .eq('id', userId)
+        .single();
+
+      if (error || !profile) return;
+
+      const lastActive = this._normalizeDate(profile.last_active_date);
+
+      // Already checked in today — nothing to do.
+      if (lastActive === today) return;
+
+      const diff = lastActive ? this._dayDiff(lastActive, today) : null;
+      const coinsService = require('./coinsService');
+
+      if (this._isAlive(diff)) {
+        // Continuing (or starting) a streak — same rule as everywhere else.
+        const newStreak = (profile.streak_count || 0) + 1;
+        await adminClient.from('profiles')
+          .update({ streak_count: newStreak, last_active_date: today })
+          .eq('id', userId);
+
+        await coinsService.addCoins(userId, 2, `📅 Daily check-in — day ${newStreak}`).catch(() => {});
+      } else {
+        // Gap was too long — restart the streak at 1. No penalty here:
+        // penalizeMissedStreaks owns coin punishment, checkIn is the
+        // welcoming path back.
+        await adminClient.from('profiles')
+          .update({ streak_count: 1, last_active_date: today })
+          .eq('id', userId);
+
+        await coinsService.addCoins(userId, 2, '📅 Daily check-in — day 1').catch(() => {});
+      }
+    } catch (e) {
+      // A check-in must never break the request it rides on.
+      console.warn('[STREAK] checkIn failed:', e.message);
+    }
+  }
+
+  /**
    * Called when user completes a lesson.
    * - If already active today: no-op
    * - If active today or within the grace window: increment streak, award 4 coins

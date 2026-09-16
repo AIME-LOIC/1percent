@@ -4,10 +4,70 @@ const { adminClient } = require('../config/database');
 class StreakController {
   async getStreak(req, res) {
     try {
+      // Any dashboard/app load that fetches the streak counts as a visit:
+      // showing up is the streak, so check the user in before reading it.
+      // checkIn is idempotent per Rwanda-calendar-day and never throws.
+      streakService.checkIn(req.user.id).catch(() => {});
+
       const streak = await streakService.getStreak(req.user.id);
       res.json({ success: true, streak });
     } catch (err) {
       res.json({ success: true, streak: { streak: 0, last_active: null, is_active_today: false } });
+    }
+  }
+
+  /**
+   * GET /api/streak/history?days=14
+   * Daily activity buckets (lesson completions + challenge submissions)
+   * for the user — powers the dashboard activity chart and the weekly
+   * goal "active day" cells. Rwanda-local dates, oldest first.
+   */
+  async getHistory(req, res) {
+    try {
+      const days = Math.min(Math.max(parseInt(req.query.days) || 14, 1), 60);
+
+      const fmt = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Africa/Kigali',
+        year: 'numeric', month: '2-digit', day: '2-digit'
+      });
+      const todayStr = fmt.format(new Date());
+      const base = new Date(todayStr + 'T00:00:00Z').getTime();
+      const keys = [];
+      for (let i = days - 1; i >= 0; i--) {
+        keys.push(new Date(base - i * 86400000).toISOString().split('T')[0]);
+      }
+      const sinceIso = new Date(base - (days - 1) * 86400000).toISOString();
+
+      const [completions, submissions] = await Promise.all([
+        adminClient
+          .from('lesson_progress')
+          .select('completed_at')
+          .eq('user_id', req.user.id)
+          .eq('completed', true)
+          .gte('completed_at', sinceIso),
+        adminClient
+          .from('challenge_submissions')
+          .select('submitted_at')
+          .eq('user_id', req.user.id)
+          .gte('submitted_at', sinceIso)
+      ]);
+
+      const counts = {};
+      const bump = (value) => {
+        if (!value) return;
+        const k = fmt.format(new Date(value));
+        counts[k] = (counts[k] || 0) + 1;
+      };
+      (completions.data || []).forEach(r => bump(r.completed_at));
+      (submissions.data || []).forEach(r => bump(r.submitted_at));
+
+      res.json({
+        success: true,
+        days: keys.map(d => ({ date: d, count: counts[d] || 0 }))
+      });
+    } catch (err) {
+      console.error('[STREAK] history error:', err.message);
+      res.json({ success: true, days: [] });
     }
   }
 

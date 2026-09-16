@@ -289,6 +289,10 @@ tr.log-fatal:hover td{background:#feeeee !important;}
         <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
         Notifications
       </a>
+      <a class="sidebar-item" data-panel="robotics-club" onclick="showPanel('robotics-club')">
+        <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></span>
+        Robotics Club <span class="badge badge-green" id="club-member-count" style="display:none;margin-left:auto;"></span>
+      </a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-label">System</div>
@@ -321,12 +325,49 @@ tr.log-fatal:hover td{background:#feeeee !important;}
     <!-- Dashboard Panel -->
     <div class="panel active" id="panel-dashboard">
       <h1>Dashboard</h1>
-      <p class="subtitle">Overview of your platform.</p>
+      <p class="subtitle">Live overview of your platform.</p>
       <div class="stats-row" id="stats-row">
-        <div class="stat-card"><div class="stat-label">Courses</div><div class="stat-value" id="stat-courses">0</div></div>
+        <div class="stat-card"><div class="stat-label">Students</div><div class="stat-value" id="stat-students">0</div><div class="stat-sub" id="stat-users-sub"></div></div>
+        <div class="stat-card"><div class="stat-label">Courses</div><div class="stat-value" id="stat-courses">0</div><div class="stat-sub" id="stat-courses-sub"></div></div>
         <div class="stat-card"><div class="stat-label">Lessons</div><div class="stat-value" id="stat-lessons">0</div></div>
-        <div class="stat-card"><div class="stat-label">Students</div><div class="stat-value" id="stat-students">0</div></div>
         <div class="stat-card"><div class="stat-label">Challenges</div><div class="stat-value" id="stat-challenges">0</div></div>
+        <div class="stat-card"><div class="stat-label">Enrollments</div><div class="stat-value" id="stat-enrollments">0</div></div>
+        <div class="stat-card"><div class="stat-label">Certificates</div><div class="stat-value" id="stat-certificates">0</div></div>
+        <div class="stat-card"><div class="stat-label">Active Today</div><div class="stat-value" id="stat-active-today">0</div></div>
+        <div class="stat-card"><div class="stat-label">Submissions</div><div class="stat-value" id="stat-submissions">0</div></div>
+      </div>
+
+      <!-- Charts -->
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;margin-bottom:24px;" id="charts-grid">
+        <div class="card" style="margin-bottom:0;">
+          <div class="card-header">
+            <h2>Activity — last 14 days</h2>
+            <div style="display:flex;gap:14px;font-size:11px;font-weight:600;color:var(--admin-muted);">
+              <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:var(--admin-green);display:inline-block;"></span>Signups</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:var(--admin-blue);display:inline-block;"></span>Lesson completions</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:var(--admin-yellow);display:inline-block;"></span>Submissions</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="chart-activity"></div>
+            <div style="display:flex;gap:24px;margin-top:14px;font-size:12px;color:var(--admin-muted);">
+              <span>This week lessons: <b id="chart-week-now" style="color:var(--admin-text);">0</b></span>
+              <span>Last week: <b id="chart-week-prev" style="color:var(--admin-text);">0</b></span>
+              <span id="chart-week-delta"></span>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:0;">
+          <div class="card-header"><h2>Course levels</h2></div>
+          <div class="card-body">
+            <div id="chart-levels"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="max-width:720px;">
+        <div class="card-header"><h2>Top courses by enrollment</h2></div>
+        <div class="card-body" id="chart-top-courses"></div>
       </div>
 
       <!-- Database Diagnostics -->
@@ -638,6 +679,85 @@ tr.log-fatal:hover td{background:#feeeee !important;}
         </table>
       </div>
     </div>
+
+    <!-- Robotics Club Panel -->
+    <div class="panel" id="panel-robotics-club">
+      <h1>Robotics Club</h1>
+      <p class="subtitle">Members who joined from the quick-join page, by school.</p>
+
+      <div class="stats-row" id="club-stats-row">
+        <div class="stat-card"><div class="stat-label">Total Members</div><div class="stat-value" id="club-total">0</div></div>
+        <div class="stat-card"><div class="stat-label">Schools</div><div class="stat-value" id="club-schools">0</div></div>
+      </div>
+
+      <!-- Send club notification -->
+      <div class="card">
+        <div class="card-header"><h2>📣 Send Club Notification</h2></div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>To</label>
+              <select id="club-notify-school">
+                <option value="">All schools — every club member</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Title</label>
+              <input id="club-notify-title" placeholder="e.g. Build session this Saturday!">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Message</label>
+            <textarea id="club-notify-message" rows="3" placeholder="Meeting details, what to bring…"></textarea>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn-admin primary" onclick="sendClubNotification()">Send to Members</button>
+            <span id="club-notify-status" style="font-size:12px;color:var(--admin-muted);"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Members table -->
+      <div class="card">
+        <div class="card-header">
+          <h2>Club Members</h2>
+          <div style="display:flex;gap:8px;">
+            <select id="club-school-filter" onchange="renderClubMembers()" style="padding:6px 10px;border:1px solid var(--admin-border);border-radius:6px;background:#fff;font-size:12px;font-family:'Inter',sans-serif;">
+              <option value="">All schools</option>
+            </select>
+            <button class="btn-admin outline" onclick="loadClubPanel()">Refresh</button>
+          </div>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>School</th>
+              <th>Grade</th>
+              <th>Status</th>
+              <th>Joined</th>
+              <th style="text-align:right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="club-members-tbody">
+            <tr><td colspan="6" class="empty">Loading members...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Add school -->
+      <div class="card">
+        <div class="card-header"><h2>Schools</h2></div>
+        <div class="card-body">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <input id="club-new-school" placeholder="New school name" style="flex:1;min-width:200px;padding:9px 12px;border:1px solid var(--admin-border);border-radius:6px;font-size:13px;font-family:'Inter',sans-serif;">
+            <input id="club-new-school-district" placeholder="District (optional)" style="width:180px;padding:9px 12px;border:1px solid var(--admin-border);border-radius:6px;font-size:13px;font-family:'Inter',sans-serif;">
+            <button class="btn-admin primary" onclick="addClubSchool()">Add School</button>
+          </div>
+          <div id="club-schools-list" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;"></div>
+        </div>
+      </div>
+    </div>
   </main>
 </div>
 
@@ -788,6 +908,273 @@ async function loadAll(){
   const lessonsP=coursesP.then(()=>countLessonsParallel()).catch(()=>0);
   await Promise.allSettled([coursesP,enrollP,challP,lessonsP]);
   if(!allCourses.length||!lastEnrollments.length)loadDiagnostics();
+  loadAnalytics(); // charts + extended stats
+}
+
+/* ════════════════════════════════════════════════
+   ANALYTICS — real charts for the dashboard panel
+   ════════════════════════════════════════════════ */
+async function loadAnalytics(){
+  try{
+    const res=await apiFetch('/api/admin/analytics');
+    if(!res.ok)return;
+    const j=await res.json();
+    if(!j.success)return;
+
+    const t=j.totals||{};
+    setStat('stat-students',t.students??0);
+    setStat('stat-courses',t.courses??0);
+    setStat('stat-lessons',t.lessons??0);
+    setStat('stat-challenges',t.challenges??0);
+    setStat('stat-enrollments',t.enrollments??0);
+    setStat('stat-certificates',t.certificates??0);
+    setStat('stat-active-today',t.active_today??0);
+    setStat('stat-submissions',t.submissions??0);
+    const usersSub=document.getElementById('stat-users-sub');
+    if(usersSub)usersSub.textContent=t.mentors?`${t.mentors} mentor${t.mentors>1?'s':''}`:'';
+    const coursesSub=document.getElementById('stat-courses-sub');
+    if(coursesSub)coursesSub.textContent=`${t.published_courses??0} published`;
+
+    renderActivityChart(j.charts||{});
+    renderLevelsChart((j.charts||{}).course_levels||{beginner:0,intermediate:0,advanced:0});
+    renderTopCourses((j.charts||{}).top_courses||[]);
+
+    document.getElementById('chart-week-now').textContent=j.week_completions??0;
+    document.getElementById('chart-week-prev').textContent=j.prev_week_completions??0;
+    const delta=document.getElementById('chart-week-delta');
+    const prev=j.prev_week_completions??0,now=j.week_completions??0;
+    if(prev>0){
+      const pct=Math.round(((now-prev)/prev)*100);
+      delta.innerHTML=pct>=0?`<b style="color:#059669;">▲ ${pct}%</b> vs last week`:`<b style="color:#dc2626;">▼ ${Math.abs(pct)}%</b> vs last week`;
+    } else delta.textContent='';
+  }catch(e){console.error('[ADMIN] Analytics error:',e);}
+}
+
+function setStat(id,val){
+  const el=document.getElementById(id);
+  if(!el)return;
+  const target=Number(val)||0;
+  if(el._anim)cancelAnimationFrame(el._anim);
+  const start=Number(el.textContent)||0;
+  const t0=performance.now(),DUR=600;
+  const tick=t=>{
+    const p=Math.min(1,(t-t0)/DUR),e=1-Math.pow(1-p,3);
+    el.textContent=Math.round(start+(target-start)*e).toLocaleString();
+    if(p<1)el._anim=requestAnimationFrame(tick);else el._anim=null;
+  };
+  el._anim=requestAnimationFrame(tick);
+}
+
+/* ── SVG line/area chart — 3 series, zero dependencies ── */
+function renderActivityChart(charts){
+  const el=document.getElementById('chart-activity');
+  if(!el)return;
+  const series=[
+    {data:(charts.signups||[]).map(d=>d.count),color:'#059669',fill:'rgba(5,150,105,.12)'},
+    {data:(charts.completions||[]).map(d=>d.count),color:'#2563eb',fill:'rgba(37,99,235,.10)'},
+    {data:(charts.submissions||[]).map(d=>d.count),color:'#d97706',fill:'rgba(217,119,6,.10)'}
+  ];
+  const dates=(charts.signups||[]).map(d=>d.date);
+  const W=560,H=200,P=28;
+  const max=Math.max(1,...series.flatMap(s=>s.data));
+  const n=dates.length||1;
+  const x=i=>P+(i*(W-2*P))/Math.max(1,n-1);
+  const y=v=>H-P-(v*(H-2*P))/max;
+
+  let grid='';
+  for(let g=0;g<=3;g++){
+    const gy=P+((H-2*P)/3)*g;
+    const val=Math.round(max*(1-g/3));
+    grid+=`<line x1="${P}" y1="${gy}" x2="${W-P}" y2="${gy}" stroke="#f3f4f6" stroke-width="1"/><text x="${P-6}" y="${gy+3}" font-size="9" fill="#9ca3af" text-anchor="end">${val}</text>`;
+  }
+  let labels='';
+  dates.forEach((d,i)=>{
+    if(i%2===0||i===n-1){
+      const dt=new Date(d+'T00:00:00Z');
+      labels+=`<text x="${x(i)}" y="${H-8}" font-size="9" fill="#9ca3af" text-anchor="middle">${dt.getUTCDate()}/${dt.getUTCMonth()+1}</text>`;
+    }
+  });
+
+  let paths='';
+  series.forEach(s=>{
+    if(!s.data.length)return;
+    const pts=s.data.map((v,i)=>`${x(i)},${y(v)}`);
+    paths+=`<path d="M${pts.join(' L')} L${x(s.data.length-1)},${H-P} L${x(0)},${H-P} Z" fill="${s.fill}"/>`;
+    paths+=`<path d="M${pts.join(' L')}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+    s.data.forEach((v,i)=>{
+      paths+=`<circle cx="${x(i)}" cy="${y(v)}" r="2.5" fill="#fff" stroke="${s.color}" stroke-width="1.5"><title>${(dates[i]||'')}: ${v}</title></circle>`;
+    });
+  });
+
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;" role="img" aria-label="Activity chart">${grid}${labels}${paths}</svg>`;
+}
+
+/* ── Donut chart — course levels ── */
+function renderLevelsChart(levels){
+  const el=document.getElementById('chart-levels');
+  if(!el)return;
+  const data=[
+    {label:'Beginner',value:levels.beginner||0,color:'#059669'},
+    {label:'Intermediate',value:levels.intermediate||0,color:'#2563eb'},
+    {label:'Advanced',value:levels.advanced||0,color:'#d97706'}
+  ];
+  const total=data.reduce((s,d)=>s+d.value,0);
+  if(!total){el.innerHTML='<div class="empty">No courses yet.</div>';return;}
+  const R=54,CENTER=70;
+  let angle=-90,arcs='';
+  data.forEach(d=>{
+    if(!d.value)return;
+    const sweep=(d.value/total)*360;
+    const a0=angle*Math.PI/180,a1=(angle+sweep)*Math.PI/180;
+    const largeArc=sweep>180?1:0;
+    const x0=CENTER+R*Math.cos(a0),y0=CENTER+R*Math.sin(a0);
+    const x1=CENTER+R*Math.cos(a1),y1=CENTER+R*Math.sin(a1);
+    arcs+=`<path d="M${CENTER},${CENTER} L${x0},${y0} A${R},${R} 0 ${largeArc} 1 ${x1},${y1} Z" fill="${d.color}" stroke="#fff" stroke-width="2"><title>${d.label}: ${d.value}</title></path>`;
+    angle+=sweep;
+  });
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;gap:18px;">
+      <svg viewBox="0 0 140 140" style="width:120px;height:120px;flex-shrink:0;" role="img" aria-label="Course levels">${arcs}
+        <text x="${CENTER}" y="${CENTER-2}" text-anchor="middle" font-size="18" font-weight="800" fill="#111827">${total}</text>
+        <text x="${CENTER}" y="${CENTER+13}" text-anchor="middle" font-size="8" fill="#6b7280">COURSES</text>
+      </svg>
+      <div style="display:grid;gap:8px;">
+        ${data.map(d=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:10px;height:10px;border-radius:3px;background:${d.color};display:inline-block;"></span>${d.label}<b style="margin-left:auto;">${d.value}</b></div>`).join('')}
+      </div>
+    </div>`;
+}
+
+/* ── Horizontal bar chart — top courses ── */
+function renderTopCourses(courses){
+  const el=document.getElementById('chart-top-courses');
+  if(!el)return;
+  if(!courses.length){el.innerHTML='<div class="empty">No enrollments yet.</div>';return;}
+  const max=Math.max(...courses.map(c=>c.enrollments),1);
+  const colors=['#0d6e3f','#059669','#10b981','#34d399','#6ee7b7','#a7f3d0'];
+  el.innerHTML=courses.map((c,i)=>`
+    <div style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><b>${escHtml(c.title)}</b><span style="color:var(--admin-muted);">${c.enrollments}</span></div>
+      <div style="height:8px;border-radius:999px;background:#f3f4f6;overflow:hidden;"><div style="height:100%;width:${Math.max(4,(c.enrollments/max)*100)}%;border-radius:999px;background:${colors[i%colors.length]};transition:width .6s ease;"></div></div>
+    </div>`).join('');
+}
+
+/* ════════════════════════════════════════════════
+   ROBOTICS CLUB PANEL
+   ════════════════════════════════════════════════ */
+let clubLoaded=false,clubMembers=[],clubSchoolsList=[];
+
+async function loadClubPanel(force){
+  if(clubLoaded&&!force)return;
+  clubLoaded=true;
+  try{
+    const [statsRes,membersRes]=await Promise.all([
+      apiFetch('/api/robotics-club/admin/stats'),
+      apiFetch('/api/robotics-club/admin/members')
+    ]);
+    const stats=statsRes.ok?await statsRes.json():{};
+    const membersJson=membersRes.ok?await membersRes.json():{};
+
+    clubMembers=membersJson.members||[];
+    clubSchoolsList=(stats.per_school||[]).map(s=>({id:s.id,name:s.name,members:s.members}));
+
+    document.getElementById('club-total').textContent=stats.total_members??0;
+    document.getElementById('club-schools').textContent=stats.total_schools??0;
+
+    const badge=document.getElementById('club-member-count');
+    if(badge){badge.textContent=stats.total_members??0;badge.style.display=(stats.total_members??0)?'':'none';}
+
+    const options=clubSchoolsList.map(s=>`<option value="${escHtml(s.id)}">${escHtml(s.name)} (${s.members})</option>`).join('');
+    const notifySel=document.getElementById('club-notify-school');
+    if(notifySel)notifySel.innerHTML='<option value="">All schools — every club member</option>'+options;
+    const filterSel=document.getElementById('club-school-filter');
+    if(filterSel)filterSel.innerHTML='<option value="">All schools</option>'+options;
+
+    renderClubSchoolChips();
+    renderClubMembers();
+  }catch(e){
+    console.error('[CLUB] Panel load error:',e);
+    const tb=document.getElementById('club-members-tbody');
+    if(tb)tb.innerHTML='<tr><td colspan="6" class="empty">Could not load club data. Run migrations/add_robotics_club.sql.</td></tr>';
+  }
+}
+
+function renderClubSchoolChips(){
+  const el=document.getElementById('club-schools-list');
+  if(!el)return;
+  if(!clubSchoolsList.length){el.innerHTML='<span style="font-size:12px;color:var(--admin-muted);">No schools yet.</span>';return;}
+  el.innerHTML=clubSchoolsList.map(s=>`<span style="padding:6px 12px;border-radius:100px;background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;font-size:12px;font-weight:600;">🏫 ${escHtml(s.name)} · ${s.members}</span>`).join('');
+}
+
+function renderClubMembers(){
+  const tb=document.getElementById('club-members-tbody');
+  if(!tb)return;
+  const filter=document.getElementById('club-school-filter')?.value||'';
+  const rows=filter?clubMembers.filter(m=>String(m.school_id)===filter):clubMembers;
+  if(!rows.length){tb.innerHTML='<tr><td colspan="6" class="empty">No club members yet. Share the join page: <a href="/robotics-club" target="_blank" style="color:var(--admin-green);font-weight:600;">/robotics-club</a></td></tr>';return;}
+  const initials=n=>String(n||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+  const statusBadge=s=>s==='approved'?'<span class="badge badge-green">Approved</span>':s==='rejected'?'<span class="badge badge-red">Rejected</span>':'<span class="badge badge-yellow">Pending</span>';
+  tb.innerHTML=rows.map(m=>`
+    <tr>
+      <td><div style="display:flex;align-items:center;gap:10px;">
+        <span style="width:28px;height:28px;border-radius:50%;background:var(--admin-accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">${initials(m.name)}</span>
+        <div><div style="font-weight:600;">${escHtml(m.name)}</div><div style="font-size:11px;color:var(--admin-muted);">${escHtml(m.email)}</div></div>
+      </div></td>
+      <td>${escHtml(m.school||'—')}</td>
+      <td>${escHtml(m.grade||'—')}</td>
+      <td>${statusBadge(m.status)}</td>
+      <td style="font-size:12px;color:var(--admin-muted);">${m.joined_at?new Date(m.joined_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}):'—'}</td>
+      <td style="text-align:right;white-space:nowrap;">
+        ${m.status!=='approved'?`<button class="btn-admin primary" style="padding:4px 10px;" onclick="setClubMemberStatus('${m.id}','approved')">Approve</button> `:''}
+        ${m.status!=='pending'?`<button class="btn-admin outline" style="padding:4px 10px;" onclick="setClubMemberStatus('${m.id}','pending')">Unapprove</button> `:''}
+        <button class="btn-admin danger" style="padding:4px 10px;" onclick="removeClubMember('${m.id}')">Remove</button>
+      </td>
+    </tr>`).join('');
+}
+
+async function setClubMemberStatus(id,status){
+  try{
+    const res=await apiFetch(`/api/robotics-club/admin/members/${id}/status`,{method:'PUT',body:JSON.stringify({status})});
+    const j=await res.json();
+    if(j.success){toast('Member '+status);const m=clubMembers.find(x=>x.id===id);if(m)m.status=status;renderClubMembers();}
+    else toast(j.error||'Failed','error');
+  }catch{toast('Failed to update member','error');}
+}
+
+async function removeClubMember(id){
+  if(!confirm('Remove this member from the club?'))return;
+  try{
+    const res=await apiFetch(`/api/robotics-club/admin/members/${id}`,{method:'DELETE'});
+    const j=await res.json();
+    if(j.success){toast('Member removed');clubMembers=clubMembers.filter(x=>x.id!==id);renderClubMembers();loadClubPanel(true);}
+    else toast(j.error||'Failed','error');
+  }catch{toast('Failed to remove member','error');}
+}
+
+async function sendClubNotification(){
+  const title=document.getElementById('club-notify-title').value.trim();
+  const message=document.getElementById('club-notify-message').value.trim();
+  const schoolId=document.getElementById('club-notify-school').value;
+  const status=document.getElementById('club-notify-status');
+  if(!title||!message){status.style.color='var(--admin-red)';status.textContent='Title and message are required.';return;}
+  status.style.color='';status.textContent='Sending…';
+  try{
+    const res=await apiFetch('/api/robotics-club/admin/notify',{method:'POST',body:JSON.stringify({school_id:schoolId||null,title,message})});
+    const j=await res.json();
+    if(j.success){status.style.color='var(--admin-green)';status.textContent=`✓ Sent to ${j.count??0} member${(j.count??0)===1?'':'s'}!`;document.getElementById('club-notify-title').value='';document.getElementById('club-notify-message').value='';}
+    else{status.style.color='var(--admin-red)';status.textContent=j.error||'Failed to send.';}
+  }catch{status.style.color='var(--admin-red)';status.textContent='Network error.';}
+}
+
+async function addClubSchool(){
+  const name=document.getElementById('club-new-school').value.trim();
+  const district=document.getElementById('club-new-school-district').value.trim();
+  if(!name){toast('Enter a school name','error');return;}
+  try{
+    const res=await apiFetch('/api/robotics-club/admin/schools',{method:'POST',body:JSON.stringify({name,district})});
+    const j=await res.json();
+    if(j.success){toast('School added');document.getElementById('club-new-school').value='';document.getElementById('club-new-school-district').value='';loadClubPanel(true);}
+    else toast(j.error||'Failed','error');
+  }catch{toast('Failed to add school','error');}
 }
 
 /* ════════════════════════════════════════════════════
@@ -1284,14 +1671,18 @@ document.querySelector('.sidebar')?.addEventListener('click',e=>{if(e.target.clo
 function showPanel(name){
   closeSidebar();
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById(`panel-${name}`).classList.add('active');
+  const panelEl=document.getElementById(`panel-${name}`);
+  if(!panelEl)return;
+  panelEl.classList.add('active');
   document.querySelectorAll('.sidebar-item').forEach(a=>{a.classList.toggle('active',a.dataset.panel===name);});
-  const titles={dashboard:'Dashboard',courses:'Courses',lessons:'Lessons',quizzes:'Quizzes',challenges:'Challenges',aiReviews:'AI Reviews',enrollments:'Enrollments',mentors:'Mentors',logs:'Logs & Errors',notifications:'Notifications',testimonials:'Testimonials'};
+  const titles={dashboard:'Dashboard',courses:'Courses',lessons:'Lessons',quizzes:'Quizzes',challenges:'Challenges',aiReviews:'AI Reviews',enrollments:'Enrollments',mentors:'Mentors',logs:'Logs & Errors',notifications:'Notifications',testimonials:'Testimonials','robotics-club':'Robotics Club'};
   document.getElementById('topbar-section-title').textContent=titles[name]||name;
+  if(name==='dashboard')loadAnalytics();
   if(name==='quizzes')loadQuizzes();
   if(name==='ai-reviews')loadAiReviews();
   if(name==='testimonials')loadTestimonials();
   if(name==='mentors')loadMentors();
+  if(name==='robotics-club')loadClubPanel();
   if(name==='lessons'){const sel=document.getElementById('lesson-course-select');if(sel.options.length>1&&!sel.value){sel.value=sel.options[1].value;}if(sel.value)loadLessons();}
   if(name==='logs')loadLogsPanel();
 }

@@ -235,14 +235,174 @@ const Dashboard = {
       if (!json.success) return;
       const s = json.streak;
       const streakEl = document.getElementById('dash-streak');
-      if (streakEl && s.streak > 0) {
+      if (streakEl) {
+        const prev = Number(streakEl.dataset.prev || 0);
+        const count = s.streak || 0;
+        // Always show the streak badge — 0 with a nudge is more motivating
+        // than hiding it (the old code hid the badge at 0).
         streakEl.style.display = 'inline-flex';
-        streakEl.querySelector('.dash-streak-count').textContent = s.streak;
+        streakEl.querySelector('.dash-streak-count').textContent = count;
+        if (count === 0) {
+          streakEl.title = 'Complete a lesson or just visit tomorrow to start your streak!';
+        } else if (count > prev && prev > 0 && sessionStorage.getItem('dash-streak-celebrated') !== String(count)) {
+          // 🎉 Streak went up since the last visit on this device
+          sessionStorage.setItem('dash-streak-celebrated', String(count));
+          this._celebrate(`🔥 ${count}-day streak! Keep it alive!`);
+        }
+        streakEl.dataset.prev = String(count);
       }
     } catch { /* streak is optional */ }
     // Show upgrade button
     this._renderUpgradeButton();
     this._renderSidebarExtras();
+    this._loadActivityChart();
+    this._loadClubPromo();
+    this._initBugReport();
+  },
+
+  /* 🎉 Confetti burst + toast — the fun bit */
+  _celebrate(message) {
+    try {
+      const colors = ['#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6'];
+      for (let i = 0; i < 26; i++) {
+        const c = document.createElement('span');
+        const size = 6 + Math.random() * 6;
+        c.style.cssText = `position:fixed;z-index:99999;top:-12px;left:${Math.random() * 100}vw;width:${size}px;height:${size * (Math.random() > 0.5 ? 1 : 0.45)}px;background:${colors[i % colors.length]};border-radius:${Math.random() > 0.5 ? '50%' : '2px'};pointer-events:none;opacity:.95;transition:transform 1.8s cubic-bezier(.25,.6,.4,1),opacity 1.8s;`;
+        document.body.appendChild(c);
+        requestAnimationFrame(() => {
+          c.style.transform = `translate(${(Math.random() - 0.5) * 220}px, ${window.innerHeight * 0.75 + Math.random() * 160}px) rotate(${(Math.random() - 0.5) * 540}deg)`;
+          c.style.opacity = '0';
+        });
+        setTimeout(() => c.remove(), 2000);
+      }
+    } catch { /* confetti is cosmetic */ }
+    if (window.NotificationPopup) {
+      window.NotificationPopup.showPopup('🔥 Nice work!', message, 'success');
+    }
+  },
+
+  /* Real activity sparkline — lesson completions per day, last 14 days */
+  async _loadActivityChart() {
+    const el = document.getElementById('dash-activity-chart');
+    if (!el) return;
+    try {
+      const token = (await this.supabase.auth.getSession()).data.session?.access_token;
+      if (!token) { el.innerHTML = '<div class="dash-empty" style="padding:8px;font-size:11px;">Log in to see your activity.</div>'; return; }
+      const res = await fetch('/api/courses/progress/overall', { headers: { Authorization: `Bearer ${token}` } });
+      const json = await res.json();
+      // overall gives course totals only — daily buckets come from completions below.
+      let daily = null;
+      try {
+        const dRes = await fetch('/api/streak/history?days=14', { headers: { Authorization: `Bearer ${token}` } });
+        if (dRes.ok) { const dJson = await dRes.json(); if (dJson.success) daily = dJson.days; }
+      } catch {}
+      if (!daily) {
+        el.innerHTML = '<div class="dash-empty" style="padding:8px;font-size:11px;">Your activity will appear here as you complete lessons.</div>';
+        return;
+      }
+      const max = Math.max(1, ...daily.map(d => d.count));
+      el.innerHTML = `
+        <div style="display:flex;align-items:flex-end;gap:3px;height:70px;">${daily.map(d => {
+          const h = Math.max(6, Math.round((d.count / max) * 60));
+          const hot = d.count > 0;
+          return `<div title="${d.date}: ${d.count} lesson${d.count === 1 ? '' : 's'}" style="flex:1;height:${h}px;border-radius:4px 4px 2px 2px;background:${hot ? 'linear-gradient(180deg,#34d399,#0d6e3f)' : 'var(--surface)'};border:1px solid ${hot ? 'transparent' : 'var(--border)'};transition:height .4s ease;"></div>`;
+        }).join('')}</div>
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-muted);margin-top:4px;"><span>14d ago</span><span>today</span></div>`;
+    } catch {
+      el.innerHTML = '<div class="dash-empty" style="padding:8px;font-size:11px;">Could not load activity.</div>';
+    }
+  },
+
+  /* Robotics club promo — only when not already a member */
+  async _loadClubPromo() {
+    const promo = document.getElementById('dash-club-promo');
+    if (!promo) return;
+    try {
+      const token = (await this.supabase.auth.getSession()).data.session?.access_token;
+      if (!token) return;
+      const res = await fetch('/api/robotics-club/me', { headers: { Authorization: `Bearer ${token}` } });
+      const json = await res.json();
+      promo.style.display = json.success && json.membership ? 'none' : '';
+    } catch {
+      promo.style.display = ''; // show promo by default when unknown
+    }
+  },
+
+  /* ── 🐞 Report a Bug — floating button + modal ── */
+  _initBugReport() {
+    if (document.getElementById('bug-report-btn')) return;
+    const btn = document.createElement('button');
+    btn.id = 'bug-report-btn';
+    btn.type = 'button';
+    btn.innerHTML = '🐞<span> Report a Bug</span>';
+    btn.style.cssText = 'position:fixed;bottom:76px;right:18px;z-index:900;display:inline-flex;align-items:center;gap:6px;padding:10px 14px;border-radius:100px;border:1px solid #fecaca;background:#fff;color:#b91c1c;font-size:12px;font-weight:700;box-shadow:0 4px 16px rgba(220,38,38,.18);cursor:pointer;font-family:inherit;transition:all .15s;';
+    btn.addEventListener('mouseenter', () => { btn.style.transform = 'translateY(-2px)'; btn.style.boxShadow = '0 6px 20px rgba(220,38,38,.26)'; });
+    btn.addEventListener('mouseleave', () => { btn.style.transform = ''; btn.style.boxShadow = '0 4px 16px rgba(220,38,38,.18)'; });
+    btn.addEventListener('click', () => this._openBugModal());
+    document.body.appendChild(btn);
+  },
+
+  _openBugModal() {
+    if (document.getElementById('bug-modal-overlay')) return;
+    const ov = document.createElement('div');
+    ov.id = 'bug-modal-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:1000;background:rgba(17,24,39,.5);display:flex;align-items:center;justify-content:center;padding:16px;';
+    ov.innerHTML = `
+      <div role="dialog" aria-modal="true" style="background:#fff;border-radius:16px;max-width:440px;width:100%;padding:24px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <h3 style="font-size:17px;font-weight:800;">🐞 Report a Bug</h3>
+          <button type="button" id="bug-modal-close" style="border:none;background:none;font-size:22px;color:#9ca3af;cursor:pointer;line-height:1;">×</button>
+        </div>
+        <p style="font-size:12.5px;color:#6b7280;margin-bottom:14px;">Something broken? Tell us what happened — we read every report.</p>
+        <label style="display:block;font-size:12px;font-weight:700;margin-bottom:5px;">What happened? *</label>
+        <textarea id="bug-desc" rows="3" maxlength="3000" placeholder="e.g. The quiz submit button does nothing when I click it…" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;outline:none;resize:vertical;"></textarea>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+          <div><label style="display:block;font-size:12px;font-weight:700;margin-bottom:5px;">What did you expect?</label><input id="bug-expected" maxlength="500" style="width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;outline:none;"></div>
+          <div><label style="display:block;font-size:12px;font-weight:700;margin-bottom:5px;">What actually happened?</label><input id="bug-actual" maxlength="500" style="width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;outline:none;"></div>
+        </div>
+        <div id="bug-status" style="font-size:12px;margin-top:10px;min-height:16px;font-weight:600;"></div>
+        <button type="button" id="bug-submit" style="width:100%;margin-top:6px;padding:12px;border:none;border-radius:10px;background:linear-gradient(135deg,#0d6e3f,#0a5c34);color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">Send report</button>
+      </div>`;
+    ov.addEventListener('mousedown', (e) => { if (e.target === ov) ov.remove(); });
+    ov.querySelector('#bug-modal-close').addEventListener('click', () => ov.remove());
+    document.body.appendChild(ov);
+    ov.querySelector('#bug-desc').focus();
+
+    ov.querySelector('#bug-submit').addEventListener('click', async () => {
+      const statusEl = ov.querySelector('#bug-status');
+      const desc = ov.querySelector('#bug-desc').value.trim();
+      if (desc.length < 5) {
+        statusEl.style.color = '#dc2626'; statusEl.textContent = 'Please describe the bug (a few words at least).';
+        return;
+      }
+      const submitBtn = ov.querySelector('#bug-submit');
+      submitBtn.disabled = true; submitBtn.textContent = 'Sending…';
+      statusEl.textContent = '';
+      try {
+        const token = (await this.supabase.auth.getSession()).data.session?.access_token;
+        const res = await fetch('/api/logs/bug', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+          body: JSON.stringify({
+            description: desc,
+            expected: ov.querySelector('#bug-expected').value.trim() || null,
+            actual: ov.querySelector('#bug-actual').value.trim() || null,
+            page: location.pathname
+          })
+        });
+        const json = await res.json();
+        if (json.success) {
+          ov.remove();
+          this._celebrate('Bug squashed… well, reported! Our team will look into it. 🐞🛠️');
+        } else {
+          throw new Error(json.error || 'Failed to send.');
+        }
+      } catch (err) {
+        statusEl.style.color = '#dc2626';
+        statusEl.textContent = err.message || 'Network error — please try again.';
+        submitBtn.disabled = false; submitBtn.textContent = 'Send report';
+      }
+    });
   },
 
   async _loadCertificates() {
@@ -531,30 +691,71 @@ const Dashboard = {
   },
 
   _renderSidebarExtras() {
+    // Weekly goal: 6 study days (Mon–Sat) driven by REAL activity.
+    // The old version marked every past weekday "done" just because the
+    // date passed — now a day lights up only when the user was active,
+    // and today's cell unlocks only after they've actually done something.
     const goalDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const dayIndex = new Date().getDay();
-    const currentDayIndex = dayIndex === 0 ? 5 : Math.min(5, (dayIndex + 6) % 7);
-    const completed = Math.min(goalDays.length, Math.max(0, currentDayIndex + 1));
     const goalWrap = document.getElementById('weekly-goal-days');
     const goalProgress = document.getElementById('weekly-goal-progress');
     const goalFill = document.getElementById('weekly-goal-fill');
+    const cheerEl = document.getElementById('goal-encouragement');
 
-    if (goalWrap) {
-      goalWrap.innerHTML = goalDays.map((day, index) => {
-        const isDone = index <= currentDayIndex;
-        const isToday = index === currentDayIndex;
-        return `<div class="dash-weekday ${isDone ? 'done' : ''} ${isToday ? 'today' : ''}">${day}</div>`;
+    this._weeklyActivity().then(activeDays => {
+      const activeSet = new Set(activeDays); // 'YYYY-MM-DD' Rwanda dates
+      const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Kigali', year: 'numeric', month: '2-digit', day: '2-digit' });
+      const todayStr = fmt.format(new Date());
+      const nowRw = new Date(todayStr + 'T12:00:00Z');
+      const dow = nowRw.getUTCDay(); // 0=Sun
+      // Monday of this week (Rwanda-local)
+      const monday = new Date(nowRw.getTime() - ((dow === 0 ? 6 : dow - 1)) * 86400000);
+
+      let completed = 0;
+      const cells = goalDays.map((day, index) => {
+        const cellDate = new Date(monday.getTime() + index * 86400000);
+        const cellStr = cellDate.toISOString().split('T')[0];
+        const isFuture = cellStr > todayStr;
+        const isToday = cellStr === todayStr;
+        const isDone = activeSet.has(cellStr);
+        if (isDone) completed++;
+        return `<div class="dash-weekday ${isDone ? 'done' : ''} ${isToday && !isDone ? 'today' : ''}" title="${cellStr}${isDone ? ' · active ✓' : ''}">${day}</div>`;
       }).join('');
-    }
 
-    if (goalProgress) goalProgress.textContent = `${completed}/${goalDays.length}`;
-    if (goalFill) goalFill.style.width = `${(completed / goalDays.length) * 100}%`;
+      if (goalWrap) goalWrap.innerHTML = cells;
+      if (goalProgress) goalProgress.textContent = `${completed}/${goalDays.length}`;
+      if (goalFill) goalFill.style.width = `${(completed / goalDays.length) * 100}%`;
+
+      if (cheerEl) {
+        const msg = completed === 0
+          ? 'Complete any lesson to light up your first day! 💪'
+          : completed < 3
+            ? `${completed} day${completed === 1 ? '' : 's'} this week — keep the momentum! ⚡`
+            : completed < 6
+              ? `${completed}/6 — you're on fire! Just ${6 - completed} more for a perfect week 🌟`
+              : 'Perfect week! You did all 6 days 🏆🎉';
+        cheerEl.textContent = msg;
+      }
+    });
 
     // Load real notifications from API
     this._loadNotifications();
     
     // Load rating widget
     this._loadRatingWidget();
+  },
+
+  /** Dates (YYYY-MM-DD, Rwanda-local) the user was active in the last 7 days.
+   * Uses /api/streak/history (activity log); falls back to [] on failure. */
+  async _weeklyActivity() {
+    try {
+      const token = (await this.supabase.auth.getSession()).data.session?.access_token;
+      if (!token) return [];
+      const res = await fetch('/api/streak/history?days=7', { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) return [];
+      const json = await res.json();
+      if (!json.success) return [];
+      return (json.days || []).filter(d => d.count > 0).map(d => d.date);
+    } catch { return []; }
   },
 
   _initLeaderboard() {
