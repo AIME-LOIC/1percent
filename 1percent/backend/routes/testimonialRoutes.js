@@ -11,7 +11,7 @@
 
 const { Router } = require('express');
 const testimonialService = require('../services/testimonialService');
-const { authenticate, requireRole } = require('../middlewares/auth');
+const { authenticate, requireAdmin } = require('../middlewares/auth');
 const { sanitizeStrings } = require('../middlewares/validate');
 
 const router = Router();
@@ -62,7 +62,7 @@ router.delete('/mine', authenticate, async (req, res) => {
 
 /* ── Admin ──────────────────────────────────────────── */
 const adminRouter = Router();
-adminRouter.use(authenticate, requireRole('admin'));
+adminRouter.use(authenticate, requireAdmin);
 
 adminRouter.get('/', async (req, res) => {
   try {

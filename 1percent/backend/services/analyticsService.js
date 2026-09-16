@@ -57,8 +57,8 @@ class AnalyticsService {
     const [
       totalUsers, totalStudents, totalMentors,
       totalCourses, publishedCourses,
-      totalEnrollments, totalLessons, totalChallenges,
-      totalSubmissions, totalCertificates,
+      totalEnrollments, completedEnrollments, totalLessons, totalChallenges,
+      totalSubmissions, passedSubmissions, totalCertificates,
       beginnerCourses, intermediateCourses, advancedCourses,
       premiumUsers, activeToday
     ] = await Promise.all([
@@ -68,9 +68,11 @@ class AnalyticsService {
       _count('courses'),
       _count('courses', q => q.eq('is_published', true)),
       _count('enrollments'),
+      _count('enrollments', q => q.not('completed_at', 'is', null)),
       _count('lessons'),
       _count('challenges', q => q.eq('is_active', true)),
       _count('challenge_submissions'),
+      _count('challenge_submissions', q => q.eq('passed', true)),
       _count('certificates'),
       _count('courses', q => q.eq('level', 'beginner')),
       _count('courses', q => q.eq('level', 'intermediate')),
@@ -86,9 +88,11 @@ class AnalyticsService {
       courses: totalCourses,
       published_courses: publishedCourses,
       enrollments: totalEnrollments,
+      completed_enrollments: completedEnrollments,
       lessons: totalLessons,
       challenges: totalChallenges,
       submissions: totalSubmissions,
+      passed_submissions: passedSubmissions,
       certificates: totalCertificates,
       premium_users: premiumUsers,
       active_today: activeToday

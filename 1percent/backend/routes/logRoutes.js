@@ -7,7 +7,7 @@
 
 const { Router } = require('express');
 const logController = require('../controllers/logController');
-const { authenticate, optionalAuth, requireRole } = require('../middlewares/auth');
+const { authenticate, optionalAuth, requireAdmin } = require('../middlewares/auth');
 const { sanitizeStrings } = require('../middlewares/validate');
 
 /* ------------------------------------------------------------
@@ -45,7 +45,7 @@ module.exports = router;
    ADMIN ROUTES (auth + admin role required)
    ------------------------------------------------------------ */
 const adminRouter = Router();
-adminRouter.use(authenticate, requireRole('admin'));
+adminRouter.use(authenticate, requireAdmin);
 
 // Dashboard stats
 adminRouter.get('/stats', (req, res, next) => logController.getStats(req, res, next));

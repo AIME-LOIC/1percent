@@ -7,7 +7,7 @@
 
 const { Router } = require('express');
 const notificationController = require('../controllers/notificationController');
-const { authenticate, requireRole } = require('../middlewares/auth');
+const { authenticate, requireAdmin } = require('../middlewares/auth');
 const { sanitizeStrings } = require('../middlewares/validate');
 
 const router = Router();
@@ -38,7 +38,7 @@ module.exports = router;
 // ============================================================
 
 const adminRouter = Router();
-adminRouter.use(authenticate, requireRole('admin'));
+adminRouter.use(authenticate, requireAdmin);
 
 // Create a notification for a specific user
 adminRouter.post('/', sanitizeStrings(2000), (req, res, next) => notificationController.createNotification(req, res, next));

@@ -328,8 +328,8 @@ app.get('/api/health', (req, res) => {
 // Diagnostics — admin-only (previously UNAUTHENTICATED: anyone could
 // enumerate DB tables and row counts).
 const { adminClient: diagClient } = require('./config/database');
-const { authenticate, requireRole } = require('./middlewares/auth');
-app.get('/api/admin/diagnostics', authenticate, requireRole('admin'), async (req, res) => {
+const { authenticate, requireAdmin } = require('./middlewares/auth');
+app.get('/api/admin/diagnostics', authenticate, requireAdmin, async (req, res) => {
   const tables = ['profiles', 'courses', 'lessons', 'enrollments', 'quizzes', 'challenges', 'notifications', 'ratings', 'parent_payments', 'premium_subscriptions', 'streaks', 'user_coins', 'error_logs', 'system_logs', 'admin_alerts'];
   const results = {};
   for (const t of tables) {

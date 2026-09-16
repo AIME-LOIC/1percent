@@ -7,7 +7,7 @@
 
 const { Router } = require('express');
 const ratingController = require('../controllers/ratingController');
-const { authenticate, requireRole } = require('../middlewares/auth');
+const { authenticate, requireAdmin } = require('../middlewares/auth');
 
 const router = Router();
 
@@ -37,7 +37,7 @@ module.exports = router;
 // ============================================================
 
 const adminRouter = Router();
-adminRouter.use(authenticate, requireRole('admin'));
+adminRouter.use(authenticate, requireAdmin);
 
 // Get all ratings (admin)
 adminRouter.get('/', (req, res, next) => ratingController.getAllRatings(req, res, next));

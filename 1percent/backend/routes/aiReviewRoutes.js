@@ -10,11 +10,11 @@
    ============================================================ */
 
 const { Router } = require('express');
-const { authenticate, requireRole } = require('../middlewares/auth');
+const { authenticate, requireAdmin } = require('../middlewares/auth');
 const aiReviewService = require('../services/aiReviewService');
 
 const router = Router();
-const adminOnly = requireRole('admin');
+const adminOnly = requireAdmin;
 
 /* ── Admin: list the queue ── */
 router.get('/admin/ai-reviews', authenticate, adminOnly, async (req, res, next) => {

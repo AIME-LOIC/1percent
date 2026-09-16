@@ -9,7 +9,7 @@
 
 const { Router } = require('express');
 const contactController = require('../controllers/contactController');
-const { authenticate, requireRole } = require('../middlewares/auth');
+const { authenticate, requireAdmin } = require('../middlewares/auth');
 const { requireFields, validateEmail, sanitizeStrings } = require('../middlewares/validate');
 const { rateLimit } = require('../middlewares/rateLimit');
 
@@ -29,13 +29,13 @@ router.get('/services', (req, res, next) => contactController.getServices(req, r
 // Admin routes
 router.get('/admin/requests',
   authenticate,
-  requireRole('admin'),
+  requireAdmin,
   (req, res, next) => contactController.getRequests(req, res, next)
 );
 
 router.put('/admin/requests/:id/status',
   authenticate,
-  requireRole('admin'),
+  requireAdmin,
   requireFields('status'),
   (req, res, next) => contactController.updateStatus(req, res, next)
 );

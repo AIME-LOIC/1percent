@@ -73,6 +73,41 @@ async function optionalAuth(req, res, next) {
 }
 
 /* ============================================================
+   Require Admin — must be used after authenticate
+   Blocks anyone who is not an admin (mentors, students, etc.)
+   ============================================================ */
+async function requireAdmin(req, res, next) {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const { data: profile, error } = await adminClient
+      .from('profiles')
+      .select('role')
+      .eq('id', req.user.id)
+      .single();
+
+    if (error || !profile) {
+      return res.status(403).json({ error: 'Could not verify role' });
+    }
+
+    if (profile.role !== 'admin') {
+      return res.status(403).json({
+        error: 'Insufficient permissions',
+        message: 'Admin access required.'
+      });
+    }
+
+    req.profile = profile;
+    next();
+  } catch (err) {
+    console.error('[AUTH] requireAdmin failed:', err.message);
+    return res.status(500).json({ error: 'Failed to verify role.' });
+  }
+}
+
+/* ============================================================
    Require Role — must be used after authenticate
    ============================================================ */
 function requireRole(...roles) {
@@ -103,4 +138,4 @@ function requireRole(...roles) {
   };
 }
 
-module.exports = { authenticate, optionalAuth, requireRole };
+module.exports = { authenticate, optionalAuth, requireRole, requireAdmin };

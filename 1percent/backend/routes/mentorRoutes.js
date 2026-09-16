@@ -16,7 +16,7 @@
    ============================================================ */
 
 const { Router } = require('express');
-const { authenticate, requireRole } = require('../middlewares/auth');
+const { authenticate, requireRole, requireAdmin } = require('../middlewares/auth');
 const { sanitizeStrings } = require('../middlewares/validate');
 const mentorService = require('../services/mentorService');
 const logService = require('../services/logService');
@@ -26,7 +26,7 @@ const adminRouter = Router();
 
 /* ── ADMIN ───────────────────────────────────────────── */
 
-adminRouter.use(authenticate, requireRole('admin'));
+adminRouter.use(authenticate, requireAdmin);
 
 adminRouter.put('/users/:userId/role', async (req, res) => {
   try {

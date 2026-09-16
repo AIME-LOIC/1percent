@@ -327,12 +327,36 @@ tr.log-fatal:hover td{background:#feeeee !important;}
       <h1>Dashboard</h1>
       <p class="subtitle">Live overview of your platform.</p>
       <div class="stats-row" id="stats-row">
-        <div class="stat-card"><div class="stat-label">Students</div><div class="stat-value" id="stat-students">0</div><div class="stat-sub" id="stat-users-sub"></div></div>
-        <div class="stat-card"><div class="stat-label">Courses</div><div class="stat-value" id="stat-courses">0</div><div class="stat-sub" id="stat-courses-sub"></div></div>
+        <div class="stat-card">
+          <div class="stat-ring" data-ring="published" data-color="#059669">
+            <svg viewBox="0 0 64 64"><circle class="ring-bg" cx="32" cy="32" r="26"/><circle class="ring-val" cx="32" cy="32" r="26"/></svg>
+            <div class="ring-txt"><span class="ring-pct">0%</span><span class="ring-cap">published</span></div>
+          </div>
+          <div><div class="stat-label">Courses</div><div class="stat-value" id="stat-courses">0</div><div class="stat-sub" id="stat-courses-sub"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-ring" data-ring="enrolled" data-color="#2563eb">
+            <svg viewBox="0 0 64 64"><circle class="ring-bg" cx="32" cy="32" r="26"/><circle class="ring-val" cx="32" cy="32" r="26"/></svg>
+            <div class="ring-txt"><span class="ring-pct">0%</span><span class="ring-cap">enrolled</span></div>
+          </div>
+          <div><div class="stat-label">Students</div><div class="stat-value" id="stat-students">0</div><div class="stat-sub" id="stat-users-sub"></div></div>
+</div>
         <div class="stat-card"><div class="stat-label">Lessons</div><div class="stat-value" id="stat-lessons">0</div></div>
         <div class="stat-card"><div class="stat-label">Challenges</div><div class="stat-value" id="stat-challenges">0</div></div>
-        <div class="stat-card"><div class="stat-label">Enrollments</div><div class="stat-value" id="stat-enrollments">0</div></div>
-        <div class="stat-card"><div class="stat-label">Certificates</div><div class="stat-value" id="stat-certificates">0</div></div>
+        <div class="stat-card">
+          <div class="stat-ring" data-ring="enrolled" data-color="#2563eb">
+            <svg viewBox="0 0 64 64"><circle class="ring-bg" cx="32" cy="32" r="26"/><circle class="ring-val" cx="32" cy="32" r="26"/></svg>
+            <div class="ring-txt"><span class="ring-pct">0%</span><span class="ring-cap">enrolled</span></div>
+          </div>
+          <div><div class="stat-label">Enrollments</div><div class="stat-value" id="stat-enrollments">0</div><div class="stat-sub" id="stat-enrollments-sub"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-ring" data-ring="certs" data-color="#7c3aed">
+            <svg viewBox="0 0 64 64"><circle class="ring-bg" cx="32" cy="32" r="26"/><circle class="ring-val" cx="32" cy="32" r="26"/></svg>
+            <div class="ring-txt"><span class="ring-pct">0%</span><span class="ring-cap">of enrolled</span></div>
+          </div>
+          <div><div class="stat-label">Certificates</div><div class="stat-value" id="stat-certificates">0</div></div>
+        </div>
         <div class="stat-card"><div class="stat-label">Active Today</div><div class="stat-value" id="stat-active-today">0</div></div>
         <div class="stat-card"><div class="stat-label">Submissions</div><div class="stat-value" id="stat-submissions">0</div></div>
       </div>
@@ -837,7 +861,9 @@ async function init(){
     if(!meRes.ok){console.log('[ADMIN] Auth check failed');showUnauthorized('Session expired. Please log in again.');return;}
     const me=await meRes.json();
     console.log('[ADMIN] User role:',me.user?.role);
-    if(!me.success||me.user?.role!=='admin'){showUnauthorized('Admin access required. You do not have permission to view this page.');return;}
+    if(!me.success){showUnauthorized('Admin access required. You do not have permission to view this page.');return;}
+    if(me.user?.role==='mentor'){console.log('[ADMIN] Mentor detected — redirecting to Mentor Hub');window.location.replace('/mentors');return;}
+    if(me.user?.role!=='admin'){console.log('[ADMIN] Non-admin (student) detected — redirecting to dashboard');window.location.replace('/dashboard');return;}
 
     // 5. Show admin panel
     document.getElementById('auth-loading').classList.add('hidden');
