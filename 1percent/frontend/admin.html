@@ -481,6 +481,12 @@ tr.log-fatal:hover td{background:#feeeee !important;}
       <h1>Mentors</h1>
       <p class="subtitle">Promote users to mentor on the Enrollments page (click a user's role badge), assign learners, and share the weekly course + activity.</p>
 
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-label">Active Mentors</div><div class="stat-value" id="mstat-mentors">0</div><div class="stat-sub">Users with the mentor role</div></div>
+        <div class="stat-card"><div class="stat-label">Assignments</div><div class="stat-value" id="mstat-assignments">0</div><div class="stat-sub">Mentor ↔ learner links</div></div>
+        <div class="stat-card"><div class="stat-label">Unassigned</div><div class="stat-value" id="mstat-unassigned">0</div><div class="stat-sub">Mentors with no learners yet</div></div>
+      </div>
+
       <div class="card">
         <div class="card-header"><h2>Weekly Share</h2></div>
         <div class="card-body">
@@ -497,7 +503,7 @@ tr.log-fatal:hover td{background:#feeeee !important;}
 
       <div class="card">
         <div class="card-header"><h2>Current Mentors</h2><button class="btn-admin outline" onclick="loadMentors()">Refresh</button></div>
-        <table class="data-table"><thead><tr><th>Name</th><th>Email</th><th style="text-align:right;">Assignments</th></tr></thead><tbody id="mentors-tbody"><tr><td colspan="3" class="empty">Loading…</td></tr></tbody></table>
+        <table class="data-table"><thead><tr><th>Name</th><th>Email</th><th style="text-align:center;">Learners</th><th style="text-align:right;">Actions</th></tr></thead><tbody id="mentors-tbody"><tr><td colspan="4" class="empty">Loading…</td></tr></tbody></table>
       </div>
     </div>
 
@@ -2143,13 +2149,43 @@ async function loadMentors(){
     const json=await res.json();
     if(!json.success)throw new Error(json.error||'Failed');
     const mentors=json.mentors||[];
+
+    // Stats overview
+    const overview=json.overview||{};
+    const unassigned=mentors.filter(m=>!m.learner_count).length;
+    document.getElementById('mstat-mentors').textContent=mentors.length;
+    document.getElementById('mstat-assignments').textContent=overview.assignments??0;
+    document.getElementById('mstat-unassigned').textContent=unassigned;
+
     const tb=document.getElementById('mentors-tbody');
-    tb.innerHTML=mentors.length?mentors.map(m=>`<tr><td><strong>${esc(m.full_name||'—')}</strong></td><td>${esc(m.email||'')}</td><td style="text-align:right;"><button class="btn-admin outline" onclick="assignLearnerPrompt('${m.id}')">Assign learner</button></td></tr>`).join(''):'<tr><td colspan="3" class="empty">No mentors yet — promote a user on the Enrollments page (click their role badge).</td></tr>';
+    tb.innerHTML=mentors.length?mentors.map(m=>{
+      const count=m.learner_count||0;
+      const countBadge=count
+        ?`<span class="badge badge-green">${count} assigned</span>`
+        :'<span class="badge badge-yellow">none yet</span>';
+      return `<tr><td><strong>${esc(m.full_name||'—')}</strong></td><td>${esc(m.email||'')}</td><td style="text-align:center;">${countBadge}</td><td style="text-align:right;white-space:nowrap;"><button class="btn-admin outline" onclick="assignLearnerPrompt('${m.id}')">Assign learner</button>${count?` <button class="btn-admin danger" onclick="unassignLearnerFlow('${m.id}')">Unassign</button>`:''}</td></tr>`;
+    }).join(''):'<tr><td colspan="4" class="empty">No mentors yet — promote a user on the Enrollments page (click their role badge).</td></tr>';
 
     // Recipients picker
     const list=document.getElementById('ws-mentor-list');
     if(list)list.innerHTML=mentors.length?mentors.map(m=>`<label style="display:flex;align-items:center;gap:8px;padding:4px 2px;font-size:12px;cursor:pointer;"><input type="checkbox" value="${m.id}" onchange="toggleMentorPick('${m.id}',this.checked)" style="accent-color:var(--admin-accent);"> ${esc(m.full_name||m.email)}</label>`).join(''):'<span style="font-size:12px;color:var(--admin-muted);">No mentors yet.</span>';
   }catch(e){toast('Failed to load mentors: '+e.message,'error');}
+}
+
+async function unassignLearnerFlow(mentorId){
+  // Mentor's assignments are not listed individually here; unassign by learner email prompt
+  const learnerEmail=prompt("Learner's email to unassign from this mentor:");
+  if(!learnerEmail)return;
+  try{
+    const enr=await apiFetch('/api/admin/enrollments');const j=await enr.json();
+    const match=(j.enrollments||[]).find(e=>(e.profiles?.email||'').toLowerCase()===learnerEmail.trim().toLowerCase());
+    if(!match){toast('Learner not found in enrollments.','error');return;}
+    const res=await apiFetch(`/api/admin/mentor/assignments/${mentorId}/${match.user_id}`,{method:'DELETE'});
+    const json=await res.json();
+    if(!res.ok||!json.success)throw new Error(json.error||'Failed');
+    toast('Learner unassigned');
+    loadMentors();
+  }catch(e){toast('Failed: '+e.message,'error');}
 }
 
 function toggleMentorPick(id,checked){checked?mentorPickState.add(id):mentorPickState.delete(id);}

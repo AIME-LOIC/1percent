@@ -8,6 +8,7 @@
    ============================================================ */
 
 const { adminClient } = require('../config/database');
+const notificationService = require('./notificationService');
 
 class MentorService {
   /* ---------- ADMIN: role management ---------- */
@@ -34,7 +35,17 @@ class MentorService {
       .eq('role', 'mentor')
       .order('full_name');
     if (error) throw error;
-    return data || [];
+    const mentors = data || [];
+    if (!mentors.length) return mentors;
+
+    // Assignment counts per mentor (for the admin Mentors panel)
+    const { data: assignments, error: aErr } = await adminClient
+      .from('mentor_assignments')
+      .select('mentor_id');
+    if (aErr || !assignments) return mentors;
+    const counts = {};
+    assignments.forEach(a => { counts[a.mentor_id] = (counts[a.mentor_id] || 0) + 1; });
+    return mentors.map(m => ({ ...m, learner_count: counts[m.id] || 0 }));
   }
 
   /* ---------- ADMIN: assignments ---------- */
@@ -136,6 +147,56 @@ class MentorService {
           .filter(Boolean).sort().pop() || null
       };
     }));
+  }
+
+  /* ---------- MENTOR: nudge a learner ---------- */
+
+  /**
+   * Mentor sends an encouragement nudge to one of their assigned learners.
+   * Creates an in-app notification; rate limited to 3 per learner per 24h.
+   */
+  async nudgeLearner(mentorId, learnerId, message) {
+    // Verify the learner is actually assigned to this mentor
+    const { data: assignment, error: aErr } = await adminClient
+      .from('mentor_assignments')
+      .select('learner_id')
+      .eq('mentor_id', mentorId)
+      .eq('learner_id', learnerId)
+      .maybeSingle();
+    if (aErr) throw aErr;
+    if (!assignment) throw new Error('This learner is not assigned to you.');
+
+    // Rate limit: max 3 nudges per learner per 24h
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { count: recent } = await adminClient
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', learnerId)
+      .eq('type', 'mentor_nudge')
+      .gte('created_at', since);
+    if ((recent || 0) >= 3) {
+      throw new Error('You already sent 3 nudges to this learner today. Try again tomorrow.');
+    }
+
+    const { data: mentor, error: mErr } = await adminClient
+      .from('profiles')
+      .select('full_name')
+      .eq('id', mentorId)
+      .single();
+    if (mErr) throw mErr;
+    const mentorName = mentor?.full_name || 'Your mentor';
+    const finalMessage = (message && String(message).trim())
+      ? String(message).trim().slice(0, 300)
+      : 'Keep going — your mentor is cheering you on! 🎯';
+
+    const notification = await notificationService.createNotification({
+      user_id: learnerId,
+      title: `Nudge from ${mentorName}`,
+      message: finalMessage,
+      type: 'mentor_nudge',
+      link: '/dashboard'
+    });
+    return { success: true, notification };
   }
 
   /* ---------- MENTOR: weekly shares ---------- */

@@ -27,7 +27,8 @@ body{font-family:'Inter',sans-serif;background:
 .hero h1{font-size:clamp(28px,5vw,42px);font-weight:900;letter-spacing:-1.5px;line-height:1.1;}
 .hero h1 .accent{color:var(--green);}
 .hero p{color:var(--muted);font-size:15px;margin-top:12px;max-width:520px;margin-left:auto;margin-right:auto;line-height:1.6;}
-.robot{font-size:64px;line-height:1;margin-bottom:12px;display:inline-block;animation:bob 3s ease-in-out infinite;}
+.robot{width:84px;height:84px;border-radius:50%;background:linear-gradient(135deg,var(--green),#059669);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 10px 30px rgba(13,110,63,.30);animation:bob 3s ease-in-out infinite;}
+.robot svg{width:44px;height:44px;stroke:#fff;}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;box-shadow:0 8px 30px rgba(17,24,39,.06);}
 .card h2{font-size:18px;font-weight:800;margin-bottom:4px;}
@@ -50,12 +51,17 @@ select:focus,input[type=text]:focus{border-color:var(--green);box-shadow:0 0 0 4
 .status{text-align:center;font-size:13px;margin-top:12px;min-height:18px;font-weight:600;}
 .status.ok{color:#059669;}.status.err{color:#dc2626;}
 .perks{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:24px;}
-.perk{background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center;}
-.perk .ic{font-size:24px;margin-bottom:6px;}
+.perk{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px 14px;text-align:center;}
+.perk .ic{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;}
+.perk .ic svg{width:22px;height:22px;}
+.perk.ic-green .ic{background:linear-gradient(135deg,#d1fae5,#a7f3d0);color:#047857;}
+.perk.ic-yellow .ic{background:linear-gradient(135deg,#fef3c7,#fde68a);color:#b45309;}
+.perk.ic-blue .ic{background:linear-gradient(135deg,#dbeafe,#bfdbfe);color:#1d4ed8;}
 .perk b{font-size:12px;display:block;}
 .perk span{font-size:11px;color:var(--muted);}
 .success-box{text-align:center;padding:20px 0 6px;display:none;}
-.success-box .big{font-size:52px;margin-bottom:10px;}
+.success-box .big{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#d1fae5,#a7f3d0);color:#059669;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;}
+.success-box .big svg{width:32px;height:32px;}
 .success-box h2{font-size:22px;margin-bottom:8px;}
 .success-box p{color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:18px;}
 .login-nudge{margin-top:18px;padding:14px 16px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;font-size:13px;color:#92400e;display:none;line-height:1.6;}
@@ -71,7 +77,7 @@ select:focus,input[type=text]:focus{border-color:var(--green);box-shadow:0 0 0 4
   <a class="back-link" href="/">← Back to 1percent</a>
 
   <div class="hero">
-    <span class="robot">🤖</span>
+    <span class="robot" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></span>
     <div class="hero-badge">Robotics Club · Free to join</div>
     <h1>Build robots with <span class="accent">students across Rwanda</span></h1>
     <p>Pick the school you study at and you're in. Meetups, build sessions, competitions — no experience needed.</p>
@@ -102,12 +108,12 @@ select:focus,input[type=text]:focus{border-color:var(--green);box-shadow:0 0 0 4
       <div class="status" id="join-status"></div>
 
       <div class="login-nudge" id="login-nudge">
-        ⚡ You need a free account to join. <a href="#" id="nudge-login-link">Log in or create one</a> — it takes 30 seconds, then come right back.
+        You need a free account to join. <a href="#" id="nudge-login-link">Log in or create one</a> — it takes 30 seconds, then come right back.
       </div>
     </div>
 
     <div class="success-box" id="success-view">
-      <div class="big">🎉</div>
+      <div class="big" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
       <h2>You're in!</h2>
       <p id="success-copy">Welcome to the Robotics Club. Your club admin will approve your membership shortly — watch your dashboard notifications for meetup announcements.</p>
       <a class="btn" style="text-decoration:none;" href="/dashboard">Go to my dashboard</a>
@@ -115,9 +121,9 @@ select:focus,input[type=text]:focus{border-color:var(--green);box-shadow:0 0 0 4
   </div>
 
   <div class="perks">
-    <div class="perk"><div class="ic">🛠️</div><b>Hands-on builds</b><span>Arduino, sensors, motors</span></div>
-    <div class="perk"><div class="ic">🏆</div><b>Competitions</b><span>Represent your school</span></div>
-    <div class="perk"><div class="ic">🤝</div><b>Mentors</b><span>Guidance from engineers</span></div>
+    <div class="perk ic-green"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div><b>Hands-on builds</b><span>Arduino, sensors, motors</span></div>
+    <div class="perk ic-yellow"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></div><b>Competitions</b><span>Represent your school</span></div>
+    <div class="perk ic-blue"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><b>Mentors</b><span>Guidance from engineers</span></div>
   </div>
 </div>
 
@@ -240,7 +246,7 @@ select:focus,input[type=text]:focus{border-color:var(--green);box-shadow:0 0 0 4
         // Already a member — treat as success with different copy
         $('join-form-view').style.display='none';
         $('success-view').style.display='block';
-        $('success-copy').textContent='You are already a member of the Robotics Club. See you at the next build session! 🤖';
+        $('success-copy').textContent='You are already a member of the Robotics Club. See you at the next build session!';
       } else {
         throw new Error(json.error||'Failed to join.');
       }

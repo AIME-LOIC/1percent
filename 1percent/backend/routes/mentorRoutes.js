@@ -12,6 +12,7 @@
      GET  /learners                    → assigned learners' progress
      GET  /shares                      → weekly shares for me
      POST /shares/:shareId/read       → mark one share read
+     POST /learners/:learnerId/nudge  → send an encouragement nudge
    ============================================================ */
 
 const { Router } = require('express');
@@ -119,6 +120,21 @@ router.post('/shares/:shareId/read', async (req, res) => {
     res.json({ success: true, ...result });
   } catch (err) {
     res.status(400).json({ error: 'Failed to mark share read.' });
+  }
+});
+
+router.post('/learners/:learnerId/nudge', sanitizeStrings(500), async (req, res) => {
+  try {
+    const result = await mentorService.nudgeLearner(req.user.id, req.params.learnerId, req.body?.message);
+    logService.logEvent({
+      level: 'info', event: 'mentor_nudge_sent',
+      message: 'Mentor nudged a learner', userId: req.user.id,
+      metadata: { learner_id: req.params.learnerId }
+    }).catch(() => {});
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[MENTOR] Nudge error:', err.message);
+    res.status(400).json({ error: err.message || 'Failed to send nudge.' });
   }
 });
 
