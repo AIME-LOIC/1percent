@@ -1,39 +1,39 @@
 /* ============================================================
-   Puppet Robot — animated 3D companion for the dashboard
+   Puppet Robot — animated 3D companion that lives on the page
    ============================================================
-   Loads /models/puppet-robot.glb (built by scripts/build-puppet-robot.js)
-   and renders it as a small interactive companion that:
+   Loads /models/puppet-robot.glb (built by scripts/build-puppet-robot.js).
 
-     • waves when it first appears / when clicked
-     • blinks at random intervals (and closes eyes while dragged)
-     • wanders slowly between course + challenge cards and sits on them
-     • can be picked up and dragged anywhere (eyes close while held)
-     • tumbles + falls with a bounce when dropped
-
-   Uses the SAME three module build as the GLB (r160 UMD) — loaded
-   lazily only after the dashboard data has rendered.
+   Behaviour (all movement is SCREEN-space — it walks the real page):
+     • enters from the RIGHT edge, walking in, then waves hello
+     • wanders the floor, picks a course/challenge card, walks to it,
+       CLIMBS up onto its top edge and sits there (follows on scroll)
+     • climbs back down when it's done sitting
+     • blinks at random; eyes stay shut while you drag it
+     • draggable anywhere — tumble + bounce fall on release,
+       landing on the floor OR on top of a card beneath it
+     • speech bubbles, milestone celebrate() hook
    ============================================================ */
 
 (function () {
   'use strict';
 
-  const STATE = { idle: 'idle', wander: 'wander', held: 'held', falling: 'falling', sitting: 'sitting' };
+  const STATE = {
+    enter: 'enter', idle: 'idle', walk: 'walk',
+    climb: 'climb', sit: 'sit', climbdown: 'climbdown',
+    fall: 'fall', held: 'held'
+  };
   const CFG = {
-    scale: 1,             // model is authored ~2.2 units tall
-    baseY: 0,             // ground level in scene units
-    wanderDelay: [14, 26],// seconds between strolls
-    speed: 1.1,           // walk speed (units/sec)
-    fallGravity: 9.8,
-    fallBounce: 0.35
+    speed: 130,          // px/sec walking
+    climbSpeed: 240,     // px/sec climbing
+    gravity: 1500,       // px/sec² falling
+    bounce: 0.32,
+    rest: 6              // px tolerance for "arrived"
   };
 
-  let three = null;      // three module cache
-  let ctx = null;        // { renderer, scene, camera, mixer, actions, parts }
+  let three = null;
+  let ctx = null;
 
-  /* ---------- lazy three.js loader ----------
-     Uses the page's importmap (bare 'three' specifier). If the page
-     has no importmap, inject one BEFORE any dynamic import happens —
-     a dynamic import of a bare specifier fails permanently otherwise. */
+  /* ---------- lazy three.js loader (uses the page importmap) ---------- */
   async function loadThree() {
     if (three) return three;
     if (!document.querySelector('script[type="importmap"]')) {
@@ -54,41 +54,37 @@
     return three;
   }
 
-  /* ---------- card targets: where the robot may sit ---------- */
+  /* ---------- cards the puppet may climb ---------- */
   function collectTargets() {
-    const cards = [
+    return [
       ...document.querySelectorAll('.dash-course-card'),
       ...document.querySelectorAll('.dash-challenge-card')
-    ];
-    return cards.slice(0, 12);
+    ].slice(0, 14);
   }
+  const floorY = () => window.innerHeight - 8;   // puppet feet line
 
   /* ============================================================ */
   async function init() {
     try {
       const T = await loadThree();
-
       const gltf = await new Promise((resolve, reject) => {
         new T.GLTFLoader().load('/models/puppet-robot.glb', resolve, undefined, reject);
       });
-
       buildStage(gltf, T);
       bindPointer();
       startLoop();
-      greet();
     } catch (e) {
       console.warn('[PUPPET]', e.message);
     }
   }
 
-  /* ---------- renderer + scene on a floating overlay ---------- */
   function buildStage(gltf, T) {
-    const W = 190, H = 230;
+    const W = 170, H = 210;
     const wrap = document.createElement('div');
     wrap.id = 'puppet-stage';
-    wrap.style.cssText = 'position:fixed;z-index:900;width:' + W + 'px;height:' + H + 'px;left:40px;top:40vh;pointer-events:none;';
+    wrap.style.cssText = `position:fixed;z-index:900;width:${W}px;height:${H}px;left:0;top:0;pointer-events:none;will-change:transform;`;
     const canvas = document.createElement('canvas');
-    canvas.width = W * 2; canvas.height = H * 2;      // 2x for crispness
+    canvas.width = W * 2; canvas.height = H * 2;
     canvas.style.cssText = 'width:100%;height:100%;pointer-events:auto;cursor:grab;';
     wrap.appendChild(canvas);
     document.body.appendChild(wrap);
@@ -109,36 +105,17 @@
     camera.lookAt(0, 1.05, 0);
 
     const model = gltf.scene;
-    model.scale.setScalar(CFG.scale);
     scene.add(model);
 
     const mixer = new T.AnimationMixer(model);
     const actions = {};
     (gltf.animations || []).forEach(clip => {
-      actions[clip.name] = mixer.clipAction(clip);
-      actions[clip.name].clampWhenFinished = true;
-      actions[clip.name].loop = T.LoopOnce; // overridden per-play below
+      const a = mixer.clipAction(clip);
+      a.clampWhenFinished = true;
+      actions[clip.name] = a;
     });
-
-    ctx = {
-      renderer, scene, camera, mixer, actions,
-      model, wrap, canvas, W, H,
-      state: STATE.idle,
-      stateT: 0,
-      velocity: new T.Vector3(),
-      spin: new T.Vector3(),              // tumble rates while falling
-      drag: null,                          // {x,y} pointer drag state
-      heldPos: new T.Vector3(),
-      target: null,                        // current wander destination {x, el}
-      blinkTimer: 2 + Math.random() * 3,
-      wanderTimer: 6 + Math.random() * CFG.wanderDelay[0],
-      waveCooldown: 0
-    };
-
-    // idle loops forever; the others play once
     if (actions.idle) actions.idle.setLoop(T.LoopRepeat).play();
 
-    // soft contact shadow (fake blob under the robot)
     const shadowTex = makeShadowTexture(T);
     const shadow = new T.Mesh(
       new T.PlaneGeometry(1.4, 1.4),
@@ -147,7 +124,25 @@
     shadow.rotation.x = -Math.PI / 2;
     shadow.position.y = 0.01;
     scene.add(shadow);
-    ctx.shadow = shadow;
+
+    ctx = {
+      T, renderer, scene, camera, mixer, actions, model, shadow,
+      wrap, canvas, W, H,
+      px: window.innerWidth + 60,      // start off-screen RIGHT
+      py: floorY() - H,                // standing on the floor
+      facing: -1,                      // walking in from the right → face left
+      state: STATE.enter,
+      velocityY: 0, spinX: 0, spinZ: 0,
+      target: null,                    // { el, x, y } screen coords, re-read live
+      sitUntil: 0,
+      blinkTimer: 2 + Math.random() * 3,
+      wanderTimer: 5 + Math.random() * 4,
+      chatTimer: 22,
+      waveCooldown: 0,
+      pending: null,
+      bubbleTimer: 0
+    };
+    place();
   }
 
   function makeShadowTexture(T) {
@@ -159,163 +154,36 @@
     grad.addColorStop(1, 'rgba(17,24,39,0)');
     g.fillStyle = grad;
     g.fillRect(0, 0, 128, 128);
-    const tex = new T.CanvasTexture(c);
-    return tex;
+    return new T.CanvasTexture(c);
   }
 
-  /* ---------- animation control ---------- */
-  function playOnce(name, then) {
-    const { actions } = ctx;
-    const a = actions[name];
-    if (!a) { then && then(); return; }
+  /* position the overlay so the FEET sit at (px, py+H) */
+  function place() {
+    ctx.wrap.style.transform = `translate(${Math.round(ctx.px)}px, ${Math.round(ctx.py)}px)`;
+  }
+  const feetY = () => ctx.py + ctx.H;
+
+  /* ---------- clip control ---------- */
+  function playOnce(name) {
+    const a = ctx.actions[name];
+    if (!a) return;
     a.reset();
-    a.setLoop(T.LoopOnce);
+    a.setLoop(ctx.T.LoopOnce);
     a.clampWhenFinished = true;
     a.play();
-    const dur = a.getClip().duration;
-    ctx.pending = { until: performance.now() / 1000 + dur, then };
+    ctx.pending = { until: performance.now() / 1000 + a.getClip().duration };
   }
 
   function setState(next) {
-    if (!ctx) return;
-    if (ctx.state !== STATE.idle && ctx.state !== STATE.sitting) {
-      // leaving a one-shot: nothing special needed
-    }
     ctx.state = next;
-    ctx.stateT = 0;
-  }
-
-  /* ---------- greeting ---------- */
-  function greet() {
-    // wave shortly after appearing
-    setTimeout(() => { if (ctx && ctx.state === STATE.idle) { playOnce('wave'); ctx.waveCooldown = 8; } }, 900);
-  }
-
-  /* ---------- pointer interaction (pick up / drag / drop) ---------- */
-  function bindPointer() {
-    const { canvas, wrap } = ctx;
-    let dragging = false;
-    let lastX = 0, lastY = 0;
-
-    const pointerPos = (e) => {
-      const p = e.touches ? e.touches[0] : e;
-      return { x: p.clientX, y: p.clientY };
-    };
-
-    const start = (e) => {
-      const p = pointerPos(e);
-      dragging = true;
-      lastX = p.x; lastY = p.y;
-      canvas.style.cursor = 'grabbing';
-      setState(STATE.held);
-      say(pick(['Up we go! ✋', 'Careful…', '*eyes squeezed shut*']), 1800);
-      e.preventDefault();
-    };
-
-    const move = (e) => {
-      if (!dragging) return;
-      const p = pointerPos(e);
-      const dx = p.x - lastX, dy = p.y - lastY;
-      lastX = p.x; lastY = p.y;
-
-      // move the overlay itself — the robot hangs at its center-bottom
-      const r = wrap.getBoundingClientRect();
-      let nx = r.left + dx, ny = r.top + dy;
-      nx = Math.max(4, Math.min(window.innerWidth - ctx.W - 4, nx));
-      ny = Math.max(4, Math.min(window.innerHeight - 60, ny));
-      wrap.style.left = nx + 'px';
-      wrap.style.top = ny + 'px';
-
-      // slight tilt while moving — feels carried
-      ctx.model.rotation.z = Math.max(-0.4, Math.min(0.4, -dx * 0.04));
-
-      e.preventDefault();
-    };
-
-    const end = () => {
-      if (!dragging) return;
-      dragging = false;
-      canvas.style.cursor = 'grab';
-      // release the parked blink so eyes can reopen after the drop
-      if (ctx.actions.blink) ctx.actions.blink.stop();
-      drop();
-    };
-
-    canvas.addEventListener('mousedown', start);
-    window.addEventListener('mousemove', move);
-    window.addEventListener('mouseup', end);
-    canvas.addEventListener('touchstart', start, { passive: false });
-    window.addEventListener('touchmove', move, { passive: false });
-    window.addEventListener('touchend', end);
-
-    // click (no drag) → wave hello
-    let downAt = 0, downXY = [0, 0];
-    canvas.addEventListener('mousedown', () => { downAt = Date.now(); downXY = [event.clientX, event.clientY]; });
-    canvas.addEventListener('mouseup', () => {
-      const moved = Math.hypot((event.clientX || 0) - downXY[0], (event.clientY || 0) - downXY[1]);
-      if (Date.now() - downAt < 250 && moved < 6 && ctx.waveCooldown <= 0) {
-        playOnce('wave');
-        ctx.waveCooldown = 6;
-      }
-    });
-  }
-
-  /* ---------- drop physics: tumble + bounce to rest ---------- */
-  function drop() {
-    const r = ctx.wrap.getBoundingClientRect();
-    // anchor back into scene coordinates
-    ctx.wrap.style.transition = 'none';
-
-    setState(STATE.falling);
-    say(pick(DROP_LINES), 1800);
-    ctx.velocity.set((Math.random() - 0.5) * 1.2, 0, 0);
-    ctx.spin.set(
-      (Math.random() - 0.5) * 4,
-      (Math.random() - 0.5) * 3,
-      (Math.random() - 0.5) * 4
-    );
-    ctx.fallFromY = 2.2;                 // approximate height above ground
-    ctx.model.rotation.z = 0;            // hand tilt released
-    ctx.wrap.style.left = Math.max(4, Math.min(window.innerWidth - ctx.W - 4, r.left)) + 'px';
-  }
-
-  /* ---------- wander: stroll to a card and sit on it ---------- */
-  function pickTarget() {
-    const cards = collectTargets();
-    if (!cards.length) return null;
-    const el = cards[Math.floor(Math.random() * cards.length)];
-    const r = el.getBoundingClientRect();
-    return {
-      el,
-      // scene-x roughly proportional to screen-x: map card center into [-2.2, 2.2]
-      x: ((r.left + r.width / 2) / window.innerWidth) * 4.4 - 2.2,
-      y: r.top
-    };
-  }
-
-  function startWander() {
-    const t = pickTarget();
-    if (!t) { ctx.wanderTimer = 8; return; }
-    ctx.target = t;
-    setState(STATE.wander);
   }
 
   /* ---------- speech bubbles ---------- */
-  const SIT_LINES = [
-    'This one looks fun! 📚',
-    'Shall we start here?',
-    'I\'ll wait right here 👀',
-    'You\'ve got this! 💪',
-    'Psst… try a challenge too!',
-    'Learning time! ☕'
-  ];
-  const IDLE_LINES = [
-    'Need a hand? 👋',
-    'Keep that streak alive! 🔥',
-    'One lesson a day! ✨',
-    '*hums robot tune* 🎵'
-  ];
+  const SIT_LINES = ['This one looks fun! 📚', 'Shall we start here?', 'I\'ll wait right here 👀', 'You\'ve got this! 💪', 'Psst… try a challenge too!', 'Learning time! ☕'];
+  const IDLE_LINES = ['Need a hand? 👋', 'Keep that streak alive! 🔥', 'One lesson a day! ✨', '*hums robot tune* 🎵'];
   const DROP_LINES = ['Wheee! 😵', 'I\'m okay!', 'Nice catch!', '*dizzy* 🌟'];
+  const CLIMB_LINES = ['Let me get up there…', 'Up I go! 🧗', 'Coming through!'];
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
   function say(text, ms = 2600) {
     if (!ctx) return;
@@ -323,7 +191,7 @@
     if (!b) {
       b = document.createElement('div');
       b.className = 'puppet-bubble';
-      b.style.cssText = 'position:absolute;left:70%;top:-6px;transform:translateX(-50%);max-width:180px;'
+      b.style.cssText = 'position:absolute;left:62%;top:-4px;transform:translateX(-50%);max-width:190px;'
         + 'background:#fff;border:1.5px solid #0d6e3f;border-radius:12px;padding:7px 11px;font:600 11.5px Inter,sans-serif;'
         + 'color:#111827;box-shadow:0 4px 14px rgba(13,110,63,.18);pointer-events:none;white-space:nowrap;z-index:2;'
         + 'transition:opacity .25s, transform .25s;opacity:0;';
@@ -348,10 +216,101 @@
     }, ms);
   }
 
-  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  /* ---------- pointer interaction ---------- */
+  function bindPointer() {
+    const { canvas } = ctx;
+    let dragging = false, lastX = 0, lastY = 0, downAt = 0, downXY = [0, 0];
+
+    const pos = (e) => { const p = e.touches ? e.touches[0] : e; return { x: p.clientX, y: p.clientY }; };
+
+    const start = (e) => {
+      const p = pos(e);
+      dragging = true; lastX = p.x; lastY = p.y;
+      downAt = Date.now(); downXY = [p.x, p.y];
+      canvas.style.cursor = 'grabbing';
+      setState(STATE.held);
+      say(pick(['Up we go! ✋', 'Careful…', '*eyes squeezed shut*']), 1800);
+      e.preventDefault();
+    };
+
+    const move = (e) => {
+      if (!dragging) return;
+      const p = pos(e);
+      ctx.px = Math.max(4, Math.min(window.innerWidth - ctx.W - 4, ctx.px + (p.x - lastX)));
+      ctx.py = Math.max(4, Math.min(window.innerHeight - 60, ctx.py + (p.y - lastY)));
+      lastX = p.x; lastY = p.y;
+      place();
+      // carried tilt
+      ctx.model.rotation.z = Math.max(-0.4, Math.min(0.4, -(p.x - downXY[0]) * 0.004));
+      e.preventDefault();
+    };
+
+    const end = (e) => {
+      if (!dragging) return;
+      dragging = false;
+      canvas.style.cursor = 'grab';
+      if (ctx.actions.blink) ctx.actions.blink.stop(); // eyes may reopen
+      const p = e.changedTouches ? { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY } : { x: event.clientX, y: event.clientY };
+      const moved = Math.hypot(p.x - downXY[0], p.y - downXY[1]);
+      if (Date.now() - downAt < 250 && moved < 6) {
+        // a tap, not a drag → wave hello
+        setState(STATE.idle);
+        ctx.py = floorY() - ctx.H;
+        place();
+        if (ctx.waveCooldown <= 0) { playOnce('wave'); ctx.waveCooldown = 6; }
+        return;
+      }
+      drop();
+    };
+
+    canvas.addEventListener('mousedown', start);
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', end);
+    canvas.addEventListener('touchstart', start, { passive: false });
+    window.addEventListener('touchmove', move, { passive: false });
+    canvas.addEventListener('touchend', end);
+  }
+
+  /* ---------- fall: land on floor or on a card below ---------- */
+  function landingYFor(centerX, fromY) {
+    // highest surface strictly below the robot's feet
+    let best = floorY();
+    for (const el of collectTargets()) {
+      const r = el.getBoundingClientRect();
+      if (centerX >= r.left && centerX <= r.right) {
+        const top = r.top;
+        if (top >= fromY - 4 && top < best) best = top;
+      }
+    }
+    return best;
+  }
+
+  function drop() {
+    setState(STATE.fall);
+    say(pick(DROP_LINES), 1800);
+    ctx.model.rotation.z = 0;
+    ctx.velocityY = 0;
+    ctx.spinX = (Math.random() - 0.5) * 6;
+    ctx.spinZ = (Math.random() - 0.5) * 6;
+    ctx.landY = landingYFor(ctx.px + ctx.W / 2, feetY());
+  }
+
+  /* ---------- wander ---------- */
+  function pickTarget() {
+    const cards = collectTargets();
+    if (!cards.length) return null;
+    return { el: cards[Math.floor(Math.random() * cards.length)] };
+  }
+
+  function startWander() {
+    const t = pickTarget();
+    if (!t) { ctx.wanderTimer = 8; return; }
+    ctx.target = t;
+    setState(STATE.walk);
+  }
 
   /* ============================================================
-     Main loop
+     Main loop — screen-space brain, scene-space animation
      ============================================================ */
   let lastT = performance.now() / 1000;
   function startLoop() {
@@ -366,134 +325,202 @@
   }
 
   function update(dt, now) {
-    const { model, mixer } = ctx;
+    const { model, mixer, actions } = ctx;
     mixer.update(dt);
     ctx.waveCooldown = Math.max(0, ctx.waveCooldown - dt);
 
+    const walkWaddle = () => { model.rotation.z = Math.sin(now * 13) * 0.07; };
+
     switch (ctx.state) {
 
-      case STATE.idle: {
-        // blink schedule
-        ctx.blinkTimer -= dt;
-        if (ctx.blinkTimer <= 0) {
-          playOnce('blink');
-          ctx.blinkTimer = 2.5 + Math.random() * 4;
+      case STATE.enter: {
+        // walk in from the right edge
+        ctx.px -= CFG.speed * 1.4 * dt;
+        ctx.py = floorY() - ctx.H;
+        ctx.facing = -1;
+        walkWaddle();
+        place();
+        if (ctx.px <= window.innerWidth * 0.68) {
+          setState(STATE.idle);
+          model.rotation.z = 0;
+          playOnce('wave');
+          ctx.waveCooldown = 8;
+          say('Hello! I\'m Bit 🤖', 3000);
+          ctx.wanderTimer = 7;
         }
-        // wander schedule
+        break;
+      }
+
+      case STATE.idle: {
+        // face last direction, breathe
+        model.rotation.z *= 0.9;
+        model.rotation.y += (ctx.facing * 0.3 - model.rotation.y) * 0.08;
+
+        ctx.blinkTimer -= dt;
+        if (ctx.blinkTimer <= 0) { playOnce('blink'); ctx.blinkTimer = 2.5 + Math.random() * 4; }
+
+        ctx.chatTimer -= dt;
+        if (ctx.chatTimer <= 0) { say(pick(IDLE_LINES)); ctx.chatTimer = 25 + Math.random() * 20; }
+
         ctx.wanderTimer -= dt;
         if (ctx.wanderTimer <= 0) startWander();
-        // occasional idle chatter
-        ctx.chatTimer = (ctx.chatTimer ?? 20) - dt;
-        if (ctx.chatTimer <= 0) { say(pick(IDLE_LINES)); ctx.chatTimer = 25 + Math.random() * 20; }
         break;
       }
 
-      case STATE.wander: {
-        if (!ctx.target) { setState(STATE.idle); break; }
-        const destX = ctx.target.x;
-        const curX = model.position.x;
-        const step = CFG.speed * dt * Math.sign(destX - curX || 1);
-        model.position.x += Math.abs(destX - curX) < Math.abs(step) ? (destX - curX) : step;
-        // face travel direction + little walk waddle
-        model.rotation.y = Math.sign(destX - curX || 1) * 0.35;
-        model.position.z = Math.sin(now * 10) * 0.02;
-        if (Math.abs(destX - curX) < 0.02) {
-          model.position.x = destX;
-          model.rotation.y = 0;
-          setState(STATE.sitting);
-          playOnce('sit');
-          // sit for a while, then stand back up
-          ctx.sitUntil = now + 6 + Math.random() * 6;
-          // greet the card
-          if (ctx.target && ctx.target.el) {
-            const title = ctx.target.el.querySelector('h4')?.textContent
-              || ctx.target.el.querySelector('.ch-title')?.textContent || '';
-            say(title ? `"${title.slice(0, 34)}" — nice pick!` : pick(SIT_LINES));
+      case STATE.walk: {
+        const el = ctx.target?.el;
+        if (!el || !document.contains(el)) { ctx.target = null; setState(STATE.idle); ctx.wanderTimer = 5; break; }
+        const r = el.getBoundingClientRect();
+        const destX = r.left + r.width / 2 - ctx.W / 2;
+        const dx = destX - ctx.px;
+        if (Math.abs(dx) > CFG.rest) {
+          ctx.facing = Math.sign(dx);
+          ctx.px += Math.sign(dx) * Math.min(Math.abs(dx), CFG.speed * dt);
+          walkWaddle();
+        } else {
+          // arrived at the card's x → climb to its top edge
+          model.rotation.z = 0;
+          const destY = r.top - ctx.H + 14;   // sit slightly overlapping the top edge
+          if (Math.abs(destY - ctx.py) > CFG.rest) {
+            setState(STATE.climb);
+            say(pick(CLIMB_LINES), 1800);
           } else {
-            say(pick(SIT_LINES));
+            arriveSit(now);
           }
+        }
+        place();
+        break;
+      }
+
+      case STATE.climb: {
+        const el = ctx.target?.el;
+        if (!el || !document.contains(el)) { setState(STATE.fall); ctx.landY = floorY(); break; }
+        const r = el.getBoundingClientRect();
+        const destY = r.top - ctx.H + 14;
+        const dy = destY - ctx.py;
+        // little scramble up with a hop arc
+        ctx.py += Math.sign(dy) * Math.min(Math.abs(dy), CFG.climbSpeed * dt);
+        model.rotation.z = Math.sin(now * 18) * 0.12;
+        place();
+        if (Math.abs(destY - ctx.py) <= CFG.rest) arriveSit(now);
+        break;
+      }
+
+      case STATE.sit: {
+        const el = ctx.target?.el;
+        if (!el || !document.contains(el)) { // card vanished (filter change) → fall
+          ctx.target = null; setState(STATE.fall); ctx.landY = floorY(); break;
+        }
+        // follow the card while sitting (scroll / reflow safe)
+        const r = el.getBoundingClientRect();
+        ctx.px = r.left + r.width / 2 - ctx.W / 2;
+        ctx.py = r.top - ctx.H + 14;
+        place();
+        if (now > ctx.sitUntil) {
+          setState(STATE.climbdown);
         }
         break;
       }
 
-      case STATE.sitting: {
-        if (now > (ctx.sitUntil || 0)) {
+      case STATE.climbdown: {
+        const destY = floorY() - ctx.H;
+        const dy = destY - ctx.py;
+        if (Math.abs(dy) > CFG.rest) {
+          ctx.py += Math.sign(dy) * Math.min(Math.abs(dy), CFG.climbSpeed * dt);
+          model.rotation.z = Math.sin(now * 18) * 0.1;
+          place();
+        } else {
+          ctx.py = destY;
+          model.rotation.z = 0;
           setState(STATE.idle);
-          ctx.wanderTimer = CFG.wanderDelay[0] + Math.random() * (CFG.wanderDelay[1] - CFG.wanderDelay[0]);
-          ctx.wanderTimer = Math.max(10, ctx.wanderTimer);
+          ctx.wanderTimer = 10 + Math.random() * 12;
         }
         break;
       }
 
       case STATE.held: {
-        // gentle dangle sway while carried
-        model.rotation.z += (Math.sin(now * 3) * 0.12 - model.rotation.z) * 0.1;
-        // keep eyes shut the whole time the puppet is carried:
-        // hold the blink clip at its closed pose (time 0.08s = squeezed).
+        // eyes parked shut while carried
         if (actions.blink) {
-          actions.blink.setLoop(T.LoopOnce);
+          actions.blink.setLoop(ctx.T.LoopOnce);
           actions.blink.clampWhenFinished = true;
           if (!actions.blink.isRunning()) actions.blink.play();
-          if (actions.blink.time >= 0.16) actions.blink.time = 0.08; // park shut
+          if (actions.blink.time >= 0.16) actions.blink.time = 0.08;
         }
+        // gentle dangle
+        model.rotation.z += (Math.sin(now * 3) * 0.12 - model.rotation.z) * 0.1;
         break;
       }
 
-      case STATE.falling: {
-        ctx.velocity.y -= CFG.fallGravity * dt;
-        model.position.y += ctx.velocity.y * dt;
-        model.rotation.x += ctx.spin.x * dt;
-        model.rotation.z += ctx.spin.z * dt;
-        model.rotation.y += ctx.spin.y * dt;
+      case STATE.fall: {
+        ctx.velocityY += CFG.gravity * dt;
+        ctx.py += ctx.velocityY * dt;
+        model.rotation.x += ctx.spinX * dt;
+        model.rotation.z += ctx.spinZ * dt;
 
-        if (model.position.y <= CFG.baseY) {
-          // land
-          model.position.y = CFG.baseY;
-          const impact = Math.abs(ctx.velocity.y);
-          ctx.velocity.y = impact * CFG.fallBounce;   // bounce
-          ctx.spin.multiplyScalar(0.5);               // damp tumble
-          if (impact < 1.6) {
+        const landY = ctx.landY ?? floorY();
+        if (feetY() >= landY) {
+          ctx.py = landY - ctx.H;
+          const impact = ctx.velocityY;
+          ctx.velocityY = impact * CFG.bounce;
+          ctx.spinX *= 0.5; ctx.spinZ *= 0.5;
+          if (impact < 320) {
             // settled
-            ctx.velocity.set(0, 0, 0);
-            ctx.spin.set(0, 0, 0);
+            ctx.velocityY = 0; ctx.spinX = 0; ctx.spinZ = 0;
             model.rotation.x = 0;
-            // ease z-rotation back upright
             const settle = () => {
               model.rotation.z *= 0.8;
               if (Math.abs(model.rotation.z) > 0.01) requestAnimationFrame(settle);
               else model.rotation.z = 0;
             };
             settle();
-            setState(STATE.idle);
-            ctx.blinkTimer = 1.5;
-            ctx.wanderTimer = 8 + Math.random() * 10;
-            // a little "oops" wave sometimes
-            if (Math.random() < 0.4) playOnce('wave');
-          } else {
-            ctx.velocity.y *= 0.6; // second bounce smaller
+            place();
+            // did we land on top of a card? then just sit there a while
+            const onCard = collectTargets().find(el => {
+              const r = el.getBoundingClientRect();
+              return Math.abs(r.top - landY) < 4 && ctx.px + ctx.W / 2 >= r.left && ctx.px + ctx.W / 2 <= r.right;
+            });
+            if (onCard) {
+              ctx.target = { el: onCard };
+              arriveSit(now, 4000);
+            } else {
+              setState(STATE.idle);
+              ctx.blinkTimer = 1.2;
+              ctx.wanderTimer = 8 + Math.random() * 8;
+              if (Math.random() < 0.4) playOnce('wave');
+            }
           }
+          place();
         }
         break;
       }
     }
 
-    // shadow follows x, shrinks with height
+    /* ---------- shared cosmetics ---------- */
+    // shadow under the feet
     if (ctx.shadow) {
-      const h = Math.max(0, model.position.y - CFG.baseY);
-      ctx.shadow.position.x = model.position.x;
-      const s = Math.max(0.55, 1 - h * 0.18);
+      const h = Math.max(0, (floorY() - feetY()));
+      const s = Math.max(0.55, 1 - h * 0.0012);
       ctx.shadow.scale.setScalar(s);
-      ctx.shadow.material.opacity = Math.max(0.12, 0.35 - h * 0.06);
+      ctx.shadow.material.opacity = Math.max(0.1, 0.35 - h * 0.0009);
     }
 
-    // pending one-shot completion
-    if (ctx.pending && now >= ctx.pending.until) {
-      const p = ctx.pending;
-      ctx.pending = null;
-      p.then && p.then();
-    }
+    // pending one-shot clip finished
+    if (ctx.pending && now >= ctx.pending.until) ctx.pending = null;
+  }
 
-    ctx.renderer.render(ctx.scene, ctx.camera);
+  function arriveSit(now, dur) {
+    const el = ctx.target?.el;
+    setState(STATE.sit);
+    playOnce('sit');
+    ctx.sitUntil = now + (dur || 6 + Math.random() * 6);
+    if (el) {
+      const title = el.querySelector('h4')?.textContent
+        || el.querySelector('.ch-title')?.textContent
+        || el.querySelector('strong')?.textContent || '';
+      say(title ? `"${title.slice(0, 34)}" — nice pick!` : pick(SIT_LINES));
+    } else {
+      say(pick(SIT_LINES));
+    }
   }
 
   /* ---------- page lifecycle ---------- */
@@ -504,26 +531,18 @@
     ctx = null;
   }
 
-  /* Milestone celebration — called by dashboard._celebrate() on
-     lesson completion, challenge pass, streak bumps, etc. */
+  /* Milestone celebration — called by dashboard._celebrate() */
   function celebrate() {
-    if (!ctx || ctx.state === STATE.held) return;
-    if (ctx.state === STATE.falling) return;
+    if (!ctx || ctx.state === STATE.held || ctx.state === STATE.fall) return;
     playOnce('wave');
     ctx.waveCooldown = 6;
-    say(pick([
-      'You did it! 🎉',
-      'Amazing work! 🌟',
-      'Level up! 🚀',
-      'So proud of you! 💚',
-      'On a roll! 🔥'
-    ]), 3200);
+    say(pick(['You did it! 🎉', 'Amazing work! 🌟', 'Level up! 🚀', 'So proud of you! 💚', 'On a roll! 🔥']), 3200);
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => setTimeout(init, 1500));
+    document.addEventListener('DOMContentLoaded', () => setTimeout(init, 1200));
   } else {
-    setTimeout(init, 1500);
+    setTimeout(init, 1200);
   }
 
   window.PuppetRobot = { init, teardown, celebrate, say: (t, m) => say(t, m) };
