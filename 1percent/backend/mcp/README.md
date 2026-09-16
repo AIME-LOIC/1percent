@@ -58,14 +58,23 @@ and Claude can then see *their* learning data — and nothing else.
 3. Name: `1% Learn`. URL: `https://learn.1percent.rw/mcp/student/<token>`.
 4. Start a chat → tools menu → pick **1% Learn**.
 
+### Account-based (OAuth) connection — no token at all
+
+The preferred flow: claude.ai discovers `/.well-known/oauth-authorization-server`, **self-registers a public client** via `POST /mcp/oauth/register` (RFC 7591), then sends the student to `/mcp/oauth/authorize` where they log in and approve. Claude exchanges the code (+ PKCE verifier) at `/mcp/oauth/token` and gets a scoped bearer token for `/mcp/student`.
+
+If claude.ai ever says *"Automatic client registration isn't supported"*, the deployment is missing `registration_endpoint` in its discovery metadata or `migrations/add_mcp_oauth_clients.sql` has not been run — the register route returns `invalid_client`/400s otherwise and the flow dies before consent.
+
 ## Implementation map
 
 | File | Role |
 |---|---|
 | `backend/mcp/studentCore.js` | Student tool definitions + JSON-RPC dispatch (user-scoped) |
 | `backend/services/studentMcpService.js` | Token generate/verify (SHA-256)/revoke/status |
+| `backend/services/mcpOAuthService.js` | OAuth account flow: auth codes, PKCE, tokens, RFC 7591 dynamic client registration |
+| `backend/routes/mcpOAuthRoutes.js` | `/mcp/oauth/*` — authorize (consent), register, token, discovery, revoke |
 | `backend/routes/studentMcpRoutes.js` | `/api/mcp/student/*` token management + `/mcp/student` JSON-RPC |
 | `migrations/add_student_mcp_tokens.sql` | `student_mcp_tokens` table (run in Supabase SQL editor) |
+| `migrations/add_mcp_oauth_clients.sql` | `mcp_oauth_clients` table for dynamic registration (run in Supabase SQL editor) |
 | `frontend/settings.html` | "Connect to Claude" settings tab |
 
 > Rotating a token instantly invalidates the old connector URL (the old hash

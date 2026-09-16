@@ -25,19 +25,50 @@
     {
       "@type": "BreadcrumbList",
       "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://learn.1percent.rw/" },
-        { "@type": "ListItem", "position": 2, "name": "Install", "item": "https://learn.1percent.rw/install" }
-      ]
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://learn.1percent.rw/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Install",
+          "item": "https://learn.1percent.rw/install"
+        }
+      ],
+      "@id": "https://learn.1percent.rw/install#breadcrumb"
     },
     {
       "@type": "HowTo",
       "name": "How to install the 1Percent Learn tools",
       "description": "Install the 1Percent VS Code extension and CLI to use 1Percent from your editor and terminal.",
       "step": [
-        { "@type": "HowToStep", "position": 1, "name": "Install the VS Code extension", "text": "Download the onepercent-learn-vscode .vsix file and run: code --install-extension onepercent-learn-vscode-1.0.4.vsix" },
-        { "@type": "HowToStep", "position": 2, "name": "Or install the CLI via npm", "text": "Run: npm install -g @1percent/learn-cli (requires Node.js 18+ and npm 9+)" },
-        { "@type": "HowToStep", "position": 3, "name": "Verify the installation", "text": "Run: onepercent --version" },
-        { "@type": "HowToStep", "position": 4, "name": "Log in", "text": "Run: onepercent login and authenticate with your 1Percent account." }
+        {
+          "@type": "HowToStep",
+          "position": 1,
+          "name": "Install the VS Code extension",
+          "text": "Download the onepercent-learn-vscode .vsix file and run: code --install-extension onepercent-learn-vscode-1.0.4.vsix"
+        },
+        {
+          "@type": "HowToStep",
+          "position": 2,
+          "name": "Or install the CLI via npm",
+          "text": "Run: npm install -g @1percent/learn-cli (requires Node.js 18+ and npm 9+)"
+        },
+        {
+          "@type": "HowToStep",
+          "position": 3,
+          "name": "Verify the installation",
+          "text": "Run: onepercent --version"
+        },
+        {
+          "@type": "HowToStep",
+          "position": 4,
+          "name": "Log in",
+          "text": "Run: onepercent login and authenticate with your 1Percent account."
+        }
       ]
     },
     {
@@ -45,7 +76,15 @@
       "name": "How to Install the 1% Learn Tools — CLI & VS Code Setup",
       "url": "https://learn.1percent.rw/install",
       "description": "Installation guide for the 1Percent VS Code extension and CLI.",
-      "isPartOf": { "@id": "https://learn.1percent.rw/#website" }
+      "isPartOf": {
+        "@id": "https://learn.1percent.rw/#website"
+      }
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://learn.1percent.rw/#website",
+      "name": "1percent Rwanda",
+      "url": "https://learn.1percent.rw"
     }
   ]
 }

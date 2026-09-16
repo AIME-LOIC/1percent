@@ -1234,17 +1234,40 @@ document.getElementById('mcp-revoke-btn')?.addEventListener('click', async () =>
   });
   if (!confirmed) return;
 
+  const btn = document.getElementById('mcp-revoke-btn');
+  btn.disabled = true;
   try {
-    const res = await apiFetch('/mcp/oauth/revoke', { method: 'POST' });
-    if (res.status === 404) {
-      // OAuth not active — fall back to legacy token revoke
-      await apiFetch('/api/mcp/student/token', { method: 'DELETE' });
+    // Revoke BOTH connection kinds: the OAuth account connection AND the
+    // legacy paste token. Both endpoints are idempotent and return success
+    // with "revoked: 0/false" when there is nothing of that kind to revoke,
+    // so firing both is safe and covers whichever connection exists.
+    // (The old code only fell back to the token DELETE on a 404 — the OAuth
+    // route always exists, so a legacy paste token was never revoked.)
+    const results = await Promise.allSettled([
+      apiFetch('/mcp/oauth/revoke', { method: 'POST' }),
+      apiFetch('/api/mcp/student/token', { method: 'DELETE' })
+    ]);
+    const ok = r => r.status === 'fulfilled' && r.value.ok;
+    const [oauthRes, tokenRes] = results;
+
+    if (!ok(oauthRes) && !ok(tokenRes)) {
+      // Both failed — surface the first readable error (usually auth).
+      let msg = 'Could not disconnect. Reload the page and try again.';
+      for (const r of results) {
+        if (r.status === 'fulfilled') {
+          try { const j = await r.value.json(); msg = j.error || j.message || msg; break; } catch { }
+        }
+      }
+      throw new Error(msg);
     }
+
     Toast.success('Disconnected');
     document.getElementById('mcp-token-result').style.display = 'none';
     await loadMcpStatus();
   } catch (e) {
     Toast.error('Failed: ' + e.message);
+  } finally {
+    btn.disabled = false;
   }
 });
 

@@ -25,9 +25,20 @@
   "@graph": [
     {
       "@type": "BreadcrumbList",
+      "@id": "https://learn.1percent.rw/pricing#breadcrumb",
       "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://learn.1percent.rw/" },
-        { "@type": "ListItem", "position": 2, "name": "Pricing", "item": "https://learn.1percent.rw/pricing" }
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://learn.1percent.rw/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Pricing",
+          "item": "https://learn.1percent.rw/pricing"
+        }
       ]
     },
     {
@@ -35,8 +46,12 @@
       "name": "1Percent Pricing — How Much Does It Cost to Learn?",
       "url": "https://learn.1percent.rw/pricing",
       "description": "1Percent pricing explained: start free, go Pro for RWF 15,000/month or Unlimited for RWF 35,000/month.",
-      "isPartOf": { "@id": "https://learn.1percent.rw/#website" },
-      "breadcrumb": { "@id": "https://learn.1percent.rw/pricing#breadcrumb" }
+      "isPartOf": {
+        "@id": "https://learn.1percent.rw/#website"
+      },
+      "breadcrumb": {
+        "@id": "https://learn.1percent.rw/pricing#breadcrumb"
+      }
     },
     {
       "@type": "FAQPage",
@@ -74,6 +89,12 @@
           }
         }
       ]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://learn.1percent.rw/#website",
+      "name": "1percent Rwanda",
+      "url": "https://learn.1percent.rw"
     }
   ]
 }

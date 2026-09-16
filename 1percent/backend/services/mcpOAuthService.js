@@ -19,6 +19,9 @@
    - Authorization codes: single-use, 10-minute TTL, PKCE-verified,
      bound to the client_id that started the flow.
    - Refresh tokens: rotated on every use, revocable, hashed at rest.
+   - Dynamic client registration (RFC 7591): claude.ai registers a
+     public client at /mcp/oauth/register before consenting, and its
+     redirect URIs are enforced exactly at authorize time.
    - The consent step means NO secret is ever copy-pasted: access is
      granted to a logged-in account from our own domain.
 
@@ -40,6 +43,49 @@ const VALID_SCOPES = ['read', 'grade'];
    connectors may omit client_id — treat missing as a fixed public id. */
 const DEFAULT_CLIENT_ID = 'claude-ai-connector';
 
+/* RFC 7591 — Dynamic Client Registration. Public clients (no secret)
+   are stored with their exact redirect_uris and checked on authorize.
+   A client_id that is neither registered nor DEFAULT must fail CLOSED:
+   unknown clients never reach the consent page. */
+const REDIRECT_URI_MAX = 5;
+
+function normalizeRedirectUris(raw) {
+  const list = Array.isArray(raw) ? raw : (raw ? String(raw).split(/\s+/) : []);
+  const uris = [];
+  for (const item of list) {
+    const uri = String(item || '').trim();
+    if (!uri) continue;
+    let u;
+    try { u = new URL(uri); } catch { return null; } // malformed → reject whole request
+    if (u.protocol !== 'https:' && u.protocol !== 'http:') return null;
+    if (u.protocol === 'http:' && u.hostname !== 'localhost' && u.hostname !== '127.0.0.1') return null;
+    if (u.hash) return null; // fragments are forbidden in redirect URIs
+    if (!uris.includes(uri)) uris.push(uri);
+  }
+  return uris;
+}
+
+function isValidRedirectUri(uri) {
+  const normalized = normalizeRedirectUris([uri]);
+  return Array.isArray(normalized) && normalized.length === 1;
+}
+
+function normalizeRequestedScopes(raw) {
+  return normalizeScope(Array.isArray(raw) ? raw.join(' ') : raw);
+}
+
+function normalizeGrantTypes(raw) {
+  // Strict mode: if the caller explicitly requested grant_types, they
+  // must be a subset of what we support AND include authorization_code.
+  // Returns null when the request is unacceptable.
+  if (raw === undefined || raw === null || raw === '') return null; // not specified → server default
+  const list = Array.isArray(raw) ? raw.map(String) : String(raw).split(/[\s+]/);
+  const g = list.filter(Boolean);
+  if (!g.length) return null;
+  const supported = g.every(x => ['authorization_code', 'refresh_token'].includes(x));
+  return supported && g.includes('authorization_code') ? g : null;
+}
+
 function sha256(value) {
   return crypto.createHash('sha256').update(String(value)).digest('hex');
 }
@@ -52,11 +98,142 @@ function normalizeScope(raw) {
 
 class McpOAuthService {
 
-  /** PKCE: S256(code_verifier) must equal the stored code_challenge. */
+  /* ── RFC 7591 dynamic client registration ────────────────── */
+
+  /**
+   * Register a public/confidential client. Returns the RFC 7591
+   * response (201-shaped payload; the route sets the status).
+   * Registration is unauthenticated (open) but rate-limited upstream
+   * and every issued client_id is stored for revocation.
+   */
+  async registerClient({ clientName, redirectUris, grantTypes, responseTypes, tokenEndpointAuthMethod, scope }) {
+    const uris = normalizeRedirectUris(redirectUris);
+    if (!Array.isArray(uris) || uris.length === 0) {
+      const e = new Error("redirect_uris must include at least one valid https:// URI (or http://localhost for development).");
+      e.status = 400; e.oauthError = 'invalid_redirect_uri';
+      throw e;
+    }
+    if (uris.length > REDIRECT_URI_MAX) {
+      const e = new Error('Too many redirect_uris (max ' + REDIRECT_URI_MAX + ').');
+      e.status = 400; e.oauthError = 'invalid_redirect_uri';
+      throw e;
+    }
+
+    const grants = normalizeGrantTypes(grantTypes);
+    if (!grants) {
+      const e = new Error('grant_types must include authorization_code (refresh_token optional).');
+      e.status = 400; e.oauthError = 'invalid_client_metadata';
+      throw e;
+    }
+
+    const authMethod = tokenEndpointAuthMethod === 'client_secret_post' ? 'client_secret_post' : 'none';
+    const scopes = normalizeRequestedScopes(scope).join(' ');
+    const clientId = 'mcp-' + crypto.randomBytes(16).toString('hex');
+    const clientSecret = authMethod === 'client_secret_post'
+      ? crypto.randomBytes(32).toString('base64url')
+      : null;
+
+    const { error } = await adminClient.from('mcp_oauth_clients').insert({
+      client_id: clientId,
+      client_secret_hash: clientSecret ? sha256(clientSecret) : null,
+      client_name: clientName ? String(clientName).slice(0, 200) : null,
+      redirect_uris: uris,
+      grant_types: grants,
+      response_types: ['code'],
+      token_endpoint_auth_method: authMethod,
+      scope: scopes
+    });
+    if (error) throw error;
+
+    const body = {
+      client_id: clientId,
+      client_id_issued_at: Math.floor(Date.now() / 1000),
+      client_name: clientName ? String(clientName).slice(0, 200) : null,
+      redirect_uris: uris,
+      grant_types: grants,
+      response_types: ['code'],
+      token_endpoint_auth_method: authMethod,
+      scope: scopes
+    };
+    if (clientSecret) {
+      body.client_secret = clientSecret;
+      body.client_secret_expires_at = 0; // never expires
+    }
+    return body;
+  }
+
+  /**
+   * Fetch a registered client by id (null if unknown or revoked).
+   * Used by the authorize page to decide whether client_id is allowed.
+   */
+  async findClient(clientId) {
+    if (!clientId || typeof clientId !== 'string') return null;
+    const { data, error } = await adminClient
+      .from('mcp_oauth_clients')
+      .select('*')
+      .eq('client_id', clientId)
+      .maybeSingle();
+    if (error || !data || data.revoked_at) return null;
+    return data;
+  }
+
+  /** True when client_id may start an authorize flow (registered or DEFAULT). */
+  async isKnownClient(clientId) {
+    const id = String(clientId || DEFAULT_CLIENT_ID);
+    if (id === DEFAULT_CLIENT_ID) return true;
+    return (await this.findClient(id)) !== null;
+  }
+
+  /**
+   * Redirect URI check for the authorize page.
+   *  - client registered via RFC 7591 → exact-match against its list
+   *  - DEFAULT_CLIENT_ID              → any valid https URL (claude.ai
+   *    rotates its callback hosts, so an allowlist would break it)
+   */
+  async isAllowedRedirectUri(clientId, redirectUri) {
+    const uri = String(redirectUri || '');
+    if (!uri || !isValidRedirectUri(uri)) return false;
+    const id = String(clientId || DEFAULT_CLIENT_ID);
+    if (id === DEFAULT_CLIENT_ID) return true; // still must be a valid https URL
+    const client = await this.findClient(id);
+    if (!client) return false;
+    return (client.redirect_uris || []).includes(uri);
+  }
+
+  /**
+   * Client authentication at /token for confidential clients.
+   * Returns { ok, reason } — reason is the RFC 6749 §5.2 error code.
+   */
+  async authenticateClient(clientId, clientSecret) {
+    const id = String(clientId || '');
+    if (id === DEFAULT_CLIENT_ID) {
+      // DEFAULT stays a public client: PKCE-only, no secret.
+      return { ok: true, client: null };
+    }
+    if (!id) return { ok: true, client: null }; // legacy flows omit client_id
+    const client = await this.findClient(id);
+    if (!client) return { ok: false, reason: 'invalid_client' };
+    if (client.token_endpoint_auth_method === 'none') {
+      // Public client: no secret expected; one must not be presented.
+      return clientSecret ? { ok: false, reason: 'invalid_client' } : { ok: true, client };
+    }
+    if (!clientSecret) return { ok: false, reason: 'invalid_client' };
+    const a = Buffer.from(sha256(String(clientSecret)));
+    const b = Buffer.from(client.client_secret_hash || '');
+    if (!a.length || a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+      return { ok: false, reason: 'invalid_client' };
+    }
+    return { ok: true, client };
+  }
+
+  /** PKCE: S256(code_verifier) must equal the stored code_challenge.
+   * NOTE: the challenge is base64url(SHA-256(verifier)) — 43 chars —
+   * NOT the hex digest. Hashing to hex here made every exchange fail
+   * with invalid_grant (caught by test_mcp_oauth_registration.js). */
   _pkceOk(verifier, challenge, method) {
     if (!verifier || !challenge) return false;
     if (method && method !== 'S256') return false; // 'plain' refused
-    const expected = sha256(verifier).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const expected = crypto.createHash('sha256').update(String(verifier)).digest('base64url');
     const a = Buffer.from(expected);
     const b = Buffer.from(String(challenge));
     return a.length === b.length && crypto.timingSafeEqual(a, b);
@@ -221,3 +398,6 @@ class McpOAuthService {
 module.exports = new McpOAuthService();
 module.exports.VALID_SCOPES = VALID_SCOPES;
 module.exports.DEFAULT_CLIENT_ID = DEFAULT_CLIENT_ID;
+module.exports.isValidRedirectUri = isValidRedirectUri;
+module.exports.normalizeRedirectUris = normalizeRedirectUris;
+module.exports.normalizeRequestedScopes = normalizeRequestedScopes;

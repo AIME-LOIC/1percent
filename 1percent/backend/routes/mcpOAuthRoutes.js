@@ -6,6 +6,7 @@
      GET  /mcp/oauth/authorize           → consent page (requires login)
      GET  /mcp/oauth/consent.js          → page script
      GET  /mcp/oauth/.well-known/oauth-authorization-server
+     POST /mcp/oauth/register            → RFC 7591 dynamic client registration
      POST /mcp/oauth/token               → code/refresh exchange
      POST /mcp/oauth/revoke              → disconnect for the logged-in user
 
@@ -17,14 +18,17 @@
 
    POST /mcp/oauth/token is a pure JSON API used server-to-server by
    Claude (client_secret_post if a secret is configured, else PKCE).
+   POST /mcp/oauth/register implements RFC 7591 so claude.ai can
+   create its own Client ID instead of asking for one manually.
    ============================================================ */
 
 const express = require('express');
 const crypto = require('crypto');
 const { adminClient } = require('../config/database');
 const mcpOAuthService = require('../services/mcpOAuthService');
-const { VALID_SCOPES, DEFAULT_CLIENT_ID } = require('../services/mcpOAuthService');
+const { VALID_SCOPES, DEFAULT_CLIENT_ID, isValidRedirectUri } = require('../services/mcpOAuthService');
 const logService = require('../services/logService');
+const { rateLimit } = require('../middlewares/rateLimit');
 
 const router = express.Router();
 
@@ -63,8 +67,16 @@ router.get('/authorize', async (req, res, next) => {
     const codeChallengeMethod = req.query.code_challenge_method ? String(req.query.code_challenge_method) : null;
 
     // RFC 6749: validate redirect_uri FIRST — never echo an unvalidated one.
-    if (redirectUri && !isHttpUrl(redirectUri)) {
+    if (redirectUri && !isValidRedirectUri(redirectUri)) {
       return res.status(400).json({ error: 'invalid_request', error_description: 'redirect_uri must be a valid http(s) URL.' });
+    }
+    // RFC 7591: only registered clients (or the built-in DEFAULT id) may
+    // start a flow — an unknown client_id fails closed.
+    if (!(await mcpOAuthService.isKnownClient(clientId))) {
+      return oauthErr(res, redirectUri, 'invalid_client', 'Unknown client_id. Register at /mcp/oauth/register first.');
+    }
+    if (redirectUri && !(await mcpOAuthService.isAllowedRedirectUri(clientId, redirectUri))) {
+      return oauthErr(res, redirectUri, 'invalid_request', 'redirect_uri is not registered for this client.');
     }
     if (responseType !== 'code') {
       return oauthErr(res, redirectUri, 'unsupported_response_type', 'Only response_type=code is supported.');
@@ -295,8 +307,14 @@ router.post('/authorize', async (req, res, next) => {
     // redirect_uri is OPTIONAL: claude.ai always sends one, but a same-origin
     // connect (e.g. "try it now" from Settings) may omit it — then we bounce
     // the browser to a success page instead of erroring.
-    if (redirectUri && !isHttpUrl(redirectUri)) {
+    if (redirectUri && !isValidRedirectUri(redirectUri)) {
       return res.status(400).json({ error: 'invalid_request', error_description: 'Missing redirect_uri.' });
+    }
+    if (!(await mcpOAuthService.isKnownClient(flow.client_id))) {
+      return res.status(400).json({ error: 'invalid_client', error_description: 'Unknown client_id.' });
+    }
+    if (redirectUri && !(await mcpOAuthService.isAllowedRedirectUri(flow.client_id, redirectUri))) {
+      return res.status(400).json({ error: 'invalid_request', error_description: 'redirect_uri is not registered for this client.' });
     }
     if (flow.code_challenge) {
       const challenge = String(flow.code_challenge);
@@ -349,10 +367,15 @@ router.post('/token', async (req, res, next) => {
       const clientSecret = p.client_secret ? String(p.client_secret) : null;
       const redirectUri = p.redirect_uri ? String(p.redirect_uri) : null;
 
-      // Confidential clients (if MCP_OAUTH_CLIENT_SECRET is set) must present it.
+      // RFC 7591 client auth: registered confidential clients must present
+      // their secret; public clients (claude.ai) authenticate via PKCE only.
+      const clientAuth = await mcpOAuthService.authenticateClient(clientId, clientSecret);
+      if (!clientAuth.ok) return tokenError(res, clientAuth.reason || 'invalid_client', 401);
+      // Defence in depth for the built-in DEFAULT client: when
+      // MCP_OAUTH_CLIENT_SECRET is set, a presented secret must match it.
       const expectedSecret = process.env.MCP_OAUTH_CLIENT_SECRET || null;
-      if (expectedSecret) {
-        const a = Buffer.from(clientSecret || '');
+      if (expectedSecret && clientSecret) {
+        const a = Buffer.from(clientSecret);
         const b = Buffer.from(expectedSecret);
         if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
           return tokenError(res, 'invalid_client', 401);
@@ -384,6 +407,42 @@ router.post('/token', async (req, res, next) => {
   }
 });
 
+/* ── 3. POST /mcp/oauth/register — dynamic client registration ──
+   RFC 7591. claude.ai custom connectors call this BEFORE authorize:
+   no registration_endpoint in the discovery metadata is exactly what
+   triggers "Automatic client registration isn't supported". Open
+   registration is safe here because:
+   - only public clients can be created from the outside (PKCE is
+     still mandatory, consent still happens on our domain),
+   - redirect_uris are stored and enforced exact-match at authorize,
+   - the endpoint is rate-limited and every client_id is auditable. */
+
+router.post('/register', rateLimit, async (req, res, next) => {
+  try {
+    const p = (req.body && typeof req.body === 'object') ? req.body : {};
+    const client = await mcpOAuthService.registerClient({
+      clientName: p.client_name,
+      redirectUris: p.redirect_uris,
+      grantTypes: p.grant_types,
+      responseTypes: p.response_types,
+      tokenEndpointAuthMethod: p.token_endpoint_auth_method,
+      scope: p.scope
+    });
+    logService.logEvent({
+      level: 'info', event: 'mcp_oauth_client_registered',
+      message: 'Dynamically registered an MCP OAuth client',
+      metadata: { client_id: client.client_id, client_name: client.client_name, redirect_uris: client.redirect_uris }
+    }).catch(() => {});
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(201).json(client);
+  } catch (err) {
+    if (err.oauthError) {
+      return res.status(err.status || 400).json({ error: err.oauthError, error_description: err.message });
+    }
+    return next(err);
+  }
+});
+
 /* ── 4. Discovery metadata for claude.ai ─────────────────── */
 
 router.get('/.well-known/oauth-authorization-server', (req, res) => {
@@ -395,10 +454,12 @@ router.get('/.well-known/oauth-authorization-server', (req, res) => {
     issuer: base,
     authorization_endpoint: `${base}/mcp/oauth/authorize`,
     token_endpoint: `${base}/mcp/oauth/token`,
+    registration_endpoint: `${base}/mcp/oauth/register`,
     response_types_supported: ['code'],
     grant_types_supported: ['authorization_code', 'refresh_token'],
     code_challenge_methods_supported: ['S256'],
     token_endpoint_auth_methods_supported: ['client_secret_post', 'none'],
+    registration_access_token_required: false,
     scopes_supported: VALID_SCOPES
   });
 });
