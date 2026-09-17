@@ -1,3 +1,13 @@
+/**
+ * services/premiumService.js
+ *
+ * PURPOSE:
+ *   Subscription tiers (free/starter/pro/unlimited): gates premium courses and free-preview lessons,
+ *   activates tiers after payment, and implements cancel-at-period-end (access preserved until
+ *   expiry, resume clears the flag).
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 const { adminClient } = require('../config/database');
 
 class PremiumService {

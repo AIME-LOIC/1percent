@@ -1,3 +1,12 @@
+/**
+ * controllers/premiumController.js
+ *
+ * PURPOSE:
+ *   HTTP layer for subscriptions: tier catalog, subscribe, cancel (at period end), resume, and
+ *   entitlement checks used by the course gate.
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 const premiumService = require('../services/premiumService');
 
 class PremiumController {

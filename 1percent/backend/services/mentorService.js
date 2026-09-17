@@ -1,11 +1,11 @@
-/* ============================================================
-   Mentor Service — mentor program data access
-   ============================================================
-   • Admin promotes/demotes mentors via profiles.role.
-   • Admin assigns learners to mentors (mentor_assignments).
-   • Mentor reads ONLY their assigned learners' progress.
-   • Admin shares a weekly course/activity note with mentors.
-   ============================================================ */
+/**
+ * services/mentorService.js
+ *
+ * PURPOSE:
+ *   Mentor program: mentor↔learner assignments, weekly share composition, per-mentor read receipts.
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { adminClient } = require('../config/database');
 const notificationService = require('./notificationService');

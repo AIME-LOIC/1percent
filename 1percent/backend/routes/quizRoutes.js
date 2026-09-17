@@ -1,15 +1,21 @@
-/* ============================================================
-   Quiz Routes
-   ============================================================
-   GET  /api/quizzes/course/:courseId          — Get quiz for course (public)
-   GET  /api/quizzes/:quizId/questions         — Get questions (auth)
-   POST /api/quizzes/:quizId/submit            — Submit answers (auth)
-   GET  /api/quizzes/:quizId/state             — Attempt state + weak areas (auth)
-   GET  /api/quizzes/:quizId/attempts          — View attempts (auth)
-   POST /api/admin/quizzes                     — Create quiz (admin)
-   POST /api/admin/quizzes/:quizId/questions   — Add question (admin)
-   DELETE /api/admin/quizzes/:quizId           — Delete quiz (admin)
-   ============================================================ */
+/**
+ * routes/quizRoutes.js
+ *
+ * PURPOSE:
+ *   Quiz routes: get quiz, start attempt, submit, results.
+ *
+ * ENDPOINTS:
+ *   GET /course/:courseId
+ *   GET /:quizId/state
+ *   GET /:quizId/questions
+ *   POST /:quizId/submit
+ *   GET /:quizId/attempts
+ *
+ * EXPORTS: quizRoutes, quizAdminRoutes, router
+ * DEPENDENCIES: express
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { Router } = require('express');
 const quizController = require('../controllers/quizController');

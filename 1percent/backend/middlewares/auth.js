@@ -1,9 +1,17 @@
-/* ============================================================
-   Auth Middleware
-   ============================================================
-   Verifies the Supabase JWT from the Authorization header.
-   Attaches the authenticated user to req.user.
-   ============================================================ */
+/**
+ * middlewares/auth.js
+ *
+ * PURPOSE:
+ *   Authentication middleware. Verifies the Supabase JWT from the Authorization header/cookie,
+ *   attaches req.user, and provides requireAuth / requireAdmin guards. requireAdmin re-checks
+ *   profiles.role from the database (not from the token claims) so demoted accounts lose access
+ *   immediately.
+ *
+ * EXPORTS: authenticate, optionalAuth, requireRole, requireAdmin
+ * DEPENDENCIES: jose
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { adminClient } = require('../config/database');
 

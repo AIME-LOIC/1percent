@@ -1,10 +1,19 @@
-/* ============================================================
-   Signature Routes
-   ============================================================
-   POST /api/sign/signature       — Save signature (auth)
-   GET  /api/sign/signature       — Get own signature (auth)
-   GET  /api/sign/public/:userId  — Get public signature (for PDFs)
-   ============================================================ */
+/**
+ * routes/signatureRoutes.js
+ *
+ * PURPOSE:
+ *   Signature upload routes for certificate signing.
+ *
+ * ENDPOINTS:
+ *   POST /signature
+ *   GET /signature
+ *   GET /public/:userId
+ *
+ * EXPORTS: router
+ * DEPENDENCIES: express
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { Router } = require('express');
 const { adminClient } = require('../config/database');

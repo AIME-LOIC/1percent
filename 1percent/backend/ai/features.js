@@ -1,14 +1,15 @@
-/* ============================================================
-   AI ENGINE · FEATURE EXTRACTOR
-   ------------------------------------------------------------
-   Converts tokens into a structured "understanding" of the
-   code: what it defines, what it calls, how it flows, how
-   complex it is. This is the engine's reading comprehension —
-   built entirely from classical parsing, no LLM anywhere.
-
-   The output (a "profile") is what gets compared against the
-   trained knowledge base to mark and review submissions.
-   ============================================================ */
+/**
+ * ai/features.js
+ *
+ * PURPOSE:
+ *   Feature extraction for the trained reviewer: turns tokenized code into the numeric feature
+ *   vector the model consumes (structure counts, keyword hits, shape metrics).
+ *
+ * EXPORTS: extractFeatures, shapeFingerprint, shapeSignature
+ * DEPENDENCIES: x
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { meaningfulTokens, wordSequence } = require('./tokenizer');
 

@@ -1,3 +1,12 @@
+/**
+ * controllers/streakController.js
+ *
+ * PURPOSE:
+ *   HTTP layer for streaks: current streak, calendar view, leaderboard feed.
+ * DEPENDENCIES: crypto
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 const streakService = require('../services/streakService');
 const { adminClient } = require('../config/database');
 

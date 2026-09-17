@@ -1,3 +1,20 @@
+/**
+ * routes/streakRoutes.js
+ *
+ * PURPOSE:
+ *   Streak routes: status, calendar, leaderboard.
+ *
+ * ENDPOINTS:
+ *   GET /
+ *   GET /history
+ *   GET /leaderboard
+ *   POST /daily-penalty
+ *
+ * EXPORTS: router
+ * DEPENDENCIES: express
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 const { Router } = require('express');
 const streakController = require('../controllers/streakController');
 const { authenticate, optionalAuth } = require('../middlewares/auth');

@@ -1,8 +1,13 @@
-/* ============================================================
-   Admin Controller
-   ============================================================
-   CRUD for courses, lessons, quizzes. All routes require admin.
-   ============================================================ */
+/**
+ * controllers/adminController.js
+ *
+ * PURPOSE:
+ *   Admin HTTP layer: dashboard stats, user management (role changes), content CRUD, AI review
+ *   approvals, and log resolution. Every handler asserts the caller is admin (middleware-enforced)
+ *   and writes system_logs for sensitive actions.
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { adminClient } = require('../config/database');
 

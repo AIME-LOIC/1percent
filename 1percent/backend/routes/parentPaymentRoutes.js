@@ -1,8 +1,21 @@
-/* ============================================================
-   Parent Payment Routes
-   ============================================================
-   /api/parent-payments/*
-   ============================================================ */
+/**
+ * routes/parentPaymentRoutes.js
+ *
+ * PURPOSE:
+ *   Parent payment routes: create link (student), public token view, payment webhook.
+ *
+ * ENDPOINTS:
+ *   POST /create
+ *   GET /my
+ *   DELETE /:id/cancel
+ *   GET /:token
+ *   POST /:token/pay
+ *
+ * EXPORTS: router
+ * DEPENDENCIES: express
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { Router } = require('express');
 const parentPaymentController = require('../controllers/parentPaymentController');

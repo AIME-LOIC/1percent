@@ -1,12 +1,16 @@
-/* ============================================================
-   1percent Learn — MCP Core (transport-independent)
-   ============================================================
-   Tool definitions + JSON-RPC method dispatch, shared by:
-   - backend/mcp/server.js        (stdio transport — Claude Desktop/Code)
-   - backend/routes/mcpRoutes.js  (Streamable HTTP — claude.ai web)
-
-   Storage: Supabase via the service-role key from the project .env
-   ============================================================ */
+/**
+ * mcp/core.js
+ *
+ * PURPOSE:
+ *   MCP ADMIN TOOLSET (13 tools): create/update/delete courses, lessons, challenges, test_grader,
+ *   platform_stats, … Every call is audited with the acting user id. Reached via OAuth admin scope
+ *   or the static token endpoint.
+ *
+ * EXPORTS: TOOLS, handleRpcMessage, SERVER_INFO
+ * DEPENDENCIES: dotenv, path, @supabase/supabase-js
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 require('dotenv').config({ path: require('path').join(__dirname, '..', '..', '.env'), override: false });
 

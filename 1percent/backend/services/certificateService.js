@@ -1,8 +1,14 @@
-/* ============================================================
-   Certificate Service
-   ============================================================
-   Issues certificates when a course reaches 100% completion.
-   ============================================================ */
+/**
+ * services/certificateService.js
+ *
+ * PURPOSE:
+ *   Certificate issuance: verifies 100% lesson completion, snapshots learner/course data at issuance
+ *   (learner_name, course_title, level, duration), and mints the unique certificate_number used for
+ *   public verification.
+ * DEPENDENCIES: crypto
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { adminClient } = require('../config/database');
 const crypto = require('crypto');

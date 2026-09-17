@@ -1,26 +1,15 @@
-/* ============================================================
-   1percent Learn — Student MCP Core (transport-independent)
-   ============================================================
-   Student-scoped MCP tools: a student generates a personal
-   token in Settings → "Connect to Claude", pastes it into the
-   claude.ai custom connector, and Claude can then:
-
-     • see their courses, progress, coins, streak, certificates
-     • read lesson/challenge content and explain it
-     • TEST code against the real grader — without awarding
-       coins or saving a submission
-
-   DESIGN PRINCIPLE: the student does the work. Every tool is
-   READ-ONLY or a no-consequence grading dry-run. There is no
-   tool that can write progress, award coins, or submit a
-   challenge on the student's behalf.
-
-   Token auth lives in ../services/studentMcpService.js (hash
-   lookup). All data is read with the service-role client but
-   strictly filtered by the token's user_id — the student can
-   only ever see their own rows (plus published course content,
-   which is public anyway).
-   ============================================================ */
+/**
+ * mcp/studentCore.js
+ *
+ * PURPOSE:
+ *   MCP STUDENT TOOLSET (7 read-only tools): get_lesson, my_courses, my_progress_in_course, … scoped
+ *   to the authenticated user's own rows.
+ *
+ * EXPORTS: TOOLS, STUDENT_TOOLS, handleStudentRpcMessage, SERVER_INFO
+ * DEPENDENCIES: dotenv, path, @supabase/supabase-js
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 require('dotenv').config({ path: require('path').join(__dirname, '..', '..', '.env'), override: false });
 

@@ -1,6 +1,12 @@
-/* ============================================================
-   Challenges Controller
-   ============================================================ */
+/**
+ * controllers/challengesController.js
+ *
+ * PURPOSE:
+ *   HTTP layer for challenges: list by course, detail (without answers), submission handling that
+ *   routes into the coinsService grading cascade.
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { adminClient } = require('../config/database');
 const coinsService = require('../services/coinsService');

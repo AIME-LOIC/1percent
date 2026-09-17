@@ -1,9 +1,13 @@
-/* ============================================================
-   Onboarding Notification Worker
-   ============================================================
-   Sends a "complete your profile" notification to existing users
-   who haven't finished onboarding. Can be called via API or cron.
-   ============================================================ */
+/**
+ * workers/onboardingNotify.js
+ *
+ * PURPOSE:
+ *   Sends welcome/notification messages on signup and first milestones (consumed by authService).
+ *
+ * EXPORTS: notifyIncompleteOnboarding
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { adminClient } = require('../config/database');
 const notificationService = require('../services/notificationService');

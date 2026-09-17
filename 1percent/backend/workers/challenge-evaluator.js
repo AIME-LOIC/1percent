@@ -1,13 +1,14 @@
-/* ============================================================
-   Challenge Evaluator — Worker Thread
-   ============================================================
-   Receives code + test_cases via parentPort, runs the code in
-   a vm context with a JSDOM document, evaluates each test case,
-   and posts back { passed: boolean }.
-
-   Designed to be terminated externally via worker.terminate()
-   for reliable infinite-loop protection.
-   ============================================================ */
+/**
+ * workers/challenge-evaluator.js
+ *
+ * PURPOSE:
+ *   Sandboxed code executor (worker_threads). Runs JS submissions inside vm with a JSDOM for DOM
+ *   test cases; the parent can terminate the worker on timeout so runaway loops never block the
+ *   event loop. No network, no filesystem access.
+ * DEPENDENCIES: worker_threads, vm, jsdom
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { parentPort } = require('worker_threads');
 const vm = require('vm');

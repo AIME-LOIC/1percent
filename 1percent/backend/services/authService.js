@@ -1,9 +1,12 @@
-/* ============================================================
-   Auth Service
-   ============================================================
-   Wraps Supabase Auth operations for signup, login, logout,
-   and session management.
-   ============================================================ */
+/**
+ * services/authService.js
+ *
+ * PURPOSE:
+ *   Signup/login against Supabase Auth, profile row sync (role, email), session/token issuing, and
+ *   password flows. Emits onboarding notifications via the worker queue.
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { adminClient, anonClient } = require('../config/database');
 

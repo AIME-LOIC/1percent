@@ -1,19 +1,18 @@
-/* ============================================================
-   Lab Routes — Code Playground Execution
-   ============================================================
-   SECURITY MODEL (red-teamed):
-   - The server NEVER executes user code. A previous version used
-     new Function() locally, which gave any logged-in student full
-     RCE: process.env leakage (service-role key!) and a single
-     while(true){} could hang the whole server (sync, single
-     thread). That path is gone for good.
-   - JavaScript/TypeScript run CLIENT-SIDE in a Web Worker: the
-     user's own browser is the only machine their code executes on.
-   - Python and compiled languages go to the external sandboxed
-     compiler API (isolated runners, 15s wall clock).
-   - Payload size caps + per-user rate limiting stop abuse of the
-     compiler relay.
-   ============================================================ */
+/**
+ * routes/labRoutes.js
+ *
+ * PURPOSE:
+ *   Code Lab routes: CRUD the signed-in user's lab_files (quota enforced per subscription tier:
+ *   free/starter 5, pro 10, unlimited).
+ *
+ * ENDPOINTS:
+ *   POST /run
+ *
+ * EXPORTS: router
+ * DEPENDENCIES: express, https
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { Router } = require('express');
 const https = require('https');

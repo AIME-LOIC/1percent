@@ -1,9 +1,12 @@
-/* ============================================================
-   Course Service
-   ============================================================
-   Handles course CRUD, enrollment, progress tracking,
-   and roadmap data from the static roadmap file.
-   ============================================================ */
+/**
+ * services/courseService.js
+ *
+ * PURPOSE:
+ *   Course/lesson/module CRUD, enrollment, and progress logic (including the 10-minute study gate
+ *   and quick-quiz bypass via lesson_quiz_passes).
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { adminClient } = require('../config/database');
 const { ROADMAP, getPhaseById, getTrackById, getTotalLessons, getTotalDuration } = require('../data/roadmap');

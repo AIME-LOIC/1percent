@@ -1,21 +1,14 @@
-/* ============================================================
-   AI ENGINE · TOKENIZER
-   ------------------------------------------------------------
-   Part of the 1Percent local code-understanding engine.
-   NO LLM, NO network calls, NO external APIs — this is a
-   classical NLP-style tokenizer adapted to source code.
-
-   It turns raw source text into a flat array of typed tokens:
-     { type, value, line, col }
-   where type ∈ keyword|identifier|string|number|comment|
-                operator|punct|whitespace|unknown
-
-   Every later stage (feature extraction, concept matching,
-   plagiarism shape) consumes tokens, not raw text — so the
-   engine "reads" code the way a human eye does: it sees the
-   structure, ignores cosmetic noise, and never looks at the
-   internet.
-   ============================================================ */
+/**
+ * ai/tokenizer.js
+ *
+ * PURPOSE:
+ *   Lexes submitted code into the normalized token stream used by the corpus model and shape
+ *   signatures.
+ *
+ * EXPORTS: tokenize, meaningfulTokens, wordSequence, profileFor, LANGUAGES
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 /* Language profiles: keyword sets + comment/quote syntax. */
 const LANGUAGES = {

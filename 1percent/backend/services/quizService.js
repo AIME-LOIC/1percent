@@ -1,9 +1,14 @@
-/* ============================================================
-   Quiz Service
-   Handles quiz CRUD, attempt submission with attempt policy
-   (max attempts + 24h cooldown), cheating detection, and
-   per-question analytics that map failures back to lessons.
-   ============================================================ */
+/**
+ * services/quizService.js
+ *
+ * PURPOSE:
+ *   Quiz taking: attempt creation with max-attempts/cooldown enforcement, scoring, per-question
+ *   results, cheating-flag handling (tab switches, impossibly fast answers), and pass persistence.
+ *
+ * EXPORTS: QUICK, scoreQuickAttempt, sanitizeQuickOptions
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { adminClient } = require('../config/database');
 

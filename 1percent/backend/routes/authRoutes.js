@@ -1,15 +1,26 @@
-/* ============================================================
-   Auth Routes
-   ============================================================
-   POST /api/auth/signup              — Register (sends confirmation email)
-   POST /api/auth/login               — Log in (rejects unconfirmed emails)
-   POST /api/auth/magic-link          — Passwordless login link by email
-   POST /api/auth/resend-confirmation — Re-send the verification email
-   POST /api/auth/logout              — Log out
-   POST /api/auth/refresh             — Refresh session
-   GET  /api/auth/callback            — Email-link landing (confirm + magic)
-   GET  /api/auth/me                  — Get current user profile (auth required)   PUT  /api/auth/profile    — Update profile (auth required)
-   ============================================================ */
+/**
+ * routes/authRoutes.js
+ *
+ * PURPOSE:
+ *   Auth routes: signup, login, logout, session refresh, password reset. Behind authLimiter.
+ *
+ * ENDPOINTS:
+ *   POST /signup
+ *   POST /login
+ *   POST /logout
+ *   POST /refresh
+ *   POST /reset-password
+ *   POST /magic-link
+ *   POST /resend-confirmation
+ *   GET /callback
+ *   GET /me
+ *   PUT /profile
+ *
+ * EXPORTS: router
+ * DEPENDENCIES: express
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { Router } = require('express');
 const authController = require('../controllers/authController');

@@ -1,11 +1,14 @@
-/* ============================================================
-   Streak Daily Penalty Cron
-   ============================================================
-   Schedules streakService.penalizeMissedStreaks() once daily
-   at 00:10 Africa/Kigali time. Started from server.js only —
-   not from backend/index.js — so importing the app for tests
-   doesn't schedule a real cron job as a side effect.
-   ============================================================ */
+/**
+ * workers/streakCron.js
+ *
+ * PURPOSE:
+ *   Nightly streak maintenance: expire stale streaks, apply freezes, snapshot leaderboard ranks.
+ *
+ * EXPORTS: startStreakCron
+ * DEPENDENCIES: node-cron
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const cron = require('node-cron');
 const streakService = require('../services/streakService');

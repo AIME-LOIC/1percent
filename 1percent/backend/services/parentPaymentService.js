@@ -1,9 +1,12 @@
-/* ============================================================
-   Parent Payment Service
-   ============================================================
-   Handles payment request generation and processing.
-   Students create a payment link, parents open it and pay.
-   ============================================================ */
+/**
+ * services/parentPaymentService.js
+ *
+ * PURPOSE:
+ *   Parent-paid subscriptions: student generates a reference-token link, parent fills the form,
+ *   payment webhook flips status pending→paid and activates the tier.
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { adminClient } = require('../config/database');
 

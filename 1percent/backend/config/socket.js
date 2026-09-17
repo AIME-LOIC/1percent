@@ -1,10 +1,15 @@
-/* ============================================================
-   Shared Socket.IO Instance
-   ============================================================
-   Attaches Socket.IO to the HTTP server and exports a
-   getIo() accessor so any service can emit events without
-   tight coupling to the server startup code.
-   ============================================================ */
+/**
+ * config/socket.js
+ *
+ * PURPOSE:
+ *   Socket.io setup for realtime features (live notifications, admin alerts). Runs in-process with
+ *   the Express server; clients fall back to HTTP polling automatically when WebSockets are blocked.
+ *
+ * EXPORTS: initSocket, getIo
+ * DEPENDENCIES: socket.io
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 let io = null;
 

@@ -1,8 +1,12 @@
-/* ============================================================
-   Rating Service
-   ============================================================
-   Handles rating CRUD operations for the platform.
-   ============================================================ */
+/**
+ * services/ratingService.js
+ *
+ * PURPOSE:
+ *   Platform ratings/feedback: one rating per user per category, aggregate averages for the
+ *   marketing site.
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { adminClient } = require('../config/database');
 

@@ -1,3 +1,13 @@
+/**
+ * services/pdfService.js
+ *
+ * PURPOSE:
+ *   Renders certificates to PDF (certificate ID, holder name, course, verification URL) for
+ *   download.
+ * DEPENDENCIES: pdfkit, https, http
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 const PDFDocument = require('pdfkit');
 const { adminClient } = require('../config/database');
 

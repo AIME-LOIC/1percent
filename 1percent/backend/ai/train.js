@@ -1,21 +1,15 @@
-/* ============================================================
-   AI ENGINE · TRAINING PIPELINE
-   ------------------------------------------------------------
-   "Training" here means: read the ENTIRE course corpus
-   (courses → lessons → challenges → solved submissions) from
-   your own Supabase, extract code features from every code
-   sample, count how concepts co-occur, and COMPILE the result
-   into a static knowledge base (model.json).
-
-   It is classical statistical learning (TF-IDF + co-occurrence
-   + per-course concept profiling) — deterministic, offline,
-   fully inspectable, and requires NO LLM, NO API keys, and NO
-   data leaving your infrastructure.
-
-   Run it with:  node backend/ai/train.js
-   Re-run it any time course content changes (or wire it to the
-   admin "Rebuild AI model" action in adminController).
-   ============================================================ */
+/**
+ * ai/train.js
+ *
+ * PURPOSE:
+ *   Trains the offline model from the graded-submission corpus and writes ai/model.json (invoked
+ *   manually or by aiRetrainCron).
+ *
+ * EXPORTS: trainModel, MODEL_PATH, CONCEPT_SEEDS, proseWords, STOPWORDS, CODE_HINTS
+ * DEPENDENCIES: fs, path, dotenv
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const fs = require('fs');
 const path = require('path');

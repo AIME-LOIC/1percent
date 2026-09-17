@@ -1,8 +1,11 @@
-/* ============================================================
-   Rating Controller
-   ============================================================
-   Handles HTTP requests for rating operations.
-   ============================================================ */
+/**
+ * controllers/ratingController.js
+ *
+ * PURPOSE:
+ *   HTTP layer for ratings: submit/update own, read aggregates.
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const ratingService = require('../services/ratingService');
 

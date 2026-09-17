@@ -1,10 +1,13 @@
-/* ============================================================
-   Log Service
-   ============================================================
-   Minimal server-side logging service used by the observability
-   routes and admin log endpoints. It writes to Supabase tables if
-   available and degrades gracefully if the tables are missing.
-   ============================================================ */
+/**
+ * services/logService.js
+ *
+ * PURPOSE:
+ *   Error/system log ingestion. Groups repeated errors by fingerprint (upsert bumps occurrence_count
+ *   instead of inserting duplicates) and raises admin_alerts for fatal/critical levels.
+ * DEPENDENCIES: crypto
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { adminClient } = require('../config/database');
 const crypto = require('crypto');

@@ -1,15 +1,13 @@
 #!/usr/bin/env node
-/* ============================================================
-   1percent Learn — MCP Server (stdio transport)
-   ============================================================
-   Lets Claude Desktop / Claude Code manage the learning
-   platform directly. Talks newline-delimited JSON-RPC 2.0 on
-   stdio; all tool logic lives in backend/mcp/core.js.
-
-   Run    : npm run mcp
-   Config : claude_desktop_config.json →
-              { "command": "node", "args": ["<abs path>/backend/mcp/server.js"] }
-   ============================================================ */
+/**
+ * mcp/server.js
+ *
+ * PURPOSE:
+ *   MCP server bootstrap — wires transports (stdio for local dev, Streamable HTTP via the route
+ *   handlers) to the tool registries in core.js/studentCore.js.
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { handleRpcMessage } = require('./core');
 

@@ -1,24 +1,16 @@
-/* ============================================================
-   AI ENGINE · REVIEWER (the trained model at work)
-   ------------------------------------------------------------
-   Given a student submission + a challenge, this module:
-     1. Tokenizes and feature-extracts the code (it "reads" it)
-     2. Detects which COURSE CONCEPTS the code uses (via the
-        trained concept lexicons + IDF weights)
-     3. Scores structure, effort, and correctness signals
-     4. Detects duplicate/cheat shapes against trained shapes
-     5. Produces a VERDICT:
-          pass | fail | needs_review
-        plus a numeric score 0-100 and a HUMAN-READABLE review
-        (strengths / weaknesses / suggestions).
-
-   NOTHING here is a decision by itself — the verdict is stored
-   as PENDING and only takes effect when an admin approves it
-   (see aiReviewService.js). That is the governance rule.
-
-   No LLM. No network. Deterministic: the same input always
-   produces the same review.
-   ============================================================ */
+/**
+ * ai/reviewer.js
+ *
+ * PURPOSE:
+ *   Model inference: loads ai/model.json, scores a submission's features, returns verdict
+ *   (pass/fail/needs_review), score, and quality band. Deterministic and offline — no external AI
+ *   calls.
+ *
+ * EXPORTS: reviewSubmission, loadModel, isModelReady, detectConcepts, shapeSignature, MODEL_PATH
+ * DEPENDENCIES: fs, path
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const fs = require('fs');
 const path = require('path');

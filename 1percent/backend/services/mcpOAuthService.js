@@ -1,42 +1,18 @@
-/* ============================================================
-   MCP OAuth Service — "Connect to Claude" with an account, not keys
-   ============================================================
-   Implements the Authorization-Code grant with PKCE (RFC 7636)
-   that claude.ai custom connectors perform automatically:
-
-     1. Claude opens GET /mcp/oauth/authorize?...code_challenge...
-     2. We require the browser to be logged in (Supabase session),
-        show a CONSENT page on our domain ("1% Learn wants access"),
-        and the user clicks Approve.
-     3. We redirect back to Claude with ?code=<auth-code>.
-     4. Claude POSTs /mcp/oauth/token with code + code_verifier.
-     5. We exchange that for a scoped MCP access token, which Claude
-        then uses as `Authorization: Bearer <token>` on /mcp/student.
-
-   Security properties:
-   - The full access token is returned ONCE at /token, then only a
-     SHA-256 hash is stored (same model as studentMcpService).
-   - Authorization codes: single-use, 10-minute TTL, PKCE-verified,
-     bound to the client_id that started the flow.
-   - Refresh tokens: rotated on every use, revocable, hashed at rest.
-   - Dynamic client registration (RFC 7591): claude.ai registers a
-     public client at /mcp/oauth/register before consenting, and its
-     redirect URIs are enforced exactly at authorize time.
-   - The consent step means NO secret is ever copy-pasted: access is
-     granted to a logged-in account from our own domain.
-
-   Scopes (user-requestable):
-     - "read"    : the 6 read-only student tools (default)
-     - "grade"   : additionally check_my_code (dry-run grader)
-
-   Server-granted scope:
-     - "admin"   : NEVER accepted from the client. When the account
-       approving consent has profiles.role = 'admin', the server
-       adds this scope itself — the token may then also call the
-       admin platform tools (course/lesson/challenge management,
-       platform stats) at /mcp/student. Students can never obtain
-       it, no matter what their client requests.
-   ============================================================ */
+/**
+ * services/mcpOAuthService.js
+ *
+ * PURPOSE:
+ *   Hand-rolled OAuth 2.0 + PKCE (S256) for the Claude connector: dynamic client registration,
+ *   authorization codes (single-use, 10-min TTL, hashed at rest), token issue/refresh with rotation,
+ *   and scope handling. The admin scope is SERVER-GRANTED ONLY: normalizeScope() strips it from
+ *   client requests, while createAuthorizationCode()/_issueTokens() append it when the approver
+ *   profiles.role = admin, re-verified at issue time.
+ *
+ * EXPORTS: VALID_SCOPES, ADMIN_SCOPE, parseStoredScopes, DEFAULT_CLIENT_ID, isValidRedirectUri, normalizeRedirectUris, normalizeRequestedScopes
+ * DEPENDENCIES: crypto
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const crypto = require('crypto');
 const { adminClient } = require('../config/database');

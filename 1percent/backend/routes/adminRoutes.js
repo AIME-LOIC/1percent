@@ -1,8 +1,29 @@
-/* ============================================================
-   Admin Routes
-   ============================================================
-   All routes require authentication + admin role.
-   ============================================================ */
+/**
+ * routes/adminRoutes.js
+ *
+ * PURPOSE:
+ *   Admin API routes — every route sits behind requireAuth + requireAdmin.
+ *
+ * ENDPOINTS:
+ *   GET /analytics
+ *   GET /courses
+ *   POST /courses
+ *   PUT /courses/:courseId
+ *   DELETE /courses/:courseId
+ *   GET /courses/:courseId/lessons
+ *   POST /courses/:courseId/lessons
+ *   PUT /lessons/:lessonId
+ *   DELETE /lessons/:lessonId
+ *   GET /enrollments
+ *   GET /users
+ *   GET /notifications
+ *   POST /send-onboarding-notifications
+ *
+ * EXPORTS: router
+ * DEPENDENCIES: express
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { Router } = require('express');
 const adminController = require('../controllers/adminController');

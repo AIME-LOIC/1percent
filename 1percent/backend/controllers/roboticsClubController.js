@@ -1,9 +1,19 @@
-/* ============================================================
-   Robotics Club Controller
-   ============================================================
-   Public/authed (students):  schools, join, my membership
-   Admin:                     members, stats, status, notify
-   ============================================================ */
+/**
+ * controllers/roboticsClubController.js
+ *
+ * PURPOSE:
+ *   HTTP layer for the robotics club: list schools, apply, check own application status.
+ *
+ * ENDPOINTS:
+ *   GET /schools
+ *   GET /me
+ *   POST /join
+ *
+ * EXPORTS: roboticsClubRouter, roboticsClubAdminRouter, roboticsClubController
+ * DEPENDENCIES: express
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const roboticsClubService = require('../services/roboticsClubService');
 const { authenticate, requireRole } = require('../middlewares/auth');

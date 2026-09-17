@@ -1,6 +1,12 @@
-/* ============================================================
-   Certificate Controller
-   ============================================================ */
+/**
+ * controllers/certificateController.js
+ *
+ * PURPOSE:
+ *   HTTP layer for certificates: request issuance, list own, public verify-by-number, and the
+ *   free/paid first-view rule (has_used_free_cert_view).
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const certificateService = require('../services/certificateService');
 

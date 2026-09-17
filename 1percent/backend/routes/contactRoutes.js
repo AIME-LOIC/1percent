@@ -1,11 +1,20 @@
-/* ============================================================
-   Contact Routes
-   ============================================================
-   POST /api/contact              — Submit contact form (public)
-   GET  /api/services             — List active services (public)
-   GET  /api/admin/requests       — List all requests (admin only)
-   PUT  /api/admin/requests/:id/status — Update status (admin only)
-   ============================================================ */
+/**
+ * routes/contactRoutes.js
+ *
+ * PURPOSE:
+ *   Contact form route: rate-limited public POST.
+ *
+ * ENDPOINTS:
+ *   POST /
+ *   GET /services
+ *   GET /admin/requests
+ *   PUT /admin/requests/:id/status
+ *
+ * EXPORTS: router
+ * DEPENDENCIES: express
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { Router } = require('express');
 const contactController = require('../controllers/contactController');

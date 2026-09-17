@@ -1,9 +1,13 @@
-/* ============================================================
-   S3 Service — Lab File Storage
-   ============================================================
-   Handles file uploads, listing, and deletion on S3.
-   Falls back to local storage if S3 is not configured.
-   ============================================================ */
+/**
+ * services/s3Service.js
+ *
+ * PURPOSE:
+ *   Supabase Storage uploads (course thumbnails, signatures, lab assets): signed paths, size/type
+ *   validation, and public-URL resolution.
+ * DEPENDENCIES: @aws-sdk/client-s3
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { adminClient } = require('../config/database');
 

@@ -1,8 +1,11 @@
-/* ============================================================
-   Notification Controller
-   ============================================================
-   Handles HTTP requests for notification operations.
-   ============================================================ */
+/**
+ * controllers/notificationController.js
+ *
+ * PURPOSE:
+ *   HTTP layer for notifications: list, unread count, mark-read, mark-all-read.
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const notificationService = require('../services/notificationService');
 

@@ -1,3 +1,12 @@
+/**
+ * controllers/coinsController.js
+ *
+ * PURPOSE:
+ *   HTTP layer for the coin economy: balance, transaction ledger, hint unlock (free quota → coins),
+ *   and challenge submit/pay endpoints.
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 const coinsService = require('../services/coinsService');
 
 class CoinsController {

@@ -1,26 +1,26 @@
-/* ============================================================
-   MCP OAuth Routes — account-based "Connect to Claude"
-   ============================================================
-   Flow (all on learn.1percent.rw, no keys to copy):
-
-     GET  /mcp/oauth/authorize           → consent page (requires login)
-     GET  /mcp/oauth/consent.js          → page script
-     GET  /mcp/oauth/.well-known/oauth-authorization-server
-     POST /mcp/oauth/register            → RFC 7591 dynamic client registration
-     POST /mcp/oauth/token               → code/refresh exchange
-     POST /mcp/oauth/revoke              → disconnect for the logged-in user
-
-   The authorize page is gated by a Supabase browser session.
-   claude.ai sends the user's browser here WITHOUT an Authorization
-   header, so auth is read from the persisted Supabase session
-   (same pattern dashboard.html uses), and a signed consent POST is
-   verified server-side via the access token of that session.
-
-   POST /mcp/oauth/token is a pure JSON API used server-to-server by
-   Claude (client_secret_post if a secret is configured, else PKCE).
-   POST /mcp/oauth/register implements RFC 7591 so claude.ai can
-   create its own Client ID instead of asking for one manually.
-   ============================================================ */
+/**
+ * routes/mcpOAuthRoutes.js
+ *
+ * PURPOSE:
+ *   OAuth endpoints for the Claude connector: RFC 8414 discovery, RFC 7591 dynamic registration,
+ *   /authorize → consent page (detects admin live and discloses ADMIN ACCESS before approval),
+ *   /token, /me, and revoke. Mounted BEFORE the /mcp/:token catch-all in index.js — order is
+ *   load-bearing.
+ *
+ * ENDPOINTS:
+ *   GET /authorize
+ *   GET /me
+ *   POST /authorize
+ *   POST /token
+ *   POST /register
+ *   GET /.well-known/oauth-authorization-server
+ *   POST /revoke
+ *
+ * EXPORTS: router
+ * DEPENDENCIES: express, crypto
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const express = require('express');
 const crypto = require('crypto');

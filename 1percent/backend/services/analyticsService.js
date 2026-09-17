@@ -1,13 +1,12 @@
-/* ============================================================
-   Analytics Service — real numbers for the admin dashboard
-   ============================================================
-   Computes platform-wide stats + time-series for charts:
-   - Users / courses / enrollments / challenges / certificates
-   - Signups + lesson completions + submissions per day (14 days)
-   - Level distribution for the donut chart
-   - Top courses by enrollment for the bar chart
-   Reads only. All queries degrade gracefully to 0/[].
-   ============================================================ */
+/**
+ * services/analyticsService.js
+ *
+ * PURPOSE:
+ *   Admin analytics aggregation: signups, active users, enrollments, completion rates, coin flow,
+ *   and revenue — computed with SQL aggregates over the service-role client.
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { adminClient } = require('../config/database');
 

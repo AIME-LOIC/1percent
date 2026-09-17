@@ -1,9 +1,21 @@
-/* ============================================================
-   Rating Routes
-   ============================================================
-   User routes: /api/ratings/*
-   Admin routes: /api/admin/ratings/*
-   ============================================================ */
+/**
+ * routes/ratingRoutes.js
+ *
+ * PURPOSE:
+ *   Rating routes: submit/read.
+ *
+ * ENDPOINTS:
+ *   GET /mine
+ *   GET /mine/:category
+ *   POST /
+ *   DELETE /:category
+ *   GET /stats
+ *
+ * EXPORTS: adminRatingRoutes, router
+ * DEPENDENCIES: express
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { Router } = require('express');
 const ratingController = require('../controllers/ratingController');

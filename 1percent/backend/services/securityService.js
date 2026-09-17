@@ -1,21 +1,15 @@
-/* ============================================================
-   Security Service — attack detection, IP tracking, blocking
-   ============================================================
-   The request-level engine lives in middlewares/securityMonitor.js;
-   this module holds the detection rules and the response machinery.
-
-   Privacy policy (matches logService): raw IPs are NEVER persisted.
-   We store an HMAC hash (correlation/tracing) + a masked preview
-   (102.89.*.*) so admins can eyeball the source without storing PII.
-
-   Blocking model:
-     - Each confirmed attack adds strikes to the source IP.
-     - At SECURITY_BLOCK_THRESHOLD (default 5) the IP is blocked for
-       an escalating window (1h → 6h → 24h) via the ip_blocklist table
-       with an in-memory cache for fast checks.
-     - Verified logged-in attackers additionally get an in-app
-       notification; admins get live alerts (throttled per source).
-   ============================================================ */
+/**
+ * services/securityService.js
+ *
+ * PURPOSE:
+ *   Security plumbing shared by the WAF and auth flows: IP hashing (peppered HMAC-SHA256 + masked
+ *   preview), ip_blocklist check/expire, and strike accounting.
+ *
+ * EXPORTS: RULES, scanRequest, scanString, identifyAttacker, isBlocked, isWhitelisted, recordAttack, recordRateLimitAbuse, previewIp, blockCache, alertThrottle, notifThrottle, BLOCK_THRESHOLD
+ * DEPENDENCIES: crypto, jose
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const crypto = require('crypto');
 const { adminClient } = require('../config/database');

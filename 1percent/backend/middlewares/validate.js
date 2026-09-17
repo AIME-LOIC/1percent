@@ -1,8 +1,14 @@
-/* ============================================================
-   Validation Middleware
-   ============================================================
-   Lightweight request body validation and sanitization.
-   ============================================================ */
+/**
+ * middlewares/validate.js
+ *
+ * PURPOSE:
+ *   Request validation helpers/schemas — whitelist-based field checks for write endpoints, returning
+ *   400 with field-level messages instead of leaking raw driver errors.
+ *
+ * EXPORTS: requireFields, validateEmail, sanitizeStrings, validate, escapeHtml
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 /* Escape HTML entities to prevent XSS */
 function escapeHtml(str) {

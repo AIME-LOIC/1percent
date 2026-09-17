@@ -1,17 +1,17 @@
-/* ============================================================
-   Student MCP Routes — "Connect to Claude" for students
-   ============================================================
-   TWO routers (mounted separately in index.js):
-
-   1) studentMcpTokenRoutes — token management, mounted at /api/mcp
-        GET    /api/mcp/student/status    → non-secret token status
-        POST   /api/mcp/student/token     → generate/rotate (shown ONCE)
-        DELETE /api/mcp/student/token     → revoke
-
-   2) studentMcpRpcRoutes — MCP over Streamable HTTP, mounted at /mcp/student/:token?
-        POST /mcp/student/<token>        → JSON-RPC, read-only student tools
-        GET  /mcp/student/<token>        → 405 (stateless, no SSE)
-   ============================================================ */
+/**
+ * routes/studentMcpRoutes.js
+ *
+ * PURPOSE:
+ *   Streamable-HTTP MCP endpoint for OAuth-issued tokens. Verifies the bearer token (live role
+ *   re-check: admin capability is resolved from profiles.role on EVERY request, so existing
+ *   connections self-heal), serves tools/list (7 student tools + 13 admin tools for admin-scoped
+ *   callers) and dispatches tools/call with per-user row isolation and audit logging.
+ *
+ * EXPORTS: studentMcpTokenRoutes, studentMcpRpcRoutes
+ * DEPENDENCIES: express
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const express = require('express');
 const { adminClient } = require('../config/database');

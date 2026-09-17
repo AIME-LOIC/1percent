@@ -1,17 +1,14 @@
-/* ============================================================
-   Hint Generator — challenge-specific, progressive hints
-   ============================================================
-   Replaces the generic filler hints ("re-read the task…") with
-   hints derived from each challenge's own data:
-     hint 1 (nudge)   — re-orients attention to the core concept
-     hint 2 (approach)— names the tool/technique without giving it away
-     hint 3 (reveal)  — concrete next action, may include the key call
-
-   Design rules:
-   - Never contain the full expected_output (that is the solution).
-   - Escaped for SQL dollar-quoting by the caller.
-   - Deterministic: same challenge → same hints (safe re-runs).
-   ============================================================ */
+/**
+ * services/hintGenerator.js
+ *
+ * PURPOSE:
+ *   Generates challenge-specific hints after seeding (replacing generic placeholders) and enforces
+ *   the unlock policy: first N free per calendar month via hint_allowance, then coins.
+ *
+ * EXPORTS: generateHints, normalizeType, detectTopics, extractSpecifics
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const CODE_LEXICON = {
   python: {

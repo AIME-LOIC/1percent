@@ -1,17 +1,20 @@
-/* ============================================================
-   MCP over Streamable HTTP — remote MCP server for claude.ai
-   ============================================================
-   Endpoint : POST /mcp/<token>
-   Auth     : the <token> path segment must equal MCP_HTTP_TOKEN
-              from .env (constant-time compare). Claude.ai sends
-              its stored credentials as the Bearer token — we
-              accept Bearer, X-MCP-Token, or the path segment.
-
-   Transport: Streamable HTTP (MCP spec 2025-03-26): POST with a
-              JSON-RPC message → JSON response. Stateless single-
-              message mode (no SSE sessions), so GET/DELETE → 405.
-   Tools    : shared with the stdio server via backend/mcp/core.js
-   ============================================================ */
+/**
+ * routes/mcpRoutes.js
+ *
+ * PURPOSE:
+ *   MCP HTTP endpoint guarded by the static MCP_HTTP_TOKEN env secret — legacy/admin CLI access
+ *   path, distinct from the OAuth user flow.
+ *
+ * ENDPOINTS:
+ *   GET /
+ *   DELETE /
+ *   POST /
+ *
+ * EXPORTS: router
+ * DEPENDENCIES: express
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const express = require('express');
 const { handleRpcMessage } = require('../mcp/core');

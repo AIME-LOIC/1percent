@@ -1,8 +1,12 @@
-/* ============================================================
-   Parent Payment Controller
-   ============================================================
-   Handles HTTP requests for parent payment operations.
-   ============================================================ */
+/**
+ * controllers/parentPaymentController.js
+ *
+ * PURPOSE:
+ *   HTTP layer for parent payments: create reference link, public token lookup for the parent form,
+ *   webhook receiver that activates the subscription.
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const parentPaymentService = require('../services/parentPaymentService');
 

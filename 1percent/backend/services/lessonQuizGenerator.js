@@ -1,22 +1,14 @@
-/* ============================================================
-   Lesson Quiz Generator — per-lesson fast-track questions
-   ============================================================
-   Generates 3 multiple-choice questions from a lesson's own
-   content (title + markdown body) so EVERY lesson can offer a
-   ⚡ Quick Quiz (fast-track completion) without hand-authoring.
-
-   Design goals:
-   - Pure and deterministic: same lesson → same questions, so the
-     emitted SQL is stable and re-runnable.
-   - Content-grounded: questions reference concepts actually
-     present in the lesson text, never generic filler.
-   - Fallback: content-light lessons still get title/concept
-     identification questions, so no lesson is left out.
-
-   Used by:
-   - generate_lesson_quizzes.js  → emits migrations/*.sql
-   - test_lesson_quiz_generator.js → unit tests
-   ============================================================ */
+/**
+ * services/lessonQuizGenerator.js
+ *
+ * PURPOSE:
+ *   Builds per-lesson quick quizzes from lesson content so fast learners can prove mastery and skip
+ *   the study-time gate.
+ *
+ * EXPORTS: generateLessonQuiz, extractConcepts, tokenize, pickBySeed, shaLikeHash, dollarQuote, optionsToJson, STOPWORDS
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 /* Stopwords that never make good quiz "concepts" */
 const STOPWORDS = new Set([

@@ -1,13 +1,21 @@
-/* ============================================================
-   AI Review Routes — admin governance + student visibility
-   ============================================================
-   Admin:
-     GET    /api/admin/ai-reviews?status=pending   → queue
-     GET    /api/admin/ai-reviews/pending-count    → sidebar badge
-     POST   /api/admin/ai-reviews/:id/decide       → { decision: approve|reject, note? }
-   Student:
-     GET    /api/ai-reviews/mine/:challengeId      → own latest review
-   ============================================================ */
+/**
+ * routes/aiReviewRoutes.js
+ *
+ * PURPOSE:
+ *   AI review routes: student reads own pending/approved reviews; admin approve/reject endpoints.
+ *
+ * ENDPOINTS:
+ *   GET /admin/ai-reviews
+ *   GET /admin/ai-reviews/pending-count
+ *   POST /admin/ai-reviews/:id/decide
+ *   GET /mine/:challengeId
+ *   POST /admin/rebuild-model
+ *
+ * EXPORTS: router
+ * DEPENDENCIES: express
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { Router } = require('express');
 const { authenticate, requireAdmin } = require('../middlewares/auth');

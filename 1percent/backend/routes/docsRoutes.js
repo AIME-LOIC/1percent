@@ -1,9 +1,18 @@
-/* ============================================================
-   Docs Routes — API Documentation & Project README
-   ============================================================
-   GET  /api/docs/readme      — Project overview & API docs
-   GET  /api/docs/endpoints   — List all API endpoints
-   ============================================================ */
+/**
+ * routes/docsRoutes.js
+ *
+ * PURPOSE:
+ *   Serves the developer API docs page.
+ *
+ * ENDPOINTS:
+ *   GET /readme
+ *   GET /endpoints
+ *
+ * EXPORTS: router
+ * DEPENDENCIES: express
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { Router } = require('express');
 

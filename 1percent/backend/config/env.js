@@ -1,8 +1,14 @@
-/* ============================================================
-   Environment Variable Validation
-   ============================================================
-   Fails fast on startup if required vars are missing.
-   ============================================================ */
+/**
+ * config/env.js
+ *
+ * PURPOSE:
+ *   Central environment-variable access. Loads dotenv once and validates that required vars are
+ *   present at boot (fail fast), so no module reads process.env directly.
+ *
+ * EXPORTS: validateEnv
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const REQUIRED_VARS = [
   'SUPABASE_URL',

@@ -1,6 +1,12 @@
-/* ============================================================
-   Analytics Controller — feeds the admin dashboard charts
-   ============================================================ */
+/**
+ * controllers/analyticsController.js
+ *
+ * PURPOSE:
+ *   HTTP layer for analytics endpoints — thin: validates query params (date ranges) and delegates to
+ *   analyticsService.
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const analyticsService = require('../services/analyticsService');
 

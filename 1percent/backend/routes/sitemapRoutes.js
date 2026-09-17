@@ -1,19 +1,20 @@
-/* ============================================================
-   Sitemap Route
-   ============================================================
-   GET /sitemap.xml — dynamic sitemap served from the domain root.
-
-   Combines:
-   - the static public pages, and
-   - every PUBLISHED course  →  /course/:slug
-
-   Course URLs are queried from Supabase and cached in-memory for
-   5 minutes, so Google always sees new courses without a deploy.
-
-   GET /courses — SEO landing page listing every published course.
-   Rendered SERVER-SIDE from the same cached course query so course
-   names/descriptions are real static HTML (indexable without JS).
-   ============================================================ */
+/**
+ * routes/sitemapRoutes.js
+ *
+ * PURPOSE:
+ *   SEO routes: /sitemap.xml and /robots.txt. Mounted before static serving so the files are always
+ *   fresh.
+ *
+ * ENDPOINTS:
+ *   GET /courses
+ *   GET /course/:slug
+ *   GET /sitemap.xml
+ *
+ * EXPORTS: invalidateCourseCache, router
+ * DEPENDENCIES: express, fs, path
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { Router } = require('express');
 const { adminClient } = require('../config/database');

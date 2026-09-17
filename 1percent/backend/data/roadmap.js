@@ -1,9 +1,13 @@
-/* ============================================================
-   1% Expert Programme — Roadmap & Lesson Content
-   ============================================================
-   4 phases, each with modules, each module with lessons.
-   This is the source of truth for the curriculum.
-   ============================================================ */
+/**
+ * data/roadmap.js
+ *
+ * PURPOSE:
+ *   Static data module: the learning-roadmap structure served to the marketing/app pages.
+ *
+ * EXPORTS: ROADMAP, getPhaseById, getTrackById, getTotalLessons, getTotalDuration
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const ROADMAP = {
   title: 'The 1% Expert Programme',

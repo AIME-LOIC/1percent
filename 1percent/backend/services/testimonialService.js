@@ -1,12 +1,12 @@
-/* ============================================================
-   Student Testimonials Service
-   ============================================================
-   Students submit a short testimonial about learning with
-   1Percent. Submissions start as 'pending'; admins approve and
-   only approved rows are shown on public pages.
-
-   Status values: 'pending' | 'approved' | 'rejected'
-   ============================================================ */
+/**
+ * services/testimonialService.js
+ *
+ * PURPOSE:
+ *   Student testimonials: submit (pending, 30–600 chars), admin approve/reject, public feed of
+ *   approved quotes.
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { adminClient } = require('../config/database');
 

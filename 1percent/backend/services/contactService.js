@@ -1,8 +1,12 @@
-/* ============================================================
-   Contact Service
-   ============================================================
-   Handles service requests and contact form submissions.
-   ============================================================ */
+/**
+ * services/contactService.js
+ *
+ * PURPOSE:
+ *   Contact-form intake: validates and stores messages, creates an admin alert for high-priority
+ *   topics.
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { adminClient } = require('../config/database');
 

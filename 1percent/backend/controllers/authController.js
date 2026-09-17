@@ -1,8 +1,12 @@
-/* ============================================================
-   Auth Controller
-   ============================================================
-   Handles signup, login, logout, session refresh, and profile.
-   ============================================================ */
+/**
+ * controllers/authController.js
+ *
+ * PURPOSE:
+ *   HTTP layer for signup/login/logout/session — delegates to authService, sets cookie flags, never
+ *   logs passwords.
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const authService = require('../services/authService');
 

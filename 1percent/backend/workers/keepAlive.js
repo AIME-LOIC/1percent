@@ -1,17 +1,15 @@
-/* ============================================================
-   Render Free-Tier Keep-Alive Worker
-   ============================================================
-   Pings the service's own public URL every ~10 minutes to
-   prevent Render's free tier from spinning down the instance.
-
-   IMPORTANT: Free tier uses ~730 of ~750 monthly hours for
-   24/7 keep-alive. This will starve other free services on
-   the same Render account.
-
-   Uses process.env.RENDER_EXTERNAL_URL (set automatically by
-   Render on every web service). If not set (local dev), the
-   worker no-ops silently.
-   ============================================================ */
+/**
+ * workers/keepAlive.js
+ *
+ * PURPOSE:
+ *   Keeps the process and its connections warm: periodic self-ping + Supabase heartbeat so free-tier
+ *   hosting/DB don't idle-out.
+ *
+ * EXPORTS: startKeepAlive
+ * DEPENDENCIES: http, https
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const http = require('http');
 const https = require('https');

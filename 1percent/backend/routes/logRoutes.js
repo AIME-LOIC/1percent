@@ -1,9 +1,19 @@
-/* ============================================================
-   Log Routes
-   ============================================================
-   Client routes:  /api/logs/*        (report errors/events)
-   Admin routes:   /api/admin/logs/*  (browse, filter, resolve)
-   ============================================================ */
+/**
+ * routes/logRoutes.js
+ *
+ * PURPOSE:
+ *   Log routes: admin log browsing/resolution + public client error reporting.
+ *
+ * ENDPOINTS:
+ *   POST /error
+ *   POST /bug
+ *   POST /event
+ *
+ * EXPORTS: adminLogRoutes, router
+ * DEPENDENCIES: express
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { Router } = require('express');
 const logController = require('../controllers/logController');

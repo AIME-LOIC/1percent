@@ -1,3 +1,22 @@
+/**
+ * routes/premiumRoutes.js
+ *
+ * PURPOSE:
+ *   Subscription/tier routes: catalog, subscribe, cancel, resume.
+ *
+ * ENDPOINTS:
+ *   GET /tiers
+ *   GET /status
+ *   POST /subscribe
+ *   POST /cancel
+ *   POST /resume
+ *   POST /free-trial
+ *
+ * EXPORTS: router
+ * DEPENDENCIES: express
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 const { Router } = require('express');
 const premiumController = require('../controllers/premiumController');
 const { authenticate } = require('../middlewares/auth');

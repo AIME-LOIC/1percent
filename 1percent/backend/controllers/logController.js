@@ -1,11 +1,12 @@
-/* ============================================================
-   Log Controller
-   ============================================================
-   - Public/client routes: report errors + events from the browser,
-     CLI or VS Code extension.
-   - Admin routes: browse errors, system logs and admin alerts;
-     resolve errors; mark alerts read; read dashboard stats.
-   ============================================================ */
+/**
+ * controllers/logController.js
+ *
+ * PURPOSE:
+ *   HTTP layer for error/system logs (admin): list/filter, resolve with note, and the public
+ *   client-error report endpoint (rate-limited, fingerprinted).
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const logService = require('../services/logService');
 const observabilityService = require('../services/observabilityService');

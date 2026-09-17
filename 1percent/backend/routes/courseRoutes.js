@@ -1,20 +1,30 @@
-/* ============================================================
-   Course Routes
-   ============================================================
-   GET  /api/roadmap                          — Full roadmap (public)
-   GET  /api/roadmap/:phaseId                 — Specific phase (public)
-   GET  /api/roadmap/:phaseId/:trackId        — Specific track (public)
-
-   GET  /api/courses                          — All courses (public)
-   GET  /api/courses/:slug                    — Single course (public)
-   POST /api/courses/:courseId/enroll         — Enroll (auth required)
-   GET  /api/courses/enrollments              — My enrollments (auth required)
-   GET  /api/courses/:courseId/progress       — Course progress (auth required)
-   GET  /api/courses/progress/overall         — Overall progress (auth required)
-   POST /api/courses/progress/:moduleId/complete — Complete module (auth required)
-   GET  /api/courses/progress/:lessonId/quick-quiz — Fast-track quiz questions (auth)
-   POST /api/courses/progress/:lessonId/quick-quiz — Submit fast-track quiz (auth)
-   ============================================================ */
+/**
+ * routes/courseRoutes.js
+ *
+ * PURPOSE:
+ *   Course/lesson routes: catalog, detail, enroll, progress.
+ *
+ * ENDPOINTS:
+ *   GET /roadmap
+ *   GET /roadmap/:phaseId
+ *   GET /roadmap/:phaseId/:trackId
+ *   GET /courses
+ *   GET /courses/enrollments
+ *   GET /courses/progress/overall
+ *   GET /courses/progress/:lessonId/quick-quiz
+ *   POST /courses/progress/:lessonId/quick-quiz
+ *   POST /courses/progress/:lessonId/complete
+ *   POST /courses/:courseId/enroll
+ *   GET /courses/:courseId/progress
+ *   GET /courses/lessons/:lessonId/content
+ *   GET /courses/:slug
+ *   POST /courses/:courseId/certificate
+ *
+ * EXPORTS: router
+ * DEPENDENCIES: express
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { Router } = require('express');
 const courseController = require('../controllers/courseController');

@@ -1,10 +1,21 @@
-/* ============================================================
-   Certificate Routes
-   ============================================================
-   POST /api/courses/:courseId/certificate     — Issue certificate (auth)
-   GET  /api/certificates/verify/:number       — Verify certificate (public)
-   GET  /api/certificates/mine                 — My certificates (auth)
-   ============================================================ */
+/**
+ * routes/certificateRoutes.js
+ *
+ * PURPOSE:
+ *   Certificate routes: issue/list (auth) + public verification by certificate number.
+ *
+ * ENDPOINTS:
+ *   GET /mine
+ *   POST /free-view
+ *   GET /usage
+ *   GET /verify/:number
+ *   GET /public/:number
+ *
+ * EXPORTS: router
+ * DEPENDENCIES: express
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { Router } = require('express');
 const certificateController = require('../controllers/certificateController');

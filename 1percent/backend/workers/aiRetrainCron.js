@@ -1,22 +1,15 @@
-/* ============================================================
-   AI Model Nightly Retrain Cron
-   ============================================================
-   Schedules the training pipeline (backend/ai/train.js) once
-   daily at 03:30 Africa/Kigali — an off-peak hour chosen to be
-   well after the streak cron (00:10) and before the morning
-   learning rush.
-
-   What it does each night:
-     1. Re-reads the FULL course corpus from Supabase (courses,
-        lessons, challenges) plus the latest solved submissions.
-     2. Compiles a fresh model.json (the reviewer hot-reloads it
-        on its next review — no restart needed).
-     3. Records the run in ai_model_versions for auditability.
-
-   Started from server.js only — not from backend/index.js — so
-   importing the app for tests doesn't schedule a real cron as a
-   side effect (same rule as streakCron.js).
-   ============================================================ */
+/**
+ * workers/aiRetrainCron.js
+ *
+ * PURPOSE:
+ *   Scheduled offline retraining: reads graded submission corpus, calls ai/train.js, writes a new
+ *   ai/model.json version row (ai_model_versions) for inspect/revert.
+ *
+ * EXPORTS: startAiRetrainCron, retrainOnce
+ * DEPENDENCIES: node-cron
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const cron = require('node-cron');
 const { adminClient } = require('../config/database');

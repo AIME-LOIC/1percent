@@ -1,8 +1,11 @@
-/* ============================================================
-   Contact Controller
-   ============================================================
-   Handles service requests and service listing endpoints.
-   ============================================================ */
+/**
+ * controllers/contactController.js
+ *
+ * PURPOSE:
+ *   HTTP layer for the contact form — rate-limited, validated, then stored via contactService.
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const contactService = require('../services/contactService');
 

@@ -1,12 +1,15 @@
-/* ============================================================
-   Request Logger Middleware
-   ============================================================
-   - Assigns a request id to every request.
-   - Captures every 5xx response (even ones returned directly with
-     res.status(500) rather than thrown) and persists it to
-     error_logs + raises an admin alert.
-   - Never blocks or throws; logging happens after the response.
-   ============================================================ */
+/**
+ * middlewares/requestLogger.js
+ *
+ * PURPOSE:
+ *   Structured request logging: assigns a request id, records method/path/status/duration, and
+ *   forwards errors to the observability pipeline (error_logs with fingerprint dedupe).
+ *
+ * EXPORTS: requestLogger
+ * DEPENDENCIES: crypto
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const crypto = require('crypto');
 

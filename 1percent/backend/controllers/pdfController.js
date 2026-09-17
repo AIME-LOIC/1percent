@@ -1,3 +1,12 @@
+/**
+ * controllers/pdfController.js
+ *
+ * PURPOSE:
+ *   HTTP layer for certificate PDFs: streams pdfService output with correct
+ *   content-type/disposition.
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 const pdfService = require('../services/pdfService');
 const premiumService = require('../services/premiumService');
 

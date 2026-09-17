@@ -1,9 +1,12 @@
-/* ============================================================
-   Observability Service
-   ============================================================
-   Admin-facing read/query operations over the observability
-   tables (error_logs, system_logs, admin_alerts).
-   ============================================================ */
+/**
+ * services/observabilityService.js
+ *
+ * PURPOSE:
+ *   Admin-facing observability: unread alert counts, unresolved error summaries (the
+ *   unresolved_error_summary view), resolution workflow, and system health snapshots.
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { adminClient } = require('../config/database');
 

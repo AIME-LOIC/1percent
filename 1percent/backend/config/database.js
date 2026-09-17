@@ -1,10 +1,17 @@
-/* ============================================================
-   Supabase Client Initialization
-   ============================================================
-   Two clients:
-   - adminClient: uses service role key — bypasses RLS, server-only
-   - anonClient: uses anon key — respects RLS, safe for edge cases
-   ============================================================ */
+/**
+ * config/database.js
+ *
+ * PURPOSE:
+ *   Supabase client factory. Exposes two clients: the anon-key client (RLS applies — used where a
+ *   request should only see its own rows) and the service-role client (bypasses RLS — backend-only
+ *   operations like grading, token minting, log writes). Choosing the wrong client for a job is a
+ *   security bug, so each export states which to use.
+ *
+ * EXPORTS: adminClient, anonClient
+ * DEPENDENCIES: @supabase/supabase-js
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { createClient } = require('@supabase/supabase-js');
 

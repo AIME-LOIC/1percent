@@ -1,9 +1,21 @@
-/* ============================================================
-   Notification Routes
-   ============================================================
-   User routes: /api/notifications/*
-   Admin routes: /api/admin/notifications/*
-   ============================================================ */
+/**
+ * routes/notificationRoutes.js
+ *
+ * PURPOSE:
+ *   Notification routes for the signed-in user.
+ *
+ * ENDPOINTS:
+ *   GET /
+ *   GET /:id
+ *   PUT /:id/read
+ *   PUT /read-all
+ *   DELETE /:id
+ *
+ * EXPORTS: adminNotificationRoutes, router
+ * DEPENDENCIES: express
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { Router } = require('express');
 const notificationController = require('../controllers/notificationController');

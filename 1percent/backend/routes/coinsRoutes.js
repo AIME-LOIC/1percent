@@ -1,3 +1,28 @@
+/**
+ * routes/coinsRoutes.js
+ *
+ * PURPOSE:
+ *   Coin economy routes: balance, ledger, hint unlock, spend.
+ *
+ * ENDPOINTS:
+ *   GET /balance
+ *   GET /transactions
+ *   GET /challenges/all
+ *   GET /challenges/search
+ *   GET /challenges/daily
+ *   GET /challenges/:courseId
+ *   POST /challenges/:challengeId/submit
+ *   GET /lock/:lessonId
+ *   POST /unlock/:lessonId
+ *   GET /hints/status
+ *   GET /challenges/:challengeId/hints
+ *   POST /challenges/:challengeId/hints/reveal
+ *
+ * EXPORTS: router
+ * DEPENDENCIES: express
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 const { Router } = require('express');
 const coinsController = require('../controllers/coinsController');
 const { authenticate, optionalAuth } = require('../middlewares/auth');

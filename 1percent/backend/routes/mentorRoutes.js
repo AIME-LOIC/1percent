@@ -1,19 +1,20 @@
-/* ============================================================
-   Mentor Routes
-   ============================================================
-   ADMIN (mounted under /api/admin/mentor):
-     PUT  /users/:userId/role          → promote/demote (student|mentor|admin)
-     GET  /learners                    → mentor list + assignments overview
-     POST /assignments                 → assign learner to mentor
-     DELETE /assignments/:mentorId/:learnerId
-     POST /weekly-share                → share weekly course/activity
-
-   MENTOR (mounted under /api/mentor):
-     GET  /learners                    → assigned learners' progress
-     GET  /shares                      → weekly shares for me
-     POST /shares/:shareId/read       → mark one share read
-     POST /learners/:learnerId/nudge  → send an encouragement nudge
-   ============================================================ */
+/**
+ * routes/mentorRoutes.js
+ *
+ * PURPOSE:
+ *   Mentor program routes: assignments, weekly shares, read receipts.
+ *
+ * ENDPOINTS:
+ *   GET /learners
+ *   GET /shares
+ *   POST /shares/:shareId/read
+ *   POST /learners/:learnerId/nudge
+ *
+ * EXPORTS: mentorRoutes, adminMentorRoutes
+ * DEPENDENCIES: express
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { Router } = require('express');
 const { authenticate, requireRole, requireAdmin } = require('../middlewares/auth');

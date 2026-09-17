@@ -1,8 +1,12 @@
-/* ============================================================
-   Notification Service
-   ============================================================
-   Handles notification CRUD operations for the platform.
-   ============================================================ */
+/**
+ * services/notificationService.js
+ *
+ * PURPOSE:
+ *   User notifications: create/list/mark-read plus realtime emit over socket.io so connected clients
+ *   update instantly.
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { adminClient } = require('../config/database');
 

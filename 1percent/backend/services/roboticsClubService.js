@@ -1,9 +1,12 @@
-/* ============================================================
-   Robotics Club Service
-   ============================================================
-   Quick-join memberships by school + school-targeted
-   notifications for club admins.
-   ============================================================ */
+/**
+ * services/roboticsClubService.js
+ *
+ * PURPOSE:
+ *   Robotics club: school directory, membership applications (pending → admin approval), and club
+ *   roster queries.
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { adminClient } = require('../config/database');
 

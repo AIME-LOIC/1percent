@@ -1,17 +1,13 @@
-/* ============================================================
-   Student MCP Token Service
-   ============================================================
-   Creates and verifies per-student MCP tokens for the
-   "Connect to Claude" feature.
-
-   Token format:  sk-mcp-<32 hex chars>   (128 bits of entropy)
-   Storage:       SHA-256 hash only — the full token is shown
-                  to the student exactly once, never stored.
-   Lookup:        sha256(token) → unique index hit → user_id.
-   Revocation:    revoked_at timestamp; verify() rejects revoked
-                  and regenerating replaces the row (one active
-                  token per student).
-   ============================================================ */
+/**
+ * services/studentMcpService.js
+ *
+ * PURPOSE:
+ *   Legacy student MCP paste-tokens: creation, sha256 hash storage, prefix display, last_used
+ *   tracking, and revocation.
+ * DEPENDENCIES: crypto
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const crypto = require('crypto');
 const { adminClient } = require('../config/database');

@@ -1,34 +1,17 @@
-/* ============================================================
-   Express App Setup — THE REQUEST LIFECYCLE MAP
-   ============================================================
-   Configures the Express application with all middleware
-   and routes. Does NOT start the server — that's server.js.
-
-   Every incoming request flows through this file top-to-bottom,
-   in exactly this order:
-
-     1. helmet          → security headers (CSP, etc.)
-     2. cors            → origin allow-list
-     3. compression     → gzip for text responses
-     4. json/urlencoded → body parsing (5 MB cap)
-     5. requestLogger   → request id + 5xx capture
-     6. /learn rewrite  → subdomain/legacy path normalization
-     7. sitemapRoutes   → /sitemap.xml, /courses, /course/:slug
-                          (dynamic SEO pages, MUST be before static)
-     8. template block  → 404s raw *-page.html templates
-     9. static files    → frontend/ assets (HTML = no-cache)
-    10. '/'             → homepage (host-aware)
-    11. /api/*          → JSON APIs (auth, courses, premium, coins,
-                          challenges, ai-reviews, …)
-    12. /mcp/*          → student MCP (Claude connector)
-    13. htmlRoutes map  → every HTML app page (host-aware)
-    14. catch-all       → legacy 301s, then 404
-     15. error handler  → last; logs + safe 500 JSON
-
-   Keeping this order intact matters: an earlier mount shadows a
-   later one (e.g. sitemapRoutes must precede static files or
-   Google could get the raw unfilled template).
-   ============================================================ */
+/**
+ * index.js
+ *
+ * PURPOSE:
+ *   Application entry point. Builds the Express app and mounts the 15-stage middleware pipeline IN
+ *   ORDER (HTTPS/host gate, security monitor, rate limiters, body parsing, cookies, routes,
+ *   sitemap-before-static, SPA fallback) — mount order is load-bearing: OAuth routes must precede
+ *   the /mcp/:token catch-all. Also boots socket.io and the cron workers.
+ *
+ * EXPORTS: app
+ * DEPENDENCIES: express, helmet, cors, compression, path, fs
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const express = require('express');
 const helmet = require('helmet');

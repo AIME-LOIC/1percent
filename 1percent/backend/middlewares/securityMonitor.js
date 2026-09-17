@@ -1,20 +1,17 @@
-/* ============================================================
-   Security Monitor Middleware
-   ============================================================
-   Mounted FIRST (after the HTTPS gate, before everything else).
-   For every request it:
-     1. Checks the IP blocklist → blocked IPs get hack.html (or JSON).
-     2. Scans path, query, auth header, referer and JSON body for
-        attack payloads (SQLi, XSS, traversal, RCE, SSRF, SSTI…).
-     3. Confirmed attacks are logged to security_events, raise a live
-        admin alert, and (for verified logged-in users) send an
-        in-app notification.
-     4. High/critical hits deny immediately; medium hits earn a
-        strike toward the auto-block threshold.
-
-   All async work is fire-and-forget: the hot path only awaits the
-   cached blocklist check, so latency impact on clean traffic is ~0.
-   ============================================================ */
+/**
+ * middlewares/securityMonitor.js
+ *
+ * PURPOSE:
+ *   The WAF. Inspects every incoming payload for XSS/SQLi/path-traversal/command-injection patterns,
+ *   records security_events with HMAC-hashed IPs (never raw), escalates repeat offenders through a
+ *   strike system (5 strikes → block 1h → 6h → 24h written to ip_blocklist), and rejects Host-header
+ *   spoofing.
+ *
+ * EXPORTS: securityMonitor, securityBodyScan, sendBlockResponse
+ * DEPENDENCIES: path, fs
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const path = require('path');
 const logService = require('../services/logService');

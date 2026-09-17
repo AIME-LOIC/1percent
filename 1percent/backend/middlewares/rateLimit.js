@@ -1,9 +1,15 @@
-/* ============================================================
-   Rate Limiting Middleware
-   ============================================================
-   Simple in-memory rate limiter. For production, consider
-   using Redis-backed rate limiting (e.g., express-rate-limit).
-   ============================================================ */
+/**
+ * middlewares/rateLimit.js
+ *
+ * PURPOSE:
+ *   In-process sliding-window rate limiters (apiLimiter, authLimiter, submitLimiter, …). No Redis:
+ *   the design point is a single Node process, so the limiter state lives in memory with periodic
+ *   cleanup.
+ *
+ * EXPORTS: rateLimit, authRateLimit
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const windowMs = 15 * 60 * 1000; // 15 minutes
 const maxRequests = 100; // per window

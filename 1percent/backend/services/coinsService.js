@@ -1,3 +1,16 @@
+/**
+ * services/coinsService.js
+ *
+ * PURPOSE:
+ *   Coin economy AND the challenge grading cascade. For a submission it runs: language gate → real
+ *   execution (sandbox) → output match with anti-echo cheat detection (≥70% echo ratio = reject) →
+ *   SQL semantic grading via sql.js with EXPLAIN QUERY PLAN proof → structural review → task
+ *   assertions → terminal transcript grading (prompt stripping, command-history parsing). Awards
+ *   coins via ledger rows + profile balance update.
+ * DEPENDENCIES: worker_threads, child_process, path, sql.js
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 const { adminClient } = require('../config/database');
 const { Worker } = require('worker_threads');
 const { execFile } = require('child_process');

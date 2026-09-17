@@ -1,8 +1,12 @@
-/* ============================================================
-   Course Controller
-   ============================================================
-   Handles roadmap, courses, enrollment, and progress endpoints.
-   ============================================================ */
+/**
+ * controllers/courseController.js
+ *
+ * PURPOSE:
+ *   HTTP layer for courses/lessons: catalog browsing, enrollment, progress updates with study-time
+ *   enforcement.
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const courseService = require('../services/courseService');
 const premiumService = require('../services/premiumService');

@@ -1,3 +1,12 @@
+/**
+ * services/streakService.js
+ *
+ * PURPOSE:
+ *   Daily streaks: UTC-day boundary logic, streak increment/reset on activity, streak freezes, and
+ *   the leaderboard score feed.
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 const { adminClient } = require('../config/database');
 
 // How many full calendar days a user can miss before the streak is considered dead.

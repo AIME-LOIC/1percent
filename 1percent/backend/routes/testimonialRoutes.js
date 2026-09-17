@@ -1,13 +1,20 @@
-/* ============================================================
-   Testimonial Routes
-   ============================================================
-   Public:   GET  /api/testimonials          → approved quotes (public pages)
-   User:     GET  /api/testimonials/mine     → own submission (any status)
-             POST /api/testimonials          → submit (pending review)
-             DELETE /api/testimonials/mine   → withdraw pending submission
-   Admin:    /api/admin/testimonials         → list all
-             /api/admin/testimonials/:id/status → approve / reject
-   ============================================================ */
+/**
+ * routes/testimonialRoutes.js
+ *
+ * PURPOSE:
+ *   Testimonial routes: submit (pending), own status, public approved feed, admin moderation.
+ *
+ * ENDPOINTS:
+ *   GET /
+ *   GET /mine
+ *   POST /
+ *   DELETE /mine
+ *
+ * EXPORTS: adminTestimonialRoutes, router
+ * DEPENDENCIES: express
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { Router } = require('express');
 const testimonialService = require('../services/testimonialService');

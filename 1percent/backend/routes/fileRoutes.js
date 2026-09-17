@@ -1,13 +1,22 @@
-/* ============================================================
-   File Routes — Lab File Storage
-   ============================================================
-   GET    /api/files         — Get all user files + usage
-   GET    /api/files/usage   — Get usage/limits only
-   GET    /api/files/:id     — Get a single file
-   POST   /api/files         — Save a file
-   PUT    /api/files/:id     — Update file content
-   DELETE /api/files/:id     — Delete a file
-   ============================================================ */
+/**
+ * routes/fileRoutes.js
+ *
+ * PURPOSE:
+ *   File upload routes (thumbnails/signatures) — multipart handling with size/type limits.
+ *
+ * ENDPOINTS:
+ *   GET /usage
+ *   GET /
+ *   GET /:id
+ *   POST /
+ *   PUT /:id
+ *   DELETE /:id
+ *
+ * EXPORTS: router
+ * DEPENDENCIES: express
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { Router } = require('express');
 const s3Service = require('../services/s3Service');

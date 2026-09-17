@@ -1,6 +1,12 @@
-/* ============================================================
-   Quiz Controller
-   ============================================================ */
+/**
+ * controllers/quizController.js
+ *
+ * PURPOSE:
+ *   HTTP layer for quizzes: fetch with questions (answers stripped), start attempt (integrity
+ *   checks), submit answers, view results.
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const quizService = require('../services/quizService');
 

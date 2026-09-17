@@ -1,33 +1,14 @@
-/* ============================================================
-   AI REVIEW SERVICE — governance layer for the trained engine
-   ============================================================
-   Flow (the "only when admin approve it" rule):
-
-     student submits code
-        │
-        ▼
-   coinsService grades it deterministically (tests/execution)
-        │
-        ▼
-   aiReviewService.queueReview()  ──► reviewer.reviewSubmission()
-        │                             (the trained model reads the
-        │                              code, scores it, writes a
-        │                              human-readable review)
-        ▼
-   stored in ai_reviews with status='pending'
-   (nothing changes for the student yet)
-        │
-        ▼
-   admin opens Admin → AI Reviews panel
-        │  ├─ approve  → verdict applied: pass sets passed=true &
-        │ │              awards coins; fail/needs_review does not
-        │ └─ reject    → AI review discarded; nothing applied
-        ▼
-   status='applied' | 'rejected', decided_at + reviewed_by recorded
-
-   The DB is the source of truth for governance; the engine can
-   never mutate a student record on its own.
-   ============================================================ */
+/**
+ * services/aiReviewService.js
+ *
+ * PURPOSE:
+ *   Offline trained AI code review. Combines the deterministic grading cascade with the locally
+ *   trained model (backend/ai/) to produce verdict/score/quality. Every review is stored PENDING;
+ *   nothing touches a student record until an admin approves. Builds shape signatures (normalized
+ *   code structure) for plagiarism/echo detection.
+ *
+ * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
+ */
 
 const { adminClient } = require('../config/database');
 const reviewer = require('../ai/reviewer');
