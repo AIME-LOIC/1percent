@@ -34,6 +34,11 @@ const router = express.Router();
 
 const CONSENT_TTL_MS = 15 * 60 * 1000; // consent form validity window
 
+/* Scopes a client may REQUEST. 'admin' exists but is server-granted
+   only (added by the service when the approving account's
+   profiles.role is admin) — a client asking for it gets it stripped. */
+const USER_REQUESTABLE_SCOPES = VALID_SCOPES;
+
 /* ── helpers ─────────────────────────────────────────────── */
 
 function isHttpUrl(uri) {
@@ -82,8 +87,8 @@ router.get('/authorize', async (req, res, next) => {
       return oauthErr(res, redirectUri, 'unsupported_response_type', 'Only response_type=code is supported.');
     }
     const requestedScopes = String(scope || 'read').split(/[\s+]/).filter(Boolean);
-    if (requestedScopes.some(s => !VALID_SCOPES.includes(s))) {
-      return oauthErr(res, redirectUri, 'invalid_scope', `Valid scopes: ${VALID_SCOPES.join(', ')}.`);
+    if (requestedScopes.some(s => !USER_REQUESTABLE_SCOPES.includes(s))) {
+      return oauthErr(res, redirectUri, 'invalid_scope', `Valid scopes: ${USER_REQUESTABLE_SCOPES.join(', ')}.`);
     }
     // PKCE is mandatory: claude.ai always sends S256. Refuse plaintext and absence.
     if (!codeChallenge || codeChallengeMethod !== 'S256') {
@@ -93,7 +98,7 @@ router.get('/authorize', async (req, res, next) => {
     return sendConsentPage(res, {
       client_id: clientId,
       redirect_uri: redirectUri || '',
-      scope: requestedScopes.filter(s => VALID_SCOPES.includes(s)).join(' ') || 'read',
+      scope: requestedScopes.filter(s => USER_REQUESTABLE_SCOPES.includes(s)).join(' ') || 'read',
       state,
       code_challenge: codeChallenge
     });
@@ -186,6 +191,7 @@ const SCOPE_TEXT = {
   read:  'View your courses, progress, coins, streak, certificates, and lesson content (read-only).',
   grade: 'Dry-run your draft code against the practice grader — never submits work or earns coins.'
 };
+const ADMIN_SCOPE_TEXT = 'ADMIN ACCESS: manage the platform\\'s courses, lessons, and challenges (create, edit, delete) and view platform stats — because your account is an administrator.';
 (function () {
   const list = document.getElementById('scope-list');
   FLOW.scope.split(/\\s+/).forEach(s => {
@@ -240,7 +246,34 @@ async function getClient() {
   }
 
   const name = user.user_metadata?.full_name || user.email || 'Student';
-  document.getElementById('consent-user').textContent = 'Signed in as ' + name;
+  const email = user.email || '';
+  const userEl = document.getElementById('consent-user');
+  userEl.textContent = 'Signed in as ' + name + (email ? ' (' + email + ')' : '');
+
+  // Admin detection: ask the server (it reads profiles.role under RLS,
+  // so the answer cannot be tampered with from the client). Admins get
+  // an explicit disclosure that approving also grants platform admin
+  // tooling to Claude — informed consent, not a silent scope bump.
+  let isAdmin = false;
+  try {
+    const meRes = await fetch('/mcp/oauth/me', {
+      headers: { 'Authorization': 'Bearer ' + (session?.access_token || '') }
+    });
+    if (meRes.ok) {
+      const me = await meRes.json();
+      isAdmin = me.role === 'admin';
+    }
+  } catch { /* non-fatal: scope disclosure is best-effort */ }
+  if (isAdmin) {
+    const li = document.createElement('li');
+    li.textContent = ADMIN_SCOPE_TEXT;
+    li.style.cssText = 'font-weight:700;color:#92400e;';
+    document.getElementById('scope-list').appendChild(li);
+    const badge = document.createElement('div');
+    badge.textContent = 'Admin account — approving also enables platform management tools.';
+    badge.style.cssText = 'background:#fef3c7;border:1px solid #fde68a;color:#92400e;font-size:12px;font-weight:700;border-radius:10px;padding:8px 12px;margin:-8px 0 18px;text-align:center;';
+    document.querySelector('.consent-scope').insertAdjacentElement('afterend', badge);
+  }
 
   // Consent-phishing mitigation: always show WHERE Claude will be sent back.
   try {
@@ -286,7 +319,43 @@ async function getClient() {
   res.send(html);
 }
 
-/* ── 2. POST /mcp/oauth/authorize — approve (browser session) ── */
+/* ── 2. GET /me — who is this token, and what can it do? ────
+   The consent page calls this (with the user's Supabase access
+   token) to learn whether the signed-in account is an admin, so the
+   disclosure on the form matches the scope the server will actually
+   grant. Returns role from profiles — read under RLS as the user. */
+
+router.get('/me', async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization || '';
+    if (!authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Authentication required. Log in first.' });
+    }
+    const jwt = authHeader.slice(7).trim();
+    const { data: { user }, error } = await adminClient.auth.getUser(jwt);
+    if (error || !user) return res.status(401).json({ error: 'Invalid session. Log in again.' });
+
+    const { data: profile, error: profileErr } = await adminClient
+      .from('profiles')
+      .select('role, full_name, email')
+      .eq('id', user.id)
+      .single();
+    if (profileErr) return res.status(403).json({ error: 'Could not verify role.' });
+
+    res.setHeader('Cache-Control', 'no-store');
+    return res.json({
+      user_id: user.id,
+      email: profile.email || user.email || null,
+      full_name: profile.full_name || user.user_metadata?.full_name || null,
+      role: profile.role || 'student',
+      is_admin: profile.role === 'admin'
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* ── 3. POST /mcp/oauth/authorize — approve (browser session) ── */
 
 router.post('/authorize', async (req, res, next) => {
   try {
@@ -354,7 +423,7 @@ router.post('/authorize', async (req, res, next) => {
   }
 });
 
-/* ── 3. POST /mcp/oauth/token — code + refresh exchange ──── */
+/* ── 4. POST /mcp/oauth/token — code + refresh exchange ──── */
 
 router.post('/token', async (req, res, next) => {
   try {
@@ -411,7 +480,7 @@ router.post('/token', async (req, res, next) => {
   }
 });
 
-/* ── 3. POST /mcp/oauth/register — dynamic client registration ──
+/* ── 5. POST /mcp/oauth/register — dynamic client registration ──
    RFC 7591. claude.ai custom connectors call this BEFORE authorize:
    no registration_endpoint in the discovery metadata is exactly what
    triggers "Automatic client registration isn't supported". Open
@@ -447,7 +516,7 @@ router.post('/register', rateLimit, async (req, res, next) => {
   }
 });
 
-/* ── 4. Discovery metadata for claude.ai ─────────────────── */
+/* ── 6. Discovery metadata for claude.ai ─────────────────── */
 
 router.get('/.well-known/oauth-authorization-server', (req, res) => {
   const proto = req.headers['x-forwarded-proto'] || req.protocol || 'https';
@@ -468,7 +537,7 @@ router.get('/.well-known/oauth-authorization-server', (req, res) => {
   });
 });
 
-/* ── 5. POST /mcp/oauth/revoke — disconnect (browser session) ── */
+/* ── 7. POST /mcp/oauth/revoke — disconnect (browser session) ── */
 
 router.post('/revoke', async (req, res, next) => {
   try {

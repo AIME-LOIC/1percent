@@ -25,10 +25,17 @@
    - The consent step means NO secret is ever copy-pasted: access is
      granted to a logged-in account from our own domain.
 
-   Scopes:
+   Scopes (user-requestable):
      - "read"    : the 6 read-only student tools (default)
      - "grade"   : additionally check_my_code (dry-run grader)
-     Admins see the same scopes — admin tooling keeps the env token.
+
+   Server-granted scope:
+     - "admin"   : NEVER accepted from the client. When the account
+       approving consent has profiles.role = 'admin', the server
+       adds this scope itself — the token may then also call the
+       admin platform tools (course/lesson/challenge management,
+       platform stats) at /mcp/student. Students can never obtain
+       it, no matter what their client requests.
    ============================================================ */
 
 const crypto = require('crypto');
@@ -38,6 +45,10 @@ const AUTH_CODE_TTL_MS = 10 * 60 * 1000;   // 10 minutes
 const ACCESS_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const REFRESH_TOKEN_TTL_MS = 90 * 24 * 60 * 60 * 1000; // 90 days
 const VALID_SCOPES = ['read', 'grade'];
+/* 'admin' is server-granted only: normalizeScope() strips it from any
+   client-supplied scope, and createAuthorizationCode re-adds it after
+   checking the approver's profiles.role server-side. */
+const ADMIN_SCOPE = 'admin';
 
 /* Claude.ai ships a published metadata client id, but custom
    connectors may omit client_id — treat missing as a fixed public id. */
@@ -92,6 +103,7 @@ function sha256(value) {
 
 function normalizeScope(raw) {
   const requested = String(raw || 'read').split(/[\s+]/).filter(Boolean);
+  // 'admin' is never client-requestable — strip it unconditionally.
   const scopes = requested.filter(s => VALID_SCOPES.includes(s));
   return scopes.length ? scopes : ['read'];
 }
@@ -246,12 +258,24 @@ class McpOAuthService {
    */
   async createAuthorizationCode({ userId, clientId, redirectUri, scope, codeChallenge }) {
     const code = crypto.randomBytes(32).toString('base64url');
+    // Scope is decided SERVER-SIDE: clients only ever propose read/grade;
+    // 'admin' is appended here when the approving account really is an
+    // admin (profiles.role), so the role check lives at approval time.
+    const scopes = normalizeScope(scope);
+    const { data: profile, error: roleErr } = await adminClient
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .single();
+    if (roleErr) throw roleErr;
+    if (profile?.role === 'admin' && !scopes.includes(ADMIN_SCOPE)) scopes.push(ADMIN_SCOPE);
+
     const { error } = await adminClient.from('mcp_oauth_codes').insert({
       code_hash: sha256(code),
       user_id: userId,
       client_id: clientId || DEFAULT_CLIENT_ID,
       redirect_uri: redirectUri || null,
-      scope: normalizeScope(scope).join(' '),
+      scope: scopes.join(' '),
       code_challenge: codeChallenge || null,
       expires_at: new Date(Date.now() + AUTH_CODE_TTL_MS).toISOString()
     });
@@ -313,11 +337,25 @@ class McpOAuthService {
     const refreshToken = crypto.randomBytes(32).toString('base64url');
     const now = Date.now();
 
+    // Re-verify the role at ISSUE time too: the admin scope in `scope`
+    // only survives if the account is still an admin right now. A user
+    // demoted between consent and exchange gets a student-only token.
+    let scopes = normalizeScope(scope);
+    if (scopes.includes(ADMIN_SCOPE)) {
+      const { data: profile, error: roleErr } = await adminClient
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+      if (roleErr) throw roleErr;
+      if (profile?.role !== 'admin') scopes = scopes.filter(s => s !== ADMIN_SCOPE);
+    }
+
     const { error } = await adminClient.from('mcp_oauth_tokens').insert({
       user_id: userId,
       access_hash: sha256(accessToken),
       refresh_hash: sha256(refreshToken),
-      scope,
+      scope: scopes.join(' '),
       expires_at: new Date(now + REFRESH_TOKEN_TTL_MS).toISOString(),
       last_used_at: null,
       revoked_at: null
@@ -329,13 +367,15 @@ class McpOAuthService {
       token_type: 'bearer',
       expires_in: Math.floor(ACCESS_TOKEN_TTL_MS / 1000),
       refresh_token: refreshToken,
-      scope
+      scope: scopes.join(' ')
     };
   }
 
   /**
    * Verify an access token presented to the MCP RPC endpoint.
-   * Returns { userId, scope } or null.
+   * Returns { userId, scope } or null. The returned scope keeps the
+   * server-granted 'admin' scope intact (normalizeUserScope strips
+   * only client-supplied values; stored scopes were granted by us).
    */
   async verifyAccessToken(accessToken) {
     if (!accessToken || typeof accessToken !== 'string') return null;
@@ -349,7 +389,8 @@ class McpOAuthService {
     if (error) throw error;
     if (!data || data.revoked_at) return null;
     if (new Date(data.expires_at).getTime() < Date.now()) return null;
-    return { userId: data.user_id, scope: normalizeScope(data.scope) };
+    const scopes = String(data.scope || 'read').split(/[\s+]/).filter(Boolean);
+    return { userId: data.user_id, scope: scopes.length ? scopes : ['read'] };
   }
 
   /** Stamp usage (fire-and-forget). */
@@ -397,6 +438,7 @@ class McpOAuthService {
 
 module.exports = new McpOAuthService();
 module.exports.VALID_SCOPES = VALID_SCOPES;
+module.exports.ADMIN_SCOPE = ADMIN_SCOPE;
 module.exports.DEFAULT_CLIENT_ID = DEFAULT_CLIENT_ID;
 module.exports.isValidRedirectUri = isValidRedirectUri;
 module.exports.normalizeRedirectUris = normalizeRedirectUris;

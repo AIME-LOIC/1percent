@@ -62,6 +62,8 @@ and Claude can then see *their* learning data — and nothing else.
 
 The preferred flow: claude.ai discovers `/.well-known/oauth-authorization-server`, **self-registers a public client** via `POST /mcp/oauth/register` (RFC 7591), then sends the student to `/mcp/oauth/authorize` where they log in and approve. Claude exchanges the code (+ PKCE verifier) at `/mcp/oauth/token` and gets a scoped bearer token for `/mcp/student`.
 
+**Admin accounts get admin tools automatically.** When the account approving consent has `profiles.role = 'admin'`, the server grants an extra `admin` scope (clients can never request it themselves). The consent page shows an explicit "ADMIN ACCESS" disclosure before approval, and the resulting token can call the full platform toolset from `backend/mcp/core.js` — create/update/delete courses, lessons, and challenges, plus `platform_stats` — on the same `/mcp/student` connector URL, alongside the student self tools. The role is re-checked at token issue and the scope rides on the token; a demoted account's next reconnect is student-only. Students cannot obtain the scope, no matter what their client asks for.
+
 If claude.ai ever says *"Automatic client registration isn't supported"*, the deployment is missing `registration_endpoint` in its discovery metadata or `migrations/add_mcp_oauth_clients.sql` has not been run — the register route returns `invalid_client`/400s otherwise and the flow dies before consent.
 
 ## Implementation map

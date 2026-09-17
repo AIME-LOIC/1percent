@@ -62,6 +62,11 @@ const check = (name, cond, extra) => {
   try { await svc.registerClient({ redirectUris: ['https://ok.dev/cb'], grantTypes: ['client_credentials'] }); } catch (e) { err = e; }
   check('register rejects missing authorization_code grant', err && err.oauthError === 'invalid_client_metadata');
 
+  /* ── 3b. Admin scope is server-granted, never client-requestable ── */
+  check('client-supplied admin scope is stripped', !svc.normalizeRequestedScopes('read admin').includes('admin'));
+  check('admin-only request falls back to read', svc.normalizeRequestedScopes('admin').join(' ') === 'read');
+  check('student scopes survive normalization', svc.normalizeRequestedScopes('read grade').join(' ') === 'read grade');
+
   /* ── 4. PKCE S256 round-trip (the real verifier flow) ───── */
   const crypto = require('crypto');
   const verifier = crypto.randomBytes(32).toString('base64url');
@@ -71,8 +76,17 @@ const check = (name, cond, extra) => {
   check('PKCE refuses plain method', !svc._pkceOk(verifier, challenge, 'plain'));
   check('PKCE refuses missing challenge', !svc._pkceOk(verifier, null, 'S256'));
 
-  /* ── 5. Discovery documents advertise registration_endpoint ── */
+  /* ── 4b. Route wiring: /me endpoint + server-side scope grant ── */
+  const svcSrc = fs.readFileSync(path.join(__dirname, 'backend/services/mcpOAuthService.js'), 'utf8');
   const routesSrc = fs.readFileSync(path.join(__dirname, 'backend/routes/mcpOAuthRoutes.js'), 'utf8');
+  check('authorize route validates against requestable scopes (not admin)', /USER_REQUESTABLE_SCOPES\.includes\(s\)/.test(routesSrc));
+  check('scope grant re-checks profiles.role', svcSrc.includes("from('profiles')") && svcSrc.includes("profile?.role === 'admin'"));
+  check('token issue re-verifies admin role', svcSrc.includes("profile?.role !== 'admin'") && svcSrc.includes("scopes.filter(s => s !== ADMIN_SCOPE)"));
+  check('verifyAccessToken preserves stored admin scope', !/scope:\s*normalizeScope\(data\.scope\)/.test(svcSrc));
+  check('me endpoint returns is_admin', /is_admin:\s*profile\.role === 'admin'/.test(routesSrc));
+  check('consent page discloses admin access', routesSrc.includes('ADMIN ACCESS'));
+
+  /* ── 5. Discovery documents advertise registration_endpoint ── */
   const indexSrc = fs.readFileSync(path.join(__dirname, 'backend/index.js'), 'utf8');
   check('route discovery advertises registration_endpoint', /registration_endpoint:\s*`\$\{base\}\/mcp\/oauth\/register`/.test(routesSrc));
   check('root discovery advertises registration_endpoint', /registration_endpoint:\s*`\$\{base\}\/mcp\/oauth\/register`/.test(indexSrc));

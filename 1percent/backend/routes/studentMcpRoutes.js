@@ -19,7 +19,14 @@ const { authenticate } = require('../middlewares/auth');
 const studentMcpService = require('../services/studentMcpService');
 const mcpOAuthService = require('../services/mcpOAuthService');
 const logService = require('../services/logService');
-const { handleStudentRpcMessage, SERVER_INFO } = require('../mcp/studentCore');
+const { handleStudentRpcMessage, SERVER_INFO, STUDENT_TOOLS } = require('../mcp/studentCore');
+const { TOOLS: ADMIN_TOOLS, handleRpcMessage: handleAdminRpc } = require('../mcp/core');
+
+/* The 'admin' scope (server-granted when the approver's profiles.role
+   is admin) unlocks the admin platform tools from backend/mcp/core.js
+   — the same toolset the stdio Claude Desktop server exposes — served
+   over this endpoint so claude.ai needs only one connector URL. */
+const ADMIN_SCOPE = 'admin';
 
 const router = express.Router();
 
@@ -131,7 +138,8 @@ async function requireStudentToken(req, res, next) {
       const auth = await mcpOAuthService.verifyAccessToken(token);
       if (auth) {
         req.mcpUserId = auth.userId;
-        req.mcpScope = auth.scope;       // e.g. ['read'] or ['read','grade']
+        req.mcpScope = auth.scope;       // e.g. ['read'] or ['read','grade','admin']
+        req.mcpIsAdmin = auth.scope.includes(ADMIN_SCOPE);
         req.mcpAuthKind = 'oauth';
         req.mcpAuthToken = token;        // for last_used stamping
         return next();
@@ -163,7 +171,7 @@ function logToolUse(req, toolName) {
     userId: req.mcpUserId || null,
     metadata: {
       tool: toolName,
-      server: 'student',
+      server: req.mcpIsAdmin ? 'student+admin' : 'student',
       auth_kind: req.mcpAuthKind || 'unknown',
       scope: Array.isArray(req.mcpScope) ? req.mcpScope.join(' ') : null
     }
@@ -210,6 +218,26 @@ rpcRouter.post('/', requireStudentToken, async (req, res) => {
           continue;
         }
         if (toolName) logToolUse(req, toolName);
+      }
+
+      // Admin-scoped OAuth connections: the admin toolset answers tools/*
+      // (write access to courses/lessons/challenges + platform stats),
+      // while student self tools stay available alongside it. Every admin
+      // response is audited with the acting user id.
+      if (req.mcpIsAdmin && (msg.method === 'tools/list' || msg.method === 'tools/call')) {
+        if (msg.method === 'tools/list') {
+          responses.push({
+            jsonrpc: '2.0', id: msg.id ?? null,
+            result: { tools: [...ADMIN_TOOLS, ...STUDENT_TOOLS] }
+          });
+          continue;
+        }
+        const adminToolNames = new Set(ADMIN_TOOLS.map(t => t.name));
+        if (adminToolNames.has(msg.params?.name)) {
+          const result = await handleAdminRpc(msg);
+          if (!result.notification) responses.push(result.response);
+          continue;
+        }
       }
 
       const result = await handleStudentRpcMessage(msg, req.mcpUserId);

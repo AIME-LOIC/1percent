@@ -527,4 +527,4 @@ async function handleStudentRpcMessage(msg, userId) {
   }
 }
 
-module.exports = { TOOLS, handleStudentRpcMessage, SERVER_INFO };
+module.exports = { TOOLS, STUDENT_TOOLS: TOOLS, handleStudentRpcMessage, SERVER_INFO };
