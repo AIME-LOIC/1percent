@@ -49,8 +49,9 @@
     }
     const mod = await import('three');
     const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
-    mod.GLTFLoader = GLTFLoader;
-    three = mod;
+    // Module namespace objects are sealed — copy exports into a plain object
+    // so we can bundle GLTFLoader (an addon) alongside them.
+    three = { ...mod, GLTFLoader };
     return three;
   }
 
@@ -92,7 +93,7 @@
     const renderer = new T.WebGLRenderer({ canvas, alpha: true, antialias: true });
     renderer.setPixelRatio(2);
     renderer.setSize(W, H, false);
-    renderer.outputEncoding = T.sRGBEncoding;
+    if ('outputColorSpace' in renderer) renderer.outputColorSpace = T.SRGBColorSpace;
 
     const scene = new T.Scene();
     scene.add(new T.HemisphereLight(0xffffff, 0x8899aa, 1.05));
