@@ -1,0 +1,426 @@
+============================================================================
+ 1% DIGITAL SOLUTIONS — TECHNICAL PITCH
+ learn.1percent.rw · "Building Rwanda's Next Tech Experts"
+----------------------------------------------------------------------------
+ Scope: full system architecture, core algorithms, security engineering,
+ and network traffic design. Every claim below reflects the real code in
+ this repository (backend/, frontend/, supabase_schema.sql).
+============================================================================
+
+1. WHAT THE SYSTEM IS
+----------------------------------------------------------------------------
+1percent is a full-stack e-learning and developer-training platform:
+structured courses, quizzes, auto-graded coding challenges with a coin
+economy, AI-assisted (but human-governed) code review, certificates,
+streaks, mentorships, a robotics club, payments, and an MCP (Model Context
+Protocol) server that lets students and admins connect Claude directly to
+the platform.
+
+One Node.js process serves everything:
+  - The marketing site (1percent.rw)
+  - The learning app (learn.1percent.rw — same codebase, host-aware)
+  - ~25 JSON API route groups under /api/*
+  - MCP servers under /mcp/* (claude.ai connector endpoint)
+  - Dynamic SEO pages (/sitemap.xml, /courses, /course/:slug)
+
+Stack:
+  Runtime      Node.js >= 18, Express 4
+  Database     Supabase (PostgreSQL) — auth, DB, storage, Row Level Security
+  Realtime     socket.io (live notifications)
+  Sandbox      worker_threads + vm + JSDOM (JS grading), sql.js WASM (SQL)
+  Docs/PDF     pdfkit (certificates)
+  Storage      AWS S3 SDK (files)
+  Security     helmet, custom WAF middleware, custom rate limiter, jose/crypto
+  Scheduling   node-cron (streaks, digests, maintenance)
+  Frontend     vanilla JS multi-page app (dashboard, playground, lab, admin),
+               Supabase JS client for auth, no build step
+
+The product has no build pipeline on purpose: every page is a static HTML
+file with plain JS, served with precise cache headers, so deploys reach
+users on their next view and the attack surface stays small.
+
+2. ARCHITECTURE — THE REQUEST LIFECYCLE
+----------------------------------------------------------------------------
+Every incoming request flows through a strict, ordered pipeline
+(backend/index.js). Order is a security property, not a convention:
+
+     internet
+        │
+        ▼
+  [0]  HTTPS gate            prod-only; 308 redirect; Host allowlist
+        │                    (open-redirect protection — see §5.1)
+        ▼
+  [0b] securityMonitor       WAF: blocklist check → payload scan (§5.2)
+        │
+        ▼
+  [1]  helmet                CSP + HSTS + security headers (§5.3)
+  [2]  cors                  origin allow-list
+  [3]  compression           gzip for text responses
+  [4]  body parsers          JSON/urlencoded, hard 5 MB cap
+  [4b] securityBodyScan      WAF pass 2 — now req.body exists
+  [5]  no-store headers      /api/* and /mcp/* are never cacheable
+  [5b] request-id sanitize   X-Request-ID validated before logging
+        │
+        ▼
+  [6]  host detection        learn.1percent.rw vs 1percent.rw; /learn/* rewrite
+  [7]  sitemapRoutes         dynamic SEO from DB (5-min cache) — BEFORE static
+  [8]  template block        raw *-page.html templates 404 (no placeholder leak)
+  [9]  static files          frontend/ with tiered Cache-Control (§6.3)
+        │
+        ▼
+  [10] homepage (host-aware)
+  [11] /api/*                auth, courses, quizzes, challenges, coins,
+                             certificates, streaks, payments, notifications,
+                             ratings, AI reviews, mentor, robotics club, logs…
+  [12] /.well-known/*        OAuth 2.0 discovery documents (RFC 9728)
+  [13] /mcp/oauth/*          OAuth consent flow for Claude
+       /mcp/student/:token?  student MCP RPC (checked before catch-all)
+       /mcp/:token?          admin MCP RPC (catch-all last)
+        │
+        ▼
+  [14] HTML route maps + catch-all (exact → parameterized → legacy 301 → 404)
+  [15] error handler         logs internally, returns safe 500 JSON —
+                             never a stack trace
+
+Two details worth calling out:
+
+  - trust proxy (1): the app runs behind nginx/Render-style proxies. req.ip
+    is resolved from X-Forwarded-For so rate limiting buckets real clients,
+    not the proxy.
+  - Mount order bugs are the classic Express vulnerability. Here the OAuth
+    routes are mounted BEFORE the /mcp/:token catch-all so the literal path
+    segment "student" can never be mistaken for an admin token; sitemap
+    routes are mounted BEFORE static so dynamic SEO pages always win.
+
+3. DATA LAYER & TENANCY
+----------------------------------------------------------------------------
+All persistence is Supabase (PostgreSQL). The backend talks to Supabase
+with two clients:
+
+  - anon client   — used only where RLS is expected to scope access
+  - admin client  — service-role key, used server-side after our own
+                    authorize() checks have run
+
+Row Level Security is the second line of defense (first is the API's own
+ownership checks). Example policy the consent page relies on:
+"Users can view own profile" — a browser can read its OWN profile.role and
+nothing else.
+
+Core tables: profiles, courses, lessons, enrollments, quizzes, challenges,
+challenge_submissions, user_coins, coin_transactions, streaks, ai_reviews,
+certificates, premium_subscriptions, parent_payments, notifications,
+ratings, testimonials, security_events, error_logs, system_logs,
+admin_alerts, mcp oauth tables (clients, codes, tokens).
+
+Multi-host serving: the SAME Express app fills two roles by Host header —
+the marketing site and the app. HTML route maps exist per host, and legacy
+paths 301 to their /learn/* equivalents.
+
+4. CORE ALGORITHMS
+----------------------------------------------------------------------------
+4.1 CHALLENGE GRADING ENGINE (backend/services/coinsService.js)
+
+The heart of the platform. A submission passes through a cascade of
+increasingly expensive checks — cheap deterministic gates first, real
+execution second, semantic analysis third. Every step returns a
+human-readable reject reason, never a bare "fail".
+
+  Step 0 — LANGUAGE GATE
+    Runs BEFORE any grading. Strips comments/strings, then detects
+    wrong-language submissions (Python def/class inside a JS box, JS
+    const/arrow inside a Python box, JS keywords inside SQL) and rejects
+    with a teaching message: "Python prints with print(\"…\"), not
+    python(\"…\")."
+
+  Step A — REAL EXECUTION (JavaScript + test cases)
+    If the challenge defines test_cases, the code runs for real in a
+    hardened sandbox (§5.5): worker_threads + vm context + JSDOM, 3-second
+    execution budget enforced by worker.terminate() — infinite loops are
+    killed, not waited on. The worker posts {ready} after jsdom cold-start
+    so the timeout only covers USER code. DOM assertions then judge the
+    submission the way a human reviewer would: render, query, assert.
+
+  Step B — OUTPUT COMPARISON (JS/Python without test cases)
+    Code executes; console output is captured, normalized (line trim,
+    CRLF fold), and compared to expected_output. Python runs through the
+    system interpreter (python3 -I, 5 s cap).
+
+    ANTI-ECHO CHEAT DETECTION: the classic cheat is
+        console.log("<the expected output>")
+    The engine counts how many expected lines appear verbatim in the
+    submission (raw AND comment/string-stripped). >= 70% verbatim echo
+    on a multi-line expected output = cheating = reject. Single-line
+    outputs get an escape hatch: echoing one line is allowed only when
+    the REST of the code is a real implementation (>= 40 stripped chars
+    with genuine control flow) — that line is then a required banner,
+    not the whole answer.
+
+  Step C — SQL SEMANTIC GRADING
+    sql.js (SQLite compiled to WASM) builds an in-memory database with a
+    real demo schema (customers ⋈ orders). The submission is executed
+    statement by statement — invalid SQL throws, which IS the validation.
+    For index tasks the engine then inspects sqlite_master to prove a
+    COMPOSITE index (>= 2 columns) exists, and rewrites the probe query
+    through EXPLAIN QUERY PLAN to verify the index is actually USED by
+    the planner — not merely declared.
+
+  Step D — STRUCTURAL REVIEW (anti-cheat pre-filter)
+    Comments and string literals are stripped (so a comment containing
+    "console.log" fools nothing), then per-language structure rules run:
+    JS needs statements + calls + punctuation (prose reads as prose),
+    Python needs def/class/if/for with colons, SQL needs real clauses,
+    Dockerfiles must start with FROM, YAML needs key structure, nginx
+    needs server/location blocks.
+
+  Step E — TASK ASSERTIONS
+    Title/description-keyword → required-code-pattern mapping. A task
+    that says "composite index" demands CREATE INDEX with 2+ columns;
+    "JOIN" demands a JOIN clause; "average/total" demands an aggregate;
+    todo/render-list tasks demand DOM creation AND a loop; API tasks
+    demand fetch(). This is how "structurally valid but off-task"
+    submissions are caught.
+
+  Step F — TERMINAL / GIT CHALLENGES
+    The submission is a command transcript. The engine:
+      - strips shell prompts (bash/user@host:~$/, root#/container/RHEL
+        styles) — only when the prompt token carries @, :, [..] or a
+        digit, so `echo $USER` is never mangled
+      - drops error-noise lines ("command not found") and comments
+      - matches required commands as WORDS at real command boundaries
+        (line start, ;, &&, |) — "gitx add" can never satisfy "git add"
+      - grades explicit command lists from challenge.expected_output
+        word-for-word, argument included
+      - falls back to task-derived heuristics (title says "stage" →
+        require git add; "permissions" → chmod/chown; …)
+      - rejects prose: every line must START with a known command word
+    The frontend feeds this grader from the session command history, so
+    `clear`/`reset` in the simulated terminal never erases a student's
+    work (and screen output never pollutes the submission).
+
+  Payment: coins are awarded only on pass, with a +50% daily-challenge
+  bonus, and every award is a ledger row (user_coins + transactions).
+
+4.2 THE LOCAL AI REVIEW ENGINE (backend/ai/)
+
+No LLM, no API keys, no data leaving the box. A statistical engine is
+trained offline on the platform's own course corpus (20 courses, 181
+lessons, 97 challenges → ~6.4k-word vocabulary, 31 concepts) into
+backend/ai/model.json: IDF weights, concept associations, per-language
+feature profiles.
+
+On each submission, reviewer.js:
+  1. Tokenizes + strips comments/strings, builds a feature profile
+     (definitions, calls, loops, branches, imports, DOM usage…).
+  2. Scores structure (0–100): definitions, calls, loops, error handling,
+     language-specific depth — each with weighted notes ("Defines 3 named
+     things", "Uses a loop").
+  3. Computes concept coverage against the challenge's course concepts.
+  4. Produces a SHAPE SIGNATURE — a structural fingerprint of the
+     solution. Repeated identical signatures across users = copied or
+     generated answers → flagged suspicious (duplication detection).
+  5. Emits a verdict: pass / fail / needs_review + a human-readable
+     review written from the score notes.
+
+GOVERNANCE — the important part. The engine NEVER mutates a student
+record by itself:
+    submission → deterministic grade (authoritative)
+               → AI review queued into ai_reviews with status='pending'
+               → admin opens the AI Reviews panel
+                    approve → verdict applied (pass sets passed, coins move)
+                    reject  → review discarded
+               → status='applied'/'rejected', decided_at + reviewed_by logged
+Re-submissions supersede stale pending reviews (older attempts for the
+same user+challenge are marked 'superseded', not left as admin noise).
+The AI layer is fire-and-forget and wrapped in try/catch: it can never
+break the student's submission flow.
+
+4.3 OTHER ALGORITHMS
+
+  - Streak engine (streakService.js): calendar-aware streak computation
+    with timezone-safe day boundaries, freeze/repair logic, cron-driven.
+  - Hint generator (hintGenerator.js): derives progressive hints from
+    challenge metadata without revealing the solution; quota system
+    (5 free/month, then coins) enforced server-side.
+  - Quiz generator (lessonQuizGenerator.js): builds quizzes from lesson
+    content structure; deterministic seeding for reproducibility.
+  - SEO cache (sitemapRoutes): server-rendered /courses and /course/:slug
+    from the DB with a 5-minute in-memory cache; admin mutations call
+    invalidateCourseCache() so pages bust instantly.
+  - Analytics/observability services: request metrics, error aggregation,
+    admin alerts.
+
+5. SECURITY ENGINEERING
+----------------------------------------------------------------------------
+Defense in depth — six independent layers:
+
+5.1 EDGE / TRANSPORT
+  - HTTPS enforced in production BEFORE any route executes. Earlier this
+    redirect ran LAST — meaning a plaintext request was fully processed
+    (Bearer tokens in headers!) and only then told to redirect. Now the
+    gate is the first middleware.
+  - Open-redirect hardening: the Host header is attacker-controlled. The
+    redirect only fires for hosts on the ALLOWED_ORIGINS allowlist; a
+    forged Host gets a 400, never a Location to a foreign domain.
+  - HSTS (max-age=1y, includeSubDomains) via helmet.
+
+5.2 WAF — securityMonitor + securityService (custom)
+  Mounted before every route; scans path, query, headers, referer and
+  JSON bodies for SQLi, XSS, path traversal, RCE, SSRF, SSTI payloads.
+  Verdicts: critical/high deny immediately; medium earns a STRIKE.
+  Strike system: per-IP (hashed) strike counter; BLOCK_THRESHOLD = 5
+  strikes → auto-block with ESCALATING duration (1 h → 6 h → 24 h).
+  Consequences of a confirmed attack:
+    - IP goes on the blocklist (memory-cached — hot path ~0 cost)
+    - event row in security_events (type, rule, severity, IP hash)
+    - live admin alert raised
+    - blocked requests get the hack.html block page (or JSON for APIs)
+    - verified logged-in attackers get an in-app notification
+  Privacy note: IPs are stored HASHED (logService.hashIp), not raw.
+  Whitelist support exists for trusted scanners/monitors.
+
+5.3 HTTP HARDENING
+  - helmet CSP: default-deny with an explicit allowlist — 'self',
+    jsDelivr (icons), Google Fonts, the Supabase origin, GitHub API,
+    Formspree. objectSrc 'none'. Everything else is blocked.
+  - CORS: strict origin allow-list from ALLOWED_ORIGINS; unknown origins
+    get an error; CORS failures are surfaced as 403, not silent.
+  - Cache-Control: no-store on ALL /api/* and /mcp/* responses — a shared
+    proxy caching an authenticated payload is exactly how "user details"
+    leak to strangers on the same network.
+  - 5 MB body cap; x-powered-by disabled.
+  - X-Request-ID is sanitized (length + charset allowlist) before being
+    stored or echoed — it is attacker-controlled input like any other.
+
+5.4 AUTHENTICATION & AUTHORIZATION
+  - Supabase Auth (JWT). authenticate middleware verifies the Bearer
+    token per request; requireAdmin gates every admin route; optionalAuth
+    for public-but-personalized endpoints.
+  - Server-side role checks: admin is decided by profiles.role in the DB,
+    re-verified live on every privileged request — never from a
+    client-claimed value, never only from a cached token scope.
+  - The /api/admin/diagnostics endpoint (DB table enumeration) is
+    admin-only — it was previously open, which let anyone fingerprint the
+    database. Now authenticate + requireAdmin precede it.
+
+5.5 SANDBOXING UNTRUSTED CODE (the grading runtime)
+  User submissions are hostile input. The evaluator runs them in:
+    - a dedicated worker_thread (isolated event loop; terminated on
+      timeout — infinite loops cost the platform 3 s, not a hang)
+    - a vm.createContext with an allowlisted global set — no require, no
+      process, no fs, no network primitives
+    - a JSDOM document scoped to the submission
+  Boot failsafe: if the worker never signals ready (hung require, cold
+  start), the parent gives up after 4× the execution budget instead of
+  hanging the request.
+
+5.6 OAUTH FOR THE CLAUDE CONNECTOR (mcpOAuthService)
+  Full Authorization-Code + PKCE (RFC 7636) implementation, hand-rolled
+  on node:crypto:
+    - code_challenge_method = S256 only; verifier re-hashed and compared
+      at token exchange
+    - authorization codes: single-use, 10-minute TTL, stored as SHA-256
+      HASHES — a DB leak exposes no usable codes or tokens
+    - access/refresh tokens: crypto.randomBytes(32) base64url, likewise
+      only stored hashed (access_hash / refresh_hash)
+    - dynamic client registration (public clients default to PKCE-only,
+      no secret); optional confidential clients compare secret HASHES in
+      constant time
+    - discovery documents at /.well-known/oauth-protected-resource and
+      oauth-authorization-server so claude.ai self-configures
+  ADMIN SCOPING — the subtle part: the 'admin' scope is SERVER-GRANTED
+  ONLY. Clients cannot request it (the scope normalizer strips it from
+  every client request); at approval time the consent page reads the
+  approver's live profiles.role and appends admin only for actual admins,
+  with a visible "ADMIN ACCESS" disclosure before the Approve button
+  (informed consent). Token issuance RE-verifies the role (a demoted
+  account gets a student-only token), and the RPC layer re-resolves the
+  LIVE role on every request — an existing connection self-heals or
+  self-revokes as roles change, and every admin tool call is audited
+  with the acting user id.
+  A regression test suite (test_mcp_oauth_registration.js) locks all of
+  this in: scope stripping, role re-checks, PKCE, hash storage.
+
+5.7 OPERATIONAL SECURITY
+  - Error handler: full details logged server-side; clients get generic
+    500 JSON. Stack traces never leave the box in production.
+  - error_logs / system_logs / admin_alerts give admins a live picture
+    without SSH access.
+  - Secrets live only in env vars; the /api/config endpoint exposes only
+    the anon key + public URLs (the anon key is safe by design: RLS is
+    the boundary).
+
+6. NETWORK TRAFFIC DESIGN
+----------------------------------------------------------------------------
+6.1 TOPOLOGY
+
+   browser ──HTTPS──► nginx/reverse proxy ──► node process (single port)
+                                                ├─ static (frontend/)
+                                                ├─ /api/*  (JSON)
+                                                ├─ /mcp/*  (MCP RPC)
+                                                ├─ /sitemap.xml, SEO
+                                                └─ socket.io (websocket)
+        node ──► Supabase (Postgres REST + Auth + Storage)
+        node ──► AWS S3 (files), Formspree (contact), GitHub API (imports)
+
+6.2 TRAFFIC CLASSES & POLICIES
+  - API JSON: no-store (never cached anywhere), gzip via compression,
+    request-id correlated logging.
+  - Static assets: Cache-Control public, max-age=600,
+    stale-while-revalidate=300, must-revalidate + ETag/Last-Modified —
+    revalidate cheaply (304) so deploys land within minutes.
+  - HTML: no-cache always — the moment a deploy happens, every user's
+    next page view gets the new app.
+  - Rate limiting (middlewares/rateLimit.js): in-memory sliding window,
+    15-minute buckets, per-IP; a dedicated stricter limiter on auth
+    routes (credential-stuffing brake); 429s carry Retry-After.
+    Keeping the limiter in-process is deliberate: zero extra
+    infrastructure, and the WAF blocklist already covers persistent
+    attackers.
+  - Realtime: socket.io pushes notifications; clients PAUSE their
+    polling loop while the socket is connected (battery/bandwidth win),
+    and fall back to polling automatically if the socket drops.
+  - MCP traffic: JSON-RPC over Streamable HTTP; bearer tokens in headers
+    (or the path token for the legacy admin route); every admin call
+    audited; /mcp/* responses no-store.
+  - Body sizes capped at 5 MB; URL/query/header scans run pre-parse,
+    body scan post-parse — nothing skips inspection.
+
+6.3 WHY SINGLE-PROCESS (and why that's honest engineering)
+  One Node process serves marketing + app + APIs + MCP. For a platform
+  at this stage that means: one deploy, one cache story, no service-mesh
+  complexity, and every request enjoying the same WAF/rate-limit/logging
+  pipeline. The stateful bits (grader sandbox, rate limiter, caches) are
+  in-process and bounded — the design point where vertical scale is the
+  cheapest axis, with the WAF and CSP layers already in place for when
+  horizontal scale becomes worth its operational cost.
+
+7. QUALITY ENGINEERING
+----------------------------------------------------------------------------
+  - Test suites run with zero external services:
+      test_challenge_checker.js       — grader semantics end-to-end
+      test_grader_antiecho.js         — cheat-detection regressions
+      test_mcp_oauth_registration.js  — OAuth/PKCE/admin scoping
+      Streakservice.test.js           — streak logic
+  - Every grader bug that has ever bitten a student now has a regression
+    test (prompt-stripping, word boundaries, echo cheating, admin-scope
+    parsing, template-literal escaping…).
+  - CHANGELOG.md is machine-read by /api/version to power the in-app
+    "What's New" banner — release notes ship with the deploy itself.
+
+8. THE PITCH IN ONE PARAGRAPH
+----------------------------------------------------------------------------
+1percent is a self-contained learning platform where the grading engine
+executes real code in a hardened sandbox, grades SQL against a real
+in-memory database, detects echo-cheating statistically, and routes every
+AI opinion through human approval before it can touch a student's record;
+where a hand-rolled WAF, PKCE-based OAuth with hash-only token storage,
+CSP default-deny, no-store API semantics and escalating IP blocks form
+six layers of defense; and where a single, carefully-ordered Express
+pipeline serves two domains, twenty-five API groups, live sockets, and a
+Claude-compatible MCP server — with every non-trivial decision locked
+down by regression tests that run offline in seconds.
+
+============================================================================
+ Generated from the repository source (branch: learn). Verify details
+ against code comments, which document the reasoning inline.
+============================================================================
