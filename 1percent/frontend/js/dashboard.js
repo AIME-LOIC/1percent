@@ -262,10 +262,6 @@ const Dashboard = {
 
   /* 🎉 Confetti burst + toast — the fun bit */
   _celebrate(message) {
-    // Puppet robot joins the party 🎉 — wave + cheer bubble
-    try {
-      if (window.PuppetRobot && window.PuppetRobot.celebrate) window.PuppetRobot.celebrate();
-    } catch { /* cosmetic */ }
     try {
       const colors = ['#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6'];
       for (let i = 0; i < 26; i++) {
