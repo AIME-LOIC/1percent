@@ -139,7 +139,25 @@ async function requireStudentToken(req, res, next) {
       if (auth) {
         req.mcpUserId = auth.userId;
         req.mcpScope = auth.scope;       // e.g. ['read'] or ['read','grade','admin']
-        req.mcpIsAdmin = auth.scope.includes(ADMIN_SCOPE);
+        // Admin capability is resolved from the LIVE profile on every
+        // request — not from the stored token scope. Stored scopes can
+        // predate a role change (or a deploy that dropped 'admin' at
+        // issue time), and the profile check is exactly what requireAdmin
+        // uses elsewhere. Existing connections self-heal on the next
+        // call once the account's role is admin again.
+        let liveRole = null;
+        try {
+          const { data: profile } = await adminClient
+            .from('profiles')
+            .select('role')
+            .eq('id', auth.userId)
+            .single();
+          liveRole = profile?.role || null;
+        } catch { /* profile lookup failed → fall back to stored scope */ }
+        req.mcpIsAdmin = liveRole === 'admin' || auth.scope.includes(ADMIN_SCOPE);
+        if (req.mcpIsAdmin && !req.mcpScope.includes(ADMIN_SCOPE)) {
+          req.mcpScope = [...req.mcpScope, ADMIN_SCOPE];
+        }
         req.mcpAuthKind = 'oauth';
         req.mcpAuthToken = token;        // for last_used stamping
         return next();

@@ -21,6 +21,18 @@ const fs = require('fs');
 const path = require('path');
 const svc = require('./backend/services/mcpOAuthService');
 
+/** The _issueTokens body must not run the client-facing normalizer over
+ * the stored scope string — that is what stripped the admin scope. */
+function svcSrcIssueUsesNormalize() {
+  const src = fs.readFileSync(path.join(__dirname, 'backend/services/mcpOAuthService.js'), 'utf8');
+  const start = src.indexOf('async _issueTokens');
+  if (start < 0) return true;
+  const body = src.slice(start, src.indexOf('\n  }', start));
+  // Match real calls (normalizeScope(x)) — prose mentioning normalizeScope() in
+  // a comment has empty parens and must not trip this check.
+  return /normalizeScope\s*\(\s*[^\s)]/.test(body);
+}
+
 let failures = 0;
 const check = (name, cond, extra) => {
   console.log((cond ? '✓' : '✗ FAIL'), name, extra || '');
@@ -67,6 +79,14 @@ const check = (name, cond, extra) => {
   check('admin-only request falls back to read', svc.normalizeRequestedScopes('admin').join(' ') === 'read');
   check('student scopes survive normalization', svc.normalizeRequestedScopes('read grade').join(' ') === 'read grade');
 
+  /* ── 3c. Stored scope parsing keeps server-granted admin ──
+     Regression guard: _issueTokens() once parsed the stored scope with
+     the client-facing normalizer, which strips 'admin' — every issued
+     token came out student-only and admins lost the platform tools. */
+  check('parseStoredScopes keeps admin', svc.parseStoredScopes('read grade admin').includes('admin'));
+  check('parseStoredScopes defaults empty to read', svc.parseStoredScopes('').join(' ') === 'read');
+  check('issue path no longer uses client normalizer on stored scope', !svcSrcIssueUsesNormalize());
+
   /* ── 4. PKCE S256 round-trip (the real verifier flow) ───── */
   const crypto = require('crypto');
   const verifier = crypto.randomBytes(32).toString('base64url');
@@ -78,6 +98,9 @@ const check = (name, cond, extra) => {
 
   /* ── 4b. Route wiring: /me endpoint + server-side scope grant ── */
   const svcSrc = fs.readFileSync(path.join(__dirname, 'backend/services/mcpOAuthService.js'), 'utf8');
+  const rpcSrc = fs.readFileSync(path.join(__dirname, 'backend/routes/studentMcpRoutes.js'), 'utf8');
+  check('RPC route resolves admin from live profile', rpcSrc.includes("liveRole === 'admin'") && /from\('profiles'\)/.test(rpcSrc));
+  check('RPC route backfills admin scope for existing connections', rpcSrc.includes('!req.mcpScope.includes(ADMIN_SCOPE)'));
   const routesSrc = fs.readFileSync(path.join(__dirname, 'backend/routes/mcpOAuthRoutes.js'), 'utf8');
   check('authorize route validates against requestable scopes (not admin)', /USER_REQUESTABLE_SCOPES\.includes\(s\)/.test(routesSrc));
   check('scope grant re-checks profiles.role', svcSrc.includes("from('profiles')") && svcSrc.includes("profile?.role === 'admin'"));

@@ -108,6 +108,15 @@ function normalizeScope(raw) {
   return scopes.length ? scopes : ['read'];
 }
 
+/** Parse a scope string the SERVER previously stored (auth-code row,
+ * token row). Unlike normalizeScope() — which is for CLIENT-supplied
+ * scope and strips 'admin' — this keeps every stored scope, including
+ * the server-granted 'admin'. */
+function parseStoredScopes(raw) {
+  const scopes = String(raw || 'read').split(/[\s+]/).filter(Boolean);
+  return scopes.length ? scopes : ['read'];
+}
+
 class McpOAuthService {
 
   /* ── RFC 7591 dynamic client registration ────────────────── */
@@ -337,10 +346,14 @@ class McpOAuthService {
     const refreshToken = crypto.randomBytes(32).toString('base64url');
     const now = Date.now();
 
+    // `scope` comes from OUR stored rows (auth code / previous refresh
+    // token), so parse it WITHOUT the client-facing normalizer — calling
+    // normalizeScope() here silently stripped the server-granted 'admin'
+    // and every issued token came out student-only (production regression).
+    let scopes = parseStoredScopes(scope);
     // Re-verify the role at ISSUE time too: the admin scope in `scope`
     // only survives if the account is still an admin right now. A user
     // demoted between consent and exchange gets a student-only token.
-    let scopes = normalizeScope(scope);
     if (scopes.includes(ADMIN_SCOPE)) {
       const { data: profile, error: roleErr } = await adminClient
         .from('profiles')
@@ -373,9 +386,9 @@ class McpOAuthService {
 
   /**
    * Verify an access token presented to the MCP RPC endpoint.
-   * Returns { userId, scope } or null. The returned scope keeps the
-   * server-granted 'admin' scope intact (normalizeUserScope strips
-   * only client-supplied values; stored scopes were granted by us).
+   * Returns { userId, scope } or null. The scope comes from the stored
+   * row and keeps every server-granted value (parseStoredScopes — unlike
+   * the client-facing normalizeScope — does not strip 'admin').
    */
   async verifyAccessToken(accessToken) {
     if (!accessToken || typeof accessToken !== 'string') return null;
@@ -389,8 +402,7 @@ class McpOAuthService {
     if (error) throw error;
     if (!data || data.revoked_at) return null;
     if (new Date(data.expires_at).getTime() < Date.now()) return null;
-    const scopes = String(data.scope || 'read').split(/[\s+]/).filter(Boolean);
-    return { userId: data.user_id, scope: scopes.length ? scopes : ['read'] };
+    return { userId: data.user_id, scope: parseStoredScopes(data.scope) };
   }
 
   /** Stamp usage (fire-and-forget). */
@@ -439,6 +451,7 @@ class McpOAuthService {
 module.exports = new McpOAuthService();
 module.exports.VALID_SCOPES = VALID_SCOPES;
 module.exports.ADMIN_SCOPE = ADMIN_SCOPE;
+module.exports.parseStoredScopes = parseStoredScopes;
 module.exports.DEFAULT_CLIENT_ID = DEFAULT_CLIENT_ID;
 module.exports.isValidRedirectUri = isValidRedirectUri;
 module.exports.normalizeRedirectUris = normalizeRedirectUris;
