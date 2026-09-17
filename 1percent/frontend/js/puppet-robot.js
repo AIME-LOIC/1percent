@@ -23,7 +23,7 @@
     fall: 'fall', held: 'held'
   };
   const CFG = {
-    speed: 130,          // px/sec walking
+    speed: 165,          // px/sec walking
     climbSpeed: 240,     // px/sec climbing
     gravity: 1500,       // px/sec² falling
     bounce: 0.32,
@@ -80,7 +80,7 @@
   }
 
   function buildStage(gltf, T) {
-    const W = 170, H = 210;
+    const W = 170, H = 260;
     const wrap = document.createElement('div');
     wrap.id = 'puppet-stage';
     wrap.style.cssText = `position:fixed;z-index:900;width:${W}px;height:${H}px;left:0;top:0;pointer-events:none;will-change:transform;`;
@@ -101,9 +101,11 @@
     key.position.set(2, 4, 3);
     scene.add(key);
 
-    const camera = new T.PerspectiveCamera(35, W / H, 0.1, 50);
-    camera.position.set(0, 1.6, 4.4);
-    camera.lookAt(0, 1.05, 0);
+    // Straight-on framing: robot spans y 0→3.04 (antenna tip), cheer hop
+    // peaks ~3.2 — fov 38 at z 5.2 covers y -0.29→3.29 with margin.
+    const camera = new T.PerspectiveCamera(38, W / H, 0.1, 50);
+    camera.position.set(0, 1.5, 5.2);
+    camera.lookAt(0, 1.5, 0);
 
     const model = gltf.scene;
     scene.add(model);
@@ -141,6 +143,8 @@
       chatTimer: 22,
       waveCooldown: 0,
       pending: null,
+      activeLoop: null,     // looping action (walk) riding over idle
+      heldAction: null,     // clamped one-shot pose (wave/cheer/sit)
       bubbleTimer: 0
     };
     place();
@@ -168,11 +172,40 @@
   function playOnce(name) {
     const a = ctx.actions[name];
     if (!a) return;
+    if (name !== 'blink' && ctx.heldAction && ctx.heldAction !== a) {
+      ctx.heldAction.stop();          // release previous clamped pose
+    }
     a.reset();
     a.setLoop(ctx.T.LoopOnce);
     a.clampWhenFinished = true;
     a.play();
-    ctx.pending = { until: performance.now() / 1000 + a.getClip().duration };
+    if (name !== 'blink') ctx.heldAction = a;
+    ctx.pending = { until: performance.now() / 1000 + a.getClip().duration, name };
+  }
+
+  /* loop 'walk' on top of idle (crossfaded); idle keeps running underneath */
+  function playLoop(name) {
+    const a = ctx.actions[name];
+    if (!a) return;
+    if (ctx.heldAction) { ctx.heldAction.stop(); ctx.heldAction = null; }
+    if (ctx.activeLoop === a) return;
+    if (ctx.activeLoop) ctx.activeLoop.fadeOut(0.12);
+    a.reset();
+    a.setLoop(ctx.T.LoopRepeat);
+    a.fadeIn(0.12);
+    a.play();
+    ctx.activeLoop = a;
+  }
+
+  function stopLoop() {
+    if (!ctx.activeLoop) return;
+    ctx.activeLoop.fadeOut(0.12);
+    ctx.activeLoop = null;
+  }
+
+  /* stop a clamped pose so idle shows through again */
+  function releasePose() {
+    if (ctx.heldAction) { ctx.heldAction.stop(); ctx.heldAction = null; }
   }
 
   function setState(next) {
@@ -229,6 +262,8 @@
       dragging = true; lastX = p.x; lastY = p.y;
       downAt = Date.now(); downXY = [p.x, p.y];
       canvas.style.cursor = 'grabbing';
+      stopLoop();
+      releasePose();
       setState(STATE.held);
       say(pick(['Up we go! ✋', 'Careful…', '*eyes squeezed shut*']), 1800);
       e.preventDefault();
@@ -287,6 +322,8 @@
   }
 
   function drop() {
+    stopLoop();
+    releasePose();
     setState(STATE.fall);
     say(pick(DROP_LINES), 1800);
     ctx.model.rotation.z = 0;
@@ -330,18 +367,20 @@
     mixer.update(dt);
     ctx.waveCooldown = Math.max(0, ctx.waveCooldown - dt);
 
-    const walkWaddle = () => { model.rotation.z = Math.sin(now * 13) * 0.07; };
+    const walkWaddle = () => { model.rotation.z = Math.sin(now * 13) * 0.05; };
 
     switch (ctx.state) {
 
       case STATE.enter: {
-        // walk in from the right edge
-        ctx.px -= CFG.speed * 1.4 * dt;
+        // jog in from the right edge
+        ctx.px -= CFG.speed * 2.1 * dt;
         ctx.py = floorY() - ctx.H;
         ctx.facing = -1;
+        playLoop('walk');
         walkWaddle();
         place();
         if (ctx.px <= window.innerWidth * 0.68) {
+          stopLoop();
           setState(STATE.idle);
           model.rotation.z = 0;
           playOnce('wave');
@@ -370,16 +409,18 @@
 
       case STATE.walk: {
         const el = ctx.target?.el;
-        if (!el || !document.contains(el)) { ctx.target = null; setState(STATE.idle); ctx.wanderTimer = 5; break; }
+        if (!el || !document.contains(el)) { ctx.target = null; stopLoop(); setState(STATE.idle); ctx.wanderTimer = 5; break; }
         const r = el.getBoundingClientRect();
         const destX = r.left + r.width / 2 - ctx.W / 2;
         const dx = destX - ctx.px;
         if (Math.abs(dx) > CFG.rest) {
           ctx.facing = Math.sign(dx);
           ctx.px += Math.sign(dx) * Math.min(Math.abs(dx), CFG.speed * dt);
+          playLoop('walk');
           walkWaddle();
         } else {
           // arrived at the card's x → climb to its top edge
+          stopLoop();
           model.rotation.z = 0;
           const destY = r.top - ctx.H + 14;   // sit slightly overlapping the top edge
           if (Math.abs(destY - ctx.py) > CFG.rest) {
@@ -400,6 +441,7 @@
         const destY = r.top - ctx.H + 14;
         const dy = destY - ctx.py;
         // little scramble up with a hop arc
+        playLoop('walk');
         ctx.py += Math.sign(dy) * Math.min(Math.abs(dy), CFG.climbSpeed * dt);
         model.rotation.z = Math.sin(now * 18) * 0.12;
         place();
@@ -427,10 +469,13 @@
         const destY = floorY() - ctx.H;
         const dy = destY - ctx.py;
         if (Math.abs(dy) > CFG.rest) {
+          playLoop('walk');
           ctx.py += Math.sign(dy) * Math.min(Math.abs(dy), CFG.climbSpeed * dt);
           model.rotation.z = Math.sin(now * 18) * 0.1;
           place();
         } else {
+          stopLoop();
+          releasePose();                 // un-clamp the sit pose → stand up
           ctx.py = destY;
           model.rotation.z = 0;
           setState(STATE.idle);
@@ -505,12 +550,17 @@
       ctx.shadow.material.opacity = Math.max(0.1, 0.35 - h * 0.0009);
     }
 
-    // pending one-shot clip finished
-    if (ctx.pending && now >= ctx.pending.until) ctx.pending = null;
+    // one-shot clip finished — release it so idle keeps moving
+    // (sit is the exception: it must HOLD until the puppet stands up)
+    if (ctx.pending && now >= ctx.pending.until) {
+      if (ctx.pending.name !== 'sit' && ctx.pending.name !== 'blink') releasePose();
+      ctx.pending = null;
+    }
   }
 
   function arriveSit(now, dur) {
     const el = ctx.target?.el;
+    stopLoop();
     setState(STATE.sit);
     playOnce('sit');
     ctx.sitUntil = now + (dur || 6 + Math.random() * 6);
@@ -535,7 +585,7 @@
   /* Milestone celebration — called by dashboard._celebrate() */
   function celebrate() {
     if (!ctx || ctx.state === STATE.held || ctx.state === STATE.fall) return;
-    playOnce('wave');
+    playOnce('cheer');
     ctx.waveCooldown = 6;
     say(pick(['You did it! 🎉', 'Amazing work! 🌟', 'Level up! 🚀', 'So proud of you! 💚', 'On a roll! 🔥']), 3200);
   }

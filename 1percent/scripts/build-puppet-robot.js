@@ -1,28 +1,30 @@
 /* ============================================================
    Build the puppet robot → GLB + OBJ into frontend/models/
-   Run:  NODE_PATH=/tmp/node_modules node scripts/build-puppet-robot.js
-         (or `npm i three` first, then just: node scripts/build-puppet-robot.js)
+   Run:  node scripts/build-puppet-robot.js   (needs `three` installed)
 
-   The robot is fully procedural (primitives + groups), so the
-   exported GLB carries a real scene graph:
+   The robot is fully procedural (primitives + groups) with a real
+   articulated rig — elbows and knees included:
 
      Robot (root)
      ├─ hips            (pelvis)
      ├─ torso           (chest + glowing core)
-     │   ├─ shoulderL → armL + handL
-     │   ├─ shoulderR → armR + handR
-     │   └─ head       (skull, face screen, eyeL, eyeR, antenna + tip)
-     ├─ legL            (thigh + footL)
-     └─ legR            (thigh + footR)
+     │   ├─ shoulderL → upperArmL → elbowL → forearmL + handL
+     │   ├─ shoulderR → upperArmR → elbowR → forearmR + handR
+     │   └─ head       (neck, skull, face screen, eyeL, eyeR, antenna + tip)
+     ├─ legL            (thighL → kneeL → shinL + footL)
+     └─ legR            (thighR → kneeR → shinR + footR)
 
    Included animation clips (playable via THREE.AnimationMixer):
      • idle  (4.0s loop)  — gentle bob, sway, antenna wiggle
-     • wave  (2.0s once)  — right arm raised + hand wave, greeting
+     • walk  (0.8s loop)  — real walk cycle: alternating legs, swinging
+                            arms, bending elbows/knees, body bob + sway
+     • wave  (2.0s once)  — right arm raised, elbow pumps the wave
+     • cheer (1.6s once)  — both arms up, double hop (milestones)
      • blink (0.4s once)  — eyes squash shut and reopen
-     • sit   (0.8s once)  — drops into a sitting pose (legs forward)
+     • sit   (0.8s once)  — sits down: legs forward, knees bent, lean back
 
-   The OBJ export is a static mesh bake (no animation — OBJ cannot
-   store it, and three's OBJExporter writes geometry only).
+   All one-shot clips END at the rest pose so stopping them never snaps.
+   The OBJ export is a static mesh bake (OBJ cannot store animation).
    ============================================================ */
 
 'use strict';
@@ -96,6 +98,12 @@ const q = (x, y, z) => {
   const quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, z));
   return [quat.x, quat.y, quat.z, quat.w];
 };
+/* keyframe-track builders: pass one euler [x,y,z] per keyframe */
+const qtr = (name, times, eulers) =>
+  new THREE.QuaternionKeyframeTrack(name, times, eulers.flatMap(e => q(e[0], e[1], e[2])));
+const vtr = (name, times, vec3s) =>
+  new THREE.VectorKeyframeTrack(name, times, vec3s.flat());
+
 const named = (obj, name) => { obj.name = name; return obj; };
 
 function mat(color, opts = {}) {
@@ -130,67 +138,87 @@ function buildRobot() {
 
   /* hips */
   const hips = named(new THREE.Group(), 'hips');
-  hips.position.set(0, 1.02, 0);
-  const pelvis = named(new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.34, 0.42), shadeM), 'pelvis');
+  hips.position.set(0, 0.95, 0);
+  const pelvis = named(new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.3, 0.4), shadeM), 'pelvis');
   hips.add(pelvis);
   robot.add(hips);
 
   /* torso (pivot at waist) */
   const torso = named(new THREE.Group(), 'torso');
-  torso.position.set(0, 1.1, 0);
-  const chest = named(new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 0.55, 6, 14), shell), 'chest');
-  chest.position.y = 0.55;
+  torso.position.set(0, 1.06, 0);
+  const chest = named(new THREE.Mesh(new THREE.CapsuleGeometry(0.38, 0.48, 6, 14), shell), 'chest');
+  chest.position.y = 0.42;
   chest.scale.set(1.15, 1, 0.85);
-  const core = named(new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.05, 20), brandM), 'core');
+  const core = named(new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.05, 20), brandM), 'core');
   core.rotation.x = Math.PI / 2;
-  core.position.set(0, 0.62, 0.36);
+  core.position.set(0, 0.5, 0.34);
   torso.add(chest, core);
 
-  /* arms — pivot at shoulders, limb hangs down inside the pivot */
+  /* arms — shoulder → upper arm → ELBOW → forearm + hand */
   const mkArm = (side) => { // side: -1 left, +1 right
-    const shoulder = named(new THREE.Group(), side < 0 ? 'shoulderL' : 'shoulderR');
-    shoulder.position.set(side * 0.5, 0.92, 0);
-    const arm = named(new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.42, 4, 10), shell), side < 0 ? 'armL' : 'armR');
-    arm.position.y = -0.31;
-    const hand = named(new THREE.Mesh(new THREE.SphereGeometry(0.15, 14, 12), brandM), side < 0 ? 'handL' : 'handR');
-    hand.position.y = -0.62;
-    shoulder.add(arm, hand);
+    const S = side < 0 ? 'L' : 'R';
+    const shoulder = named(new THREE.Group(), `shoulder${S}`);
+    shoulder.position.set(side * 0.5, 0.78, 0);
+
+    const upperArm = named(new THREE.Mesh(new THREE.CapsuleGeometry(0.1, 0.36, 4, 10), shell), `upperArm${S}`);
+    upperArm.position.y = -0.19;
+
+    const elbow = named(new THREE.Group(), `elbow${S}`);
+    elbow.position.y = -0.4;
+    const forearm = named(new THREE.Mesh(new THREE.CapsuleGeometry(0.085, 0.3, 4, 10), shell), `forearm${S}`);
+    forearm.position.y = -0.16;
+    const hand = named(new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 12), brandM), `hand${S}`);
+    hand.position.y = -0.36;
+    elbow.add(forearm, hand);
+
+    shoulder.add(upperArm, elbow);
     return shoulder;
   };
   torso.add(mkArm(-1), mkArm(1));
 
-  /* head */
+  /* head — neck pivot, skull, face screen, eyes, antenna */
   const head = named(new THREE.Group(), 'head');
-  head.position.set(0, 1.3, 0);
-  const skull = named(new THREE.Mesh(new THREE.SphereGeometry(0.42, 22, 18), shell), 'skull');
+  head.position.set(0, 0.98, 0);
+  const neck = named(new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.14, 10), shadeM), 'neck');
+  neck.position.y = -0.06;
+  const skull = named(new THREE.Mesh(new THREE.SphereGeometry(0.36, 22, 18), shell), 'skull');
+  skull.position.y = 0.3;
   skull.scale.set(1.12, 1, 0.95);
-  const face = named(new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.34, 0.1), screenM), 'faceScreen');
-  face.position.set(0, 0.02, 0.34);
-  const eyeGeo = new THREE.CapsuleGeometry(0.055, 0.05, 3, 8);
+  const face = named(new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.3, 0.09), screenM), 'faceScreen');
+  face.position.set(0, 0.32, 0.31);
+  const eyeGeo = new THREE.CapsuleGeometry(0.05, 0.04, 3, 8);
   const eyeL = named(new THREE.Mesh(eyeGeo, eyeM), 'eyeL');
   const eyeR = named(new THREE.Mesh(eyeGeo, eyeM), 'eyeR');
-  eyeL.position.set(-0.13, 0.05, 0.4);
-  eyeR.position.set(0.13, 0.05, 0.4);
-  const neck = named(new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.14, 10), shadeM), 'neck');
-  neck.position.y = -0.38;
+  eyeL.position.set(-0.12, 0.35, 0.37);
+  eyeR.position.set(0.12, 0.35, 0.37);
   const antenna = named(new THREE.Group(), 'antenna');
-  const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.3, 8), shadeM);
-  rod.position.y = 0.52;
-  const tip = named(new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 10), tipM), 'antennaTip');
-  tip.position.y = 0.7;
+  antenna.position.y = 0.64;
+  const rod = named(new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.028, 0.26, 8), shadeM), 'antennaRod');
+  rod.position.y = 0.13;
+  const tip = named(new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 10), tipM), 'antennaTip');
+  tip.position.y = 0.3;
   antenna.add(rod, tip);
-  head.add(skull, face, eyeL, eyeR, neck, antenna);
+  head.add(neck, skull, face, eyeL, eyeR, antenna);
   torso.add(head);
 
-  /* legs — pivot at hips, limb hangs down */
+  /* legs — hip → thigh → KNEE → shin + foot */
   const mkLeg = (side) => {
-    const leg = named(new THREE.Group(), side < 0 ? 'legL' : 'legR');
-    leg.position.set(side * 0.22, 1.0, 0);
-    const thigh = named(new THREE.Mesh(new THREE.CapsuleGeometry(0.12, 0.34, 4, 10), shell), side < 0 ? 'thighL' : 'thighR');
-    thigh.position.y = -0.26;
-    const foot = named(new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.12, 0.36), brandM), side < 0 ? 'footL' : 'footR');
-    foot.position.set(0, -0.52, 0.05);
-    leg.add(thigh, foot);
+    const S = side < 0 ? 'L' : 'R';
+    const leg = named(new THREE.Group(), `leg${S}`);
+    leg.position.set(side * 0.2, 0.95, 0);
+
+    const thigh = named(new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.32, 4, 10), shell), `thigh${S}`);
+    thigh.position.y = -0.24;
+
+    const knee = named(new THREE.Group(), `knee${S}`);
+    knee.position.y = -0.46;
+    const shin = named(new THREE.Mesh(new THREE.CapsuleGeometry(0.095, 0.28, 4, 10), shell), `shin${S}`);
+    shin.position.y = -0.17;
+    const foot = named(new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.11, 0.34), brandM), `foot${S}`);
+    foot.position.set(0, -0.4, 0.05);
+    knee.add(shin, foot);
+
+    leg.add(thigh, knee);
     return leg;
   };
   robot.add(mkLeg(-1), mkLeg(1));
@@ -207,59 +235,107 @@ function buildClips() {
   {
     const times = [0, 1, 2, 3, 4];
     const tracks = [
-      new THREE.VectorKeyframeTrack('Robot.position', times,
-        [0, 0, 0, 0, 0.03, 0, 0, 0, 0, 0, 0.03, 0, 0, 0, 0]),
-      new THREE.QuaternionKeyframeTrack('torso.quaternion', times,
-        [...q(0, 0, 0.04), ...q(0, 0.05, 0), ...q(0, 0, -0.04), ...q(0, -0.05, 0), ...q(0, 0, 0.04)]),
-      new THREE.QuaternionKeyframeTrack('shoulderL.quaternion', times,
-        [...q(0, 0, 0.10), ...q(0, 0, 0.16), ...q(0, 0, 0.10), ...q(0, 0, 0.16), ...q(0, 0, 0.10)]),
-      new THREE.QuaternionKeyframeTrack('shoulderR.quaternion', times,
-        [...q(0, 0, -0.16), ...q(0, 0, -0.10), ...q(0, 0, -0.16), ...q(0, 0, -0.10), ...q(0, 0, -0.16)]),
-      new THREE.QuaternionKeyframeTrack('antenna.quaternion', times,
-        [...q(0, 0, 0.25), ...q(0, 0, -0.25), ...q(0, 0, 0.25), ...q(0, 0, -0.25), ...q(0, 0, 0.25)])
+      vtr('Robot.position', times, [[0, 0, 0], [0, 0.03, 0], [0, 0, 0], [0, 0.03, 0], [0, 0, 0]]),
+      qtr('torso.quaternion', times, [[0, 0.05, 0.03], [0.02, 0, -0.02], [0, -0.05, -0.03], [-0.02, 0, 0.02], [0, 0.05, 0.03]]),
+      qtr('head.quaternion', times, [[0, 0, 0.05], [0, 0.06, 0], [0, 0, -0.05], [0, -0.06, 0], [0, 0, 0.05]]),
+      qtr('shoulderL.quaternion', times, [[0, 0, 0.12], [0, 0, 0.2], [0, 0, 0.12], [0, 0, 0.2], [0, 0, 0.12]]),
+      qtr('shoulderR.quaternion', times, [[0, 0, -0.2], [0, 0, -0.12], [0, 0, -0.2], [0, 0, -0.12], [0, 0, -0.2]]),
+      qtr('elbowL.quaternion', times, [[-0.18, 0, 0], [-0.3, 0, 0], [-0.18, 0, 0], [-0.3, 0, 0], [-0.18, 0, 0]]),
+      qtr('elbowR.quaternion', times, [[-0.3, 0, 0], [-0.18, 0, 0], [-0.3, 0, 0], [-0.18, 0, 0], [-0.3, 0, 0]]),
+      qtr('antenna.quaternion', times, [[0, 0, 0.25], [0, 0, -0.25], [0, 0, 0.25], [0, 0, -0.25], [0, 0, 0.25]])
     ];
     clips.push(new THREE.AnimationClip('idle', 4, tracks));
   }
 
-  /* wave — 2s once: right arm up, forearm wiggle, small head tilt */
+  /* walk — 0.8s loop: real gait. Legs alternate, knees bend on the
+     swing, arms counter-swing, elbows pump, body bobs twice a cycle. */
+  {
+    const t = [0, 0.2, 0.4, 0.6, 0.8];
+    const tracks = [
+      vtr('Robot.position', t, [[0, 0, 0], [0, 0.05, 0], [0, 0, 0], [0, 0.05, 0], [0, 0, 0]]),
+      /* legs: negative x = forward swing, positive = back */
+      qtr('legL.quaternion', t, [[0, 0, 0.02], [-0.8, 0, 0.02], [0, 0, 0.02], [0.55, 0, 0.02], [0, 0, 0.02]]),
+      qtr('legR.quaternion', t, [[0, 0, -0.02], [0.55, 0, -0.02], [0, 0, -0.02], [-0.8, 0, -0.02], [0, 0, -0.02]]),
+      /* knees bend while the foot lifts / swings through */
+      qtr('kneeL.quaternion', t, [[0.1, 0, 0], [0.9, 0, 0], [0.25, 0, 0], [0.1, 0, 0], [0.1, 0, 0]]),
+      qtr('kneeR.quaternion', t, [[0.1, 0, 0], [0.1, 0, 0], [0.25, 0, 0], [0.9, 0, 0], [0.1, 0, 0]]),
+      /* arms counter-swing opposite to their same-side leg */
+      qtr('shoulderL.quaternion', t, [[0, 0, 0.1], [0.6, 0, 0.1], [0, 0, 0.1], [-0.6, 0, 0.1], [0, 0, 0.1]]),
+      qtr('shoulderR.quaternion', t, [[0, 0, -0.1], [-0.6, 0, -0.1], [0, 0, -0.1], [0.6, 0, -0.1], [0, 0, -0.1]]),
+      qtr('elbowL.quaternion', t, [[-0.25, 0, 0], [-0.5, 0, 0], [-0.25, 0, 0], [-0.45, 0, 0], [-0.25, 0, 0]]),
+      qtr('elbowR.quaternion', t, [[-0.25, 0, 0], [-0.45, 0, 0], [-0.25, 0, 0], [-0.5, 0, 0], [-0.25, 0, 0]]),
+      /* torso lean + sway */
+      qtr('torso.quaternion', t, [[-0.08, 0.06, 0], [-0.08, 0, 0.02], [-0.08, -0.06, 0], [-0.08, 0, -0.02], [-0.08, 0.06, 0]])
+    ];
+    clips.push(new THREE.AnimationClip('walk', 0.8, tracks));
+  }
+
+  /* wave — 2s once: right arm up, ELBOW pumps the wave, head tilts.
+     Starts and ends at the rest pose. */
   {
     const t = [0, 0.25, 0.55, 0.85, 1.15, 1.45, 1.7, 2.0];
     const tracks = [
-      new THREE.QuaternionKeyframeTrack('shoulderR.quaternion', t,
-        [...q(0, 0, -0.16), ...q(0, 0, 2.6), ...q(0, 0, 2.35), ...q(0, 0, 2.85), ...q(0, 0, 2.35), ...q(0, 0, 2.85), ...q(0, 0, 2.6), ...q(0, 0, -0.16)]),
-      new THREE.QuaternionKeyframeTrack('head.quaternion', t,
-        [...q(0, 0, 0), ...q(0, 0, 0.14), ...q(0, 0, -0.12), ...q(0, 0, 0.14), ...q(0, 0, -0.12), ...q(0, 0, 0.14), ...q(0, 0, 0.08), ...q(0, 0, 0)]),
-      new THREE.QuaternionKeyframeTrack('shoulderL.quaternion', t,
-        [...q(0, 0, 0.10), ...q(0, 0, 0.28), ...q(0, 0, 0.28), ...q(0, 0, 0.28), ...q(0, 0, 0.28), ...q(0, 0, 0.28), ...q(0, 0, 0.28), ...q(0, 0, 0.10)])
+      qtr('shoulderR.quaternion', t,
+        [[0, 0, -0.16], [0, 0, 2.65], [0, 0, 2.4], [0, 0, 2.85], [0, 0, 2.4], [0, 0, 2.85], [0, 0, 2.5], [0, 0, -0.16]]),
+      qtr('elbowR.quaternion', t,
+        [[-0.2, 0, 0], [-0.8, 0, 0], [-0.45, 0, 0], [-0.85, 0, 0], [-0.45, 0, 0], [-0.85, 0, 0], [-0.5, 0, 0], [-0.2, 0, 0]]),
+      qtr('head.quaternion', t,
+        [[0, 0, 0], [0, 0, 0.14], [0, 0, -0.12], [0, 0, 0.14], [0, 0, -0.12], [0, 0, 0.14], [0, 0, 0.08], [0, 0, 0]]),
+      qtr('shoulderL.quaternion', t,
+        [[0, 0, 0.1], [0, 0, 0.28], [0, 0, 0.28], [0, 0, 0.28], [0, 0, 0.28], [0, 0, 0.28], [0, 0, 0.28], [0, 0, 0.1]])
     ];
     clips.push(new THREE.AnimationClip('wave', 2, tracks));
+  }
+
+  /* cheer — 1.6s once: both arms up, two hops (milestone celebrate).
+     Ends back at rest. */
+  {
+    const t = [0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6];
+    const tracks = [
+      vtr('Robot.position', t,
+        [[0, 0, 0], [0, 0.16, 0], [0, 0, 0], [0, 0, 0], [0, 0.16, 0], [0, 0, 0], [0, 0, 0], [0, 0.08, 0], [0, 0, 0]]),
+      qtr('shoulderL.quaternion', t,
+        [[0, 0, 0.15], [0, 0, 2.5], [0, 0, 2.65], [0, 0, 2.5], [0, 0, 2.65], [0, 0, 2.5], [0, 0, 2.65], [0, 0, 1.2], [0, 0, 0.15]]),
+      qtr('shoulderR.quaternion', t,
+        [[0, 0, -0.15], [0, 0, -2.5], [0, 0, -2.65], [0, 0, -2.5], [0, 0, -2.65], [0, 0, -2.5], [0, 0, -2.65], [0, 0, -1.2], [0, 0, -0.15]]),
+      qtr('elbowL.quaternion', t,
+        [[-0.2, 0, 0], [-0.7, 0, 0], [-0.6, 0, 0], [-0.7, 0, 0], [-0.6, 0, 0], [-0.7, 0, 0], [-0.6, 0, 0], [-0.4, 0, 0], [-0.2, 0, 0]]),
+      qtr('elbowR.quaternion', t,
+        [[-0.2, 0, 0], [-0.7, 0, 0], [-0.6, 0, 0], [-0.7, 0, 0], [-0.6, 0, 0], [-0.7, 0, 0], [-0.6, 0, 0], [-0.4, 0, 0], [-0.2, 0, 0]]),
+      qtr('kneeL.quaternion', t,
+        [[0, 0, 0], [0.35, 0, 0], [0, 0, 0], [0, 0, 0], [0.35, 0, 0], [0, 0, 0], [0, 0, 0], [0.2, 0, 0], [0, 0, 0]]),
+      qtr('kneeR.quaternion', t,
+        [[0, 0, 0], [0.35, 0, 0], [0, 0, 0], [0, 0, 0], [0.35, 0, 0], [0, 0, 0], [0, 0, 0], [0.2, 0, 0], [0, 0, 0]]),
+      qtr('head.quaternion', t,
+        [[0, 0, 0], [0, 0, 0.1], [0, 0, -0.1], [0, 0, 0.1], [0, 0, -0.1], [0, 0, 0.1], [0, 0, -0.1], [0, 0, 0.05], [0, 0, 0]])
+    ];
+    clips.push(new THREE.AnimationClip('cheer', 1.6, tracks));
   }
 
   /* blink — 0.4s once: both eyes squash shut then reopen */
   {
     const t = [0, 0.08, 0.16, 0.32, 0.4];
     const scaleY = [1, 0.08, 0.08, 0.08, 1];
-    const mk = (n) => new THREE.VectorKeyframeTrack(`${n}.scale`, t,
-      scaleY.flatMap(s => [1, s, 1]));
+    const mk = (n) => vtr(`${n}.scale`, t, scaleY.map(s => [1, s, 1]));
     clips.push(new THREE.AnimationClip('blink', 0.4, [mk('eyeL'), mk('eyeR')]));
   }
 
-  /* sit — 0.8s once: settle down, legs swing forward, slight lean back */
+  /* sit — 0.8s once: settle down, legs swing forward with knees
+     bending, slight lean back. Intentionally ends IN the sit pose —
+     the mixer clamps and holds it until the puppet stands up. */
   {
     const t = [0, 0.35, 0.6, 0.8];
     const tracks = [
-      new THREE.VectorKeyframeTrack('Robot.position', t,
-        [0, 0, 0, 0, -0.06, 0, 0, -0.1, 0, 0, -0.1, 0]),
-      new THREE.QuaternionKeyframeTrack('legL.quaternion', t,
-        [...q(0, 0, 0), ...q(-1.1, 0, 0.06), ...q(-1.35, 0, 0.06), ...q(-1.35, 0, 0.06)]),
-      new THREE.QuaternionKeyframeTrack('legR.quaternion', t,
-        [...q(0, 0, 0), ...q(-1.1, 0, -0.06), ...q(-1.35, 0, -0.06), ...q(-1.35, 0, -0.06)]),
-      new THREE.QuaternionKeyframeTrack('torso.quaternion', t,
-        [...q(0, 0, 0), ...q(-0.1, 0, 0), ...q(-0.16, 0, 0), ...q(-0.16, 0, 0)]),
-      new THREE.QuaternionKeyframeTrack('shoulderL.quaternion', t,
-        [...q(0, 0, 0.1), ...q(0, 0, 0.5), ...q(0, 0, 0.55), ...q(0, 0, 0.55)]),
-      new THREE.QuaternionKeyframeTrack('shoulderR.quaternion', t,
-        [...q(0, 0, -0.1), ...q(0, 0, -0.5), ...q(0, 0, -0.55), ...q(0, 0, -0.55)])
+      vtr('Robot.position', t, [[0, 0, 0], [0, -0.06, 0], [0, -0.1, 0], [0, -0.1, 0]]),
+      qtr('legL.quaternion', t, [[0, 0, 0.02], [-1.0, 0, 0.04], [-1.3, 0, 0.04], [-1.3, 0, 0.04]]),
+      qtr('legR.quaternion', t, [[0, 0, -0.02], [-1.0, 0, -0.04], [-1.3, 0, -0.04], [-1.3, 0, -0.04]]),
+      qtr('kneeL.quaternion', t, [[0, 0, 0], [0.7, 0, 0], [1.15, 0, 0], [1.15, 0, 0]]),
+      qtr('kneeR.quaternion', t, [[0, 0, 0], [0.7, 0, 0], [1.15, 0, 0], [1.15, 0, 0]]),
+      qtr('torso.quaternion', t, [[0, 0, 0], [-0.08, 0, 0], [-0.14, 0, 0], [-0.14, 0, 0]]),
+      qtr('shoulderL.quaternion', t, [[0, 0, 0.1], [0, 0, 0.4], [0, 0, 0.5], [0, 0, 0.5]]),
+      qtr('shoulderR.quaternion', t, [[0, 0, -0.1], [0, 0, -0.4], [0, 0, -0.5], [0, 0, -0.5]]),
+      qtr('elbowL.quaternion', t, [[-0.2, 0, 0], [-0.35, 0, 0], [-0.45, 0, 0], [-0.45, 0, 0]]),
+      qtr('elbowR.quaternion', t, [[-0.2, 0, 0], [-0.35, 0, 0], [-0.45, 0, 0], [-0.45, 0, 0]])
     ];
     clips.push(new THREE.AnimationClip('sit', 0.8, tracks));
   }
@@ -275,7 +351,7 @@ function buildClips() {
 
   const { GLTFExporter, OBJExporter } = await loadExporters();
 
-  /* GLB — binary, includes scene graph + all 4 clips */
+  /* GLB — binary, includes scene graph + all clips */
   const glb = await new Promise((resolve, reject) => {
     new GLTFExporter().parse(robot, resolve, reject, { binary: true, animations: clips });
   });
