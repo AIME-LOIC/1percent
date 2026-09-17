@@ -356,7 +356,11 @@
       const now = performance.now() / 1000;
       const dt = Math.min(0.05, now - lastT);
       lastT = now;
-      if (ctx) update(dt, now);
+      if (ctx) {
+        update(dt, now);
+        // paint the scene — without this the canvas stays blank forever
+        ctx.renderer.render(ctx.scene, ctx.camera);
+      }
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
