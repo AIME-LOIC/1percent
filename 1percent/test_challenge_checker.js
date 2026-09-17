@@ -165,6 +165,34 @@ list.appendChild(document.createElement('li'));`, domChallenge);
   r = await run('I would list the files and then navigate around the system', proseTask);
   ok('prose-only terminal submission rejected', !r.passed, r.reason);
 
+  /* ── 8. Terminal — full-transcript submissions (the playground bug) ──
+     The playground used to submit the terminal SCREEN (prompts + output).
+     These are the shapes that must grade correctly. */
+  console.log('\n[8] Terminal — transcript shapes');
+  r = await run('user@host:~/app$ git add .', gitChallenge);
+  ok('bash-style prompt line passes', r.passed, r.reason);
+
+  r = await run('root@srv:/var/www# git add .', gitChallenge);
+  ok('root prompt line passes', r.passed, r.reason);
+
+  r = await run('bash-5.1$ git add .', gitChallenge);
+  ok('container-style prompt line passes', r.passed, r.reason);
+
+  r = await run('[user@host ~]$ git add .', gitChallenge);
+  ok('RHEL-style prompt line passes', r.passed, r.reason);
+
+  r = await run('$ git add .\n-bash: gti: command not found\n$ git commit -m "x"', twoCmd);
+  ok('typo + command-not-found noise tolerated, both real commands found', r.passed, r.reason);
+
+  r = await run('git add .\n fatal: not a git repository (user@host:~/x$ git add .)', gitChallenge);
+  ok('commands survive surrounding transcript noise', r.passed, r.reason);
+
+  r = await run('echo $USER', gitChallenge);
+  ok('real $ inside a command is NOT mangled (echo fails git add gate)', !r.passed, `passed: ${r.passed}`);
+
+  r = await run('$ git status', gitChallenge);
+  ok('bare prompt + wrong command still rejected', !r.passed, r.reason);
+
   console.log(`\n══════════════════════════════`);
   console.log(`Challenge checker: ${pass} passed, ${fail} failed`);
   console.log(`══════════════════════════════`);

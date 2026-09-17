@@ -978,13 +978,30 @@ class CoinsService {
   _evaluateTerminal(code, challenge) {
     const stripped = this._stripCommentsAndStrings(code);
     // Terminal "code" is a list of shell commands. Grade the actual command
-    // lines: strip prompts ($/#/>), comments, and blank lines, then check
-    // that the required command appears as a WORD (word-boundary match) and,
-    // where the task implies an argument, that a plausible argument follows.
+    // lines: strip prompts, comments, and blank lines, then check that the
+    // required command appears as a WORD (word-boundary match) and, where
+    // the task implies an argument, that a plausible argument follows.
+    //
+    // Prompt shapes tolerated (transcript submissions mix these in):
+    //   $ git add .                     (bare prompt)
+    //   user@host:~/app$ git add .      (bash default)
+    //   bash-5.1$ git add .             (container shells)
+    //   [user@host ~]$ git add .        (RHEL style)
+    //   root@srv:/var/www# git add .    (root prompt)
+    // The prompt token must contain @, :, [..], or a digit — a plain word
+    // (echo) never matches, and the $ must be followed by whitespace, so
+    // real commands like `echo $USER` are never mangled.
+    const PROMPT_RE = /^\s*(?:\[[^\]]*\]|\S*@\S*|\S*:\S*|\S*\d\S*)\s*[$#>]\s+/;
     const commands = String(code || '')
       .split('\n')
-      .map(l => l.replace(/^\s*[$#>]\s*/, '').trim()) // strip shell prompts
-      .filter(l => l && !l.startsWith('#'));
+      .map(l => l
+        .replace(PROMPT_RE, '')
+        .replace(/^\s*[$#>]\s*/, '')
+        .trim())
+      .filter(l => l && !l.startsWith('#'))
+      // Transcript noise: error lines real shells print for unknown commands
+      // ("bash: xyz: command not found") are output, not the student's commands.
+      .filter(l => !/^[A-Za-z0-9._-]+:\s*.*(?:command not found|not found)\s*$/i.test(l));
     const joined = commands.join('\n');
 
     const hasCommand = (name) =>

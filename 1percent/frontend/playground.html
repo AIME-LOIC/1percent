@@ -386,6 +386,10 @@ const FS = {
 let cwd = '/home/user';
 let terminalHistory = [];
 let historyIndex = -1;
+/* Every command actually executed this session (Enter-pressed), in order.
+   The grading source for terminal challenges: unlike the terminal screen,
+   it survives `clear`/`reset` and isn't polluted with output text. */
+let sessionCommands = [];
 
 let gitState = { initialized: false, branch: 'main', commits: [], staged: [], modified: [], remotes: {} };
 
@@ -855,6 +859,10 @@ function selectChallenge(ch) {
   const ext = solExt[type] || 'js';
   const starter = ch.starter_code || getDefaultStarter(type);
 
+  // Fresh terminal session per challenge: commands run for a previous
+  // challenge must never leak into this one's submission.
+  sessionCommands = [];
+
   FILES[key] = {
     name: fname,
     ext: ext,
@@ -1225,7 +1233,23 @@ async function submitChallenge() {
 
   let code = '';
   if (type === 'linux' || type === 'git') {
-    code = document.getElementById('terminal-output').innerText;
+    // Grade from the commands the student actually RAN (session history),
+    // NOT the terminal screen: `clear`/`reset` wipe the screen but must
+    // never erase the student's work, and innerText mixes prompts and
+    // output into the submission. Fall back to the transcript only when
+    // no history exists (e.g. commands typed before this session).
+    const ran = sessionCommands.slice();
+    const transcript = (document.getElementById('terminal-output')?.innerText || '').trim();
+    if (ran.length) {
+      code = ran.join('\n');
+    } else if (transcript) {
+      code = transcript; // legacy path — backend strips prompts/output noise
+    } else {
+      Toast.warning('Type your commands in the Terminal tab (bottom panel), press Enter to run them, then submit.');
+      submitBtn.disabled = false;
+      submitBtn.textContent = '▶ Run & Submit';
+      return;
+    }
   } else {
     // Get code from the current editor
     code = editor.value;
@@ -1308,6 +1332,9 @@ function executeCommand(cmd) {
   const result = processCommand(cmd);
   termEl.innerHTML += prompt + result + '\n';
   termEl.scrollTop = termEl.scrollHeight;
+  // Record for challenge grading (screen may be cleared later — this list may not).
+  const clean = String(cmd || '').trim();
+  if (clean) sessionCommands.push(clean);
 }
 
 function processCommand(cmd) {
