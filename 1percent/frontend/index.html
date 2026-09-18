@@ -150,6 +150,10 @@
     .footer-grid{grid-template-columns:1fr;}
     .learn-cta{padding:48px 24px;}
   }
+
+/* auto-extracted from inline styles (do not edit names, values only) */
+pg-index-15e9k{justify-content:space-between}
+pg-index-1si9v{font-size:13px;color:var(--text-muted);line-height:1.55}
 </style>
 <script src="/js/icons.js"></script>
 <script src="/js/session.js" defer></script>
@@ -157,25 +161,27 @@
 <body>
 
 <header id="header">
-  <div class="container">
+  <div class="container header-shell">
     <a href="/" class="logo">
       <div class="logo-text">
         <span class="name">1percent Rwanda</span>
         <span class="tagline">Learn. Build. Ship.</span>
       </div>
     </a>
+    <div class="header-tools">
     <button class="mobile-toggle" id="mobile-toggle" aria-label="Menu"><span class="icon-menu"></span></button>
     <nav id="main-nav">
       <a href="#programme">Programme</a>
       <a href="#curriculum">Curriculum</a>
       <a href="#tracks">Tracks</a>
-      <a href="https://1percent.rw" style="display:inline-flex;align-items:center;gap:4px;">
+      <a href="https://1percent.rw" class="iflex-row">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         Business Site
       </a>
-      <a href="/dashboard" class="btn btn-outline btn-sm nav-cta" id="nav-dashboard-link" style="display:none;">Dashboard</a>
+      <a href="/dashboard" class="btn btn-outline btn-sm nav-cta" id="nav-dashboard-link" hidden>Dashboard</a>
       <a href="#" class="btn btn-primary btn-sm nav-cta" id="open-auth">Student Login</a>
     </nav>
+    </div>
   </div>
 </header>
 
@@ -267,7 +273,7 @@
 <!-- CURRICULUM -->
 <section id="curriculum" class="section">
   <div class="container">
-    <div style="margin-bottom:48px;">
+    <div class="mb-48">
       <span class="eyebrow">What You'll Learn</span>
       <h2 class="section-title">Curriculum Built for Production</h2>
       <p class="section-subtitle">Not tutorials. Not toy projects. Real engineering skills that transfer to real jobs.</p>
@@ -300,7 +306,7 @@
 <!-- TRACKS -->
 <section id="tracks" class="section section-alt">
   <div class="container">
-    <div style="margin-bottom:48px;">
+    <div class="mb-48">
       <span class="eyebrow">Specialisation Tracks</span>
       <h2 class="section-title">Choose Your Path</h2>
       <p class="section-subtitle">After the foundation, pick the track that matches your goals.</p>
@@ -333,7 +339,7 @@
 <!-- WHY 1% -->
 <section class="section">
   <div class="container">
-    <div style="margin-bottom:48px;">
+    <div class="mb-48">
       <span class="eyebrow">Why 1%?</span>
       <h2 class="section-title">Not Another Tutorial Platform</h2>
       <p class="section-subtitle">We don't teach you to follow along. We teach you to build.</p>
@@ -361,7 +367,7 @@
 <!-- STUDENT TESTIMONIALS -->
 <section class="section section-alt" id="testimonials" aria-labelledby="testimonials-title">
   <div class="container">
-    <div style="margin-bottom:48px;">
+    <div class="mb-48">
       <span class="eyebrow">Student Voices</span>
       <h2 class="section-title" id="testimonials-title">What Students Say</h2>
       <p class="section-subtitle">Real words from learners studying with 1Percent. Every story is submitted by a student and reviewed before publishing.</p>
@@ -379,9 +385,9 @@
       <span class="eyebrow">Start Your Journey</span>
       <h2 class="section-title">Ready to Become a 1% Expert?</h2>
       <p class="section-subtitle">Join the next cohort and transform your development skills. Spaces are limited — apply now.</p>
-      <div style="display:flex;gap:14px;flex-wrap:wrap;position:relative;z-index:1;">
+      <div class="flex-row flex-row-wrap hero-actions-inline">
         <a href="#" class="btn btn-white btn-lg" id="cta-login-btn">Apply Now</a>
-        <a href="#programme" class="btn btn-lg" style="border-color:rgba(255,255,255,0.3);color:#fff;background:transparent;">Learn More</a>
+        <a href="#programme" class="btn btn-lg btn-on-dark">Learn More</a>
       </div>
     </div>
   </div>
@@ -392,7 +398,7 @@
   <div class="container">
     <div class="footer-grid">
       <div class="footer-brand">
-        <div class="logo-mark" style="margin-bottom:12px;">1%</div>
+        <div class="logo-mark mb-12">1%</div>
         <p>The 1% Expert Programme — training the next generation of world-class developers from Kigali, Rwanda.</p>
       </div>
       <div class="footer-col">
@@ -494,7 +500,7 @@
 
 <!-- AUTH MODAL -->
 <div class="modal-overlay" id="auth-modal">
-  <div class="modal" style="max-width:440px;">
+  <div class="modal mw-440">
     <div class="modal-header"><h3 id="auth-modal-title">Student Login</h3><button class="modal-close" data-close-modal>&times;</button></div>
     <div class="auth-tabs">
       <button class="auth-tab active" data-tab="login">Log In</button>
@@ -505,23 +511,23 @@
       <input type="email" id="login-email" placeholder="you@example.com" required>
       <label for="login-password">Password</label>
       <input type="password" id="login-password" placeholder="Min 6 characters" required>
-      <div class="checkbox-row" style="justify-content:space-between;">
+      <div class="checkbox-row pg-index-15e9k">
         <span><input type="checkbox" id="remember-me"><label for="remember-me">Remember me</label></span>
-        <a href="#" id="forgot-password-link" style="font-size:13px;">Forgot password?</a>
+        <a href="#" id="forgot-password-link" class="fs-13">Forgot password?</a>
       </div>
       <div class="form-actions"><button type="submit" class="btn btn-primary btn-lg">Log In</button></div>
       <div class="form-status" id="login-status"></div>
-      <div style="text-align:center;font-size:13px;margin-top:10px;"><a href="#" id="magic-link-open" style="color:var(--primary);font-weight:600;text-decoration:none;">✨ Log in with a magic link</a> (no password)</div>
+      <div class="status-line fs-13"><a href="#" id="magic-link-open" class="link-primary">✨ Log in with a magic link</a> (no password)</div>
     </form>
-    <form class="auth-form" id="magic-form" style="display:none;">
-      <p style="font-size:13px;color:var(--text-muted);line-height:1.55;">Enter your email and we'll send you a one-tap login link — no password needed.</p>
+    <form class="auth-form" id="magic-form" hidden>
+      <p class="pg-index-1si9v">Enter your email and we'll send you a one-tap login link — no password needed.</p>
       <label for="magic-email">Email</label>
       <input type="email" id="magic-email" placeholder="you@example.com" required>
       <div class="form-actions"><button type="submit" class="btn btn-primary btn-lg">Send Magic Link</button></div>
       <div class="form-status" id="magic-status"></div>
-      <div style="text-align:center;font-size:13px;margin-top:10px;"><a href="#" id="magic-back" style="color:var(--primary);font-weight:600;text-decoration:none;">← Back to password login</a></div>
+      <div class="status-line fs-13"><a href="#" id="magic-back" class="link-primary">← Back to password login</a></div>
     </form>
-    <form class="auth-form" id="signup-form" style="display:none;">
+    <form class="auth-form" id="signup-form" hidden>
       <label for="signup-name">Full Name</label>
       <input type="text" id="signup-name" placeholder="Your name" required>
       <label for="signup-email">Email</label>
@@ -574,6 +580,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   } catch {}
 
+  // Drop orphaned sessions left by confirm-email flows. When the stored
+  // refresh token is already dead, supabase-js fires a
+  // token?grant_type=refresh_token request on load that 400s; clearing the
+  // stale legacy keys makes signup/login start from a clean slate.
+  try {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session?.user) {
+      localStorage.removeItem('sb-access-token');
+      localStorage.removeItem('sb-refresh-token');
+      sessionStorage.removeItem('sb-access-token');
+      sessionStorage.removeItem('sb-refresh-token');
+    }
+  } catch {}
+
   async function onLoggedIn() {
     const loginBtn = document.getElementById('open-auth');
     let dashUrl = '/dashboard';
@@ -596,7 +616,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     loginBtn.id = 'nav-dash';
     loginBtn.classList.remove('btn-primary');
     loginBtn.classList.add('btn-outline');
-    document.getElementById('nav-dashboard-link').style.display = 'none';
+    document.getElementById('nav-dashboard-link').classList.add('hidden');
     return dashUrl;
   }
 
@@ -624,7 +644,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const password = document.getElementById('login-password').value;
     status.className = 'form-status';
     status.textContent = 'Logging in...';
-    status.style.display = 'block';
+    status.classList.remove('hidden');
     status.style.color = 'var(--text-muted)';
     try {
       const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
@@ -672,16 +692,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Signup
   signupForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (signupForm.dataset.submitting === '1') return; // double-click guard
+    signupForm.dataset.submitting = '1';
     const status = document.getElementById('signup-status');
     const name = document.getElementById('signup-name').value;
     const email = document.getElementById('signup-email').value;
     const password = document.getElementById('signup-password').value;
     status.className = 'form-status';
     status.textContent = 'Creating account...';
-    status.style.display = 'block';
+    status.classList.remove('hidden');
     status.style.color = 'var(--text-muted)';
     try {
       const res = await fetch('/api/auth/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password, full_name: name }) });
+      if (res.status === 429) {
+        status.style.color = 'var(--danger)';
+        status.textContent = 'Too many attempts — please wait a minute and try again.';
+        return;
+      }
+      if (res.status === 504) {
+        status.style.color = 'var(--danger)';
+        status.textContent = 'The signup service is temporarily unreachable. Please try again in a moment.';
+        return;
+      }
       const json = await res.json();
       if (json.success) {
         // Confirmed-email disabled → session returned, log straight in.
@@ -702,7 +734,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           tabs.forEach(t => t.classList.remove('active'));
           document.querySelector('.auth-tab[data-tab="login"]')?.classList.add('active');
           loginForm.style.display = '';
-          signupForm.style.display = 'none';
+          signupForm.classList.add('hidden');
           document.getElementById('auth-modal-title').textContent = 'Student Login';
           status.textContent = '';
         }, 2500);
@@ -714,17 +746,19 @@ document.addEventListener('DOMContentLoaded', async () => {
           tabs.forEach(t => t.classList.remove('active'));
           document.querySelector('.auth-tab[data-tab="login"]')?.classList.add('active');
           loginForm.style.display = '';
-          signupForm.style.display = 'none';
+          signupForm.classList.add('hidden');
           document.getElementById('auth-modal-title').textContent = 'Student Login';
           status.textContent = 'Account found — enter your password to log in.';
         }, 1500);
       } else {
         status.style.color = 'var(--danger)';
-        status.textContent = json.error || 'Signup failed';
+        status.textContent = json.error || 'Signup failed. If you already have an account, log in instead.';
       }
     } catch {
       status.style.color = 'var(--danger)';
       status.textContent = 'Network error. Please try again.';
+    } finally {
+      signupForm.dataset.submitting = '0';
     }
   });
 
@@ -733,22 +767,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   const magicLinkOpen = document.getElementById('magic-link-open');
   magicLinkOpen?.addEventListener('click', (e) => {
     e.preventDefault();
-    loginForm.style.display = 'none';
-    signupForm.style.display = 'none';
+    loginForm.classList.add('hidden');
+    signupForm.classList.add('hidden');
     magicForm.style.display = '';
     document.getElementById('auth-modal-title').textContent = 'Log in with email';
     document.getElementById('magic-email').focus();
   });
   document.getElementById('magic-back')?.addEventListener('click', (e) => {
     e.preventDefault();
-    magicForm.style.display = 'none';
+    magicForm.classList.add('hidden');
     loginForm.style.display = '';
     document.getElementById('auth-modal-title').textContent = 'Student Login';
   });
   magicForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const status = document.getElementById('magic-status');
-    status.style.display = 'block';
+    status.classList.remove('hidden');
     status.style.color = 'var(--text-muted)';
     status.textContent = 'Sending magic link...';
     try {
@@ -882,7 +916,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const res = await fetch('/api/testimonials?limit=6');
     const json = await res.json();
     const items = (json.testimonials || []).slice(0, 6);
-    if (!items.length) { grid.closest('.section').style.display = 'none'; return; }
+    if (!items.length) { grid.closest('.section').classList.add('hidden'); return; }
     const stars = n => {
       let s = '';
       for (let i = 0; i < 5; i++) s += '<svg width="14" height="14" viewBox="0 0 24 24" fill="' + (i < n ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';

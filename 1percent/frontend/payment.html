@@ -187,7 +187,13 @@
       .comparison-table { font-size: 12px; }
       .comparison-table th, .comparison-table td { padding: 10px 8px; }
     }
-  </style>
+  
+/* auto-extracted from inline styles (do not edit names, values only) */
+pg-payment-bmzsy{color:#0d6e3f;font-size:13px;font-weight:600}
+pg-payment-15gnm{font-size:13px;color:#6b7280;margin-bottom:4px}
+pg-payment-1u0cm{font-size:18px;font-weight:700;color:#059669;text-transform:capitalize}
+pg-payment-1l40d{font-size:12px;color:#9ca3af;margin-top:4px}
+</style>
 </head>
 <body>
 
@@ -196,7 +202,7 @@
     <a href="/" class="nav-logo">1% Expert</a>
     <div class="nav-links">
       <a href="/">Courses</a>
-      <span id="nav-user-name" style="color:#0d6e3f;font-size:13px;font-weight:600;display:none;"></span>
+      <span id="nav-user-name" class="pg-payment-bmzsy" hidden></span>
       <a href="/" class="btn-sm" id="nav-auth-btn">Login</a>
     </div>
   </nav>
@@ -238,7 +244,7 @@
         <li><span class="icon-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></span> Completion certificates</li>
         <li><span class="icon-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></span> 50 bonus coins</li>
       </ul>
-      <a href="/payment-details?plan=pro" class="plan-btn primary" style="display:block;text-align:center;text-decoration:none;">Subscribe to Pro</a>
+      <a href="/payment-details?plan=pro" class="plan-btn primary link-plain-x ta-center d-block">Subscribe to Pro</a>
     </div>
 
     <div class="plan">
@@ -254,23 +260,23 @@
         <li><span class="icon-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></span> 100 bonus coins</li>
         <li><span class="icon-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></span> Job placement support</li>
       </ul>
-      <a href="/payment-details?plan=unlimited" class="plan-btn primary" style="display:block;text-align:center;text-decoration:none;">Subscribe to Unlimited</a>
+      <a href="/payment-details?plan=unlimited" class="plan-btn primary link-plain-x ta-center d-block">Subscribe to Unlimited</a>
     </div>
   </section>
 
   <!-- MANAGE SUBSCRIPTION (signed-in users with a plan) -->
-  <section class="manage-sub" id="manage-sub" style="display:none;">
+  <section class="manage-sub" id="manage-sub" hidden>
     <div class="manage-card">
       <div class="manage-info">
         <div class="manage-plan" id="manage-plan-name">Pro</div>
         <div class="manage-meta" id="manage-plan-meta">Active</div>
-        <div class="manage-note" id="manage-cancelled-note" style="display:none;color:#b45309;">
+        <div class="manage-note text-amber-deep" id="manage-cancelled-note" hidden>
           Your plan ends on <span id="manage-end-date"></span>. You keep full access until then.
         </div>
       </div>
       <div class="manage-actions">
         <button class="manage-btn danger" id="cancel-btn" onclick="cancelPlan()">Cancel Plan</button>
-        <button class="manage-btn primary" id="resume-btn" onclick="resumePlan()" style="display:none;">Resume Plan</button>
+        <button class="manage-btn primary" id="resume-btn" onclick="resumePlan()" hidden>Resume Plan</button>
       </div>
     </div>
   </section>
@@ -280,7 +286,7 @@
     <h2>Compare Plans</h2>
     <table class="comparison-table">
       <thead>
-        <tr><th style="text-align:left;">Feature</th><th>Free</th><th class="highlight-col">Pro</th><th>Unlimited</th></tr>
+        <tr><th class="ta-left">Feature</th><th>Free</th><th class="highlight-col">Pro</th><th>Unlimited</th></tr>
       </thead>
       <tbody>
         <tr><td>Course access</td><td>Overviews only</td><td class="highlight-col">Full content</td><td>Full content</td></tr>
@@ -366,7 +372,7 @@
       if (cancelled && ends) document.getElementById('manage-end-date').textContent = ends;
       document.getElementById('cancel-btn').style.display = cancelled ? 'none' : 'inline-block';
       document.getElementById('resume-btn').style.display = cancelled ? 'inline-block' : 'none';
-      bar.style.display = 'block';
+      bar.classList.remove('hidden');
     }
 
     async function cancelPlan() {
@@ -457,7 +463,7 @@
         if (data.success && data.tier) {
           const tierBadge = document.createElement('div');
           tierBadge.style.cssText = 'background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:16px 20px;margin-bottom:24px;text-align:center;';
-          tierBadge.innerHTML = `<div style="font-size:13px;color:#6b7280;margin-bottom:4px;">Your Current Plan</div><div style="font-size:18px;font-weight:700;color:#059669;text-transform:capitalize;">${data.tier.name || data.tier.slug || 'Free'}</div><div style="font-size:12px;color:#9ca3af;margin-top:4px;">Since ${data.tier.started_at ? new Date(data.tier.started_at).toLocaleDateString() : 'N/A'}</div>`;
+          tierBadge.innerHTML = `<div class="pg-payment-15gnm">Your Current Plan</div><div class="pg-payment-1u0cm">${data.tier.name || data.tier.slug || 'Free'}</div><div class="pg-payment-1l40d">Since ${data.tier.started_at ? new Date(data.tier.started_at).toLocaleDateString() : 'N/A'}</div>`;
           document.querySelector('.hero').after(tierBadge);
         }
       } catch (e) { console.warn('Could not load tier:', e); }

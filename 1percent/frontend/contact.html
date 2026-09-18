@@ -83,7 +83,7 @@ body{font-family:'Inter',sans-serif;background:#f8fafc;color:#0f172a;min-height:
         <textarea id="cf-message" name="message" required maxlength="4000" placeholder="How can we help?"></textarea>
       </div>
       <!-- Honeypot (spam trap) -->
-      <input type="text" name="_gotcha" style="display:none;">
+      <input type="text" name="_gotcha" hidden>
       <input type="hidden" name="source" value="learn.1percent.rw/contact">
       <button type="submit" class="submit-btn" id="cf-submit">Send message</button>
       <div class="form-status" id="cf-status"></div>
@@ -105,7 +105,7 @@ body{font-family:'Inter',sans-serif;background:#f8fafc;color:#0f172a;min-height:
   form.addEventListener('submit', async (e)=>{
     e.preventDefault();
     status.className='form-status';
-    status.style.display='none';
+    status.classList.add('hidden');
     btn.disabled=true; btn.textContent='Sending…';
     try{
       const data={

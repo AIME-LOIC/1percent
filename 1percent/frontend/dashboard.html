@@ -47,6 +47,19 @@
   var origAssign = Object.getOwnPropertyDescriptor(window.location.__proto__, 'href');
 })();
 </script>
+<style>
+/* auto-extracted from inline styles (do not edit names, values only) */
+pg-dashboard-1u0b2{color:var(--primary);font-weight:600}
+pg-dashboard-16tx3{margin-top:16px;max-width:360px;text-align:left}
+pg-dashboard-1b2z5{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+pg-dashboard-15na0{font-size:13px;margin-top:8px;min-height:18px}
+pg-dashboard-1qm4y{font-size:12px;color:var(--primary);font-weight:600;text-decoration:none}
+pg-dashboard-1nxv5{padding:16px;text-align:center;color:var(--text-muted);font-size:12px}
+pg-dashboard-18jk1{font-size:11px;color:var(--text-muted);margin-top:8px;text-align:center}
+pg-dashboard-1n75i{display:block;text-decoration:none}
+pg-dashboard-15f8p{font-weight:800;font-size:13px;color:#065f46;margin-top:6px}
+pg-dashboard-qnbky{font-size:11px;color:#047857;margin-top:3px;line-height:1.5}
+</style>
 </head>
 <body>
 
@@ -83,12 +96,12 @@
     <h1>You need to log in to view your dashboard.</h1>
     <p class="text-secondary">Log in to see your courses, progress and coins — or create a free account in seconds.</p>
     <button type="button" id="guest-login-btn" class="btn btn-primary btn-lg">Student Login</button>
-    <p style="margin-top:14px;font-size:14px;color:var(--text-secondary);">No password handy? <a href="#" id="guest-magic-link" style="color:var(--primary);font-weight:600;">✨ Email me a magic link</a></p>
-    <form id="guest-magic-form" style="display:none;margin-top:16px;max-width:360px;text-align:left;">
-      <label for="guest-magic-email" style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">Email</label>
-      <input type="email" id="guest-magic-email" placeholder="you@example.com" required style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;">
-      <button type="submit" class="btn btn-primary" style="margin-top:10px;">Send Magic Link</button>
-      <div id="guest-magic-status" style="font-size:13px;margin-top:8px;min-height:18px;"></div>
+    <p class="mt-14 fs-14 text-secondary-x">No password handy? <a href="#" id="guest-magic-link" class="pg-dashboard-1u0b2">✨ Email me a magic link</a></p>
+    <form id="guest-magic-form" class="pg-dashboard-16tx3" hidden>
+      <label for="guest-magic-email" class="pg-dashboard-1b2z5">Email</label>
+      <input type="email" id="guest-magic-email" placeholder="you@example.com" required class="input-lg">
+      <button type="submit" class="btn btn-primary mt-10">Send Magic Link</button>
+      <div id="guest-magic-status" class="pg-dashboard-15na0"></div>
     </form>
   </div>
 </template>
@@ -103,10 +116,10 @@
           <div>
             <div class="skel-greeting skeleton" id="skel-greeting"></div>
             <div class="skel-subtitle skeleton" id="skel-subtitle"></div>
-            <h1 class="dash-greeting" id="dash-greeting-text" style="display:none;"></h1>
-            <p class="dash-subtitle" id="dash-subtitle-text" style="display:none;"></p>
+            <h1 class="dash-greeting" id="dash-greeting-text" hidden></h1>
+            <p class="dash-subtitle" id="dash-subtitle-text" hidden></p>
           </div>
-          <span class="dash-streak" id="dash-streak" style="display:none;">
+          <span class="dash-streak" id="dash-streak" hidden>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
             <span class="dash-streak-count">0</span>-day streak
           </span>
@@ -127,7 +140,7 @@
 
         <div class="dash-section">
           <h2>Challenges</h2>
-          <a href="/playground" style="font-size:12px;color:var(--primary);font-weight:600;text-decoration:none;">View All &rarr;</a>
+          <a href="/playground" class="pg-dashboard-1qm4y">View All &rarr;</a>
         </div>
         <div class="dash-challenges" id="dash-challenges">
           <div class="dash-challenge-filters" id="challenge-filters"></div>
@@ -164,14 +177,14 @@
       <!-- Leaderboard sidebar -->
       <div class="dash-lb">
         <div class="dash-lb-head">
-          <h3><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px;"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> Leaderboard</h3>
+          <h3><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> Leaderboard</h3>
           <div class="dash-lb-tabs">
             <button class="dash-lb-tab active" data-type="coins">Coins</button>
             <button class="dash-lb-tab" data-type="streak">Streak</button>
           </div>
         </div>
         <div class="dash-lb-list" id="dash-lb-list">
-          <div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px;">Loading...</div>
+          <div class="pg-dashboard-1nxv5">Loading...</div>
         </div>
 
         <div class="dash-lb-section">
@@ -181,22 +194,22 @@
           </div>
           <div class="dash-weekdays" id="weekly-goal-days"></div>
           <div class="dash-goal-bar"><span id="weekly-goal-fill"></span></div>
-          <div id="goal-encouragement" style="font-size:11px;color:var(--text-muted);margin-top:8px;text-align:center;"></div>
+          <div id="goal-encouragement" class="pg-dashboard-18jk1"></div>
         </div>
 
         <div class="dash-lb-section">
           <div class="dash-lb-section-head"><span>Last 14 Days</span></div>
-          <div id="dash-activity-chart" style="min-height:70px;"></div>
+          <div id="dash-activity-chart" class="min-h70"></div>
         </div>
 
-        <div class="dash-lb-section" id="dash-club-promo" style="display:none;">
-          <a href="/robotics-club" style="display:block;text-decoration:none;">
-            <div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1px solid #a7f3d0;border-radius:12px;padding:14px;transition:transform .15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
-              <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--green,#0d6e3f),#059669);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(13,110,63,.25);">
+        <div class="dash-lb-section" id="dash-club-promo" hidden>
+          <a href="/robotics-club" class="pg-dashboard-1n75i">
+            <div onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''" class="adm-tile-green">
+              <div class="success-orb">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
               </div>
-              <div style="font-weight:800;font-size:13px;color:#065f46;margin-top:6px;">Join the Robotics Club!</div>
-              <div style="font-size:11px;color:#047857;margin-top:3px;line-height:1.5;">Build robots with students across Rwanda. Pick your school →</div>
+              <div class="pg-dashboard-15f8p">Join the Robotics Club!</div>
+              <div class="pg-dashboard-qnbky">Build robots with students across Rwanda. Pick your school →</div>
             </div>
           </a>
         </div>
@@ -219,13 +232,13 @@
       <button class="dash-lb-tab" data-type="streak" type="button">Streak</button>
     </div>
     <div class="dash-lb-list" id="mobile-leaderboard-list">
-      <div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px;">Loading...</div>
+      <div class="pg-dashboard-1nxv5">Loading...</div>
     </div>
   </div>
 </div>
 
 <!-- Mobile bottom nav -->
-<nav class="mobile-bottom-nav" id="mobile-bottom-nav" style="display:none;">
+<nav class="mobile-bottom-nav" id="mobile-bottom-nav" hidden>
   <a href="/dashboard" class="active">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     Dashboard
@@ -254,8 +267,8 @@
   const nav=document.getElementById('mobile-bottom-nav');
   if(!nav)return;
   function check(){
-    if(window.innerWidth<=900)nav.style.display='flex';
-    else nav.style.display='none';
+    if(window.innerWidth<=900)nav.classList.remove('hidden');
+    else nav.classList.add('hidden');
   }
   check();
   window.addEventListener('resize',check);

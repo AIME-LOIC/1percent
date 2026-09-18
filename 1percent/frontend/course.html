@@ -235,6 +235,16 @@ body{padding-top:60px;}
 .quiz-modal-header .close-btn{background:none;border:none;font-size:20px;color:var(--c-muted);cursor:pointer;padding:4px 8px;border-radius:4px;}
 .quiz-modal-header .close-btn:hover{background:#f3f4f6;}
 .quiz-modal-body{flex:1;overflow-y:auto;padding:24px;}
+/* dynamic-style replacements (hydrated by the observer in script below) */
+.quiz-timer-pill{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:800;background:#fff;border:1px solid var(--c-border);border-radius:100px;padding:6px 12px;font-variant-numeric:tabular-nums;}
+.quiz-timer-pill[hidden]{display:none;}
+.quiz-timer-note{display:block;font-size:11px;color:var(--c-muted);margin-right:8px;}
+.quiz-timer-note[hidden]{display:none;}
+.result-orb{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;}
+.result-orb.orb-pass{background:#ecfdf5;}
+.result-orb.orb-fail{background:#fef2f2;}
+.result-pct{font-size:28px;font-weight:800;}
+.mv-8{margin:8px 0;}
 .quiz-modal-footer{padding:16px 24px;border-top:1px solid var(--c-border);display:flex;justify-content:flex-end;gap:8px;}
 
 /* ── Main Content ────────────────────────────────── */
@@ -373,6 +383,56 @@ body{padding-top:60px;}
 .mobile-bottom-nav svg{width:20px;height:20px;}
 .mobile-profile-nav{flex:1.2;min-width:56px;}
 .mobile-profile-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--c-accent),#0a5c34);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;box-shadow:0 4px 10px rgba(13,110,63,.18);}
+
+/* auto-extracted page classes (course.html + playground.html — use --c-* tokens) */
+.cr-t-muted{color:var(--c-muted);}
+.cr-t-muted13{font-size:13px;color:var(--c-muted);}
+.cr-section-bb{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--c-border);}
+.cr-green{color:var(--c-green);}
+.cr-red{color:var(--c-red);}
+.cr-tone{color:var(--c-muted);}
+.cr-modal{background:#fff;border:1px solid var(--c-border);border-radius:10px;padding:24px;max-width:520px;width:92%;max-height:85vh;overflow-y:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.1);}
+.modal-x{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--c-muted);cursor:pointer;font-size:16px;}
+.term-row{padding:8px 12px;border-bottom:1px solid #313244;}
+.term-box{background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:10px 12px;margin-bottom:6px;}
+.term-chip{background:#313244;padding:2px 6px;border-radius:3px;color:#a6e3a1;}
+.term-input{width:100%;padding:6px 10px;background:#1e1e2e;border:1px solid #313244;border-radius:4px;color:#cdd6f4;font-size:12px;font-family:var(--mono);outline:none;}
+.term-btn{width:100%;padding:6px;background:rgba(166,227,161,0.1);border:1px solid rgba(166,227,161,0.2);border-radius:4px;color:#a6e3a1;font-size:11px;font-weight:600;cursor:pointer;}
+.term-warn-row{background:rgba(249,226,175,0.06);border:1px dashed #45475a;border-radius:8px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;}
+.term-gold-row{padding:10px 12px;background:linear-gradient(135deg,rgba(249,226,175,0.1),rgba(250,183,135,0.08));border-bottom:1px solid rgba(249,226,175,0.15);cursor:pointer;}
+.mono-block{font-family:var(--mono);font-size:12px;line-height:1.6;}
+
+/* auto-extracted from inline styles (do not edit names, values only) */
+pg-course-pu9mj{font-size:13.5px}
+pg-course-5xcnj{flex-direction:row;gap:6px}
+pg-course-t0xth{color:var(--c-muted);font-size:13px}
+pg-course-t7b5q{font-size:16px;font-weight:800;margin-bottom:8px}
+pg-course-140fq{font-size:13px;color:var(--c-muted);margin-bottom:14px}
+pg-course-t0xu8{color:var(--c-muted);font-size:14px}
+pg-course-1662q{color:var(--c-red);font-size:13px}
+pg-course-gid44{font-size:22px}
+pg-course-1k1je{list-style-type:decimal}
+pg-course-aoa8s{display:flex;align-items:center;gap:10px}
+pg-course-140ga{font-size:13px;color:var(--c-muted);margin-bottom:20px}
+pg-course-7zzug{font-size:14px;color:var(--c-muted);margin-bottom:16px}
+pg-course-1gkit{color:var(--c-red);font-weight:700}
+pg-course-tozbu{font-size:12px;color:var(--c-muted);margin-top:6px}
+pg-course-4r8x4{font-size:13px;font-weight:700;margin:0 0 8px}
+pg-course-q4sel{display:block;width:100%;margin-bottom:6px;text-align:left}
+pg-course-1lr1h{font-size:11px;color:var(--c-muted);margin:6px 0 0}
+pg-course-1y4d5{font-size:14px;color:var(--c-muted);text-align:center;padding:20px 0}
+pg-course-140fr{font-size:13px;color:var(--c-muted);margin-bottom:16px}
+pg-course-lzbw3{font-size:10px;font-weight:700;color:#d97706;background:#fffbeb;border:1px solid #fde68a;border-radius:100px;padding:1px 8px;vertical-align:2px}
+pg-course-kbszm{font-size:13px;color:var(--c-red)}
+pg-course-qolyq{font-size:13px;color:var(--c-green);font-weight:700;text-align:center}
+pg-course-12hbv{font-size:13px;color:#d97706;font-weight:700;text-align:center}
+pg-course-1w4y1{font-size:12px;color:var(--c-muted);margin-top:10px}
+pg-course-1dysj{font-size:12px;color:var(--c-muted)}
+pg-course-cvedx{color:var(--c-accent)}
+pg-course-12y2w{font-size:16px;font-weight:800;margin:12px 0 4px}
+pg-course-10v60{font-size:13px;color:var(--c-muted);margin:0 0 12px}
+pg-course-1sh7l{font-size:12px;color:var(--c-red);margin-bottom:12px}
+pg-course-1sn3m{font-size:11px;font-weight:800;color:var(--c-muted)}
 </style>
 </head>
 <body>
@@ -384,7 +444,7 @@ body{padding-top:60px;}
       <a href="/" class="topbar-logo">
         <div class="mark">1%</div>
         <div class="logo-text">
-          <span class="name" style="font-size:13.5px;">1% Expert Programme</span>
+          <span class="name pg-course-pu9mj">1% Expert Programme</span>
         </div>
       </a>
       <span class="topbar-sep"></span>
@@ -399,7 +459,7 @@ body{padding-top:60px;}
 
 <!-- Mobile bottom nav -->
 <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
-  <a href="/dashboard" style="flex-direction:row;gap:6px;">
+  <a href="/dashboard" class="pg-course-5xcnj">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     Dashboard
   </a>
@@ -429,12 +489,12 @@ body{padding-top:60px;}
       <div><h3>Lessons</h3><span class="count" id="sidebar-count">Loading...</span></div>
       <button id="download-course-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> PDF</button>
     </div>
-    <div class="sidebar-progress" id="sidebar-progress" style="display:none;">
+    <div class="sidebar-progress" id="sidebar-progress" hidden>
       <button class="sidebar-download" id="sidebar-download-btn">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Download Full Course
       </button>
-      <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      <div class="progress-track"><div class="progress-fill meter-zero" id="progress-fill"></div></div>
       <div class="progress-text"><span id="progress-pct">0%</span><span id="progress-count">0/0</span></div>
     </div>
     <div class="lesson-list" id="lesson-list">
@@ -445,7 +505,7 @@ body{padding-top:60px;}
       <div class="skel-lesson"><div class="skel-circle skeleton"></div><div class="skel-lines"><div class="skel-line w60 skeleton"></div><div class="skel-line w30 skeleton"></div></div></div>
       <div class="skel-lesson"><div class="skel-circle skeleton"></div><div class="skel-lines"><div class="skel-line w60 skeleton"></div><div class="skel-line w30 skeleton"></div></div></div>
     </div>
-    <div class="sidebar-bottom" id="sidebar-bottom" style="display:none;">
+    <div class="sidebar-bottom" id="sidebar-bottom" hidden>
       <button class="sidebar-quiz-btn" id="take-quiz-btn" onclick="openQuizModal()">
         <svg class="quiz-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
         Take Quiz
@@ -473,13 +533,13 @@ body{padding-top:60px;}
           <div class="skel-text w60 skeleton"></div>
         </div>
       </div>
-      <div id="empty-select-lesson" style="display:none;">
+      <div id="empty-select-lesson" hidden>
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
         <h3>Select a lesson</h3>
         <p>Choose a lesson from the sidebar to start learning.</p>
       </div>
     </div>
-    <div id="content-render" style="display:none;"></div>
+    <div id="content-render" hidden></div>
   </div>
 
 
@@ -709,9 +769,9 @@ async function loadCourse(){
   if(!json||!json.success||!json.course){
     if(fromCache)return; // stale cache, wait for fresh fetch to decide
     document.getElementById('topbar-course').textContent='Course not found';
-    document.getElementById('skel-main-loading').style.display='none';
+    document.getElementById('skel-main-loading').classList.add('hidden');
     /* Also clear the sidebar skeleton — it must never keep shimmering */
-    document.getElementById('lesson-list').innerHTML='<div style="padding:24px 16px;text-align:center;color:var(--c-muted);font-size:12.5px;">Lessons unavailable</div>';
+    document.getElementById('lesson-list').innerHTML='<div class="empty-note cr-tone">Lessons unavailable</div>';
     document.getElementById('empty-select-lesson').style.display='';
     return;
   }
@@ -751,13 +811,13 @@ async function loadCourse(){
   renderLessons();
 
   if(!currentUser){
-    document.getElementById('skel-main-loading').style.display='none';
-    document.getElementById('empty-select-lesson').style.display='none';
+    document.getElementById('skel-main-loading').classList.add('hidden');
+    document.getElementById('empty-select-lesson').classList.add('hidden');
     document.getElementById('content-placeholder').innerHTML=`
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--c-muted)" stroke-width="1.5"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
       <h3>Log in to access this course</h3>
       <p>You need an account to enroll and track progress.</p>
-      <a href="/" class="footer-btn primary" style="margin-top:8px;">Log In</a>`;
+      <a href="/" class="footer-btn primary mt-8">Log In</a>`;
     renderLessons();return;
   }
 
@@ -766,13 +826,13 @@ async function loadCourse(){
   const enrolled=(enrollJson.enrollments||[]).some(e=>e.course_id===courseData.id);
 
   if(!enrolled){
-    document.getElementById('skel-main-loading').style.display='none';
-    document.getElementById('empty-select-lesson').style.display='none';
+    document.getElementById('skel-main-loading').classList.add('hidden');
+    document.getElementById('empty-select-lesson').classList.add('hidden');
     document.getElementById('content-placeholder').innerHTML=`
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--c-accent)" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
       <h3>Enroll in this course</h3>
       <p>${escapeHTML(courseData.description||'Start learning by enrolling in this course.')}</p>
-      <button class="footer-btn primary" onclick="doEnroll()" style="margin-top:8px;">Enroll Now</button>`;
+      <button class="footer-btn primary mt-8" onclick="doEnroll()">Enroll Now</button>`;
     renderLessons();return;
   }
 
@@ -788,7 +848,7 @@ async function loadCourse(){
   // Prominent sidebar download (visible for everyone; the PDF route
   // enforces auth server-side)
   const sdlBtn=document.getElementById('sidebar-download-btn');
-  if(sdlBtn){sdlBtn.style.display='flex';sdlBtn.onclick=()=>downloadCoursePdf(courseData.id);}
+  if(sdlBtn){sdlBtn.classList.remove('hidden');sdlBtn.onclick=()=>downloadCoursePdf(courseData.id);}
   renderLessons();
   const nextId=getNextLesson();
   if(nextId)openLesson(nextId);
@@ -807,7 +867,7 @@ async function loadProgress(){
   if(!json.success)return;const p=json.progress;
 
   const progEl=document.getElementById('sidebar-progress');
-  progEl.style.display='block';
+  progEl.classList.remove('hidden');
   document.getElementById('progress-fill').style.width=p.percentage+'%';
   document.getElementById('progress-pct').textContent=p.percentage+'%';
   document.getElementById('progress-count').textContent=`${p.completed_lessons}/${p.total_lessons}`;
@@ -886,8 +946,8 @@ function renderLessons(){
 
 function openLesson(lessonId){
   if(!currentUser){
-    document.getElementById('content-placeholder').style.display='flex';
-    document.getElementById('content-render').style.display='none';
+    document.getElementById('content-placeholder').classList.remove('hidden');
+    document.getElementById('content-render').classList.add('hidden');
     return;
   }
   const lesson=(courseData.lessons||[]).find(l=>l.id===lessonId);
@@ -940,9 +1000,9 @@ async function doOpenLesson(lessonId){
   const colors={video:'var(--c-blue)',lab:'var(--c-yellow)',project:'var(--c-purple)',reading:'var(--c-green)',quiz:'var(--c-red)'};
   const color=colors[lesson.lesson_type]||'var(--c-muted)';
 
-  document.getElementById('content-placeholder').style.display='none';
+  document.getElementById('content-placeholder').classList.add('hidden');
   const render=document.getElementById('content-render');
-  render.style.display='block';
+  render.classList.remove('hidden');
 
   render.innerHTML=`
     <div class="content-header">
@@ -950,7 +1010,7 @@ async function doOpenLesson(lessonId){
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
         Lessons
       </button>
-      <span class="type-badge" style="background:${color}20;color:${color};">${lesson.lesson_type}</span>
+      <span class="type-badge" data-dynbg20="${color}">${lesson.lesson_type}</span>
       <h1>${escapeHTML(lesson.title)}</h1>
       <div class="meta">
         <span>${Icons.get('clock',14)} ${lesson.duration_min} min</span>
@@ -958,7 +1018,7 @@ async function doOpenLesson(lessonId){
       </div>
     </div>
     <div class="content-body" id="lesson-content-body">
-      <p style="color:var(--c-muted);">Loading content...</p>
+      <p class="cr-t-muted">Loading content...</p>
     </div>
     <div class="content-footer">
       <div class="footer-actions" id="content-footer-left">
@@ -966,7 +1026,7 @@ async function doOpenLesson(lessonId){
         ${next?(()=>{
           const nextLocked=courseData.is_premium&&!isPremiumUser&&!next.is_free_preview;
           return nextLocked
-            ?`<button class="footer-btn outline" onclick="showPremiumWall()" title="Premium required">Next &#8594; <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></button>`
+            ?`<button class="footer-btn outline" onclick="showPremiumWall()" title="Premium required">Next &#8594; <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></button>`
             :`<button class="footer-btn outline" onclick="openLesson('${next.id}')">Next &#8594;</button>`;
         })():''}
       </div>
@@ -1012,16 +1072,16 @@ async function doOpenLesson(lessonId){
       lesson.content_md=cachedContent;
       body.innerHTML=renderMarkdown(cachedContent);
     } else {
-      body.innerHTML='<p style="color:var(--c-muted);font-size:13px;">Loading content…</p>';
+      body.innerHTML='<p class="pg-course-t0xth">Loading content…</p>';
     }
     fetch(`/api/courses/lessons/${lessonId}/content`,{headers:currentUser&&supabaseClient?{Authorization:`Bearer ${(OPSession?await OPSession.getToken():'')||''}`}:{}})
       .then(async r=>{
         if(r.status===403){
           // Server-side tier check refused — show the upgrade wall.
           const b=document.getElementById('lesson-content-body');
-          if(b)b.innerHTML=`<div style="text-align:center;padding:40px 20px;">
-            <h3 style="font-size:16px;font-weight:800;margin-bottom:8px;">Premium lesson</h3>
-            <p style="font-size:13px;color:var(--c-muted);margin-bottom:14px;">Upgrade your plan to unlock this lesson and the rest of the course.</p>
+          if(b)b.innerHTML=`<div class="empty-pad">
+            <h3 class="pg-course-t7b5q">Premium lesson</h3>
+            <p class="pg-course-140fq">Upgrade your plan to unlock this lesson and the rest of the course.</p>
             <a href="/payment" class="footer-btn primary">View Plans</a>
           </div>`;
           return null;
@@ -1033,16 +1093,41 @@ async function doOpenLesson(lessonId){
         lesson.content_md=j.content_md||'';
         DataCache.set(contentKey,j.content_md||'');
         const b=document.getElementById('lesson-content-body');
-        if(b&&(!cachedContent||b.dataset.revalidated!=='1')){b.dataset.revalidated='1';b.innerHTML=lesson.content_md?renderMarkdown(lesson.content_md):'<p style="color:var(--c-muted);font-size:14px;">Content will be available soon.</p>';}
+        if(b&&(!cachedContent||b.dataset.revalidated!=='1')){b.dataset.revalidated='1';b.innerHTML=lesson.content_md?renderMarkdown(lesson.content_md):'<p class="pg-course-t0xu8">Content will be available soon.</p>';}
         startStudyTimer(lessonId,isCompleted);
       })
       .catch(()=>{
-        if(!cachedContent){const b=document.getElementById('lesson-content-body');if(b)b.innerHTML='<p style="color:var(--c-red);font-size:13px;">Failed to load content.</p>';}
+        if(!cachedContent){const b=document.getElementById('lesson-content-body');if(b)b.innerHTML='<p class="pg-course-1662q">Failed to load content.</p>';}
       });
   }
 
   document.getElementById('main-area').scrollTop=0;
 }
+
+/* Hydrate runtime-only styling from data-attributes (replaces inline styles)
+   — watches the lesson body + quiz modal because they re-render. */
+const __dynHydrate=el=>{
+  if(el.dataset&&el.dataset.dynbg20){
+    el.style.background=el.dataset.dynbg20+'20';
+    el.style.color=el.dataset.dynbg20;
+  }
+};
+const __dynObserver=new MutationObserver(muts=>{
+  muts.forEach(m=>{
+    if(m.type==='attributes'){__dynHydrate(m.target);return;}
+    m.addedNodes&&m.addedNodes.forEach(n=>{
+      if(!(n instanceof HTMLElement))return;
+      __dynHydrate(n);
+      n.querySelectorAll&&n.querySelectorAll('[data-dynbg20]').forEach(__dynHydrate);
+    });
+  });
+});
+document.addEventListener('DOMContentLoaded',()=>{
+  const body=document.getElementById('lesson-content-body')||document.body;
+  __dynObserver.observe(body,{childList:true,subtree:true,attributes:true,attributeFilter:['data-dynbg20']});
+  // hydrate anything already rendered
+  body.querySelectorAll('[data-dynbg20]').forEach(__dynHydrate);
+});
 
 function renderMarkdown(md){
   let html=md;
@@ -1055,11 +1140,11 @@ function renderMarkdown(md){
   });
   html=html.replace(/^### (.+)$/gm,'<h4>$1</h4>');
   html=html.replace(/^## (.+)$/gm,'<h2>$1</h2>');
-  html=html.replace(/^# (.+)$/gm,'<h2 style="font-size:22px;">$1</h2>');
+  html=html.replace(/^# (.+)$/gm,'<h2 class="pg-course-gid44">$1</h2>');
   html=html.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
   html=html.replace(/\*(.+?)\*/g,'<em>$1</em>');
   html=html.replace(/^- (.+)$/gm,'<li>$1</li>');
-  html=html.replace(/^(\d+)\. (.+)$/gm,'<li style="list-style-type:decimal;">$2</li>');
+  html=html.replace(/^(\d+)\. (.+)$/gm,'<li class="pg-course-1k1je">$2</li>');
   html=html.replace(/^> (.+)$/gm,'<blockquote>$1</blockquote>');
   html=html.replace(/^---$/gm,'<hr>');
   html=html.split('\n\n').map(block=>{
@@ -1147,7 +1232,7 @@ let quizState=null; // attempt policy state from the server
 async function loadQuizInfo(){
   if(!currentUser)return;
   const bottom=document.getElementById('sidebar-bottom');
-  bottom.style.display='block';
+  bottom.classList.remove('hidden');
   try{
     const res=await fetch(`/api/quizzes/course/${courseData.id}`);const json=await res.json();
     if(!json.success||!json.quiz){document.getElementById('take-quiz-btn').disabled=true;document.getElementById('quiz-status').textContent='No quiz available';return;}
@@ -1236,8 +1321,8 @@ async function openQuizModal(){
     <div class="quiz-modal">
       <div class="quiz-modal-header">
         <h3>End-of-Course Quiz</h3>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <span id="quiz-timer" style="display:${hasTimer?'inline-flex':'none'};align-items:center;gap:6px;font-size:13px;font-weight:800;background:#fff;border:1px solid var(--c-border);border-radius:100px;padding:6px 12px;font-variant-numeric:tabular-nums;">
+        <div class="pg-course-aoa8s">
+          <span id="quiz-timer" class="quiz-timer-pill"${hasTimer?'':' hidden'}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             <span id="quiz-timer-text">--:--</span>
           </span>
@@ -1245,21 +1330,21 @@ async function openQuizModal(){
         </div>
       </div>
       <div class="quiz-modal-body">
-        <p style="font-size:13px;color:var(--c-muted);margin-bottom:20px;">${questions.length} questions · ${currentQuizData.passing_score}% to pass${hasTimer?` · ${limitMin} min limit`:''}${quizState&&quizState.attempts_remaining!=null?` · ${quizState.attempts_remaining} attempt${quizState.attempts_remaining===1?'':'s'} left`:''}</p>
+        <p class="pg-course-140ga">${questions.length} questions · ${currentQuizData.passing_score}% to pass${hasTimer?` · ${limitMin} min limit`:''}${quizState&&quizState.attempts_remaining!=null?` · ${quizState.attempts_remaining} attempt${quizState.attempts_remaining===1?'':'s'} left`:''}</p>
         <div id="quiz-modal-questions"></div>
       </div>
       <div class="quiz-modal-footer">
         <button class="footer-btn outline" onclick="closeQuizModal()">Cancel</button>
         <button class="footer-btn primary" id="submit-quiz-modal" onclick="submitQuizModal('${currentQuizData.id}')">Submit Quiz</button>
-        <span id="quiz-timer-note" style="display:${hasTimer?'block':'none'};font-size:11px;color:var(--c-muted);margin-right:8px;">Quiz auto-submits when time runs out.</span>
+        <span id="quiz-timer-note" class="quiz-timer-note"${hasTimer?'':' hidden'}>Quiz auto-submits when time runs out.</span>
       </div>
     </div>`;
   document.body.appendChild(overlay);
 
   document.getElementById('quiz-modal-questions').innerHTML=questions.map((q,i)=>`
-    <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--c-border);" data-qid="${q.id}">
-      <p style="font-size:14px;font-weight:600;margin:0 0 10px;">${i+1}. ${escapeHTML(q.question)}</p>
-      ${(q.options||[]).map(o=>`<button class="quiz-option" data-qid="${q.id}" data-aid="${o.id}" onclick="selectAnswer('${q.id}','${o.id}')" style="margin-bottom:6px;">${escapeHTML(o.text)}</button>`).join('')}
+    <div data-qid="${q.id}" class="cr-section-bb">
+      <p class="fs-14 fw-600 mb-10">${i+1}. ${escapeHTML(q.question)}</p>
+      ${(q.options||[]).map(o=>`<button class="quiz-option mb-6" data-qid="${q.id}" data-aid="${o.id}" onclick="selectAnswer('${q.id}','${o.id}')">${escapeHTML(o.text)}</button>`).join('')}
     </div>`).join('');
 
   // Countdown timer (from quizzes.time_limit_min — set 10 for a 10-min quiz)
@@ -1359,21 +1444,21 @@ async function submitQuizModal(quizId){
   const weak=(r.weak_areas&&r.weak_areas.lessons)||[];
   if(modal){
     modal.innerHTML=`
-      <div style="text-align:center;padding:20px 0;">
-        <div style="width:64px;height:64px;border-radius:50%;background:${r.passed?'#ecfdf5':'#fef2f2'};display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+      <div class="ta-center py-20">
+        <div class="result-orb ${r.passed?'orb-pass':'orb-fail'}">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="${r.passed?'var(--c-green)':'var(--c-red)'}" stroke-width="2">${r.passed?'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>':'<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'}</svg>
         </div>
-        <h3 style="font-size:20px;font-weight:800;margin-bottom:4px;">${r.passed?'Congratulations!':'Not Quite There'}</h3>
-        <p style="font-size:14px;color:var(--c-muted);margin-bottom:16px;">${r.passed?'You passed the end-of-course quiz!':'Keep studying and try again.'}</p>
-        <div style="font-size:28px;font-weight:800;color:${r.passed?'var(--c-green)':'var(--c-red)'};margin-bottom:4px;">${r.percentage}%</div>
-        <p style="font-size:13px;color:var(--c-muted);">${r.score}/${r.max_score} correct${r.flagged?' · <span style="color:var(--c-red);font-weight:700;">reviewed for integrity</span>':''}</p>
-        ${r.attempts_remaining!=null?'<p style="font-size:12px;color:var(--c-muted);margin-top:6px;">'+r.attempts_remaining+' attempt'+(r.attempts_remaining===1?'':'s')+' remaining</p>':''}
+        <h3 class="stat-big mb-4">${r.passed?'Congratulations!':'Not Quite There'}</h3>
+        <p class="pg-course-7zzug">${r.passed?'You passed the end-of-course quiz!':'Keep studying and try again.'}</p>
+        <div class="result-pct ${r.passed?'cr-green':'cr-red'} mb-4">${r.percentage}%</div>
+        <p class="cr-t-muted13">${r.score}/${r.max_score} correct${r.flagged?' · <span class="pg-course-1gkit">reviewed for integrity</span>':''}</p>
+        ${r.attempts_remaining!=null?'<p class="pg-course-tozbu">'+r.attempts_remaining+' attempt'+(r.attempts_remaining===1?'':'s')+' remaining</p>':''}
       </div>
       ${weak.length?`
-      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:14px 16px;margin-top:6px;">
-        <p style="font-size:13px;font-weight:700;margin:0 0 8px;">📚 Revisit these lessons before retrying:</p>
-        ${weak.map(l=>`<button class="footer-btn outline" style="display:block;width:100%;margin-bottom:6px;text-align:left;" onclick="reopenLessonFromQuiz('${l.id}')">${escapeHTML(l.title)}</button>`).join('')}
-        <p style="font-size:11px;color:var(--c-muted);margin:6px 0 0;">Quiz retries unlock 24h after your last attempt${r.retry_at?' ('+new Date(r.retry_at).toLocaleString()+')':''}.</p>
+      <div class="callout-amber mt-6">
+        <p class="pg-course-4r8x4">📚 Revisit these lessons before retrying:</p>
+        ${weak.map(l=>`<button class="footer-btn outline pg-course-q4sel" onclick="reopenLessonFromQuiz('${l.id}')">${escapeHTML(l.title)}</button>`).join('')}
+        <p class="pg-course-1lr1h">Quiz retries unlock 24h after your last attempt${r.retry_at?' ('+new Date(r.retry_at).toLocaleString()+')':''}.</p>
       </div>`:''}
     `;
     document.querySelector('.quiz-modal-footer').innerHTML=`<button class="footer-btn outline" onclick="closeQuizModal()">Close</button>`+
@@ -1420,7 +1505,7 @@ async function openQuickQuiz(lessonId){
         <button class="close-btn" onclick="closeQuickQuiz()">&times;</button>
       </div>
       <div class="quiz-modal-body" id="quick-quiz-body">
-        <p style="font-size:13px;color:var(--c-muted);">Loading questions…</p>
+        <p class="cr-t-muted13">Loading questions…</p>
       </div>
       <div class="quiz-modal-footer">
         <button class="footer-btn outline" onclick="closeQuickQuiz()">Cancel</button>
@@ -1435,25 +1520,25 @@ async function openQuickQuiz(lessonId){
     if(!json.success){throw new Error(json.error||'Failed to load');}
     if(!json.quiz){
       document.getElementById('quick-quiz-body').innerHTML=`
-        <p style="font-size:14px;color:var(--c-muted);text-align:center;padding:20px 0;">
+        <p class="pg-course-1y4d5">
           No quick quiz is available for this lesson yet — ask your admin to add
           quiz questions linked to this lesson, or complete the lesson by studying.
         </p>`;
-      document.getElementById('quick-quiz-submit').style.display='none';
+      document.getElementById('quick-quiz-submit').classList.add('hidden');
       return;
     }
     quickQuiz=json.quiz;
     quickWatch.startedAt=Date.now();
     document.getElementById('quick-quiz-body').innerHTML=`
-      <p style="font-size:13px;color:var(--c-muted);margin-bottom:16px;">${quickQuiz.questions.length} questions · ${quickQuiz.passing_score}% to pass · pass it and this lesson completes instantly</p>
+      <p class="pg-course-140fr">${quickQuiz.questions.length} questions · ${quickQuiz.passing_score}% to pass · pass it and this lesson completes instantly</p>
       ${quickQuiz.questions.map((q,i)=>`
-        <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--c-border);" data-qqid="${q.id}">
-          <p style="font-size:14px;font-weight:600;margin:0 0 10px;">${i+1}. ${escapeHTML(q.question)}${q.review?' <span style="font-size:10px;font-weight:700;color:#d97706;background:#fffbeb;border:1px solid #fde68a;border-radius:100px;padding:1px 8px;vertical-align:2px;">review</span>':''}</p>
-          ${(q.options||[]).map(o=>`<button class="quiz-option" data-qqid="${q.id}" data-qaid="${o.id}" onclick="selectQuickAnswer('${q.id}','${o.id}')" style="margin-bottom:6px;">${escapeHTML(o.text)}</button>`).join('')}
+        <div data-qqid="${q.id}" class="cr-section-bb">
+          <p class="fs-14 fw-600 mb-10">${i+1}. ${escapeHTML(q.question)}${q.review?' <span class="pg-course-lzbw3">review</span>':''}</p>
+          ${(q.options||[]).map(o=>`<button class="quiz-option mb-6" data-qqid="${q.id}" data-qaid="${o.id}" onclick="selectQuickAnswer('${q.id}','${o.id}')">${escapeHTML(o.text)}</button>`).join('')}
         </div>`).join('')}`;
   }catch(e){
-    document.getElementById('quick-quiz-body').innerHTML='<p style="font-size:13px;color:var(--c-red);">Could not load the quick quiz. Try again.</p>';
-    document.getElementById('quick-quiz-submit').style.display='none';
+    document.getElementById('quick-quiz-body').innerHTML='<p class="pg-course-kbszm">Could not load the quick quiz. Try again.</p>';
+    document.getElementById('quick-quiz-submit').classList.add('hidden');
   }
 }
 
@@ -1478,13 +1563,13 @@ async function submitQuickQuiz(lessonId){
     const body=document.getElementById('quick-quiz-body');
     if(body){
       body.innerHTML=`
-        <div style="text-align:center;padding:20px 0;">
-          <div style="width:64px;height:64px;border-radius:50%;background:${r.passed?'#ecfdf5':'#fef2f2'};display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+        <div class="ta-center py-20">
+          <div class="result-orb ${r.passed?'orb-pass':'orb-fail'}">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="${r.passed?'var(--c-green)':'var(--c-red)'}" stroke-width="2">${r.passed?'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>':'<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'}</svg>
           </div>
-          <h3 style="font-size:20px;font-weight:800;margin-bottom:4px;">${r.passed?'Nice — mastery proven!':'Not quite'}</h3>
-          <div style="font-size:28px;font-weight:800;color:${r.passed?'var(--c-green)':'var(--c-red)'};margin:8px 0;">${r.percentage}%</div>
-          <p style="font-size:13px;color:var(--c-muted);">${r.passed?'Lesson unlocked instantly. You can close and continue.':'You need '+r.passing_score+'% to fast-track. Study a little and retry — there is no attempt limit.'}</p>
+          <h3 class="stat-big mb-4">${r.passed?'Nice — mastery proven!':'Not quite'}</h3>
+          <div class="result-pct ${r.passed?'cr-green':'cr-red'} mv-8">${r.percentage}%</div>
+          <p class="cr-t-muted13">${r.passed?'Lesson unlocked instantly. You can close and continue.':'You need '+r.passing_score+'% to fast-track. Study a little and retry — there is no attempt limit.'}</p>
         </div>`;
     }
     if(r.passed){
@@ -1496,9 +1581,9 @@ async function submitQuickQuiz(lessonId){
       const cJson=await cRes.json().catch(()=>({}));
       if(cJson.success){
         await loadProgress();
-        if(body){body.innerHTML+=`<p style="font-size:13px;color:var(--c-green);font-weight:700;text-align:center;">✓ Lesson completed — next lesson is unlocked.</p>`;}
+        if(body){body.innerHTML+=`<p class="pg-course-qolyq">✓ Lesson completed — next lesson is unlocked.</p>`;}
       }else if(cJson.code==='PREVIOUS_LESSON_INCOMPLETE'){
-        if(body){body.innerHTML+=`<p style="font-size:13px;color:#d97706;font-weight:700;text-align:center;">Pass recorded — but finish the previous lesson first, then Mark Complete.</p>`;}
+        if(body){body.innerHTML+=`<p class="pg-course-12hbv">Pass recorded — but finish the previous lesson first, then Mark Complete.</p>`;}
       }
     }
     const footer=document.querySelector('#quick-quiz-overlay .quiz-modal-footer');
@@ -1550,9 +1635,9 @@ async function loadPremium(){
 }
 
 function showPremiumWall(){
-  document.getElementById('content-placeholder').style.display='none';
+  document.getElementById('content-placeholder').classList.add('hidden');
   const render=document.getElementById('content-render');
-  render.style.display='block';
+  render.classList.remove('hidden');
   const tierName=premiumStatus?.tier?.name||'Free Starter';
   const check='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
   render.innerHTML=`
@@ -1581,18 +1666,18 @@ function showPremiumWall(){
           <div class="plan-desc">Everything + mentorship</div>
         </div>
       </div>
-      <a href="/payment" class="footer-btn primary" style="padding:11px 34px;font-size:14px;">Upgrade Now</a>
-      <p style="font-size:12px;color:var(--c-muted);margin-top:10px;">Mobile Money (MTN · Airtel) · Card · Bank transfer — cancel anytime.</p>
-      <p style="font-size:12px;color:var(--c-muted);">Already subscribed? <a href="/" style="color:var(--c-accent);">Log out and back in</a> to refresh.</p>
+      <a href="/payment" class="footer-btn primary fs-14 pad-11-34">Upgrade Now</a>
+      <p class="pg-course-1w4y1">Mobile Money (MTN · Airtel) · Card · Bank transfer — cancel anytime.</p>
+      <p class="pg-course-1dysj">Already subscribed? <a href="/" class="pg-course-cvedx">Log out and back in</a> to refresh.</p>
     </div>`;
   document.getElementById('main-area').scrollTop=0;
 }
 
 /* Shown when a student taps a lesson before finishing the previous one */
 function showSequentialWall(idx,prev){
-  document.getElementById('content-placeholder').style.display='none';
+  document.getElementById('content-placeholder').classList.add('hidden');
   const render=document.getElementById('content-render');
-  render.style.display='block';
+  render.classList.remove('hidden');
   const lessons=courseData.lessons||[];
   const arrow='<svg class="seq-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
   const dot=(cls,label)=>`<span class="seq-dot ${cls}">${label}</span>`;
@@ -1604,11 +1689,11 @@ function showSequentialWall(idx,prev){
         ${arrow}
         ${dot('now',String(idx))}
         ${arrow}
-        <span class="seq-dot" style="opacity:.55;">${Math.min(idx+1,lessons.length)}</span>
+        <span class="seq-dot op-55">${Math.min(idx+1,lessons.length)}</span>
       </div>
       <h2>Finish the current lesson first</h2>
       <p class="wall-sub">Lessons build on each other. Complete <strong>"${escapeHTML(prev.title||'the previous lesson')}"</strong> (Lesson ${idx}) to unlock this one.</p>
-      <button class="footer-btn primary" style="margin-top:14px;padding:11px 28px;font-size:14px;" onclick="openLesson('${prev.id}')">Continue Lesson ${idx} &#8594;</button>
+      <button class="footer-btn primary fs-14 pad-11-28 mt-14" onclick="openLesson('${prev.id}')">Continue Lesson ${idx} &#8594;</button>
     </div>`;
   document.getElementById('main-area').scrollTop=0;
 }
@@ -1619,8 +1704,8 @@ function showModal(html){
   m=document.createElement('div');m.id='modal-overlay';
   m.style.cssText='position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);';
   m.onclick=e=>{if(e.target===m)m.remove();};
-  m.innerHTML=`<div style="background:#fff;border:1px solid var(--c-border);border-radius:10px;padding:24px;max-width:520px;width:92%;max-height:85vh;overflow-y:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.1);">
-    <button onclick="this.closest('#modal-overlay').remove()" style="position:absolute;top:10px;right:10px;background:none;border:none;color:var(--c-muted);cursor:pointer;font-size:16px;">&times;</button>
+  m.innerHTML=`<div class="cr-modal">
+    <button onclick="this.closest('#modal-overlay').remove()" class="modal-x">&times;</button>
     ${html}</div>`;
   document.body.appendChild(m);
 }
@@ -1662,12 +1747,12 @@ async function checkLessonLock(lessonId,idx){
     if(j.locked){
       const canAfford=j.coins>=j.cost;
       showModal(`
-        <div style="text-align:center;">
+        <div class="ta-center">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--c-muted)" stroke-width="1.5"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          <h3 style="font-size:16px;font-weight:800;margin:12px 0 4px;">Lesson Locked</h3>
-          <p style="font-size:13px;color:var(--c-muted);margin:0 0 12px;">Cost: <b>${j.cost} coins</b> · You have: <b>${j.coins}</b></p>
-          ${!canAfford?'<p style="font-size:12px;color:var(--c-red);margin-bottom:12px;">Not enough coins.</p>':''}
-          <div style="display:flex;gap:8px;justify-content:center;">
+          <h3 class="pg-course-12y2w">Lesson Locked</h3>
+          <p class="pg-course-10v60">Cost: <b>${j.cost} coins</b> · You have: <b>${j.coins}</b></p>
+          ${!canAfford?'<p class="pg-course-1sh7l">Not enough coins.</p>':''}
+          <div class="flex-row flex-center-x">
             <button class="footer-btn outline" onclick="document.getElementById('modal-overlay').remove()">Cancel</button>
             ${canAfford?`<button class="footer-btn primary" onclick="unlockLesson('${lessonId}')">Unlock (${j.cost})</button>`:`<a href="/payment" class="footer-btn primary">Get Coins</a>`}
           </div>
@@ -1708,7 +1793,7 @@ function showMobileSidebar(){
   const main=document.querySelector('.main');
   if(window.innerWidth <= 900){
     if(sidebar)sidebar.classList.remove('hidden-mobile');
-    if(main)main.style.display='none';
+    if(main)main.classList.add('hidden');
   }
   document.querySelectorAll('.mobile-bottom-nav a').forEach(a=>a.classList.remove('active'));
   const lessonsTab=document.getElementById('mobile-lessons-tab');
@@ -1762,13 +1847,13 @@ async function loadLeaderboard(){
     if(!json.success)return;
     const list=document.getElementById('lb-list');
     const footer=document.getElementById('lb-footer');
-    if(!json.leaderboard.length){list.innerHTML='<div style="padding:20px;text-align:center;color:var(--c-muted);font-size:12px;">No data yet</div>';return;}
+    if(!json.leaderboard.length){list.innerHTML='<div class="empty-note cr-tone">No data yet</div>';return;}
     const rankClass=r=>r===1?'gold':r===2?'silver':r===3?'bronze':'';
     const medalSvg=(c)=>`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15"/><path d="M11 12 5.12 2.2"/><path d="m13 12 5.88-9.8"/><path d="M8 7h8"/><circle cx="12" cy="17" r="5"/><path d="M12 18v-2h-.5"/></svg>`;
-    const rankIcon=r=>r===1?medalSvg('#f59e0b'):r===2?medalSvg('#9ca3af'):r===3?medalSvg('#b45309'):`<span style="font-size:11px;font-weight:800;color:var(--c-muted);">${r}</span>`;
+    const rankIcon=r=>r===1?medalSvg('#f59e0b'):r===2?medalSvg('#9ca3af'):r===3?medalSvg('#b45309'):`<span class="pg-course-1sn3m">${r}</span>`;
     list.innerHTML=json.leaderboard.map(u=>{
       const initials=(u.name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-      const score=lbType==='coins'?`${u.coins} coins`:`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> ${u.streak} day streak`;
+      const score=lbType==='coins'?`${u.coins} coins`:`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> ${u.streak} day streak`;
       return`<div class="lb-item${u.isCurrentUser?' me':''}">
         <div class="lb-rank ${rankClass(u.rank)}">${rankIcon(u.rank)}</div>
         <div class="lb-avatar">${u.avatar?`<img src="${u.avatar}" alt="">`:`${initials}`}</div>

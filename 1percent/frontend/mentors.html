@@ -21,6 +21,10 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);}
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;background:#fff;border-bottom:1px solid var(--border);}
+.topbar-left{display:flex;align-items:center;gap:12px;min-width:0;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.topbar-logo .logo-text{display:flex;flex-direction:column;line-height:1.1;}
+.topbar-logo .logo-text .name{font-size:14px;font-weight:700;color:var(--text);}
 .topbar .nav-shell{display:flex;align-items:center;gap:18px;flex:1;justify-content:flex-end;}
 .topbar #main-nav{display:flex;align-items:center;gap:14px;}
 .topbar #main-nav a{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:8px;}
@@ -137,19 +141,35 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--bg);co
   .card-tools input{width:100%;flex:1;}
   .detail-stats{grid-template-columns:1fr 1fr;}
 }
+
+/* auto-extracted page classes (mentors.html) */
+/* dynamic-style replacement: progress fill width set at runtime */
+.progress > div[data-dynwidth]{width:0;transition:width .4s;}
+.text-muted-x{color:var(--muted);}
+
+/* auto-extracted from inline styles (do not edit names, values only) */
+pg-mentors-1agp8{font-size:11px;color:var(--muted);margin-top:2px}
+pg-mentors-1hjji{color:var(--muted);font-size:12px}
+pg-mentors-j67pg{font-size:11px;color:var(--muted)}
+pg-mentors-q81kx{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f3f4f6}
+pg-mentors-8n7p5{color:var(--muted);font-size:12.5px}
+pg-mentors-gicjd{font-size:15px}
+pg-mentors-tqh4d{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:6px}
 </style>
 </head>
 <body>
 <div class="auth-loading" id="auth-loading"><div class="spinner"></div><p>Verifying access...</p></div>
 
 <div class="topbar">
-  <a href="/dashboard" class="topbar-logo"><div class="mark">1%</div> Mentor Hub</a>
-  <div class="nav-shell">
+  <div class="topbar-left">
+    <a href="/dashboard" class="topbar-logo"><div class="mark">1%</div><div class="logo-text"><span class="name">Mentor Hub</span></div></a>
+  </div>
+  <div class="topbar-right">
     <nav id="main-nav" aria-label="Primary"></nav>
   </div>
 </div>
 
-<main class="main" id="main-content" style="display:none;">
+<main class="main" id="main-content" hidden>
   <h1>Mentor Hub</h1>
   <p class="subtitle">Your learners' progress and this week's course &amp; activity from the admins.</p>
 
@@ -192,14 +212,14 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--bg);co
         </select>
       </div>
     </div>
-    <div style="overflow-x:auto;">
+    <div class="overflow-x">
       <table class="data-table">
         <thead><tr>
           <th class="sortable" onclick="setSort('name')">Learner <span class="arrow" id="arrow-name"></span></th>
           <th class="sortable" onclick="setSort('progress')">Courses &amp; Progress <span class="arrow" id="arrow-progress"></span></th>
           <th class="sortable" onclick="setSort('challenges')">Challenges <span class="arrow" id="arrow-challenges"></span></th>
           <th class="sortable" onclick="setSort('activity')">Last Active <span class="arrow" id="arrow-activity"></span></th>
-          <th style="text-align:right;">Actions</th>
+          <th class="ta-right">Actions</th>
         </tr></thead>
         <tbody id="learners-tbody"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody>
       </table>
@@ -207,7 +227,7 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--bg);co
   </div>
 </main>
 
-<div class="denied" id="denied" style="display:none;">
+<div class="denied" id="denied" hidden>
   <h1>Mentor access required</h1>
   <p>This page is for mentors. Ask an admin to promote your account on the Enrollments page.</p>
   <a href="/dashboard">Back to Dashboard</a>
@@ -355,8 +375,8 @@ function renderLearners(){
   tb.innerHTML=rows.map(l=>{
     const courses=(l.courses||[]).map(c=>{
       const badge=c.completed?'<span class="badge badge-green">done</span>':c.percent>=50?'<span class="badge badge-blue">active</span>':'<span class="badge badge-yellow">starting</span>';
-      return `<div style="margin-bottom:6px;"><strong style="font-size:12.5px;">${esc(c.title)}</strong> ${badge}<div class="pbar-cell" style="margin-top:3px;"><div class="progress" style="flex:1;"><div style="width:${c.percent}%"></div></div><span class="pct">${c.percent}%</span></div><div style="font-size:11px;color:var(--muted);margin-top:2px;">${c.lessons_done}/${c.lessons_total} lessons</div></div>`;
-    }).join('')||'<span style="color:var(--muted);font-size:12px;">No enrollments</span>';
+      return `<div class="mb-6"><strong class="fs-12">${esc(c.title)}</strong> ${badge}<div class="pbar-cell mt-3"><div class="progress flex-1"><div data-dynwidth="${c.percent}"></div></div><span class="pct">${c.percent}%</span></div><div class="pg-mentors-1agp8">${c.lessons_done}/${c.lessons_total} lessons</div></div>`;
+    }).join('')||'<span class="pg-mentors-1hjji">No enrollments</span>';
 
     const st=learnerStatus(l);
     const stBadge={
@@ -368,18 +388,18 @@ function renderLearners(){
 
     const inactiveDays=daysSince(l.last_activity);
     const leader=inactiveDays>=7
-      ? `<div class="leader-note" style="color:#b45309;">⏰ Inactive ${inactiveDays>=30?'30+ days':inactiveDays+' days'} — a nudge could help</div>`
+      ? `<div class="leader-note text-amber-deep">⏰ Inactive ${inactiveDays>=30?'30+ days':inactiveDays+' days'} — a nudge could help</div>`
       : '';
 
     return `<tr>
       <td><div class="learner-cell">
         <div class="learner-avatar" onclick="openDetail('${l.id}')" title="View details">${esc(initials(l.full_name))}</div>
-        <div><strong>${esc(l.full_name)}</strong>${stBadge?` ${stBadge}`:''}<div style="font-size:11px;color:var(--muted);">${esc(l.email||'')}</div>${leader}</div>
+        <div><strong>${esc(l.full_name)}</strong>${stBadge?` ${stBadge}`:''}<div class="pg-mentors-j67pg">${esc(l.email||'')}</div>${leader}</div>
       </div></td>
-      <td style="max-width:260px;">${courses}</td>
+      <td class="mw-260">${courses}</td>
       <td>${l.challenges_passed}/${l.challenges_attempted} passed</td>
       <td>${timeAgo(l.last_activity)}</td>
-      <td style="text-align:right;white-space:nowrap;">
+      <td class="ta-right nowrap">
         <button class="btn btn-primary btn-sm" onclick="openNudge('${l.id}')">Nudge</button>
       </td>
     </tr>`;
@@ -392,11 +412,11 @@ function openDetail(id){
   if(!l)return;
   const avg=avgProgress(l);
   const courses=(l.courses||[]).map(c=>`
-    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f3f4f6;">
-      <div style="flex:1;"><strong style="font-size:12.5px;">${esc(c.title)}</strong>
-      <div class="pbar-cell" style="margin-top:3px;"><div class="progress" style="flex:1;"><div style="width:${c.percent}%"></div></div><span class="pct">${c.percent}%</span></div></div>
+    <div class="pg-mentors-q81kx">
+      <div class="flex-1"><strong class="fs-12">${esc(c.title)}</strong>
+      <div class="pbar-cell mt-3"><div class="progress flex-1"><div data-dynwidth="${c.percent}"></div></div><span class="pct">${c.percent}%</span></div></div>
       <span class="badge ${c.completed?'badge-green':'badge-blue'}">${c.completed?'done':c.percent+'%'}</span>
-    </div>`).join('')||'<div style="color:var(--muted);font-size:12.5px;">No enrollments yet.</div>';
+    </div>`).join('')||'<div class="pg-mentors-8n7p5">No enrollments yet.</div>';
   const overlay=document.createElement('div');
   overlay.className='modal-overlay';
   overlay.innerHTML=`
@@ -405,15 +425,15 @@ function openDetail(id){
       <div class="modal-body">
         <div class="detail-row">
           <div class="detail-avatar">${esc(initials(l.full_name))}</div>
-          <div><strong style="font-size:15px;">${esc(l.full_name)}</strong><div style="font-size:12px;color:var(--muted);">${esc(l.email||'')}</div></div>
+          <div><strong class="pg-mentors-gicjd">${esc(l.full_name)}</strong><div class="text-muted-x fs-12">${esc(l.email||'')}</div></div>
         </div>
         <div class="detail-stats">
           <div class="detail-stat"><b>${avg}%</b><span>Avg progress</span></div>
           <div class="detail-stat"><b>${l.challenges_passed||0}/${l.challenges_attempted||0}</b><span>Challenges</span></div>
           <div class="detail-stat"><b>${l.coins||0}</b><span>Coins</span></div>
         </div>
-        <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:6px;">Courses</div>${courses}</div>
-        <div style="font-size:12px;color:var(--muted);">Last active: <strong>${timeAgo(l.last_activity)}</strong></div>
+        <div><div class="pg-mentors-tqh4d">Courses</div>${courses}</div>
+        <div class="text-muted-x fs-12">Last active: <strong>${timeAgo(l.last_activity)}</strong></div>
       </div>
       <div class="modal-foot">
         <button class="btn btn-outline" data-close>Nudge later</button>
@@ -501,6 +521,26 @@ async function markRead(id){
 
 document.addEventListener('DOMContentLoaded',init);
 if(document.readyState!=='loading')init();
+</script>
+<script>
+/* Hydrate runtime progress-bar widths from data-attributes (replaces inline styles). */
+(function(){
+  const hydrate=el=>{if(el.dataset&&el.dataset.dynwidth)el.style.width=el.dataset.dynwidth+'%';};
+  const obs=new MutationObserver(muts=>{
+    muts.forEach(m=>{
+      if(m.type==='attributes'){hydrate(m.target);return;}
+      m.addedNodes&&m.addedNodes.forEach(n=>{
+        if(!(n instanceof HTMLElement))return;
+        hydrate(n);
+        n.querySelectorAll&&n.querySelectorAll('[data-dynwidth]').forEach(hydrate);
+      });
+    });
+  });
+  document.addEventListener('DOMContentLoaded',()=>{
+    obs.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['data-dynwidth']});
+    document.querySelectorAll('[data-dynwidth]').forEach(hydrate);
+  });
+})();
 </script>
 </body>
 </html>

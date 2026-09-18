@@ -77,6 +77,31 @@ class CourseController {
   }
 
   /**
+   * GET /api/courses/thumbnail?path=<storage-path>
+   * Redirects to the course thumbnail's public URL in Supabase Storage.
+   * Thumbnails are stored as PATHS (e.g. 'course-thumbnails/git-github.jpg'),
+   * so the frontend needs the project origin to build a usable URL — this
+   * endpoint supplies it without leaking config to the client. Public: a
+   * thumbnail path reveals nothing about users.
+   */
+  async getCourseThumbnail(req, res) {
+    try {
+      const p = String(req.query.path || '');
+      if (!p || p.length > 300 || p.includes('..')) {
+        return res.status(400).json({ error: 'Invalid thumbnail path.' });
+      }
+      const origin = process.env.SUPABASE_URL
+        ? new URL(process.env.SUPABASE_URL).origin
+        : '';
+      if (!origin) return res.status(404).json({ error: 'Storage not configured.' });
+      return res.redirect(302, `${origin}/storage/v1/object/public/${p.replace(/^\/+/, '')}`);
+    } catch (err) {
+      console.error('[COURSE] Thumbnail redirect error:', err.message);
+      res.status(500).json({ error: 'Failed to resolve thumbnail.' });
+    }
+  }
+
+  /**
    * GET /api/courses/:slug
    * Get a single course with modules (public)
    */

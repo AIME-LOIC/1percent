@@ -49,13 +49,25 @@ function validateEmail(req, res, next) {
   next();
 }
 
-/* Sanitize string fields — trim, limit length, escape HTML to prevent XSS */
+/* Sanitize string fields — trim, limit length, escape HTML to prevent XSS.
+ * Sensitive fields (password, tokens) are NOT HTML-escaped — escaping them
+ * corrupts the value ("Pass&word" → "Pass&amp;word") so the user can never
+ * log in again with the password they typed. Length is still capped. */
+const SENSITIVE_KEYS = new Set([
+  'password', 'current_password', 'new_password', 'confirm_password',
+  'token', 'refresh_token', 'access_token', 'api_key', 'secret'
+]);
+
 function sanitizeStrings(maxLength = 5000) {
   return (req, res, next) => {
     if (req.body && typeof req.body === 'object') {
       for (const [key, value] of Object.entries(req.body)) {
         if (typeof value === 'string') {
-          req.body[key] = escapeHtml(value.trim().slice(0, maxLength));
+          if (SENSITIVE_KEYS.has(key)) {
+            req.body[key] = value.slice(0, maxLength); // no HTML escaping
+          } else {
+            req.body[key] = escapeHtml(value.trim().slice(0, maxLength));
+          }
         }
       }
     }

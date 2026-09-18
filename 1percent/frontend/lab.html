@@ -169,7 +169,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);background:#1e1e2e
       <div class="titlebar-logo"><div class="mark">1%</div><span>Playground</span></div>
       <div class="titlebar-menus"><span>File</span><span>Edit</span><span>View</span><span>Run</span></div>
     </div>
-    <div class="titlebar-center"><span id="titlebar-file">script.js</span><span style="color:#45475a;">—</span><span>1% Playground</span></div>
+    <div class="titlebar-center"><span id="titlebar-file">script.js</span><span class="muted-dark">—</span><span>1% Playground</span></div>
     <div class="titlebar-right">
       <span class="lang-pill" id="lang-pill">JavaScript</span>
       <select class="lang-select" id="lang-select">
@@ -179,7 +179,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);background:#1e1e2e
         <option value="php">PHP</option><option value="ruby">Ruby</option>
       </select>
       <button class="btn-run-sm" id="run-btn" onclick="runCode()"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> Run</button>
-      <button class="btn-run-sm sec" id="login-gate-btn" onclick="LoginPopup.show('lab')" style="display:none;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Login</button>
+      <button class="btn-run-sm sec" id="login-gate-btn" onclick="LoginPopup.show('lab')" hidden><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Login</button>
       <button class="btn-run-sm sec" id="dash-btn" onclick="window.location.href='/dashboard'">Dashboard</button>
     </div>
   </div>
@@ -189,7 +189,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);background:#1e1e2e
       <div class="activity-icon active" id="act-explorer" title="Explorer" onclick="showSidebarTab('explorer')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
       <div class="activity-icon" id="act-search" title="Search" onclick="showSidebarTab('search')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></div>
       <div class="activity-icon" id="act-scm" title="Source Control"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="4"/><line x1="1.05" y1="12" x2="7" y2="12"/><path d="M17.01 4.94A9 9 0 0 1 22.95 12"/></svg></div>
-      <div style="flex:1;"></div>
+      <div class="flex-1"></div>
       <div class="activity-icon" id="act-settings" title="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></div>
     </div>
 
@@ -218,7 +218,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);background:#1e1e2e
           <div class="autocomplete" id="autocomplete"></div>
         </div>
       </div>
-      <div class="panel-area" id="panel-area" style="height:200px;">
+      <div class="panel-area h-200" id="panel-area">
         <div class="panel-tabs">
           <div class="panel-tabs-left">
             <div class="panel-tab active" data-panel="output" onclick="switchPanel('output')">Output</div>
@@ -532,7 +532,7 @@ function doSearch() {
       }
     });
   }
-  results.innerHTML = html || '<div style="padding:12px;color:#585b74;font-size:12px;">No results found</div>';
+  results.innerHTML = html || '<div class="muted-dark fs-12 pad-12">No results found</div>';
 }
 
 function goToLine(n) {
@@ -555,7 +555,7 @@ function showSidebarTab(tab) {
     search.classList.add('hidden');
     document.getElementById('act-explorer').classList.add('active');
   } else if (tab === 'search') {
-    explorer.style.display = 'none';
+    explorer.classList.add('hidden');
     search.classList.remove('hidden');
     document.getElementById('act-search').classList.add('active');
     document.getElementById('search-input').focus();
@@ -813,14 +813,14 @@ document.getElementById('terminal-input').addEventListener('keydown', (e) => {
       termHistory.unshift(cmd);
       termHistIdx = -1;
       const termOut = document.getElementById('terminal-output');
-      termOut.innerHTML += `<span style="color:#89b4fa;">$ ${escHtml(cmd)}</span>\n`;
+      termOut.innerHTML += `<span class="term-blue">$ ${escHtml(cmd)}</span>\n`;
       const parts = cmd.split(/\s+/);
       const bin = parts[0];
       const args = parts.slice(1);
 
       if (cmd === 'clear') termOut.innerHTML = '';
       else if (cmd === 'reset') termOut.innerHTML = '';
-      else if (cmd === 'help') termOut.innerHTML += `<span class="muted">\n<span style="color:#a6e3a1;">Navigation:</span> ls, cd, pwd, tree\n<span style="color:#a6e3a1;">Files:</span> cat, head, tail, touch, mkdir, rm, cp, mv, chmod\n<span style="color:#a6e3a1;">Search:</span> grep, find, which, wc\n<span style="color:#a6e3a1;">System:</span> ps, df, free, uptime, whoami, hostname, id, uname, date, env\n<span style="color:#a6e3a1;">Network:</span> ping, curl, wget\n<span style="color:#a6e3a1;">Text:</span> echo, printf, sort, uniq, tr\n<span style="color:#a6e3a1;">Git:</span> git init/add/commit/status/log/branch/checkout/merge/diff\n<span style="color:#a6e3a1;">Docker:</span> docker ps/images/logs/run/build\n<span style="color:#a6e3a1;">Other:</span> history, clear, help, run, version\n</span>\n`;
+      else if (cmd === 'help') termOut.innerHTML += `<span class="muted">\n<span class="term-green">Navigation:</span> ls, cd, pwd, tree\n<span class="term-green">Files:</span> cat, head, tail, touch, mkdir, rm, cp, mv, chmod\n<span class="term-green">Search:</span> grep, find, which, wc\n<span class="term-green">System:</span> ps, df, free, uptime, whoami, hostname, id, uname, date, env\n<span class="term-green">Network:</span> ping, curl, wget\n<span class="term-green">Text:</span> echo, printf, sort, uniq, tr\n<span class="term-green">Git:</span> git init/add/commit/status/log/branch/checkout/merge/diff\n<span class="term-green">Docker:</span> docker ps/images/logs/run/build\n<span class="term-green">Other:</span> history, clear, help, run, version\n</span>\n`;
       else if (cmd === 'pwd') termOut.innerHTML += `<span>/home/user/project</span>\n`;
       else if (cmd === 'ls' || cmd === 'ls -la' || cmd === 'ls -a') {
         const files = Object.values(FILES).map(f => f.name).join('  ');

@@ -70,6 +70,15 @@ class AuthController {
         return res.status(400).json({ error: 'Password must be between 8 and 128 characters.' });
       }
 
+      // Supabase rate limit — a blind 500 hides the real problem and the
+      // client has no way to know retrying is pointless right now.
+      if (err.status === 429 || err.code === 'over_request_rate_limit' || /rate limit/i.test(err.message || '')) {
+        return res.status(429).json({ error: 'Too many signup attempts. Please wait a minute and try again.' });
+      }
+      if (/timed out|timeout|fetch failed|ENOTFOUND|ECONNRESET|network/i.test(err.message || '')) {
+        return res.status(504).json({ error: 'The signup service is temporarily unreachable. Please try again in a moment.' });
+      }
+
       res.status(500).json({ error: 'Failed to create account. Please try again.' });
     }
   }
@@ -145,6 +154,33 @@ class AuthController {
     } catch (err) {
       console.error('[AUTH] Resend confirmation error:', err.message);
       res.status(500).json({ error: 'Could not send the email. Please try again.' });
+    }
+  }
+
+  /**
+   * POST /api/auth/reset-password
+   * Send a password-reset email. Always answers success — never reveals
+   * whether the address has an account (no enumeration).
+   */
+  async resetPassword(req, res) {
+    try {
+      const email = String(req.body.email || '').trim().toLowerCase();
+      if (!email) return res.status(400).json({ error: 'Email required.' });
+      await authService.requestPasswordReset(email, this._redirectBase(req));
+      res.json({
+        success: true,
+        message: 'If an account exists for that address, a reset link is on its way.'
+      });
+    } catch (err) {
+      console.error('[AUTH] Reset password error:', err.message);
+      if (err.status === 429 || /rate limit/i.test(err.message || '')) {
+        return res.status(429).json({ error: 'Too many requests. Please wait a minute and try again.' });
+      }
+      // Stay generic — same contract as resend-confirmation.
+      res.json({
+        success: true,
+        message: 'If an account exists for that address, a reset link is on its way.'
+      });
     }
   }
 

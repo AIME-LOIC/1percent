@@ -172,7 +172,19 @@
       .card { padding: 24px 20px; }
       .nav-links a:not(.btn-sm) { display: none; }
     }
-  </style>
+  
+/* auto-extracted from inline styles (do not edit names, values only) */
+pg-paymentdetails-q5vo9{font-size:13px;color:var(--muted)}
+pg-paymentdetails-14cpr{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+pg-paymentdetails-j1jmf{font-size:12px;color:var(--faint)}
+pg-paymentdetails-wb3xg{font-size:13px;color:var(--muted);margin-bottom:12px}
+pg-paymentdetails-tsw0q{margin-top:12px;background:#f0fdf4;border:1px solid #a7f3d0;border-radius:8px;padding:12px 16px}
+pg-paymentdetails-9xutb{font-size:12px;color:#065f46;font-weight:600;margin-bottom:8px}
+pg-paymentdetails-1i3do{flex:1;padding:8px 12px;border:1px solid #a7f3d0;border-radius:6px;font-size:13px;font-family:monospace;background:#fff}
+pg-paymentdetails-2x8p2{margin-top:8px;display:flex;gap:8px;justify-content:center}
+pg-paymentdetails-k1z2d{font-size:12px;color:#25d366;text-decoration:none;font-weight:600}
+pg-paymentdetails-1w7kw{color:var(--muted)}
+</style>
 </head>
 <body>
   <nav class="nav">
@@ -192,7 +204,7 @@
     </div>
 
     <!-- Current Tier -->
-    <div class="current-tier" id="current-tier" style="display:none;">
+    <div class="current-tier" id="current-tier" hidden>
       <div class="tier-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       </div>
@@ -249,7 +261,7 @@
       </div>
 
       <!-- Bank Transfer Form -->
-      <div id="bank-form" style="display:none;">
+      <div id="bank-form" hidden>
         <div class="form-group">
           <label for="bank-name">Bank</label>
           <select id="bank-name">
@@ -262,16 +274,16 @@
           </select>
           <div class="helper">Only used to match your transfer — the payment is completed at your bank.</div>
         </div>
-        <p style="font-size:13px;color:var(--muted);">Account details are shown in the instructions below after you open the instructions. Use your registered email as the transfer reference.</p>
+        <p class="pg-paymentdetails-q5vo9">Account details are shown in the instructions below after you open the instructions. Use your registered email as the transfer reference.</p>
       </div>
 
       <!-- Card Form -->
-      <div id="card-form" style="display:none;">
+      <div id="card-form" hidden>
         <div class="form-group">
           <label for="card-number">Card Number</label>
           <input type="text" id="card-number" placeholder="4242 4242 4242 4242" maxlength="19" autocomplete="cc-number" inputmode="numeric">
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="pg-paymentdetails-14cpr">
           <div class="form-group">
             <label for="card-expiry">Expiry Date</label>
             <input type="text" id="card-expiry" placeholder="MM/YY" maxlength="5" autocomplete="cc-exp">
@@ -285,7 +297,7 @@
           <label for="card-name">Cardholder Name</label>
           <input type="text" id="card-name" placeholder="John Doe" autocomplete="cc-name">
         </div>
-        <p style="font-size:12px;color:var(--faint);">Card details are never sent to or stored on 1Percent servers — only the payment method is recorded.</p>
+        <p class="pg-paymentdetails-j1jmf">Card details are never sent to or stored on 1Percent servers — only the payment method is recorded.</p>
       </div>
 
       <!-- MoMo Instructions -->
@@ -300,7 +312,7 @@
           <li>Confirm with your PIN</li>
         </ol>
         <div class="amount">RWF <span id="momo-amount-display">15,000</span></div>
-        <p style="font-size:12px;color:#92400e;margin-top:8px;">Payment will be verified automatically within 5 minutes.</p>
+        <p class="warn-amber fs-12 mt-8">Payment will be verified automatically within 5 minutes.</p>
       </div>
 
       <!-- Bank Instructions -->
@@ -316,13 +328,13 @@
           <li>Reference: <strong>your registered email address</strong></li>
         </ol>
         <div class="amount">RWF <span id="bank-amount-display">15,000</span></div>
-        <p style="font-size:12px;color:#92400e;margin-top:8px;">Send your transfer confirmation to <a href="mailto:1percentrwanda@gmail.com" style="color:#92400e;">1percentrwanda@gmail.com</a>. Activation usually within one business day.</p>
+        <p class="warn-amber fs-12 mt-8">Send your transfer confirmation to <a href="mailto:1percentrwanda@gmail.com" class="text-amber-deep">1percentrwanda@gmail.com</a>. Activation usually within one business day.</p>
       </div>
 
       <!-- Card Notice -->
-      <div class="payment-instructions" id="card-instructions" style="background:#eff6ff;border-color:#bfdbfe;">
-        <h4 style="color:#1e40af;">Card Payment</h4>
-        <p style="color:#1e3a8a;font-size:14px;">Card payments are processed by our payment provider during checkout. Enter your card details and click <strong>Pay Now</strong> to continue.</p>
+      <div class="payment-instructions chip-blue" id="card-instructions">
+        <h4 class="text-blue-deep">Card Payment</h4>
+        <p class="text-blue-deep fs-14">Card payments are processed by our payment provider during checkout. Enter your card details and click <strong>Pay Now</strong> to continue.</p>
       </div>
 
       <div class="btn-row">
@@ -331,19 +343,19 @@
       </div>
 
       <!-- Share with Parent -->
-      <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);text-align:center;">
-        <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Can't pay right now? Ask a parent to pay for you.</p>
-        <button class="btn secondary" id="share-parent-btn" onclick="shareWithParent()" style="background:#eff6ff;border-color:#bfdbfe;color:#1e40af;">
+      <div class="bt-line ta-center mt-20 pt-20">
+        <p class="pg-paymentdetails-wb3xg">Can't pay right now? Ask a parent to pay for you.</p>
+        <button class="btn secondary chip-blue" id="share-parent-btn" onclick="shareWithParent()">
           Share Payment Link with Parent
         </button>
-        <div id="share-link-box" style="display:none;margin-top:12px;background:#f0fdf4;border:1px solid #a7f3d0;border-radius:8px;padding:12px 16px;">
-          <div style="font-size:12px;color:#065f46;font-weight:600;margin-bottom:8px;">Share this link with your parent:</div>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <input type="text" id="share-link-input" readonly style="flex:1;padding:8px 12px;border:1px solid #a7f3d0;border-radius:6px;font-size:13px;font-family:monospace;background:#fff;">
-            <button onclick="copyShareLink()" style="padding:8px 16px;border:none;background:#059669;color:#fff;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">Copy</button>
+        <div id="share-link-box" class="pg-paymentdetails-tsw0q" hidden>
+          <div class="pg-paymentdetails-9xutb">Share this link with your parent:</div>
+          <div class="flex-row">
+            <input type="text" id="share-link-input" readonly class="pg-paymentdetails-1i3do">
+            <button onclick="copyShareLink()" class="btn-solid-green btn-solid-green-sm">Copy</button>
           </div>
-          <div style="margin-top:8px;display:flex;gap:8px;justify-content:center;">
-            <a id="whatsapp-link" href="#" target="_blank" rel="noopener" style="font-size:12px;color:#25d366;text-decoration:none;font-weight:600;">Share on WhatsApp</a>
+          <div class="pg-paymentdetails-2x8p2">
+            <a id="whatsapp-link" href="#" target="_blank" rel="noopener" class="pg-paymentdetails-k1z2d">Share on WhatsApp</a>
           </div>
         </div>
       </div>
@@ -352,7 +364,7 @@
     <!-- Loading State -->
     <div class="loading-spinner" id="loading-spinner">
       <div class="spinner"></div>
-      <p style="color:var(--muted);">Processing payment...</p>
+      <p class="pg-paymentdetails-1w7kw">Processing payment...</p>
     </div>
 
     <!-- Security Note -->
@@ -414,7 +426,7 @@
         const data = await res.json();
         if (data.success && data.tier) {
           const tierEl = document.getElementById('current-tier');
-          tierEl.style.display = 'flex';
+          tierEl.classList.remove('hidden');
           document.getElementById('current-tier-name').textContent = data.tier.name || data.tier.slug || 'Free';
 
           // Show upgrade indicator if current tier is lower
@@ -546,7 +558,7 @@
 
           document.getElementById('share-link-input').value = shareUrl;
           document.getElementById('whatsapp-link').href = `https://wa.me/?text=${encodeURIComponent('Please pay for my ' + plans[planSlug].name + ' subscription at 1% Expert Programme: ' + shareUrl)}`;
-          document.getElementById('share-link-box').style.display = 'block';
+          document.getElementById('share-link-box').classList.remove('hidden');
           btn.textContent = 'Share Another Link';
           btn.disabled = false;
         } else {

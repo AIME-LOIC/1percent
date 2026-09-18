@@ -42,6 +42,7 @@ router.get('/roadmap/:phaseId/:trackId', (req, res, next) => courseController.ge
 
 // Public — courses list (MUST be before /:slug to avoid route collision)
 router.get('/courses', rateLimit, (req, res, next) => courseController.getCourses(req, res, next));
+router.get('/courses/thumbnail', (req, res, next) => courseController.getCourseThumbnail(req, res, next));
 
 // Protected courses routes — named routes BEFORE /:slug
 router.get('/courses/enrollments', authenticate, (req, res, next) => courseController.getMyEnrollments(req, res, next));

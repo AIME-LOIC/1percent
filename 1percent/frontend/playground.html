@@ -205,6 +205,35 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);background:#1e1e2e
   .btn-run-sm{padding:3px 8px;font-size:10px;}
   .coins-pill{padding:2px 8px;font-size:9px;}
 }
+
+/* auto-extracted page classes (playground.html) */
+.cr-t-muted{color:var(--c-muted);}
+
+/* auto-extracted from inline styles (do not edit names, values only) */
+pg-playground-ma8je{font-size:9px;color:#f9e2af}
+pg-playground-ojqs6{padding:8px 12px;text-align:center}
+pg-playground-1fhaw{background:#181825;border-bottom:1px solid #313244;padding:12px 16px;flex-shrink:0;max-height:200px;overflow-y:auto}
+pg-playground-hjlse{background:#181825;border-bottom:1px solid #313244;padding:12px 16px;flex-shrink:0;max-height:180px;overflow-y:auto}
+pg-playground-1k4ka{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+pg-playground-aknxx{font-size:11px;font-weight:700;color:#f9e2af;text-transform:uppercase;letter-spacing:.5px}
+pg-playground-1wtvu{font-size:10px;color:#a6e3a1;margin-left:auto}
+pg-playground-10crf{font-size:12px;font-weight:600;color:#cdd6f4;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+pg-playground-1bn8v{font-size:9px;padding:2px 6px;border-radius:100px;background:rgba(249,226,175,0.15);color:#f9e2af}
+pg-playground-13q89{font-size:10px;font-weight:700;color:#f9e2af;font-family:var(--mono)}
+pg-playground-1x36q{font-size:9px;color:#585b74;margin-left:auto}
+pg-playground-fd4ey{font-size:9px;font-weight:700;padding:3px 8px;border-radius:100px;text-transform:uppercase;background:rgba(166,227,161,0.15);color:#a6e3a1}
+pg-playground-ficir{font-size:9px;font-weight:700;padding:3px 8px;border-radius:100px;background:rgba(137,180,250,0.15);color:#89b4fa}
+pg-playground-syle3{font-size:10px;font-weight:700;color:#f9e2af}
+pg-playground-y14bh{font-size:10px;color:#a6e3a1}
+pg-playground-1y2rm{font-size:9px;color:#585b74}
+pg-playground-x85zh{font-size:14px;font-weight:700;color:#cdd6f4;margin-bottom:6px}
+pg-playground-xnhhr{font-size:12px;color:#a6adc8;line-height:1.6}
+pg-playground-1j36l{font-size:12px;color:#a6adc8}
+pg-playground-1kqlc{font-size:12px;color:#cdd6f4}
+pg-playground-3cwld{font-size:10px;color:#f9e2af}
+pg-playground-1lwyd{font-size:10px;color:#a6e3a1;font-weight:700;margin-bottom:4px}
+pg-playground-1l2t5{font-size:12px;color:#cdd6f4;line-height:1.55}
+pg-playground-ogg4l{font-size:11px;color:#a6adc8;font-weight:700}
 </style>
 </head>
 <body>
@@ -216,15 +245,15 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);background:#1e1e2e
       <a href="/dashboard" class="titlebar-logo"><div class="mark">1%</div><span>Playground</span></a>
       <div class="titlebar-menus"><span>File</span><span>Edit</span><span>View</span><span>Run</span></div>
     </div>
-    <div class="titlebar-center"><span id="titlebar-file">welcome.md</span><span style="color:#45475a;">—</span><span>1% Playground</span></div>
+    <div class="titlebar-center"><span id="titlebar-file">welcome.md</span><span class="muted-dark">—</span><span>1% Playground</span></div>
     <div class="titlebar-right">
       <div class="coins-pill">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M8 10l4-4 4 4M8 14l4 4 4-4"/></svg>
         <span id="coins-count">0</span>
       </div>
-      <button class="btn-run-sm sec" id="hint-btn" onclick="toggleHintPanel()" style="display:none;" title="Get a hint">💡 Hint <span id="hint-free-badge" style="font-size:9px;color:#f9e2af;"></span></button>
+      <button class="btn-run-sm sec" id="hint-btn" onclick="toggleHintPanel()" title="Get a hint" hidden>💡 Hint <span id="hint-free-badge" class="pg-playground-ma8je"></span></button>
       <button class="btn-run-sm warn" onclick="submitChallenge()" id="submit-btn">▶ Run &amp; Submit</button>
-      <button class="btn-run-sm sec" id="login-gate-btn" onclick="LoginPopup.show('playground')" style="display:none;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Login</button>
+      <button class="btn-run-sm sec" id="login-gate-btn" onclick="LoginPopup.show('playground')" hidden><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Login</button>
       <button class="btn-run-sm sec" id="dash-btn" onclick="window.location.href='/dashboard'">Dashboard</button>
     </div>
   </div>
@@ -236,7 +265,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);background:#1e1e2e
       <div class="activity-icon active" id="act-explorer" title="Explorer" onclick="showSidebarTab('explorer')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
       <div class="activity-icon" id="act-challenges" title="Challenges" onclick="showSidebarTab('challenges')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg></div>
       <div class="activity-icon" id="act-scm" title="Source Control"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="4"/><line x1="1.05" y1="12" x2="7" y2="12"/><path d="M17.01 4.94A9 9 0 0 1 22.95 12"/></svg></div>
-      <div style="flex:1;"></div>
+      <div class="flex-1"></div>
       <div class="activity-icon" id="act-settings" title="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></div>
     </div>
 
@@ -247,26 +276,26 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);background:#1e1e2e
     </div>
 
     <!-- Challenges sidebar -->
-    <div class="challenge-sidebar" id="sidebar-challenges" style="display:none;">
+    <div class="challenge-sidebar" id="sidebar-challenges" hidden>
       <div class="sidebar-header">Challenges</div>
-      <div class="challenge-search" style="padding:8px 12px;border-bottom:1px solid #313244;">
-        <input type="text" id="challenge-search-input" placeholder="Search challenges..." oninput="onSearchInput(this.value)" style="width:100%;padding:6px 10px;background:#1e1e2e;border:1px solid #313244;border-radius:4px;color:#cdd6f4;font-size:12px;font-family:var(--mono);outline:none;">
+      <div class="challenge-search term-row">
+        <input type="text" id="challenge-search-input" placeholder="Search challenges..." oninput="onSearchInput(this.value)" class="term-input">
       </div>
       <div id="daily-challenge-banner"></div>
       <div class="challenge-filter" id="ch-filter-bar"></div>
       <div class="challenge-list" id="challenge-list"></div>
-      <div id="load-more-container" style="padding:8px 12px;text-align:center;display:none;">
-        <button onclick="loadMoreChallenges()" style="width:100%;padding:6px;background:rgba(166,227,161,0.1);border:1px solid rgba(166,227,161,0.2);border-radius:4px;color:#a6e3a1;font-size:11px;font-weight:600;cursor:pointer;">Load More</button>
+      <div id="load-more-container" class="pg-playground-ojqs6" hidden>
+        <button onclick="loadMoreChallenges()" class="term-btn">Load More</button>
       </div>
-      <div id="search-info" style="padding:4px 12px;font-size:10px;color:#585b74;"></div>
+      <div id="search-info" class="muted-dark fs-10 px-4-12"></div>
     </div>
 
     <!-- Editor + Panel -->
     <div class="editor-area">
       <div class="editor-tabs" id="editor-tabs"></div>
       <div class="breadcrumb"><span>playground</span><span class="sep">/</span><span id="bc-file">welcome.md</span></div>
-    <div id="hint-panel" style="display:none;background:#181825;border-bottom:1px solid #313244;padding:12px 16px;flex-shrink:0;max-height:200px;overflow-y:auto;"></div>
-      <div id="challenge-info" style="display:none;background:#181825;border-bottom:1px solid #313244;padding:12px 16px;flex-shrink:0;max-height:180px;overflow-y:auto;"></div>
+    <div id="hint-panel" class="pg-playground-1fhaw" hidden></div>
+      <div id="challenge-info" class="pg-playground-hjlse" hidden></div>
       <div class="editor-wrap">
         <div class="line-numbers" id="line-numbers">1</div>
         <div class="editor-container" id="editor-container">
@@ -274,7 +303,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);background:#1e1e2e
           <textarea class="code-editor" id="code-editor" spellcheck="false" placeholder="// Select a challenge from the sidebar..."></textarea>
         </div>
       </div>
-      <div class="panel-area" id="panel-area" style="height:200px;">
+      <div class="panel-area h-200" id="panel-area">
         <div class="panel-tabs">
           <div class="panel-tabs-left">
             <div class="panel-tab active" data-panel="output" onclick="switchPanel('output')">Output</div>
@@ -735,7 +764,7 @@ function renderFileTree() {
       const isPassed = passedChallenges.has(ch.id);
       const type = ch.challenge_type || 'javascript';
       const iconClass = { javascript: 'js', python: 'py', html: 'html', css: 'css', sql: 'md', git: 'md', linux: 'md', docker: 'md', nginx: 'md', yaml: 'md', markdown: 'md' };
-      html += `<div class="file-item${isActive ? ' active' : ''}" data-file="${key}" onclick="switchFile('${key}')"><svg class="file-icon ${iconClass[type] || 'js'}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span class="file-name">${esc(fname)}</span>${isPassed ? ' <span style="color:#a6e3a1;font-size:10px;">✓</span>' : ''}</div>`;
+      html += `<div class="file-item${isActive ? ' active' : ''}" data-file="${key}" onclick="switchFile('${key}')"><svg class="file-icon ${iconClass[type] || 'js'}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span class="file-name">${esc(fname)}</span>${isPassed ? ' <span class="term-green fs-10">✓</span>' : ''}</div>`;
     });
     html += `</div>`;
   }
@@ -756,17 +785,17 @@ function renderDailyBanner() {
   const key = fname.replace(/[^a-zA-Z0-9]/g, '_');
   
   banner.innerHTML = `
-    <div style="padding:10px 12px;background:linear-gradient(135deg,rgba(249,226,175,0.1),rgba(250,183,135,0.08));border-bottom:1px solid rgba(249,226,175,0.15);cursor:pointer;" onclick="selectChallenge(allChallenges.find(c=>c.id==='${ch.id}')||{id:'${ch.id}',title:'${esc(ch.title)}',description:'${esc(ch.description)}',difficulty:'${ch.difficulty}',coins_reward:${ch.coins_reward},challenge_type:'${ch.challenge_type||'javascript'}',expected_output:'${esc(ch.expected_output||'')}',course_title:'${esc(ch.course_title||'')}'})">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f9e2af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
-        <span style="font-size:11px;font-weight:700;color:#f9e2af;text-transform:uppercase;letter-spacing:.5px;">Daily Challenge</span>
-        ${dailyCompleted ? '<span style="font-size:10px;color:#a6e3a1;margin-left:auto;">✓ Done</span>' : ''}
+    <div onclick="selectChallenge(allChallenges.find(c=>c.id==='${ch.id}')||{id:'${ch.id}',title:'${esc(ch.title)}',description:'${esc(ch.description)}',difficulty:'${ch.difficulty}',coins_reward:${ch.coins_reward},challenge_type:'${ch.challenge_type||'javascript'}',expected_output:'${esc(ch.expected_output||'')}',course_title:'${esc(ch.course_title||'')}'})" class="term-gold-row">
+      <div class="pg-playground-1k4ka">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f9e2af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="no-shrink"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+        <span class="pg-playground-aknxx">Daily Challenge</span>
+        ${dailyCompleted ? '<span class="pg-playground-1wtvu">✓ Done</span>' : ''}
       </div>
-      <div style="font-size:12px;font-weight:600;color:#cdd6f4;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(ch.title)}</div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span style="font-size:9px;padding:2px 6px;border-radius:100px;background:rgba(249,226,175,0.15);color:#f9e2af;">${ch.difficulty}</span>
-        <span style="font-size:10px;font-weight:700;color:#f9e2af;font-family:var(--mono);">+${ch.total_reward || ch.coins_reward} coins</span>
-        <span style="font-size:9px;color:#585b74;margin-left:auto;">${ch.bonus_coins ? '+'+ch.bonus_coins+' bonus' : ''}</span>
+      <div class="pg-playground-10crf">${esc(ch.title)}</div>
+      <div class="flex-row">
+        <span class="pg-playground-1bn8v">${ch.difficulty}</span>
+        <span class="pg-playground-13q89">+${ch.total_reward || ch.coins_reward} coins</span>
+        <span class="pg-playground-1x36q">${ch.bonus_coins ? '+'+ch.bonus_coins+' bonus' : ''}</span>
       </div>
     </div>`;
 }
@@ -902,16 +931,16 @@ function renderChallengeInfoPanel(ch) {
   const langMap = { linux: 'Shell', git: 'Git', sql: 'SQL', yaml: 'YAML', docker: 'Dockerfile', nginx: 'Nginx', markdown: 'Markdown', python: 'Python', html: 'HTML/CSS', javascript: 'JavaScript' };
   const hintCount = Array.isArray(ch.hints) ? ch.hints.length : 0;
   infoPanel.innerHTML = `
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
-      <span style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:100px;text-transform:uppercase;background:rgba(166,227,161,0.15);color:#a6e3a1;">${ch.difficulty}</span>
-      <span style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:100px;background:rgba(137,180,250,0.15);color:#89b4fa;">${langMap[type] || type}</span>
-      <span style="font-size:10px;font-weight:700;color:#f9e2af;">+${ch.coins_reward} coins</span>
-      ${isPassed ? '<span style="font-size:10px;color:#a6e3a1;">✓ Completed</span>' : ''}
-      ${ch.course_title ? '<span style="font-size:9px;color:#585b74;">' + esc(ch.course_title) + '</span>' : ''}
+    <div class="flex-row flex-row-wrap mb-8">
+      <span class="pg-playground-fd4ey">${ch.difficulty}</span>
+      <span class="pg-playground-ficir">${langMap[type] || type}</span>
+      <span class="pg-playground-syle3">+${ch.coins_reward} coins</span>
+      ${isPassed ? '<span class="pg-playground-y14bh">✓ Completed</span>' : ''}
+      ${ch.course_title ? '<span class="pg-playground-1y2rm">' + esc(ch.course_title) + '</span>' : ''}
     </div>
-    <div style="font-size:14px;font-weight:700;color:#cdd6f4;margin-bottom:6px;">${esc(ch.title)}</div>
-    <div style="font-size:12px;color:#a6adc8;line-height:1.6;">${esc(ch.description || 'No description')}</div>
-    ${ch.expected_output ? '<div style="margin-top:8px;font-size:11px;color:#585b74;">Expected: <code style="background:#313244;padding:2px 6px;border-radius:3px;color:#a6e3a1;">' + esc(ch.expected_output) + '</code></div>' : ''}
+    <div class="pg-playground-x85zh">${esc(ch.title)}</div>
+    <div class="pg-playground-xnhhr">${esc(ch.description || 'No description')}</div>
+    ${ch.expected_output ? '<div class="muted-dark fs-11 mt-8">Expected: <code class="term-chip">' + esc(ch.expected_output) + '</code></div>' : ''}
   `;
   infoPanel.style.display = '';
   // Hint button + panel — only when the challenge has hints
@@ -920,7 +949,7 @@ function renderChallengeInfoPanel(ch) {
   if (hintBtn && hintPanel) {
     const show = hintCount > 0;
     hintBtn.style.display = show ? 'flex' : 'none';
-    hintPanel.style.display = 'none';
+    hintPanel.classList.add('hidden');
     hintPanel.innerHTML = '';
     if (show) renderHintPanel(ch);
   }
@@ -934,13 +963,13 @@ let hintState = { hints: [], free_remaining: null, hint_cost: null, coins: null 
 async function renderHintPanel(ch) {
   const panel = document.getElementById('hint-panel');
   if (!panel || !ch) return;
-  panel.innerHTML = '<div style="font-size:11px;color:#585b74;">Loading hints…</div>';
+  panel.innerHTML = '<div class="muted-dark fs-11">Loading hints…</div>';
   const total = Array.isArray(ch.hints) ? ch.hints.length : 0;
-  if (!total) { panel.style.display = 'none'; return; }
+  if (!total) { panel.classList.add('hidden'); return; }
   try {
     const token = (await supabaseClient.auth.getSession()).data.session?.access_token;
     if (!token) {
-      panel.innerHTML = '<div style="font-size:12px;color:#a6adc8;">💡 Log in to unlock hints (5 free every month).</div>';
+      panel.innerHTML = '<div class="pg-playground-1j36l">💡 Log in to unlock hints (5 free every month).</div>';
       return;
     }
     const [uRes, sRes] = await Promise.all([
@@ -958,32 +987,32 @@ async function renderHintPanel(ch) {
     };
     updateHintBadge();
     panel.innerHTML = `
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
-        <b style="font-size:12px;color:#cdd6f4;">💡 Hints</b>
-        <span style="font-size:10px;color:#f9e2af;">${hintState.free_remaining} free left this month</span>
-        <span style="font-size:10px;color:#585b74;">then ${hintState.hint_cost} coins each</span>
-        <button onclick="toggleHintPanel()" style="margin-left:auto;background:none;border:none;color:#585b74;cursor:pointer;font-size:14px;">&times;</button>
+      <div class="flex-row flex-row-wrap mb-8">
+        <b class="pg-playground-1kqlc">💡 Hints</b>
+        <span class="pg-playground-3cwld">${hintState.free_remaining} free left this month</span>
+        <span class="muted-dark fs-10">then ${hintState.hint_cost} coins each</span>
+        <button onclick="toggleHintPanel()" class="ml-auto btn-plain muted-dark fs-14">&times;</button>
       </div>
       ${Array.from({ length: total }, (_, i) => {
         const u = unlocked.find(x => x.index === i);
         if (u) {
-          return `<div style="background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:10px 12px;margin-bottom:6px;">
-            <div style="font-size:10px;color:#a6e3a1;font-weight:700;margin-bottom:4px;">Hint ${i + 1} ${u.source === 'free' ? '· free' : '· ' + hintState.hint_cost + ' coins'}</div>
-            <div style="font-size:12px;color:#cdd6f4;line-height:1.55;">${esc(u.text)}</div>
+          return `<div class="term-box">
+            <div class="pg-playground-1lwyd">Hint ${i + 1} ${u.source === 'free' ? '· free' : '· ' + hintState.hint_cost + ' coins'}</div>
+            <div class="pg-playground-1l2t5">${esc(u.text)}</div>
           </div>`;
         }
         const useFree = hintState.free_remaining > 0;
-        return `<div style="background:rgba(249,226,175,0.06);border:1px dashed #45475a;border-radius:8px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;">
-          <div style="flex:1;">
-            <div style="font-size:11px;color:#a6adc8;font-weight:700;">Hint ${i + 1} — locked</div>
-            <div style="font-size:10px;color:#585b74;">${useFree ? 'Uses 1 of your free monthly hints' : `Costs ${hintState.hint_cost} coins (you have ${hintState.coins})`}</div>
+        return `<div class="term-warn-row flex-row">
+          <div class="flex-1">
+            <div class="pg-playground-ogg4l">Hint ${i + 1} — locked</div>
+            <div class="muted-dark fs-10">${useFree ? 'Uses 1 of your free monthly hints' : `Costs ${hintState.hint_cost} coins (you have ${hintState.coins})`}</div>
           </div>
           <button class="btn-run-sm ${useFree ? '' : 'sec'}" onclick="revealHint(${i})">${useFree ? 'Unlock free' : `Unlock (${hintState.hint_cost} 🪙)`}</button>
         </div>`;
       }).join('')}
     `;
   } catch {
-    panel.innerHTML = '<div style="font-size:11px;color:#585b74;">Could not load hints.</div>';
+    panel.innerHTML = '<div class="muted-dark fs-11">Could not load hints.</div>';
   }
 }
 
@@ -994,7 +1023,7 @@ function toggleHintPanel() {
     panel.style.display = '';
     if (currentChallenge) renderHintPanel(currentChallenge);
   } else {
-    panel.style.display = 'none';
+    panel.classList.add('hidden');
   }
 }
 
@@ -1084,7 +1113,7 @@ function switchFile(key) {
       switchPanel('output');
     }
   } else {
-    if (infoPanel) infoPanel.style.display = 'none';
+    if (infoPanel) infoPanel.classList.add('hidden');
   }
 
   if (!openTabs.includes(key)) openTabs.push(key);
@@ -1128,10 +1157,10 @@ function showSidebarTab(tab) {
 
   if (tab === 'explorer') {
     explorer.style.display = '';
-    challenges.style.display = 'none';
+    challenges.classList.add('hidden');
     document.getElementById('act-explorer').classList.add('active');
   } else if (tab === 'challenges') {
-    explorer.style.display = 'none';
+    explorer.classList.add('hidden');
     challenges.style.display = '';
     document.getElementById('act-challenges').classList.add('active');
   }
@@ -1281,7 +1310,7 @@ async function submitChallenge() {
       passedChallenges.add(currentChallenge.id);
       coinsBalance = json.total || coinsBalance;
       renderCoins();
-      output.innerHTML = `<span class="success"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg> Challenge passed!</span>\n<span class="output">+${json.coins} coins earned${isDaily ? ' (includes daily bonus!)' : ''}</span>\n<span class="output">Total: ${coinsBalance} coins</span>`;
+      output.innerHTML = `<span class="success"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg> Challenge passed!</span>\n<span class="output">+${json.coins} coins earned${isDaily ? ' (includes daily bonus!)' : ''}</span>\n<span class="output">Total: ${coinsBalance} coins</span>`;
       // Refresh the "✓ Completed" badge in the info panel — keep the user's
       // own code in the editor as-is, don't replace it with the description doc.
       renderChallengeInfoPanel(currentChallenge);
@@ -1291,7 +1320,7 @@ async function submitChallenge() {
     } else {
       const reason = json.reason ? String(json.reason) : '';
       Toast.error('Challenge not passed. ' + (reason || 'Check your solution and try again.'));
-      output.innerHTML = `<span class="error"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg> Challenge not passed</span>\n<span class="output">${reason ? reason.replace(/</g, '&lt;') : 'Check your solution and try again.'}</span>`;
+      output.innerHTML = `<span class="error"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg> Challenge not passed</span>\n<span class="output">${reason ? reason.replace(/</g, '&lt;') : 'Check your solution and try again.'}</span>`;
     }
 
     // ── AI feedback card (trained local engine, informational only) ──

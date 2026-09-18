@@ -54,7 +54,19 @@ class AuthService {
       new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase connection timed out')), 10000))
     ]);
 
-    if (error) throw error;
+    if (error) {
+      // Overlapping signups: between our pre-check above and signUp, the
+      // same email can be registered (e.g. a double-clicked submit). The
+      // race loser must surface as a 409 "email exists", not a 500.
+      const msg = String(error.message || error.msg || error.error_description || '');
+      const status = error.status || error.code;
+      if (status === 422 || /already registered|already exists|user already/i.test(msg)) {
+        const err = new Error('An account with this email already exists. Please log in instead.');
+        err.code = 'email_exists';
+        throw err;
+      }
+      throw error;
+    }
 
     // ── Check 2: Supabase's "fake user" for a duplicate email ─
     // When email confirmation is ON, signUp for an ALREADY-registered
@@ -79,12 +91,17 @@ class AuthService {
       email: data.user.email || email
     });
 
-    // Log terms acceptance
+    // Log terms acceptance — best-effort only. A missing table or RLS
+    // hiccup here must NEVER fail an otherwise-successful signup
+    // (this was a silent 500 after the account was really created).
     try {
-      await adminClient.from('terms_acceptance').insert({
+      const { error: termsError } = await adminClient.from('terms_acceptance').insert({
         user_id: data.user.id,
         policy_version: metadata.policy_version || '1.0'
       });
+      if (termsError) {
+        console.warn('[AUTH] Could not log terms acceptance:', termsError.message);
+      }
     } catch (e) {
       console.warn('[AUTH] Could not log terms acceptance:', e.message);
     }

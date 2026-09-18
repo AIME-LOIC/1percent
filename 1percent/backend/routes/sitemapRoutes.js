@@ -53,7 +53,7 @@ async function getPublishedCourses() {
   try {
     const { data, error } = await adminClient
       .from('courses')
-      .select('slug, title, description, level, duration_weeks, updated_at')
+      .select('slug, title, description, level, duration_weeks, thumbnail_url, updated_at')
       .eq('is_published', true)
       .order('sort_order', { ascending: true });
 
@@ -66,6 +66,7 @@ async function getPublishedCourses() {
         description: c.description || '',
         level: c.level || '',
         duration_weeks: c.duration_weeks || 0,
+        thumbnail_url: c.thumbnail_url || '',
         lastmod: (c.updated_at || '').split('T')[0] || undefined
       })),
       urls: (data || []).map(c => ({ slug: c.slug, title: c.title, lastmod: (c.updated_at || '').split('T')[0] || undefined })),
@@ -106,9 +107,14 @@ async function renderCoursesPage(req, res) {
     const renderCard = c => {
       const level = escapeHtml(c.level);
       const weeks = c.duration_weeks ? `${c.duration_weeks} week${c.duration_weeks === 1 ? '' : 's'}` : '';
+      // Real thumbnail when the course has one; the icon tile remains the
+      // fallback (styled by .course-thumb-img only when the image loads).
+      const thumb = c.thumbnail_url
+        ? `\n        <img class="course-thumb-img" src="/api/courses/thumbnail?path=${encodeURIComponent(c.thumbnail_url)}" alt="" loading="lazy" onerror="this.classList.add('thumb-missing')">`
+        : '';
       return [
         `      <a class="course-card" href="/course/${escapeHtml(c.slug)}" aria-label="${escapeHtml(c.title)} course">`,
-        `        <div class="course-top">`,
+        `        <div class="course-thumb">${thumb}`,
         `          ${level ? `<span class="course-level ${level.toLowerCase()}">${level}</span>` : '<span></span>'}`,
         `          ${weeks ? `<span class="course-weeks">${weeks}</span>` : ''}`,
         `        </div>`,

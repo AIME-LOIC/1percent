@@ -60,6 +60,9 @@
   .onboard-header{padding:24px 20px 0;}
   .onboard-body{padding:20px;}
 }
+
+/* auto-extracted from inline styles (do not edit names, values only) */
+pg-onboarding-5xrdo{flex-direction:column}
 </style>
 </head>
 <body>
@@ -135,12 +138,12 @@
         <div class="onboard-field">
           <label>What's your main goal?</label>
           <div class="field-hint">This helps us track your progress toward what matters to you</div>
-          <div class="onboard-chips" id="onboard-goal" style="flex-direction:column;">
-            <div class="onboard-chip" data-value="career" style="text-align:left;">Switch careers into tech</div>
-            <div class="onboard-chip" data-value="freelance" style="text-align:left;">Start freelancing / build a business</div>
-            <div class="onboard-chip" data-value="skills" style="text-align:left;">Level up existing skills</div>
-            <div class="onboard-chip" data-value="explore" style="text-align:left;">Explore and find my path</div>
-            <div class="onboard-chip" data-value="cert" style="text-align:left;">Earn certificates</div>
+          <div class="onboard-chips pg-onboarding-5xrdo" id="onboard-goal">
+            <div class="onboard-chip ta-left" data-value="career">Switch careers into tech</div>
+            <div class="onboard-chip ta-left" data-value="freelance">Start freelancing / build a business</div>
+            <div class="onboard-chip ta-left" data-value="skills">Level up existing skills</div>
+            <div class="onboard-chip ta-left" data-value="explore">Explore and find my path</div>
+            <div class="onboard-chip ta-left" data-value="cert">Earn certificates</div>
           </div>
         </div>
         <div class="onboard-field">
@@ -151,21 +154,21 @@
         <div class="onboard-actions">
           <button class="onboard-btn outline" id="onboard-back-2">Back</button>
           <button class="onboard-btn primary" id="onboard-finish">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
             Complete Setup
           </button>
         </div>
       </div>
 
       <!-- Done -->
-      <div class="onboard-step" id="onboard-done" style="display:none;">
+      <div class="onboard-step" id="onboard-done" hidden>
         <div class="onboard-welcome">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mb-12"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
           <h2>You're all set!</h2>
           <p>Your profile is ready. Let's start learning.</p>
-          <button class="onboard-btn primary" id="onboard-go-dashboard" style="margin-top:20px;">
+          <button class="onboard-btn primary mt-20" id="onboard-go-dashboard">
             Go to Dashboard
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-left:4px;"><path d="m9 18 6-6-6-6"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline-r"><path d="m9 18 6-6-6-6"/></svg>
           </button>
           <div class="skip" id="onboard-skip">Skip for now</div>
         </div>
@@ -285,9 +288,9 @@ document.getElementById('onboard-finish')?.addEventListener('click',async()=>{
     if(error)throw error;
 
     // Show done state
-    document.querySelectorAll('.onboard-step').forEach(s=>s.style.display='none');
-    document.getElementById('onboard-done').style.display='block';
-    document.getElementById('onboard-progress').style.display='none';
+    document.querySelectorAll('.onboard-step').forEach(s=>s.classList.add('hidden'));
+    document.getElementById('onboard-done').classList.remove('hidden');
+    document.getElementById('onboard-progress').classList.add('hidden');
   }catch(e){
     Toast.error?.('Failed to save: '+e.message);
     btn.disabled=false;

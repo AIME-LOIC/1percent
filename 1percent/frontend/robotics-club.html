@@ -90,16 +90,16 @@ select:focus,input[type=text]:focus{border-color:var(--green);box-shadow:0 0 0 4
 
       <label>Where do you study?</label>
       <div class="schools" id="schools-list">
-        <div class="school-option skeleton-opt" style="opacity:.5;">🏫 Loading schools…</div>
+        <div class="school-option skeleton-opt op-50">🏫 Loading schools…</div>
       </div>
 
       <div class="grade-row">
         <div>
-          <label for="grade-input" style="font-size:12px;">Grade / class <span style="color:#dc2626;font-weight:700;">*</span></label>
+          <label for="grade-input" class="fs-12">Grade / class <span class="text-danger fw-700">*</span></label>
           <input type="text" id="grade-input" placeholder="e.g. S5, Senior 6" required>
         </div>
         <div>
-          <label for="full-name-input" style="font-size:12px;">Full name <span style="color:#dc2626;font-weight:700;">*</span></label>
+          <label for="full-name-input" class="fs-12">Full name <span class="text-danger fw-700">*</span></label>
           <input type="text" id="full-name-input" placeholder="Your full name" required>
         </div>
       </div>
@@ -116,7 +116,7 @@ select:focus,input[type=text]:focus{border-color:var(--green);box-shadow:0 0 0 4
       <div class="big" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
       <h2>You're in!</h2>
       <p id="success-copy">Welcome to the Robotics Club. Your club admin will approve your membership shortly — watch your dashboard notifications for meetup announcements.</p>
-      <a class="btn" style="text-decoration:none;" href="/dashboard">Go to my dashboard</a>
+      <a class="btn link-plain-x" href="/dashboard">Go to my dashboard</a>
     </div>
   </div>
 
@@ -152,7 +152,7 @@ select:focus,input[type=text]:focus{border-color:var(--green);box-shadow:0 0 0 4
         }
       }
     }catch{ isLoggedIn=false; }
-    if(!isLoggedIn)$('login-nudge').style.display='block';
+    if(!isLoggedIn)$('login-nudge').classList.remove('hidden');
 
     // Shared nav for logged-in users
     if(isLoggedIn&&typeof Nav!=='undefined'){
@@ -175,7 +175,7 @@ select:focus,input[type=text]:focus{border-color:var(--green);box-shadow:0 0 0 4
 
     const list=$('schools-list');
     if(!schools.length){
-      list.innerHTML='<div style="padding:14px;color:#6b7280;font-size:13px;">No schools listed yet — check back soon!</div>';
+      list.innerHTML='<div class="text-secondary-x fs-13 pad-14">No schools listed yet — check back soon!</div>';
       return;
     }
     list.innerHTML=schools.map(s=>`
@@ -204,7 +204,7 @@ select:focus,input[type=text]:focus{border-color:var(--green);box-shadow:0 0 0 4
     if(!isLoggedIn){
       status.className='status err';
       status.textContent='Please log in first to join the club.';
-      $('login-nudge').style.display='block';
+      $('login-nudge').classList.remove('hidden');
       if(window.LoginPopup)window.LoginPopup.show('robotics-club');
       return;
     }
@@ -243,13 +243,13 @@ select:focus,input[type=text]:focus{border-color:var(--green);box-shadow:0 0 0 4
         const name=$('full-name-input').value.trim();
         if(name){ try{ await fetch('/api/auth/profile',{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({full_name:name})}); }catch{} }
 
-        $('join-form-view').style.display='none';
-        $('success-view').style.display='block';
+        $('join-form-view').classList.add('hidden');
+        $('success-view').classList.remove('hidden');
         $('success-copy').textContent=`Welcome to the Robotics Club${school?` — ${school.name}`:''}! Your club admin will approve your membership shortly. Watch your dashboard notifications for meetup announcements.`;
       } else if(res.status===409){
         // Already a member — treat as success with different copy
-        $('join-form-view').style.display='none';
-        $('success-view').style.display='block';
+        $('join-form-view').classList.add('hidden');
+        $('success-view').classList.remove('hidden');
         $('success-copy').textContent='You are already a member of the Robotics Club. See you at the next build session!';
       } else {
         throw new Error(json.error||'Failed to join.');

@@ -151,7 +151,12 @@
       .payment-methods { grid-template-columns: 1fr; }
       .card { padding: 24px 20px; }
     }
-  </style>
+  
+/* auto-extracted from inline styles (do not edit names, values only) */
+pg-parentpayment-4vdej{font-size:12px;color:#3b82f6;font-weight:600;margin-bottom:4px}
+pg-parentpayment-g647y{font-size:14px;color:#1e40af}
+pg-parentpayment-14cpr{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+</style>
 </head>
 <body>
   <nav class="nav">
@@ -163,7 +168,7 @@
     <!-- Loading -->
     <div class="loading" id="loading">
       <div class="spinner"></div>
-      <p style="color:#6b7280;">Loading payment details...</p>
+      <p class="text-secondary-x">Loading payment details...</p>
     </div>
   </div>
 
@@ -240,7 +245,7 @@
           </ul>
         </div>
 
-        ${paymentData.notes ? `<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:16px;margin-bottom:24px;"><div style="font-size:12px;color:#3b82f6;font-weight:600;margin-bottom:4px;">Message from student</div><div style="font-size:14px;color:#1e40af;">${esc(paymentData.notes)}</div></div>` : ''}
+        ${paymentData.notes ? `<div class="callout-blue mb-24"><div class="pg-parentpayment-4vdej">Message from student</div><div class="pg-parentpayment-g647y">${esc(paymentData.notes)}</div></div>` : ''}
 
         <div class="card">
           <h2>Complete Payment</h2>
@@ -274,12 +279,12 @@
             </div>
           </div>
 
-          <div id="card-form" style="display:none;">
+          <div id="card-form" hidden>
             <div class="form-group">
               <label>Card Number</label>
               <input type="text" id="card-number" placeholder="4242 4242 4242 4242" maxlength="19">
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div class="pg-parentpayment-14cpr">
               <div class="form-group">
                 <label>Expiry</label>
                 <input type="text" id="card-expiry" placeholder="MM/YY" maxlength="5">
@@ -314,7 +319,7 @@
               <li>Confirm with your PIN</li>
             </ol>
             <div class="amount">RWF ${paymentData.amount.toLocaleString()}</div>
-            <p style="font-size:12px;color:#92400e;margin-top:8px;">Payment will be verified automatically.</p>
+            <p class="warn-amber fs-12 mt-8">Payment will be verified automatically.</p>
           </div>
 
           <button class="btn primary" id="pay-btn" onclick="processPayment()">
@@ -322,7 +327,7 @@
           </button>
         </div>
 
-        <div class="security-note"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Your payment is secure and encrypted.</div>
+        <div class="security-note"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Your payment is secure and encrypted.</div>
       `;
     }
 
@@ -378,8 +383,8 @@
             <div class="success-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg></div>
             <h2>Payment Successful!</h2>
             <p>Thank you! The student's account has been upgraded.<br>The subscription is now active.</p>
-            <div style="margin-top:24px;">
-              <a href="/" class="btn primary" style="text-decoration:none;text-align:center;">Back to Home</a>
+            <div class="mt-24">
+              <a href="/" class="btn primary link-plain-x ta-center">Back to Home</a>
             </div>
           </div>
         </div>
@@ -403,8 +408,8 @@
         <div class="card">
           <div class="expired-state">
             <div class="expired-icon">⏰</div>
-            <h2 style="font-size:20px;font-weight:700;color:#991b1b;margin-bottom:8px;">Link Expired</h2>
-            <p style="font-size:14px;color:#6b7280;">This payment link has expired or been cancelled.<br>Please ask the student to send a new link.</p>
+            <h2 class="stat-big stat-red mb-8">Link Expired</h2>
+            <p class="text-secondary-x fs-14">This payment link has expired or been cancelled.<br>Please ask the student to send a new link.</p>
           </div>
         </div>
       `;
@@ -415,11 +420,11 @@
         <div class="card">
           <div class="expired-state">
             <div class="expired-icon">❓</div>
-            <h2 style="font-size:20px;font-weight:700;color:#991b1b;margin-bottom:8px;">Invalid Link</h2>
-            <p style="font-size:14px;color:#6b7280;">This payment link is invalid. Please check the link and try again.</p>
-            ${detail ? `<div style="margin-top:16px;padding:12px 16px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:13px;color:#92400e;">${esc(detail)}</div>` : ''}
-            <div style="margin-top:24px;">
-              <a href="/" class="btn primary" style="text-decoration:none;text-align:center;">Back to Home</a>
+            <h2 class="stat-big stat-red mb-8">Invalid Link</h2>
+            <p class="text-secondary-x fs-14">This payment link is invalid. Please check the link and try again.</p>
+            ${detail ? `<div class="callout-amber mt-16">${esc(detail)}</div>` : ''}
+            <div class="mt-24">
+              <a href="/" class="btn primary link-plain-x ta-center">Back to Home</a>
             </div>
           </div>
         </div>

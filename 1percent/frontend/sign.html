@@ -42,12 +42,21 @@ canvas#draw-canvas{width:100%;height:150px;border:2px dashed #d1d5db;border-radi
 .existing img{max-width:300px;max-height:80px;}
 .existing p{font-size:12px;color:#6b7280;margin-top:8px;}
 .info{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;font-size:13px;color:#1e40af;margin-bottom:20px;}
+
+/* auto-extracted from inline styles (do not edit names, values only) */
+pg-sign-zn9su{font-weight:600;margin-bottom:8px}
+pg-sign-10g4r{font-size:12px;color:#6b7280;margin-top:8px;text-align:center}
+pg-sign-10u3f{font-size:12px;color:#9ca3af}
 </style>
 </head>
 <body>
 <div class="topbar">
-  <a href="/" class="topbar-logo"><div class="mark">1%</div> Expert Programme</a>
-  <div class="topbar-actions"><a href="/dashboard" class="topbar-btn">Dashboard</a></div>
+  <div class="topbar-left">
+    <a href="/" class="topbar-logo"><div class="mark">1%</div><div class="logo-text"><span class="name">Expert Programme</span></div></a>
+  </div>
+  <div class="topbar-right">
+    <a href="/dashboard" class="topbar-btn">Dashboard</a>
+  </div>
 </div>
 <div class="main">
   <div class="card">
@@ -55,35 +64,35 @@ canvas#draw-canvas{width:100%;height:150px;border:2px dashed #d1d5db;border-radi
     <div class="subtitle">Your signature will be saved once and applied to all certificates.</div>
     <div class="info">Draw, type, or upload your signature below. It will appear on all certificates you earn.</div>
     
-    <div id="existing-section" class="existing" style="display:none;">
-      <p style="font-weight:600;margin-bottom:8px;">Current Signature:</p>
+    <div id="existing-section" class="existing" hidden>
+      <p class="pg-sign-zn9su">Current Signature:</p>
       <img id="existing-img" src="" alt="Current signature">
       <p>This signature will appear on all your certificates.</p>
     </div>
 
     <div class="sig-tabs">
-      <button class="sig-tab active" onclick="switchTab('draw')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg> Draw</button>
-      <button class="sig-tab" onclick="switchTab('type')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M6 10h.01"/><path d="M10 10h.01"/><path d="M14 10h.01"/></svg> Type</button>
-      <button class="sig-tab" onclick="switchTab('upload')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><polyline points="14 2 14 8 20 8"/><path d="M2 15h10"/><path d="m9 18 3-3-3-3"/></svg> Upload</button>
+      <button class="sig-tab active" onclick="switchTab('draw')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg> Draw</button>
+      <button class="sig-tab" onclick="switchTab('type')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M6 10h.01"/><path d="M10 10h.01"/><path d="M14 10h.01"/></svg> Type</button>
+      <button class="sig-tab" onclick="switchTab('upload')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline"><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><polyline points="14 2 14 8 20 8"/><path d="M2 15h10"/><path d="m9 18 3-3-3-3"/></svg> Upload</button>
     </div>
 
     <div id="panel-draw" class="sig-panel active">
       <canvas id="draw-canvas" width="500" height="150"></canvas>
-      <p style="font-size:12px;color:#6b7280;margin-top:8px;text-align:center;">Draw your signature above</p>
+      <p class="pg-sign-10g4r">Draw your signature above</p>
     </div>
 
     <div id="panel-type" class="sig-panel">
       <input type="text" class="text-input" id="typed-name" placeholder="Type your name" oninput="updateTypedPreview()">
-      <div class="preview"><img id="typed-preview" src="" alt="Preview" style="display:none;"></div>
+      <div class="preview"><img id="typed-preview" src="" alt="Preview" hidden></div>
     </div>
 
     <div id="panel-upload" class="sig-panel">
       <div class="upload-zone" onclick="document.getElementById('file-input').click()">
-        <p><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px;"><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><polyline points="14 2 14 8 20 8"/><path d="M2 15h10"/><path d="m9 18 3-3-3-3"/></svg> Click to upload signature image</p>
-        <p style="font-size:12px;color:#9ca3af;">PNG, JPG up to 2MB</p>
+        <p><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline"><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><polyline points="14 2 14 8 20 8"/><path d="M2 15h10"/><path d="m9 18 3-3-3-3"/></svg> Click to upload signature image</p>
+        <p class="pg-sign-10u3f">PNG, JPG up to 2MB</p>
       </div>
-      <input type="file" id="file-input" accept="image/*" style="display:none;" onchange="handleUpload(event)">
-      <div class="preview"><img id="upload-preview" src="" alt="Preview" style="display:none;"></div>
+      <input type="file" id="file-input" accept="image/*" onchange="handleUpload(event)" hidden>
+      <div class="preview"><img id="upload-preview" src="" alt="Preview" hidden></div>
     </div>
 
     <div class="actions">
@@ -152,7 +161,7 @@ function switchTab(tab) {
 
 function updateTypedPreview() {
   const name = document.getElementById('typed-name').value;
-  if (!name) { document.getElementById('typed-preview').style.display = 'none'; return; }
+  if (!name) { document.getElementById('typed-preview').classList.add('hidden'); return; }
   const c = document.createElement('canvas');
   c.width = 400; c.height = 80;
   const tctx = c.getContext('2d');
@@ -165,7 +174,7 @@ function updateTypedPreview() {
   tctx.fillText(name, 200, 40);
   signatureData = c.toDataURL('image/png');
   document.getElementById('typed-preview').src = signatureData;
-  document.getElementById('typed-preview').style.display = 'block';
+  document.getElementById('typed-preview').classList.remove('hidden');
 }
 
 function handleUpload(e) {
@@ -176,7 +185,7 @@ function handleUpload(e) {
   reader.onload = (ev) => {
     signatureData = ev.target.result;
     document.getElementById('upload-preview').src = signatureData;
-    document.getElementById('upload-preview').style.display = 'block';
+    document.getElementById('upload-preview').classList.remove('hidden');
   };
   reader.readAsDataURL(file);
 }
@@ -231,7 +240,7 @@ async function loadExisting() {
     const json = await res.json();
     if (json.success && json.signature?.signature_url) {
       document.getElementById('existing-img').src = json.signature.signature_url;
-      document.getElementById('existing-section').style.display = 'block';
+      document.getElementById('existing-section').classList.remove('hidden');
       signatureData = json.signature.signature_url;
     }
   } catch {}

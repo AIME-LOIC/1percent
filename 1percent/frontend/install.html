@@ -370,6 +370,9 @@
     .version-card { flex-direction: column; text-align: center; }
     .docs-grid { grid-template-columns: 1fr; }
   }
+
+/* auto-extracted from inline styles (do not edit names, values only) */
+pg-install-159bc{font-size: 13px;padding: 8px 16px}
 </style>
 </head>
 <body>
@@ -410,14 +413,14 @@
       <div class="version-number" id="current-version">Loading…</div>
       <div class="version-status" id="version-status">Checking GitHub for updates…</div>
     </div>
-    <button class="version-btn primary" id="update-btn" onclick="checkForUpdates()" style="display:none;">View Releases</button>
+    <button class="version-btn primary" id="update-btn" onclick="checkForUpdates()" hidden>View Releases</button>
   </div>
 
   <!-- Releases -->
   <section class="releases-section">
     <h2 class="section-title"><i data-lucide="clipboard-list"></i> Release Notes & Binaries</h2>
     <div id="releases-list">
-      <div style="text-align:center;padding:40px;color:var(--text-muted);">Loading releases…</div>
+      <div class="empty-pad">Loading releases…</div>
     </div>
   </section>
 
@@ -429,12 +432,12 @@
       <li>
         <h4>Option A: Install VS Code Extension (.vsix)</h4>
         <p>Download the package file and install directly in VS Code.</p>
-        <div style="margin-top: 12px;">
-          <a href="https://github.com/AIME-LOIC/1percent/releases/download/v1.0.0/onepercent-learn-vscode-1.0.4.vsix" class="btn btn-primary" style="font-size: 13px; padding: 8px 16px;">
+        <div class="mt-12">
+          <a href="https://github.com/AIME-LOIC/1percent/releases/download/v1.0.0/onepercent-learn-vscode-1.0.4.vsix" class="btn btn-primary pg-install-159bc">
             <i data-lucide="download"></i> Download onepercent-learn-vscode-1.0.4.vsix
           </a>
         </div>
-        <div class="code-block" style="margin-top: 12px;">
+        <div class="code-block mt-12">
           <span class="lang-tag">bash</span>
           <button class="copy-btn" onclick="copyCode(this)"><i data-lucide="copy"></i> Copy</button>
           <pre>code --install-extension onepercent-learn-vscode-1.0.4.vsix</pre>
@@ -533,7 +536,7 @@
 <!-- Footer -->
 <footer class="footer">
   <p>1percent Rwanda — Kigali, Rwanda</p>
-  <p style="margin-top: 8px;">
+  <p class="mt-8">
     <a href="/">Business</a> ·
     <a href="/docs">Docs</a> ·
     <a href="mailto:1percentrwanda@gmail.com">Contact</a>

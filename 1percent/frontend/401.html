@@ -12,6 +12,8 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Inter',sans-serif;background:#0a0a0f;color:#e8e8ed;min-height:100vh;display:flex;flex-direction:column;}
 .topbar{background:rgba(10,10,15,0.9);border-bottom:1px solid #252530;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:fixed;top:0;left:0;right:0;z-index:100;}
+.topbar-left{display:flex;align-items:center;min-width:0;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
 .topbar-logo{font-size:16px;font-weight:700;color:#6366f1;text-decoration:none;}
 .topbar-logo span{color:#e8e8ed;}
 .page{flex:1;display:flex;align-items:center;justify-content:center;padding:80px 24px;text-align:center;}
@@ -39,8 +41,12 @@ h1{font-size:28px;font-weight:800;margin-bottom:8px;}
 </head>
 <body>
 <nav class="topbar">
-  <a href="/" class="topbar-logo">1% <span>Expert</span></a>
-  <a href="/" class="btn btn-outline" style="padding:6px 16px;font-size:12px;">Back to Home</a>
+  <div class="topbar-left">
+    <a href="/" class="topbar-logo">1% <span>Expert</span></a>
+  </div>
+  <div class="topbar-right">
+    <a href="/" class="btn btn-outline fs-12 px-6-16">Back to Home</a>
+  </div>
 </nav>
 
 <div class="page">
@@ -78,7 +84,7 @@ h1{font-size:28px;font-weight:800;margin-bottom:8px;}
         </li>
         <li>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          Email us at <a href="mailto:1percentrwanda@gmail.com" style="color:#6366f1;text-decoration:none;">1percentrwanda@gmail.com</a>
+          Email us at <a href="mailto:1percentrwanda@gmail.com" class="link-indigo">1percentrwanda@gmail.com</a>
         </li>
       </ul>
     </div>
