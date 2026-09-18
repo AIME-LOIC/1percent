@@ -554,6 +554,107 @@ class CoinsService {
     return this._normalizeOutput(actual) === this._normalizeOutput(expected);
   }
 
+  /* ── Code-requirement mode: expected_output stores CODE PATTERNS ── */
+
+  /**
+   * Parse an expected_output that lists required code constructs.
+   * Recognized shapes:
+   *   • dotted/called tokens ("jwt.sign", "useState()", "React.memo")
+   *   • one-liners ("WHERE id = $1", "function Card", "CREATE TABLE users")
+   *   • bullet/comma/newline lists ("jwt.sign bcrypt jwt.verify")
+   *   • known library/API names ("bcrypt", "csrfToken", "SlidingWindow")
+   * Returns [] when the string looks like console OUTPUT (greetings,
+   * numbers, prose, comment banners like "// Fixed:") — those challenges
+   * keep the classic execute-and-diff grading.
+   */
+  _parseCodeRequirements(expectedOutput, challenge) {
+    const s = String(expectedOutput || '').trim();
+    if (!s || s.length > 200) return []; // long text is prose/output, not a token list
+
+    // Comment banners ("// Fixed:", "// POST /shorten", "// Auth flow") are
+    // required CODE banners — the submission must contain that comment —
+    // never stdout. Explicit prose IS output ("Hello, Python!").
+    if (/^(\/\/|\/\*|<!--)/.test(s) && s.length <= 80) {
+      return [{ pattern: s, label: s, inComments: true }];
+    }
+    if (/\b(your|you|please|should|must|here|this is|output|print|enter|hello|name is|the answer)\b/i.test(s)) return [];
+
+    const codeTokens = /\w+\.\w+|\w+\s*\(|\$\d|::|=>|=|_|-|<|>|\[|\]/;
+    // Keywords that basically never appear in expected console output but
+    // always in required code snippets ("function Card", "CREATE INDEX",
+    // "FROM node:20-alpine", "proxy_pass", "WHERE id = $1").
+    const codeKeywords = /\b(function|class|const|let|var|await|async|import|export|require|return|create|select|insert|update|delete|alter|drop|explain|join|where|index|table|server|location|proxy_pass|listen|entrypoint|def|lambda|fetch|document|window|version|from|use|usestate|useeffect|jwt|bcrypt|csrf)\b/i;
+    const camelCase = /^[a-z]+(?:[A-Z][a-z0-9]+)+$/; // loginAttempts, SlidingWindow
+
+    const isCodeish = (t) => codeTokens.test(t) || codeKeywords.test(t) || camelCase.test(t);
+
+    // Whole-string single requirement ("WHERE id = $1", "function Card")
+    if (isCodeish(s) && s.split(/\s+/).length <= 8) {
+      return [{ pattern: s, label: s }];
+    }
+
+    // Multi-token list: split on commas / semicolons / newlines / 2+ spaces.
+    const parts = s.split(/,|;|\n|\s{2,}/).map(p => p.trim()).filter(Boolean);
+    if (parts.length > 1 && parts.every(isCodeish)) {
+      return parts.map(p => ({ pattern: p, label: p }));
+    }
+
+    // Space-separated token list ("jwt.sign bcrypt jwt.verify") — only when
+    // EVERY word is codeish, so "Name: Amina" style output stays output.
+    const words = s.split(/\s+/);
+    if (words.length > 1 && words.length <= 6 && words.every(isCodeish)) {
+      return words.map(p => ({ pattern: p, label: p }));
+    }
+
+    // Single bare token ("bcrypt", "sanitize") — accept known library/API
+    // names, or any word the task title/description itself calls for (the
+    // seed data mirrors the description keyword), so "Hello" and "42" and
+    // ordinary output words never land here.
+    if (/^\w{3,30}$/.test(s)) {
+      const known = /^(bcrypt|bcryptjs|argon2|jwt|jsonwebtoken|csrf|helmet|express|uuid|crypto|dotenv|jest|axios|moment|lodash|zustand|redux|react|usestate|useeffect|slidingwindow)$/i.test(s);
+      const task = `${challenge?.title || ''} ${challenge?.description || ''}`;
+      const esc = s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const inTask = task ? new RegExp(`\\b${esc}\\b`, 'i').test(task) : false;
+      if (known || inTask) return [{ pattern: s, label: s }];
+    }
+
+    return [];
+  }
+
+  /**
+   * Check each requirement appears in the submitted code. Line/block
+   * comments are stripped (prose can't fake a match) but STRING literals
+   * are kept — patterns like version: "3.8" quote real syntax. Match is
+   * case-insensitive with word boundaries so "useState" doesn't match
+   * inside "useStateChanged". Returns the missing items.
+   */
+  _missingCodeRequirements(code, reqs) {
+    const noComments = String(code || '')
+      .replace(/\/\*[\s\S]*?\*\//g, ' ')
+      .replace(/(^|\s)(?:\/\/|#)[^\n\r]*/g, '$1');
+    // Canonical form: lowercase, collapsed whitespace, unified quotes,
+    // normalized comma spacing — so `p.full_name, c.title` matches the
+    // seed `p.full_name,c.title` and '3.8' matches "3.8".
+    const canon = (t) => String(t || '')
+      .replace(/["'`]/g, '"')
+      .replace(/\s+/g, ' ')
+      .replace(/,\s*/g, ',')
+      .toLowerCase()
+      .trim();
+    const flat = canon(noComments);
+    const missing = [];
+    for (const { pattern, label, inComments } of reqs) {
+      const haystack = inComments ? canon(code) : flat;
+      const norm = canon(pattern);
+      const esc = norm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = /[\w)/\]$]/.test(norm)
+        ? new RegExp(`(^|[^\\w$])${esc}($|[^\\w$])`, 'i')
+        : new RegExp(esc, 'i');
+      if (!re.test(haystack)) missing.push(`\`${label}\``);
+    }
+    return missing;
+  }
+
   _runCodeCaptureOutput(code, type) {
     if (type === 'javascript') return this._runWorkerCaptureOutput(code);
     if (type === 'python') return this._runPythonCaptureOutput(code);
@@ -648,6 +749,30 @@ class CoinsService {
     if (!Array.isArray(testCases)) testCases = [];
     const expectedOutput = String(challenge.expected_output || '').trim();
 
+    // ── B0. CODE-REQUIREMENT MODE — many challenges store required CODE
+    // PATTERNS in expected_output ("jwt.sign", "bcrypt", "WHERE id = $1",
+    // "function Card" …), not console output. Executing those challenges
+    // and diffing stdout always fails: a correct JWT sign() prints nothing.
+    // Detect this shape and grade by checking the patterns appear in the
+    // submitted code instead. The pattern check IS the semantic gate here,
+    // so the generic "no logic" structural review is skipped — it would
+    // reject valid one-liner answers like `const t = jwt.sign(...)`.
+    if (expectedOutput && testCases.length === 0 && ['javascript', 'python', 'sql', 'yaml', 'docker', 'nginx'].includes(type)) {
+      const reqs = this._parseCodeRequirements(expectedOutput, challenge);
+      if (reqs.length > 0) {
+        if (this._strippedLen(code) < 10) {
+          this._lastRejectReason = 'Submission too short — implement the full solution (comments don\'t count).';
+          return false;
+        }
+        const missing = this._missingCodeRequirements(code, reqs);
+        if (missing.length > 0) {
+          this._lastRejectReason = `Your solution is missing a required part of the task: ${missing.join(', ')} — the task expects: ${expectedOutput}`;
+          return false;
+        }
+        return true;
+      }
+    }
+
     // ── A. Real execution: DOM test cases judge JS challenges that have them.
     if (type === 'javascript' && testCases.length > 0) {
       const review = this._reviewCode(code, challenge); // cheap pre-filter first
@@ -673,8 +798,10 @@ class CoinsService {
           this._lastRejectReason = `Output mismatch — expected "${this._normalizeOutput(expectedOutput).slice(0, 120)}" but your code printed "${this._normalizeOutput(run.output).slice(0, 120) || '(nothing)'}".`;
           return false;
         }
-        // ANTI-ECHO (line-aware): the output matched — but did the code
-        // COMPUTE it, or just print the expected lines back as literals?
+        // ANTI-ECHO (line-aware, JavaScript only): the output matched — but
+        // did the code COMPUTE it, or just print the expected lines back as
+        // literals? On Python "print exactly this" challenges echoing IS the
+        // assignment (there is no DOM to build), so Python is exempt.
         //
         //   Pure echo cheat:   console.log("// Todo app") alone          → reject
         //   Real solution:     builds the whole poll API AND prints the
@@ -696,7 +823,7 @@ class CoinsService {
         const echoedCount = expectedLines.filter(l => raw.includes(l) || strippedCode.includes(l)).length;
         const echoedRatio = expectedLines.length ? echoedCount / expectedLines.length : 0;
 
-        if (expectedLines.length > 0 && expectedNorm.length >= 8 && echoedRatio >= 0.7) {
+        if (type === 'javascript' && expectedLines.length > 0 && expectedNorm.length >= 8 && echoedRatio >= 0.7) {
           let isEchoCheat = true;
           if (expectedLines.length === 1) {
             // The single echoed line may be a required banner/header —
