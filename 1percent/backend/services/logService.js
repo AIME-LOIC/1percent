@@ -98,21 +98,26 @@ class LogService {
   } = {}) {
     if (!message) return null;
 
-    const row = await this._insert('error_logs', {
-      level,
-      source,
-      message,
-      stack,
-      error_code: errorCode,
-      path,
-      url,
+  const row = await this._insert('error_logs', {
+    level,
+    source,
+    message,
+    stack,
+    error_code: errorCode,
+    path,
+    url,
+    // (see ip_address note below) + ip_hash in context for correlation
       user_agent: userAgent,
-      ip_address: this.hashIp(ipAddress),
+      // error_logs.ip_address is an inet column — hashed IPs (hex) are
+      // rejected by Postgres with "invalid input syntax for type inet".
+      // Keep the raw IP in the inet column, stash the peppered hash in
+      // context.ip_hash so IP correlation still works without PII leakage.
+      ip_address: ipAddress || null,
       request_id: requestId,
       user_id: userId,
       user_email: this.maskEmail(userEmail),
       contact_email: this.maskEmail(contactEmail),
-      context: context || {},
+      context: { ...(context || {}), ip_hash: ipAddress ? this.hashIp(ipAddress) : null },
       is_client_reported: !!isClientReported,
       created_at: new Date().toISOString()
     });
@@ -152,7 +157,10 @@ class LogService {
       this.createAdminAlert({
         title: `Server error (${statusCode || 'unknown'})`,
         message: `${message}${statusCode ? ` (${statusCode})` : ''}`,
-        type: 'server_error',
+        // 'server_error' violated admin_alerts_type_check (allowed: error,
+        // warning, info, security, payment, system). 'error' is the honest
+        // match; the admin UI special-case below keeps its icon handling.
+        type: 'error',
         severity: level === 'critical' ? 'critical' : level === 'fatal' ? 'critical' : 'high',
         link: path || req?.path || null,
         source: 'backend',

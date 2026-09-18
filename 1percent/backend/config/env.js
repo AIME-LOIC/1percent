@@ -34,15 +34,14 @@ const OPTIONAL_VARS = {
 function validateEnv() {
   // Supabase key-name migration: new Supabase projects ship PUBLISHABLE /
   // SECRET keys and many have legacy (JWT-style) keys disabled entirely.
-  // The codebase reads the legacy names, so alias the new ones in.
-  if (!process.env.SUPABASE_ANON_KEY && process.env.SUPABASE_PUBLISHABLE_KEY) {
-    process.env.SUPABASE_ANON_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
-  }
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.SUPABASE_SECRET_KEY) {
-    process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SECRET_KEY;
-  }
+  // The codebase reads the legacy names. New-format keys WIN whenever they
+  // are present — so operators can just append the sb_ keys to .env and
+  // leave the old lines behind (they are dead anyway on such projects).
+  if (process.env.SUPABASE_PUBLISHABLE_KEY) process.env.SUPABASE_ANON_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+  if (process.env.SUPABASE_SECRET_KEY) process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SECRET_KEY;
   if (process.env.SUPABASE_ANON_KEY?.startsWith('eyJ') || process.env.SUPABASE_SERVICE_ROLE_KEY?.startsWith('eyJ')) {
     console.warn('⚠️  Legacy JWT-style Supabase keys detected. Projects with legacy keys disabled will reject them — switch to the sb_publishable_/sb_secret_ keys from the Supabase dashboard (Settings → API Keys).');
+    console.warn('⚠️  Auth (login / signup / magic link / password reset) WILL FAIL until the keys are replaced.');
   }
 
   const missing = REQUIRED_VARS.filter(key => !process.env[key]);
