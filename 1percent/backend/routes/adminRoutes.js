@@ -123,11 +123,13 @@ router.post('/send-onboarding-notifications', async (req, res) => {
 router.get('/email/stats', async (req, res) => {
   try {
     const emailService = require('../services/emailService');
-    const [stats, templates] = await Promise.all([
+    const [{ stats, error: statsError }, templates] = await Promise.all([
       emailService.getAudienceStats(),
       Promise.resolve(emailService.getTemplates())
     ]);
-    res.json({ success: true, stats, templates });
+    // Partial success still renders the panel — the error note tells the
+    // admin WHY counts are missing (e.g. legacy Supabase keys disabled).
+    res.json({ success: true, stats, templates, warning: statsError || null });
   } catch (err) {
     console.error('[ADMIN] Email stats error:', err.message);
     res.status(500).json({ error: 'Failed to load email stats.' });

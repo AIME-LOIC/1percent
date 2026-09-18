@@ -173,15 +173,22 @@ function _render(text) {
   return `<!DOCTYPE html><html><body style="font-family:Arial,Helvetica,sans-serif;line-height:1.6;color:#222;max-width:600px;margin:0 auto;padding:24px">${paragraphs}<hr style="border:none;border-top:1px solid #eee;margin:24px 0"><p style="color:#888;font-size:12px">You received this because you have a 1% Learn account.</p></body></html>`;
 }
 
-/** Audience sizes for the panel preview. */
+/** Audience sizes for the panel preview. Degrades per-audience so one
+ *  failing source (e.g. legacy Supabase keys rejecting listUsers) doesn't
+ *  500 the whole panel — failures come back as null counts + error note. */
 async function getAudienceStats() {
-  const [all, active, premium, recent] = await Promise.all([
-    resolveAudience('all'),
-    resolveAudience('active'),
-    resolveAudience('premium'),
-    resolveAudience('recent')
-  ]);
-  return { all: all.length, active: active.length, premium: premium.length, recent: recent.length };
+  const keys = ['all', 'active', 'premium', 'recent'];
+  const results = await Promise.allSettled(keys.map(k => resolveAudience(k)));
+  const stats = {};
+  let firstError = null;
+  keys.forEach((k, i) => {
+    if (results[i].status === 'fulfilled') stats[k] = results[i].value.length;
+    else {
+      stats[k] = null;
+      if (!firstError) firstError = results[i].reason?.message || 'unknown error';
+    }
+  });
+  return { stats, error: firstError };
 }
 
 module.exports = {

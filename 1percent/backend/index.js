@@ -135,8 +135,24 @@ app.use(helmet({
       objectSrc: ["'none'"]
     }
   },
-  crossOriginEmbedderPolicy: false
+  crossOriginEmbedderPolicy: false,
+  // HSTS over plain HTTP is actively harmful: a browser that once sees it
+  // pins the host HTTPS-only for a YEAR — http://localhost:3000 then dies
+  // as "This site can't be reached" (nothing listens on TLS :3000). Browsers
+  // ignore HSTS on http:// responses, but don't rely on that — only ever
+  // emit the header when the request actually arrived over HTTPS.
+  strictTransportSecurity: false // replaced by the conditional middleware below
 }));
+
+// Conditional HSTS: header ONLY on genuinely HTTPS traffic (production,
+// behind the TLS-terminating proxy). Local HTTP dev never sends it.
+app.use((req, res, next) => {
+  const proto = req.headers['x-forwarded-proto'] || req.protocol;
+  if (String(proto).split(',')[0].trim() === 'https') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+  next();
+});
 
 // CORS
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000')

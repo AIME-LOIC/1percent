@@ -2043,6 +2043,10 @@ async function loadEmailStats(){
     const j=await res.json().catch(()=>({}));
     if(!res.ok||!j.success){if(countEl)countEl.textContent='Failed to load counts.';return;}
     emailStatsCache=j.stats||{};
+    if(j.warning){
+      Toast.error('Email counts unavailable: '+j.warning);
+      if(countEl)countEl.textContent='Counts unavailable';
+    }
     // Template chips
     if(tplEl){
       tplEl.innerHTML=Object.entries(j.templates||{}).map(([k,t])=>
@@ -2058,7 +2062,8 @@ function updateEmailAudienceCount(){
   const countEl=document.getElementById('email-audience-count');
   if(!sel||!countEl||!emailStatsCache)return;
   const n=emailStatsCache[sel.value];
-  countEl.textContent=(typeof n==='number')?`${n.toLocaleString()} recipient${n===1?'':'s'}`:'—';
+  if(n===null||n===undefined){countEl.textContent='Counts unavailable — check the warning above';return;}
+  countEl.textContent=`${Number(n).toLocaleString()} recipient${n===1?'':'s'}`;
 }
 
 function applyEmailTemplate(key){
