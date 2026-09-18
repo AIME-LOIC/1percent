@@ -322,9 +322,15 @@ const Dashboard = {
       if (!token) return;
       const res = await fetch('/api/robotics-club/me', { headers: { Authorization: `Bearer ${token}` } });
       const json = await res.json();
-      promo.style.display = json.success && json.membership ? 'none' : '';
+      if (json.success && json.membership) {
+        promo.style.display = 'none'; // already a member — keep it hidden
+      } else {
+        promo.hidden = false;         // clear the static [hidden] attribute
+        promo.style.display = '';     // undo any previous display:none
+      }
     } catch {
-      promo.style.display = ''; // show promo by default when unknown
+      promo.hidden = false;         // show promo by default when unknown
+      promo.style.display = '';
     }
   },
 

@@ -237,6 +237,13 @@
 .mobile-bottom-nav a.active,
 .mobile-bottom-nav button:hover{color:var(--primary);}
 .mobile-bottom-nav svg{width:20px;height:20px;}
+/* Mobile only — desktop keeps the sidebar leaderboard */
+@media(min-width:901px){
+  .mobile-bottom-nav{display:none !important;}
+}
+@media(max-width:900px){
+  .mobile-bottom-nav{display:flex !important;}
+}
 .mobile-profile-nav{min-width:56px;}
 .mobile-leaderboard-trigger{color:var(--text-muted);}
 .mobile-profile-avatar{
@@ -248,13 +255,21 @@
 
 /* ── Leaderboard Sidebar ─────────────────────────────── */
 .dash-lb{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;position:sticky;top:80px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+/* Desktop only: cap the whole leaderboard card to the viewport so the
+   robotics/weekly-goal sections are reachable without scrolling the
+   window (the card scrolls internally instead). */
+@media(min-width:1101px){
+  .dash-lb{max-height:calc(100vh - 110px);overflow-y:auto;overscroll-behavior:contain;}
+}
 .dash-lb-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#fafbfc 0%,#f8f9fa 100%);}
 .dash-lb-head h3{font-size:13px;font-weight:700;margin:0;display:flex;align-items:center;gap:6px;color:var(--text);}
 .dash-lb-tabs{display:flex;gap:3px;background:var(--surface);padding:3px;border-radius:100px;border:1px solid var(--border);}
 .dash-lb-tab{padding:4px 12px;border-radius:100px;font-size:11px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--text-muted);transition:all .15s;}
 .dash-lb-tab:hover{color:var(--text);}
 .dash-lb-tab.active{background:var(--primary);color:#fff;box-shadow:0 1px 3px rgba(13,110,63,.25);}
-.dash-lb-list{padding:4px 0;max-height:480px;overflow-y:auto;}
+/* Sidebar leaderboard: ~3 rows visible, the rest scroll INSIDE the list
+   (overscroll-behavior stops the scroll from chaining to the window). */
+.dash-lb-list{padding:4px 0;max-height:150px;overflow-y:auto;overscroll-behavior:contain;}
 .dash-lb-item{display:flex;align-items:center;gap:10px;padding:8px 14px;transition:all .12s;border-left:3px solid transparent;}
 .dash-lb-item:hover{background:#f9fafb;}
 .dash-lb-item.me{background:linear-gradient(135deg,#ecfdf5 0%,#f0fdf4 100%);border-left-color:var(--primary);}

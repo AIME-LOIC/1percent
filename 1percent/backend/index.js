@@ -330,7 +330,7 @@ app.get('/api/admin/diagnostics', authenticate, requireAdmin, async (req, res) =
 app.get('/api/config', (req, res) => {
   res.json({
     supabaseUrl: process.env.SUPABASE_URL || '',
-    supabaseAnonKey: process.env.SUPABASE_ANON_KEY || '',
+    supabaseAnonKey: process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || '',
     contactEmail: process.env.CONTACT_EMAIL || '1percentrwanda@gmail.com',
     environment: process.env.NODE_ENV || 'development'
   });

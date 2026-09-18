@@ -139,7 +139,13 @@
 .mobile-bottom-nav a.active,
 .mobile-bottom-nav button:hover{color:var(--primary);}
 .mobile-bottom-nav svg{width:20px;height:20px;}
-.mobile-profile-nav{min-width:56px;}
+/* Mobile only — desktop keeps the sidebar nav */
+@media(min-width:901px){
+  .mobile-bottom-nav{display:none !important;}
+}
+@media(max-width:900px){
+  .mobile-bottom-nav{display:flex !important;}
+}
 .mobile-profile-avatar{
   width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--primary) 0%,#0a5c34 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;box-shadow:0 4px 10px rgba(13,110,63,.18);
 }
@@ -193,14 +199,14 @@
 .text-muted-x{color:var(--muted);}
 
 /* auto-extracted from inline styles (do not edit names, values only) */
-pg-settings-1w8uh{font-size:11px;color:#6b7280;margin:0 0 12px}
-pg-settings-y4woz{margin-bottom:20px;padding:16px 20px;border-radius:10px;font-size:14px}
-pg-settings-svv72{font-weight:700;margin-bottom:4px}
-pg-settings-tsezc{flex-direction:column;align-items:stretch;gap:8px}
-pg-settings-1kkze{font-size:12px;color:var(--text-muted);text-align:right}
-pg-settings-1m55v{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0 20px}
-pg-settings-12h61{font-weight:400}
-pg-settings-ccdpv{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap}
+.pg-settings-1w8uh{font-size:11px;color:#6b7280;margin:0 0 12px}
+.pg-settings-y4woz{margin-bottom:20px;padding:16px 20px;border-radius:10px;font-size:14px}
+.pg-settings-svv72{font-weight:700;margin-bottom:4px}
+.pg-settings-tsezc{flex-direction:column;align-items:stretch;gap:8px}
+.pg-settings-1kkze{font-size:12px;color:var(--text-muted);text-align:right}
+.pg-settings-1m55v{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0 20px}
+.pg-settings-12h61{font-weight:400}
+.pg-settings-ccdpv{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -641,7 +647,7 @@ pg-settings-ccdpv{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap}
   </div>
 </main>
 
-<nav class="mobile-bottom-nav" id="mobile-bottom-nav" hidden>
+<nav class="mobile-bottom-nav" id="mobile-bottom-nav">
   <a href="/dashboard" class="active">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     Dashboard
@@ -751,8 +757,9 @@ document.getElementById('settings-rating-submit')?.addEventListener('click', asy
 
 const navEl = document.getElementById('mobile-bottom-nav');
 function checkMobileNav(){
-  if (window.innerWidth <= 900) navEl.classList.remove('hidden');
-  else navEl.classList.add('hidden');
+  // Mobile-only CSS (@media) controls visibility; JS just syncs the
+  // hidden ATTRIBUTE so screen readers skip it on desktop too.
+  if (navEl) navEl.hidden = window.innerWidth > 900;
 }
 window.addEventListener('resize', checkMobileNav);
 checkMobileNav();

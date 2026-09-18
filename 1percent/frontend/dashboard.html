@@ -49,16 +49,20 @@
 </script>
 <style>
 /* auto-extracted from inline styles (do not edit names, values only) */
-pg-dashboard-1u0b2{color:var(--primary);font-weight:600}
-pg-dashboard-16tx3{margin-top:16px;max-width:360px;text-align:left}
-pg-dashboard-1b2z5{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
-pg-dashboard-15na0{font-size:13px;margin-top:8px;min-height:18px}
-pg-dashboard-1qm4y{font-size:12px;color:var(--primary);font-weight:600;text-decoration:none}
-pg-dashboard-1nxv5{padding:16px;text-align:center;color:var(--text-muted);font-size:12px}
-pg-dashboard-18jk1{font-size:11px;color:var(--text-muted);margin-top:8px;text-align:center}
-pg-dashboard-1n75i{display:block;text-decoration:none}
-pg-dashboard-15f8p{font-weight:800;font-size:13px;color:#065f46;margin-top:6px}
-pg-dashboard-qnbky{font-size:11px;color:#047857;margin-top:3px;line-height:1.5}
+.pg-dashboard-1u0b2{color:var(--primary);font-weight:600}
+.pg-dashboard-16tx3{margin-top:16px;max-width:360px;text-align:left}
+.pg-dashboard-1b2z5{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+.pg-dashboard-15na0{font-size:13px;margin-top:8px;min-height:18px}
+.pg-dashboard-1qm4y{font-size:12px;color:var(--primary);font-weight:600;text-decoration:none}
+.pg-dashboard-1nxv5{padding:16px;text-align:center;color:var(--text-muted);font-size:12px}
+.pg-dashboard-18jk1{font-size:11px;color:var(--text-muted);margin-top:8px;text-align:center}
+.pg-dashboard-1n75i{display:block;text-decoration:none}
+.pg-dashboard-15f8p{font-weight:800;font-size:13px;color:#065f46;margin-top:6px}
+.pg-dashboard-qnbky{font-size:11px;color:#047857;margin-top:3px;line-height:1.5}
+/* Robotics-club promo tile (class reused from admin.html — defined here
+   too because dashboard.html does not link admin.css) */
+.adm-tile-green{background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1px solid #a7f3d0;border-radius:12px;padding:14px;transition:transform .15s;}
+.adm-tile-green .success-orb{margin-bottom:2px;}
 </style>
 </head>
 <body>
@@ -238,7 +242,7 @@ pg-dashboard-qnbky{font-size:11px;color:#047857;margin-top:3px;line-height:1.5}
 </div>
 
 <!-- Mobile bottom nav -->
-<nav class="mobile-bottom-nav" id="mobile-bottom-nav" hidden>
+<nav class="mobile-bottom-nav" id="mobile-bottom-nav">
   <a href="/dashboard" class="active">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     Dashboard
