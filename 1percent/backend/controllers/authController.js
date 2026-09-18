@@ -144,11 +144,23 @@ class AuthController {
       });
     } catch (err) {
       console.error('[AUTH] Magic link error:', err.message);
-      // Supabase itself throttles OTP emails per address/project — surface
-      // that honestly (429) instead of a blanket "could not send".
+      // Supabase throttles this endpoint two different ways — surface
+      // each honestly instead of a blanket "could not send":
+      //  • over_email_send_rate_limit → the EMAIL quota: with the built-in
+      //    Supabase mailer it is ~2 emails/HOUR project-wide ("wait a
+      //    minute" would be a lie — it can be nearly an hour).
+      //  • over_request_rate_limit → the per-user 60s OTP window.
+      if (err.code === 'over_email_send_rate_limit' || /email rate limit/i.test(err.message || '')) {
+        return res.status(429).json({
+          error: 'Email quota reached — the built-in Supabase mailer allows only ~2 emails per hour. Try again later, or ask the admin to configure custom SMTP.',
+          code: 'email_quota',
+          retry_after: 3600
+        });
+      }
       if (err.status === 429 || err.code === 'over_request_rate_limit' || /rate limit|too many|wait/i.test(err.message || '')) {
         return res.status(429).json({
           error: 'This email was requested recently. Please wait about a minute and try again.',
+          code: 'rate_limited',
           retry_after: 60
         });
       }
