@@ -122,7 +122,13 @@ const AUTH_LIMITS = {
 };
 
 function authRateLimit(req, res, next) {
-  const action = (req.path.split('/')[0] || 'other');
+  // Inside a mounted router req.path is RELATIVE ('/login', not '/api/auth/login'),
+  // and lab/parent-payment mounts it on paths with no action segment at all.
+  // Use the originalUrl and strip the mount prefix + query so the action is the
+  // real last segment ('login', 'signup', 'run', '<token>' …).
+  const clean = String(req.originalUrl || req.url || '').split('?')[0]
+    .replace(/^\/api\/(auth|lab|parent-payments)\//, '');
+  const action = (clean.split('/').filter(Boolean).pop() || 'other');
   const max = AUTH_LIMITS[action] ?? 12;
   const credential = (action === 'login' || action === 'signup');
   return createLimiter({

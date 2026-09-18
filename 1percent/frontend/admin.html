@@ -1039,9 +1039,11 @@ async function init(){
     if(me.user?.role==='mentor'){console.log('[ADMIN] Mentor detected — redirecting to Mentor Hub');window.location.replace('/mentors');return;}
     if(me.user?.role!=='admin'){console.log('[ADMIN] Non-admin (student) detected — redirecting to dashboard');window.location.replace('/dashboard');return;}
 
-    // 5. Show admin panel
+    // 5. Show admin panel — the root ships with the `hidden` ATTRIBUTE, so it
+    // must be removed (style.display alone cannot override hidden).
+    const adminRoot=document.querySelector('.admin');
+    if(adminRoot){ adminRoot.hidden=false; adminRoot.style.display=''; }
     document.getElementById('auth-loading').classList.add('hidden');
-    document.querySelector('.admin').style.display='';
     const name=me.user.full_name||me.user.email||'Admin';
     document.getElementById('admin-name').textContent=name;
     document.getElementById('admin-avatar').textContent=name[0].toUpperCase();
@@ -1054,7 +1056,7 @@ async function init(){
 
 function showUnauthorized(msg){
   const adminRoot=document.querySelector('.admin');
-  if(adminRoot){ adminRoot.classList.remove('hidden'); }
+  if(adminRoot){ adminRoot.hidden=false; adminRoot.classList.remove('hidden'); adminRoot.style.display=''; }
   const loading=document.getElementById('auth-loading');
   if(loading){ loading.classList.add('hidden'); }
   if(adminRoot){ adminRoot.innerHTML=`
