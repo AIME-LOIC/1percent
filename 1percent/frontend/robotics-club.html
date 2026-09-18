@@ -217,6 +217,10 @@ select:focus,input[type=text]:focus{border-color:var(--green);box-shadow:0 0 0 4
     btn.disabled=true;btn.textContent='Joining…';
     status.className='status';status.textContent='';
 
+    // Abort the request if it stalls (otherwise "Joining…" hangs forever)
+    const controller=new AbortController();
+    const timeoutId=setTimeout(()=>controller.abort(),20000);
+
     try{
       let token=null;
       if(typeof OPSession!=='undefined'){
@@ -234,14 +238,21 @@ select:focus,input[type=text]:focus{border-color:var(--green);box-shadow:0 0 0 4
       const res=await fetch('/api/robotics-club/join',{
         method:'POST',
         headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},
-        body:JSON.stringify({school_id:selectedSchool,grade:gradeVal,full_name:fullName})
+        body:JSON.stringify({school_id:selectedSchool,grade:gradeVal,full_name:fullName}),
+        signal:controller.signal
       });
-      const json=await res.json();
+      const json=await res.json().catch(()=>({}));
 
       if(json.success){
-        // Save name if they typed one (best-effort, never blocks success)
+        // Save name if they typed one — fire-and-forget: the club join is
+        // DONE, a slow/dropped profile call must not keep the user stuck
+        // on "Joining…".
         const name=$('full-name-input').value.trim();
-        if(name){ try{ await fetch('/api/auth/profile',{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({full_name:name})}); }catch{} }
+        if(name){
+          try{
+            fetch('/api/auth/profile',{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({full_name:name})}).catch(()=>{});
+          }catch{}
+        }
 
         $('join-form-view').classList.add('hidden');
         $('success-view').classList.remove('hidden');
@@ -251,13 +262,19 @@ select:focus,input[type=text]:focus{border-color:var(--green);box-shadow:0 0 0 4
         $('join-form-view').classList.add('hidden');
         $('success-view').classList.remove('hidden');
         $('success-copy').textContent='You are already a member of the Robotics Club. See you at the next build session!';
+      } else if(res.status===429){
+        throw new Error('Too many attempts. Please wait a few minutes and try again.');
       } else {
         throw new Error(json.error||'Failed to join.');
       }
     }catch(err){
       status.className='status err';
-      status.textContent=err.message||'Something went wrong. Please try again.';
+      status.textContent=(err.name==='AbortError')
+        ? 'This is taking too long — please check your connection and try again.'
+        : (err.message||'Something went wrong. Please try again.');
       btn.disabled=false;btn.textContent='Join the Robotics Club →';
+    }finally{
+      clearTimeout(timeoutId);
     }
   });
 

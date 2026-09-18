@@ -175,6 +175,11 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
+// General abuse ceiling for the whole API (auth endpoints carry their own
+// stricter per-action limits inside their routers).
+const { rateLimit } = require('./middlewares/rateLimit');
+app.use('/api', rateLimit);
+
 // Same for the MCP endpoints (tokens and student data flow there)
 app.use('/mcp', (req, res, next) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');

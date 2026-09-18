@@ -2,88 +2,135 @@
  * middlewares/rateLimit.js
  *
  * PURPOSE:
- *   In-process sliding-window rate limiters (apiLimiter, authLimiter, submitLimiter, …). No Redis:
- *   the design point is a single Node process, so the limiter state lives in memory with periodic
- *   cleanup.
+ *   In-process rate limiters. No Redis: the design point is a single Node process,
+ *   so limiter state lives in memory with periodic cleanup.
  *
- * EXPORTS: rateLimit, authRateLimit
+ *   Design notes (v3 — fixes "2 logins → too many attempts"):
+ *   • Only REAL brute-force signals count: 401 (wrong password), 429 and 5xx.
+ *     Successful logins/signups NEVER burn the budget.
+ *   • Credential endpoints (login/signup) key the bucket on IP + EMAIL, so one
+ *     student's typos can't lock out everyone behind a school NAT IP, and an
+ *     attacker can't lock out a victim by spamming their email either (the IP
+ *     part still catches them).
+ *   • Per-action buckets (login / signup / refresh / magic-link…) instead of one
+ *     shared pool — signing up no longer eats the login budget.
+ *   • Small in-memory hard ceiling per IP as a backstop against pure floods.
+ *
+ * EXPORTS: rateLimit, authRateLimit, createLimiter
  *
  * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
  */
 
 const windowMs = 15 * 60 * 1000; // 15 minutes
-const maxRequests = 100; // per window
 
 const hits = new Map();
 
-// Cleanup old entries periodically
-setInterval(() => {
+function sweep() {
   const now = Date.now();
   for (const [key, entry] of hits) {
-    if (now - entry.start > windowMs) {
-      hits.delete(key);
+    if (now - entry.start > windowMs) hits.delete(key);
+  }
+}
+setInterval(sweep, 60_000).unref?.();
+sweep();
+
+function clientKey(req) {
+  return req.ip || req.connection?.remoteAddress || 'unknown';
+}
+
+/** Feed the security monitor — fire-and-forget, never throws. */
+function reportAbuse(req) {
+  try {
+    const securityService = require('../services/securityService');
+    securityService.recordRateLimitAbuse(req).catch(() => {});
+  } catch { /* monitor unavailable — rate limiting still applies */ }
+}
+
+/**
+ * Limiter factory.
+ * @param {object}  opts
+ * @param {number}  [opts.windowMs]        sliding window length
+ * @param {number}  opts.max               max counted requests per window
+ * @param {string}  opts.prefix            bucket namespace
+ * @param {'all'|'failures'} [opts.countMode] 'failures' = only 401/429/5xx responses count
+ * @param {'ip'|'ip+email'}  [opts.keyMode]  'ip+email' = per-IP-per-account buckets
+ * @param {Function} [opts.keyFrom]         extra key material (falls back to ip+email)
+ */
+function createLimiter({ windowMs: win = windowMs, max = 100, prefix = 'api', countMode = 'all', keyMode = 'ip', keyFrom } = {}) {
+  return function limiter(req, res, next) {
+    if (req.method === 'OPTIONS') return next(); // never throttle CORS preflights
+
+    const ident = keyFrom
+      ? keyFrom(req)
+      : (keyMode === 'ip+email'
+        ? `${clientKey(req)}|${String(req.body?.email || '').trim().toLowerCase()}`
+        : clientKey(req));
+    const key = `${prefix}:${ident}`;
+    const now = Date.now();
+    let entry = hits.get(key);
+
+    if (!entry || now - entry.start > win) {
+      entry = { start: now, count: 0 };
+      hits.set(key, entry);
     }
-  }
-}, 60_000);
 
-function rateLimit(req, res, next) {
-  const key = req.ip || req.connection.remoteAddress || 'unknown';
-  const now = Date.now();
-  const entry = hits.get(key);
+    res.setHeader('X-RateLimit-Limit', max);
+    res.setHeader('X-RateLimit-Remaining', Math.max(0, max - entry.count));
 
-  if (!entry || now - entry.start > windowMs) {
-    hits.set(key, { start: now, count: 1 });
-    res.setHeader('X-RateLimit-Limit', maxRequests);
-    res.setHeader('X-RateLimit-Remaining', maxRequests - 1);
-    return next();
-  }
+    if (entry.count >= max) {
+      reportAbuse(req);
+      res.setHeader('Retry-After', Math.max(1, Math.ceil((win - (now - entry.start)) / 1000)));
+      return res.status(429).json({
+        error: 'Too many attempts. Please wait a few minutes and try again.',
+        retry_after: Math.max(1, Math.ceil((win - (now - entry.start)) / 1000))
+      });
+    }
 
-  entry.count++;
+    if (countMode === 'failures') {
+      // Count ONLY true brute-force signals, after the handler answered:
+      // 401 (wrong credentials) and 429 (already throttled, still hammering).
+      // 5xx are SERVER faults (e.g. Supabase unreachable) — they must never
+      // burn the user's budget; 4xx validation errors are user CORRECTIONS,
+      // not attacks.
+      res.on('finish', () => {
+        const s = res.statusCode;
+        if (s !== 401 && s !== 429) return;
+        const t = Date.now();
+        const e = hits.get(key);
+        if (!e || t - e.start > win) hits.set(key, { start: t, count: 1 });
+        else e.count++;
+      });
+    } else {
+      entry.count++;
+    }
 
-  if (entry.count > maxRequests) {
-    // Feed the security monitor: sustained 429 storms are an abuse signal.
-    // Fire-and-forget so the limiter's hot path stays fast.
-    try {
-      const securityService = require('../services/securityService');
-      securityService.recordRateLimitAbuse(req).catch(() => {});
-    } catch { /* monitor unavailable — rate limiting still applies */ }
-    res.setHeader('X-RateLimit-Limit', maxRequests);
-    res.setHeader('X-RateLimit-Remaining', 0);
-    res.setHeader('Retry-After', Math.ceil((windowMs - (now - entry.start)) / 1000));
-    return res.status(429).json({
-      error: 'Too many requests',
-      message: 'Please try again later.'
-    });
-  }
-
-  res.setHeader('X-RateLimit-Limit', maxRequests);
-  res.setHeader('X-RateLimit-Remaining', maxRequests - entry.count);
-  next();
+    next();
+  };
 }
 
-/* Stricter rate limit for auth endpoints */
+/** General API ceiling — generous; normal usage never touches it. */
+const rateLimit = createLimiter({ max: 600, prefix: 'api', countMode: 'all' });
+
+/* Per-action auth limits — failures only */
+const AUTH_LIMITS = {
+  login: 15,
+  signup: 10,
+  refresh: 40,
+  'reset-password': 6,
+  'magic-link': 6,
+  'resend-confirmation': 4
+};
+
 function authRateLimit(req, res, next) {
-  const key = `auth:${req.ip || 'unknown'}`;
-  const now = Date.now();
-  const entry = hits.get(key);
-  const authMax = 10; // 10 attempts per 15 min
-
-  if (!entry || now - entry.start > windowMs) {
-    hits.set(key, { start: now, count: 1 });
-    return next();
-  }
-
-  entry.count++;
-
-  if (entry.count > authMax) {
-    res.setHeader('Retry-After', Math.ceil((windowMs - (now - entry.start)) / 1000));
-    return res.status(429).json({
-      error: 'Too many authentication attempts',
-      message: 'Please wait before trying again.'
-    });
-  }
-
-  next();
+  const action = (req.path.split('/')[0] || 'other');
+  const max = AUTH_LIMITS[action] ?? 12;
+  const credential = (action === 'login' || action === 'signup');
+  return createLimiter({
+    max,
+    prefix: `auth:${action}`,
+    countMode: 'failures',
+    keyMode: credential ? 'ip+email' : 'ip'
+  })(req, res, next);
 }
 
-module.exports = { rateLimit, authRateLimit };
+module.exports = { rateLimit, authRateLimit, createLimiter };

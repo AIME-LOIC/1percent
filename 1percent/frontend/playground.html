@@ -942,6 +942,7 @@ function renderChallengeInfoPanel(ch) {
     <div class="pg-playground-xnhhr">${esc(ch.description || 'No description')}</div>
     ${ch.expected_output ? '<div class="muted-dark fs-11 mt-8">Expected: <code class="term-chip">' + esc(ch.expected_output) + '</code></div>' : ''}
   `;
+  infoPanel.hidden = false;   // attribute is the single source of truth
   infoPanel.style.display = '';
   // Hint button + panel — only when the challenge has hints
   const hintBtn = document.getElementById('hint-btn');
@@ -949,7 +950,9 @@ function renderChallengeInfoPanel(ch) {
   if (hintBtn && hintPanel) {
     const show = hintCount > 0;
     hintBtn.style.display = show ? 'flex' : 'none';
-    hintPanel.classList.add('hidden');
+    hintPanel.hidden = true;    // collapsed by default (was class-based)
+    hintPanel.classList.remove('hidden');
+    hintPanel.style.display = '';
     hintPanel.innerHTML = '';
     if (show) renderHintPanel(ch);
   }
@@ -965,7 +968,7 @@ async function renderHintPanel(ch) {
   if (!panel || !ch) return;
   panel.innerHTML = '<div class="muted-dark fs-11">Loading hints…</div>';
   const total = Array.isArray(ch.hints) ? ch.hints.length : 0;
-  if (!total) { panel.classList.add('hidden'); return; }
+  if (!total) { panel.hidden = true; return; }
   try {
     const token = (await supabaseClient.auth.getSession()).data.session?.access_token;
     if (!token) {
@@ -1019,11 +1022,11 @@ async function renderHintPanel(ch) {
 function toggleHintPanel() {
   const panel = document.getElementById('hint-panel');
   if (!panel) return;
-  if (panel.style.display === 'none') {
-    panel.style.display = '';
+  // Attribute-based toggle: reliably reflects initial [hidden] markup state
+  panel.hidden = !panel.hidden;
+  if (!panel.hidden) {
+    panel.classList.remove('hidden');
     if (currentChallenge) renderHintPanel(currentChallenge);
-  } else {
-    panel.classList.add('hidden');
   }
 }
 
@@ -1113,7 +1116,7 @@ function switchFile(key) {
       switchPanel('output');
     }
   } else {
-    if (infoPanel) infoPanel.classList.add('hidden');
+    if (infoPanel) { infoPanel.hidden = true; infoPanel.style.display = 'none'; }
   }
 
   if (!openTabs.includes(key)) openTabs.push(key);
@@ -1156,11 +1159,15 @@ function showSidebarTab(tab) {
   document.querySelectorAll('.activity-icon').forEach(i => i.classList.remove('active'));
 
   if (tab === 'explorer') {
+    explorer.hidden = false;
     explorer.style.display = '';
-    challenges.classList.add('hidden');
+    challenges.hidden = true;
+    challenges.style.display = 'none';
     document.getElementById('act-explorer').classList.add('active');
   } else if (tab === 'challenges') {
-    explorer.classList.add('hidden');
+    explorer.hidden = true;
+    explorer.style.display = 'none';
+    challenges.hidden = false;
     challenges.style.display = '';
     document.getElementById('act-challenges').classList.add('active');
   }

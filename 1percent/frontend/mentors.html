@@ -280,7 +280,9 @@ async function init(){
       }
 
       document.getElementById('auth-loading').classList.add('hidden');
-      document.getElementById('main-content').style.display='';
+      const mc = document.getElementById('main-content');
+      mc.hidden = false;          // remove the hidden ATTRIBUTE (style.display='' alone never unhid the page)
+      mc.style.display = '';
       await Promise.all([loadLearners(),loadShares()]);
     }else{denied();}
   }catch(e){console.error('[MENTORS] init error:',e);denied();}
@@ -288,7 +290,9 @@ async function init(){
 
 function denied(){
   document.getElementById('auth-loading').classList.add('hidden');
-  document.getElementById('denied').style.display='';
+  const dn = document.getElementById('denied');
+  dn.hidden = false;
+  dn.style.display = '';
   // Keep the topbar nav visible (guests get the login button there).
 }
 

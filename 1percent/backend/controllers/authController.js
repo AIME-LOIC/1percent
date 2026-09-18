@@ -131,8 +131,16 @@ class AuthController {
       });
     } catch (err) {
       console.error('[AUTH] Magic link error:', err.message);
-      if (err.message?.includes('rate')) {
-        return res.status(429).json({ error: 'Too many emails requested. Please wait a minute and try again.' });
+      // Supabase itself throttles OTP emails per address/project — surface
+      // that honestly (429) instead of a blanket "could not send".
+      if (err.status === 429 || err.code === 'over_request_rate_limit' || /rate limit|too many|wait/i.test(err.message || '')) {
+        return res.status(429).json({
+          error: 'This email was requested recently. Please wait about a minute and try again.',
+          retry_after: 60
+        });
+      }
+      if (/timed out|timeout|fetch failed|ENOTFOUND|ECONNRESET|network/i.test(err.message || '')) {
+        return res.status(504).json({ error: 'The login service is temporarily unreachable. Please try again in a moment.' });
       }
       res.status(500).json({ error: 'Could not send the magic link. Please try again.' });
     }

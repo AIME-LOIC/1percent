@@ -15,6 +15,9 @@
 <style>
 :root{--admin-bg:#f8f9fa;--admin-surface:#ffffff;--admin-card:#ffffff;--admin-border:#e5e7eb;--admin-text:#111827;--admin-muted:#6b7280;--admin-green:#059669;--admin-blue:#2563eb;--admin-yellow:#d97706;--admin-red:#dc2626;--admin-purple:#7c3aed;--admin-accent:#0d6e3f;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+/* admin.html links no main.css — provide the .hidden utility its own JS relies on */
+.hidden{display:none !important;}
+[hidden]{display:none !important;}
 html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:var(--admin-bg);color:var(--admin-text);}
 
 .admin{display:grid;grid-template-columns:240px 1fr;grid-template-rows:56px 1fr;height:100vh;}
@@ -59,6 +62,16 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .stat-ring .ring-txt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;}
 .stat-ring .ring-pct{font-size:11px;font-weight:800;color:var(--admin-text);}
 .stat-ring .ring-cap{font-size:5.5px;font-weight:700;color:var(--admin-muted);text-transform:uppercase;letter-spacing:.4px;margin-top:1px;}
+/* Top-courses circular rings */
+.tc-ring-row{display:flex;flex-wrap:wrap;gap:18px;}
+.tc-ring-item{display:flex;flex-direction:column;align-items:center;gap:4px;width:100px;text-align:center;}
+.tc-ring{position:relative;width:64px;height:64px;}
+.tc-ring svg{width:64px;height:64px;transform:rotate(-90deg);display:block;}
+.tc-ring .ring-bg{fill:none;stroke:#f1f5f9;stroke-width:6;}
+.tc-ring .ring-val{fill:none;stroke-linecap:round;transition:stroke-dashoffset .8s cubic-bezier(.4,0,.2,1);}
+.tc-ring .tc-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--admin-text);}
+.tc-ring-name{font-size:11px;font-weight:600;color:var(--admin-text);line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.tc-ring-count{font-size:10px;color:var(--admin-muted);}
 .stat-card .stat-label{font-size:12px;font-weight:600;color:var(--admin-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
 .stat-card .stat-value{font-size:20px;font-weight:800;color:var(--admin-text);}
 .stat-card .stat-sub{font-size:11px;color:var(--admin-muted);margin-top:2px;}
@@ -1260,18 +1273,30 @@ function renderLevelsChart(levels){
     </div>`;
 }
 
-/* ── Horizontal bar chart — top courses ── */
+/* ── Circular rings — top courses by enrollment ── */
 function renderTopCourses(courses){
   const el=document.getElementById('chart-top-courses');
   if(!el)return;
   if(!courses.length){el.innerHTML='<div class="empty">No enrollments yet.</div>';return;}
-  const max=Math.max(...courses.map(c=>c.enrollments),1);
   const colors=['#0d6e3f','#059669','#10b981','#34d399','#6ee7b7','#a7f3d0'];
-  el.innerHTML=courses.map((c,i)=>`
-    <div class="mb-12">
-      <div class="pg-admin-gc0zj"><b>${escHtml(c.title)}</b><span class="adm-muted">${c.enrollments}</span></div>
-      <div class="pg-admin-buubb"><div class="meter-fill" data-dynwidth="${Math.max(4,(c.enrollments/max)*100)}" data-dynbg="${colors[i%colors.length]}"></div></div>
-    </div>`).join('');
+  const max=Math.max(...courses.map(c=>c.enrollments),1);
+  const R=26,CIRC=2*Math.PI*R;
+  el.innerHTML='<div class="tc-ring-row">'+courses.map((c,i)=>{
+    const pct=Math.min(100,Math.round((c.enrollments/max)*100));
+    const color=colors[i%colors.length];
+    return `
+    <div class="tc-ring-item" title="${escHtml(c.title)} — ${c.enrollments} enrolled (${pct}% of top course)">
+      <div class="tc-ring">
+        <svg viewBox="0 0 64 64">
+          <circle class="ring-bg" cx="32" cy="32" r="26"/>
+          <circle class="ring-val" cx="32" cy="32" r="26" style="stroke:${color};stroke-dasharray:${CIRC.toFixed(2)};stroke-dashoffset:${(CIRC*(1-pct/100)).toFixed(2)};"/>
+        </svg>
+        <span class="tc-pct">${c.enrollments}</span>
+      </div>
+      <span class="tc-ring-name">${escHtml(c.title)}</span>
+      <span class="tc-ring-count">${c.enrollments} enrolled</span>
+    </div>`;
+  }).join('')+'</div>';
 }
 
 /* ════════════════════════════════════════════════
@@ -1402,9 +1427,15 @@ let allLogErrors=[], allLogActivity=[], allLogAlerts=[];
 function switchLogTab(tab){
   logTab=tab;
   document.querySelectorAll('.log-tab').forEach(b=>b.classList.toggle('active',b.dataset.logtab===tab));
-  document.getElementById('log-tab-errors').style.display=tab==='errors'?'':'none';
-  document.getElementById('log-tab-activity').style.display=tab==='activity'?'':'none';
-  document.getElementById('log-tab-alerts').style.display=tab==='alerts'?'':'none';
+  // Tabs ship with the hidden ATTRIBUTE (log-tab-activity/alerts) — style.display
+  // alone can't reveal them, so sync both.
+  [['log-tab-errors','errors'],['log-tab-activity','activity'],['log-tab-alerts','alerts']].forEach(([id,name])=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    const show=(name===tab);
+    el.hidden=!show;
+    el.style.display=show?'':'none';
+  });
 }
 
 async function loadLogsPanel(force){
@@ -2735,7 +2766,9 @@ let signActiveTab='draw',signUploadedUrl=null;
 const signCanvas=document.getElementById('modal-sign-canvas');const signCtx=signCanvas?.getContext('2d');let signDrawing=false,signLastX=0,signLastY=0;
 
 function openSignModal(){
-  document.getElementById('sign-modal').classList.remove('hidden');
+  const sm = document.getElementById('sign-modal');
+  sm.classList.remove('hidden');
+  sm.hidden = false;   // markup ships with the hidden ATTRIBUTE — clear it too
   document.getElementById('modal-sign-name').value=document.getElementById('admin-name').textContent||'';
   setupModalCanvas();
   loadExistingSignature();
