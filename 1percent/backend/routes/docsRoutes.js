@@ -1,18 +1,9 @@
-/**
- * routes/docsRoutes.js
- *
- * PURPOSE:
- *   Serves the developer API docs page.
- *
- * ENDPOINTS:
- *   GET /readme
- *   GET /endpoints
- *
- * EXPORTS: router
- * DEPENDENCIES: express
- *
- * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
- */
+/* ============================================================
+   Docs Routes — API Documentation & Project README
+   ============================================================
+   GET  /api/docs/readme      — Project overview & API docs
+   GET  /api/docs/endpoints   — List all API endpoints
+   ============================================================ */
 
 const { Router } = require('express');
 
@@ -31,9 +22,9 @@ router.get('/readme', (req, res) => {
       version: '1.0.0',
       license: 'UNLICENSED',
       author: '1percent Rwanda',
-      website: 'https://1percentrwanda.com',
+      website: 'https://1percent.rw',
       learn_platform: 'https://learn.1percent.rw',
-      repository: 'https://github.com/1percent-digital/1percent'
+      repository: 'https://github.com/AIME-LOIC/1percent'
     },
     stack: {
       backend: 'Node.js + Express',

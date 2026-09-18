@@ -408,6 +408,83 @@ const WHITELIST = new Set(
 );
 function isWhitelisted(ipHash) { return WHITELIST.has(ipHash); }
 
+/* ── Block management (admin API + CLI) ────────────────────
+   The strike system previously had no unblock path: an admin who
+   tripped the alarm (or a school NAT that ate one) stayed locked out
+   for up to 24h with no recourse. These helpers clear blocks in BOTH
+   stores — memory first (hot path reads it for 30s), then the DB. */
+
+/** All currently-blocked IPs: DB rows + any newer memory-only blocks. */
+async function listBlocks() {
+  const now = Date.now();
+  const blocks = [];
+
+  // In-memory strikes/blocks (covers DB being down or a block that is
+  // newer than the last DB write)
+  for (const [ipHash, s] of strikeMemory) {
+    const blockedUntil = s.blockedUntil && s.blockedUntil > now ? s.blockedUntil : null;
+    blocks.push({ ip_hash: ipHash, blocked_until: blockedUntil ? new Date(blockedUntil).toISOString() : null, strikes: s.strikes, source: 'memory' });
+  }
+
+  if (adminClient) {
+    try {
+      const { data, error } = await adminClient.from('ip_blocklist')
+        .select('ip_hash, ip_preview, reason, blocked_until')
+        .gt('blocked_until', new Date().toISOString());
+      if (!error && Array.isArray(data)) {
+        for (const row of data) {
+          const mem = blocks.find(b => b.ip_hash === row.ip_hash);
+          if (mem) { mem.ip_preview = row.ip_preview; mem.reason = row.reason; mem.source = 'db+memory'; }
+          else blocks.push({ ip_hash: row.ip_hash, ip_preview: row.ip_preview, reason: row.reason, blocked_until: row.blocked_until, strikes: null, source: 'db' });
+        }
+      }
+    } catch (e) {
+      console.warn('[SECURITY] listBlocks DB query failed:', e.message);
+    }
+  }
+
+  return blocks;
+}
+
+/**
+ * Lift a block. `ipPlain` is the RAW IP (IPv4/IPv6) — we hash it the same
+ * way the monitor does. When called from the HTTP API the raw IP never
+ * leaves the server; the CLI passes it locally.
+ * Returns { found, cleared } so the caller can tell "nothing to clear".
+ */
+async function unblockIp(ipPlain) {
+  const ipHash = logService.hashIp(String(ipPlain || '').trim());
+  if (!ipHash) return { found: false, cleared: false };
+
+  let found = false;
+
+  // Memory: clear the block AND the strike count (otherwise the next
+  // single strike re-blocks immediately at the escalated duration).
+  if (strikeMemory.has(ipHash)) {
+    const cur = strikeMemory.get(ipHash);
+    found = found || !!cur.blockedUntil;
+    strikeMemory.set(ipHash, { strikes: 0, blockedUntil: null });
+  }
+  if (blockCache.has(ipHash)) {
+    blockCache.set(ipHash, { blockedUntil: null, checkedAt: Date.now() });
+  }
+
+  // DB row (persisted blocks survive restarts)
+  if (adminClient) {
+    try {
+      const { data, error } = await adminClient.from('ip_blocklist')
+        .delete()
+        .eq('ip_hash', ipHash)
+        .select();
+      if (!error && Array.isArray(data)) found = found || data.length > 0;
+    } catch (e) {
+      console.warn('[SECURITY] unblockIp DB delete failed:', e.message);
+    }
+  }
+
+  return { found, cleared: true };
+}
+
 module.exports = {
   RULES,
   scanRequest,
@@ -418,6 +495,8 @@ module.exports = {
   recordAttack,
   recordRateLimitAbuse,
   previewIp,
+  listBlocks,
+  unblockIp,
   // exposed for tests
   _internals: { strikeMemory, blockCache, alertThrottle, notifThrottle, BLOCK_THRESHOLD }
 };

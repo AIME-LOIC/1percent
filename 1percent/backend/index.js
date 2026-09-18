@@ -304,12 +304,14 @@ app.get('/', (req, res) => {
    API ROUTES
    ============================================================ */
 
-// Health check
+// Health check — also echoes the caller's IP (as the server sees it) so a
+// blocked/locked-out admin can copy the exact address for whitelist/unblock.
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    env: process.env.NODE_ENV || 'development'
+    env: process.env.NODE_ENV || 'development',
+    your_ip: req.ip || req.connection?.remoteAddress || null
   });
 });
 

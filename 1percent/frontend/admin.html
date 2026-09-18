@@ -461,6 +461,10 @@ tr.log-fatal:hover td{background:#feeeee !important;}
         Logs & Errors
         <span id="logs-unread-badge" class="pg-admin-uj9nk" hidden></span>
       </a>
+      <a class="sidebar-item" data-panel="security" onclick="showPanel('security')">
+        <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg></span>
+        Security
+      </a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-label">Tools</div>
@@ -960,6 +964,26 @@ tr.log-fatal:hover td{background:#feeeee !important;}
           </div>
           <div id="club-schools-list" class="mt-12 flex-row flex-row-wrap"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- Security Panel (blocked IPs / WAF strikes) -->
+    <div class="panel" id="panel-security">
+      <h1>Security</h1>
+      <p class="subtitle">IPs blocked by the security monitor (payload strikes, rate-limit storms). Blocks expire on their own — lift them here if one is wrong.</p>
+      <div class="card">
+        <div class="card-header"><h2>Blocked IPs</h2><button class="btn-admin outline" onclick="loadBlockedIps()">Refresh</button></div>
+        <div class="card-body" style="border-bottom:1px solid var(--admin-border)">
+          <div class="flex-row flex-row-wrap">
+            <input id="unblock-ip-input" placeholder="Full IP to unblock, e.g. 102.89.34.10" class="pg-admin-tgqj5" style="max-width:320px">
+            <button class="btn-admin primary" onclick="unblockIpFromInput()">Unblock IP</button>
+          </div>
+          <p class="adm-t12-muted" style="margin-top:8px">IPs are stored hashed, so the table shows only a masked preview. Check your server logs (or search “what is my IP” from the affected network) and type the full address above.</p>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>IP (masked)</th><th>Strikes</th><th>Reason</th><th>Blocked until</th><th>Source</th></tr></thead>
+          <tbody id="blocks-tbody"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody>
+        </table>
       </div>
     </div>
   </main>
@@ -1924,7 +1948,7 @@ function showPanel(name){
   if(!panelEl)return;
   panelEl.classList.add('active');
   document.querySelectorAll('.sidebar-item').forEach(a=>{a.classList.toggle('active',a.dataset.panel===name);});
-  const titles={dashboard:'Dashboard',courses:'Courses',lessons:'Lessons',quizzes:'Quizzes',challenges:'Challenges',aiReviews:'AI Reviews',enrollments:'Enrollments',mentors:'Mentors',logs:'Logs & Errors',notifications:'Notifications',testimonials:'Testimonials','robotics-club':'Robotics Club'};
+  const titles={dashboard:'Dashboard',courses:'Courses',lessons:'Lessons',quizzes:'Quizzes',challenges:'Challenges',aiReviews:'AI Reviews',enrollments:'Enrollments',mentors:'Mentors',logs:'Logs & Errors',security:'Security',notifications:'Notifications',testimonials:'Testimonials','robotics-club':'Robotics Club'};
   document.getElementById('topbar-section-title').textContent=titles[name]||name;
   if(name==='dashboard')loadAnalytics();
   if(name==='quizzes')loadQuizzes();
@@ -1934,6 +1958,41 @@ function showPanel(name){
   if(name==='robotics-club')loadClubPanel();
   if(name==='lessons'){const sel=document.getElementById('lesson-course-select');if(sel.options.length>1&&!sel.value){sel.value=sel.options[1].value;}if(sel.value)loadLessons();}
   if(name==='logs')loadLogsPanel();
+  if(name==='security')loadBlockedIps();
+}
+
+/* ═════════════════════════════════════════════════
+   SECURITY — blocked IPs (list + unblock)
+   ═════════════════════════════════════════════════ */
+async function loadBlockedIps(){
+  const tbody=document.getElementById('blocks-tbody');
+  if(!tbody)return;
+  tbody.innerHTML='<tr><td colspan="5" class="empty">Loading…</td></tr>';
+  try{
+    const res=await apiFetch('/api/admin/security/blocks');
+    const j=await res.json().catch(()=>({}));
+    if(!res.ok||!j.success){tbody.innerHTML='<tr><td colspan="5" class="empty">Failed to load blocked IPs.</td></tr>';return;}
+    const blocks=Array.isArray(j.blocks)?j.blocks:[];
+    if(!blocks.length){tbody.innerHTML='<tr><td colspan="5" class="empty">No IPs are currently blocked. ✅</td></tr>';return;}
+    tbody.innerHTML=blocks.map(b=>{
+      const preview=b.ip_preview||('<span class="adm-code-chip">'+esc(String(b.ip_hash||'').slice(0,10))+'…</span>');
+      const until=b.blocked_until?esc(new Date(b.blocked_until).toLocaleString()):'—';
+      return '<tr><td class="adm-t12-muted">'+preview+'</td><td>'+(b.strikes??'—')+'</td><td class="adm-t12-muted">'+esc(b.reason||'—')+'</td><td class="adm-t12-muted">'+until+'</td><td>'+esc(b.source||'—')+'</td></tr>';
+    }).join('');
+  }catch(e){
+    tbody.innerHTML='<tr><td colspan="5" class="empty">Failed to load blocked IPs.</td></tr>';
+  }
+}
+async function unblockIpFromInput(){
+  const input=document.getElementById('unblock-ip-input');
+  const ip=(input?.value||'').trim();
+  if(!ip){Toast.error('Enter the IP address to unblock.');return;}
+  try{
+    const res=await apiFetch('/api/admin/security/unblock',{method:'POST',body:JSON.stringify({ip})});
+    const j=await res.json().catch(()=>({}));
+    if(res.ok&&j.success){Toast.success(j.message||'IP unblocked.');if(input)input.value='';loadBlockedIps();}
+    else Toast.error(j.error||'Failed to unblock.');
+  }catch(e){Toast.error('Failed to unblock.');}
 }
 
 // ── Testimonials ──────────────────────────────────

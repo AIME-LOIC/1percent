@@ -39,6 +39,50 @@ router.use(authenticate, requireAdmin);
 // Analytics (dashboard charts)
 router.get('/analytics', (req, res, next) => analyticsController.getOverview(req, res, next));
 
+/* ── Security: IP blocklist management ─────────────────────
+   The WAF strike system (5 strikes → 1h/6h/24h block) previously had
+   NO unblock path — an admin tripping it themselves was locked out of
+   the admin panel too. These endpoints let an admin review and lift
+   blocks. IPs are only ever listed hashed/masked; the raw IP is sent
+   BY the admin to unblock and never echoed back. */
+router.get('/security/blocks', async (req, res) => {
+  try {
+    const securityService = require('../services/securityService');
+    const blocks = await securityService.listBlocks();
+    res.json({ success: true, blocks });
+  } catch (err) {
+    console.error('[ADMIN] Security blocks error:', err.message);
+    res.status(500).json({ error: 'Failed to load blocked IPs.' });
+  }
+});
+
+router.post('/security/unblock', async (req, res) => {
+  try {
+    const ip = String(req.body?.ip || '').trim();
+    // Loose sanity check: IPv4, IPv6, or IPv6-mapped IPv4 — we only need
+    // to stop obvious garbage before it reaches the hasher.
+    if (!ip || ip.length > 45 || !/^[0-9a-fA-F:.]+$/.test(ip)) {
+      return res.status(400).json({ error: 'Provide a valid IP address (e.g. 102.89.34.10).' });
+    }
+    const securityService = require('../services/securityService');
+    const result = await securityService.unblockIp(ip);
+
+    // Audit trail — who lifted what, without recording the raw IP.
+    require('../services/logService').createAdminAlert({
+      title: '🔓 IP block lifted',
+      message: `${securityService.previewIp(ip)} unblocked by admin ${req.user?.email || req.user?.id || 'unknown'} (found: ${result.found})`,
+      type: 'security',
+      severity: 'low',
+      source: 'admin-panel'
+    }).catch(() => {});
+
+    res.json({ success: true, found: result.found, message: result.found ? 'IP unblocked.' : 'No active block found for that IP.' });
+  } catch (err) {
+    console.error('[ADMIN] Unblock error:', err.message);
+    res.status(500).json({ error: 'Failed to unblock IP.' });
+  }
+});
+
 // Courses
 router.get('/courses', (req, res, next) => adminController.getAllCourses(req, res, next));
 router.post('/courses', sanitizeStrings(2000), (req, res, next) => adminController.createCourse(req, res, next));
