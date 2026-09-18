@@ -116,4 +116,50 @@ router.post('/send-onboarding-notifications', async (req, res) => {
   }
 });
 
+// ── Email Users (admin broadcast) ─────────────────────────
+// Quick emails to user segments (429 apology, verification nudges…)
+// via the Brevo REST API. GET returns audience sizes + templates so the
+// panel can preview before sending.
+router.get('/email/stats', async (req, res) => {
+  try {
+    const emailService = require('../services/emailService');
+    const [stats, templates] = await Promise.all([
+      emailService.getAudienceStats(),
+      Promise.resolve(emailService.getTemplates())
+    ]);
+    res.json({ success: true, stats, templates });
+  } catch (err) {
+    console.error('[ADMIN] Email stats error:', err.message);
+    res.status(500).json({ error: 'Failed to load email stats.' });
+  }
+});
+
+router.post('/email/broadcast', async (req, res) => {
+  try {
+    const { audience, subject, body, dryRun } = req.body || {};
+    const emailService = require('../services/emailService');
+
+    // Audit BEFORE sending: who sent what, to whom (counts only).
+    const result = await emailService.sendBroadcast({
+      audience: String(audience || 'all'),
+      subject: String(subject || ''),
+      body: String(body || ''),
+      dryRun: !!dryRun
+    });
+
+    require('../services/logService').createAdminAlert({
+      title: dryRun ? `📧 Broadcast preview: ${result.total} recipients` : `📧 Broadcast sent to ${result.sent} users`,
+      message: `Audience: ${audience} · Subject: "${String(subject).slice(0, 80)}" · failed: ${result.failed} (by ${req.user?.email || req.user?.id || 'unknown'})`,
+    type: 'security',
+      severity: 'low',
+      source: 'admin-panel'
+    }).catch(() => {});
+
+    res.json({ success: true, ...result, dryRun: !!dryRun });
+  } catch (err) {
+    console.error('[ADMIN] Broadcast error:', err.message);
+    res.status(400).json({ error: err.message || 'Broadcast failed.' });
+  }
+});
+
 module.exports = router;

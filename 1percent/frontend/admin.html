@@ -465,6 +465,10 @@ tr.log-fatal:hover td{background:#feeeee !important;}
         <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg></span>
         Security
       </a>
+      <a class="sidebar-item" data-panel="email-users" onclick="showPanel('email-users')">
+        <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
+        Email Users
+      </a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-label">Tools</div>
@@ -984,6 +988,38 @@ tr.log-fatal:hover td{background:#feeeee !important;}
           <thead><tr><th>IP (masked)</th><th>Strikes</th><th>Reason</th><th>Blocked until</th><th>Source</th></tr></thead>
           <tbody id="blocks-tbody"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody>
         </table>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-email-users">
+      <h1>Email Users</h1>
+      <p class="subtitle">Quick broadcast emails to user segments via Brevo. Sends in chunks of 50 — watch your Brevo daily quota (300/day free tier).</p>
+      <div class="card">
+        <div class="card-header"><h2>Compose</h2><button class="btn-admin outline" onclick="loadEmailStats()">Refresh counts</button></div>
+        <div class="card-body">
+          <div class="flex-row flex-row-wrap" style="gap:8px;margin-bottom:12px" id="email-templates"></div>
+          <div class="flex-row flex-row-wrap" style="gap:8px;margin-bottom:12px">
+            <select id="email-audience" class="adm-input" style="max-width:260px">
+              <option value="all">All users</option>
+              <option value="active">Confirmed / logged-in users</option>
+              <option value="premium">Premium subscribers</option>
+              <option value="recent">Signed up last 7 days</option>
+            </select>
+            <span id="email-audience-count" class="adm-t12-muted">—</span>
+          </div>
+          <input id="email-subject" placeholder="Subject" class="adm-input w-100" style="margin-bottom:12px">
+          <textarea id="email-body" rows="9" placeholder="Message — {{name}} becomes each user's name" class="adm-input w-100"></textarea>
+          <p class="adm-t12-muted" style="margin:8px 0 12px">Variables: {{name}}, {{email}} · HTML is escaped; blank lines become paragraphs.</p>
+          <div class="flex-row flex-row-wrap" style="gap:8px">
+            <button class="btn-admin outline" onclick="previewBroadcast()">Preview</button>
+            <button class="btn-admin outline" onclick="sendBroadcast(true)">Count only (dry run)</button>
+            <button class="btn-admin primary" onclick="sendBroadcast(false)">Send to audience</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h2>Preview</h2></div>
+        <div class="card-body" id="email-preview" style="color:var(--admin-text-muted)">Compose a message and click Preview.</div>
       </div>
     </div>
   </main>
@@ -1995,6 +2031,78 @@ async function unblockIpFromInput(){
   }catch(e){Toast.error('Failed to unblock.');}
 }
 
+// ── Email Users (admin broadcast) ─────────────────────────
+let emailStatsCache=null;
+
+async function loadEmailStats(){
+  const countEl=document.getElementById('email-audience-count');
+  const tplEl=document.getElementById('email-templates');
+  if(countEl)countEl.textContent='Loading counts…';
+  try{
+    const res=await apiFetch('/api/admin/email/stats');
+    const j=await res.json().catch(()=>({}));
+    if(!res.ok||!j.success){if(countEl)countEl.textContent='Failed to load counts.';return;}
+    emailStatsCache=j.stats||{};
+    // Template chips
+    if(tplEl){
+      tplEl.innerHTML=Object.entries(j.templates||{}).map(([k,t])=>
+        `<button class="btn-admin outline" onclick="applyEmailTemplate('${k}')">${esc(t.label)}</button>`
+      ).join(' ');
+    }
+    updateEmailAudienceCount();
+  }catch(e){if(countEl)countEl.textContent='Failed to load counts.';}
+}
+
+function updateEmailAudienceCount(){
+  const sel=document.getElementById('email-audience');
+  const countEl=document.getElementById('email-audience-count');
+  if(!sel||!countEl||!emailStatsCache)return;
+  const n=emailStatsCache[sel.value];
+  countEl.textContent=(typeof n==='number')?`${n.toLocaleString()} recipient${n===1?'':'s'}`:'—';
+}
+
+function applyEmailTemplate(key){
+  const t=(window.__emailTemplates||{})[key];
+  if(!t)return;
+  document.getElementById('email-subject').value=t.subject||'';
+  document.getElementById('email-body').value=t.body||'';
+}
+
+function previewBroadcast(){
+  const body=document.getElementById('email-body').value;
+  const preview=document.getElementById('email-preview');
+  if(!body.trim()){preview.textContent='Write a message first.';return;}
+  const sample=body
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\{\{name\}\}/g,'Amina (sample)')
+    .replace(/\{\{email\}\}/g,'amina@example.rw')
+    .replace(/\n{2,}/g,'</p><p>')
+    .replace(/\n/g,'<br>');
+  preview.innerHTML='<p>'+sample+'</p>';
+}
+
+async function sendBroadcast(dryRun){
+  const audience=document.getElementById('email-audience')?.value||'all';
+  const subject=document.getElementById('email-subject')?.value.trim();
+  const body=document.getElementById('email-body')?.value.trim();
+  if(!subject){Toast.error('Write a subject first.');return;}
+  if(!body){Toast.error('Write a message first.');return;}
+  if(!dryRun){
+    const n=(emailStatsCache||{})[audience];
+    const est=(typeof n==='number')?n:'all matching users';
+    if(!confirm(`Send "${subject}" to ${est}? This cannot be undone.`))return;
+  }
+  try{
+    const res=await apiFetch('/api/admin/email/broadcast',{method:'POST',body:JSON.stringify({audience,subject,body,dryRun})});
+    const j=await res.json().catch(()=>({}));
+    if(res.ok&&j.success){
+      if(j.dryRun)Toast.success(`Preview: ${j.total} recipients in ${j.chunks||0} chunks.`);
+      else Toast.success(`Sent to ${j.sent} users${j.failed?` — ${j.failed} FAILED`:''}.`);
+      loadEmailStats();
+    } else Toast.error(j.error||'Broadcast failed.');
+  }catch(e){Toast.error('Broadcast failed — is BREVO_API_KEY configured?');}
+}
+
 // ── Testimonials ──────────────────────────────────
 let testimonialsLoaded=false;
 
@@ -2760,6 +2868,7 @@ window.showPanel = function(name) {
     loadNotificationHistory();
     loadUsersForNotifications();
   }
+  if (name === 'email-users') loadEmailStats();
 };
 
 document.addEventListener('DOMContentLoaded', init);
