@@ -6,8 +6,12 @@
  *   so limiter state lives in memory with periodic cleanup.
  *
  *   Design notes (v3 — fixes "2 logins → too many attempts"):
- *   • Only REAL brute-force signals count: 401 (wrong password), 429 and 5xx.
- *     Successful logins/signups NEVER burn the budget.
+ *   • Only REAL brute-force signals count: 401 (wrong password).
+ *     Successful logins/signups NEVER burn the budget. 429 from an UPSTREAM
+ *     service (e.g. Supabase email quota) is a SERVER fault — the client
+ *     must not pay for it, and it must not feed the abuse-strike system.
+ *     (Clients hammering an already-throttled limiter are handled at the
+ *     rejection site via reportAbuse, so no finish-hook counting needed.)
  *   • Credential endpoints (login/signup) key the bucket on IP + EMAIL, so one
  *     student's typos can't lock out everyone behind a school NAT IP, and an
  *     attacker can't lock out a victim by spamming their email either (the IP
@@ -84,17 +88,15 @@ function createLimiter({ windowMs: win = windowMs, max = 100, prefix = 'api', co
         error: 'Too many attempts. Please wait a few minutes and try again.',
         retry_after: Math.max(1, Math.ceil((win - (now - entry.start)) / 1000))
       });
-    }
-
-    if (countMode === 'failures') {
+    }      if (countMode === 'failures') {
       // Count ONLY true brute-force signals, after the handler answered:
-      // 401 (wrong credentials) and 429 (already throttled, still hammering).
-      // 5xx are SERVER faults (e.g. Supabase unreachable) — they must never
-      // burn the user's budget; 4xx validation errors are user CORRECTIONS,
-      // not attacks.
+      // 401 (wrong credentials). Everything else is either a user CORRECTION
+      // (4xx validation), a SERVER fault (5xx, upstream 429 like Supabase's
+      // email quota) or traffic shaping — none of it may burn the user's
+      // budget or cascade into a WAF strike.
       res.on('finish', () => {
         const s = res.statusCode;
-        if (s !== 401 && s !== 429) return;
+        if (s !== 401) return;
         const t = Date.now();
         const e = hits.get(key);
         if (!e || t - e.start > win) hits.set(key, { start: t, count: 1 });

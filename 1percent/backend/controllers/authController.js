@@ -72,8 +72,21 @@ class AuthController {
 
       // Supabase rate limit — a blind 500 hides the real problem and the
       // client has no way to know retrying is pointless right now.
-      if (err.status === 429 || err.code === 'over_request_rate_limit' || /rate limit/i.test(err.message || '')) {
-        return res.status(429).json({ error: 'Too many signup attempts. Please wait a minute and try again.' });
+      // TWO different limits live here:
+      //  • over_email_send_rate_limit — the confirmation-EMAIL quota. With the
+      //    built-in Supabase email provider it is ~2 emails/HOUR PROJECT-WIDE,
+      //    so it fires even for brand-new email addresses.
+      //  • over_request_rate_limit — ~30 signup requests / 5 min per source
+      //    IP, and since the backend calls Supabase server-side, ALL users
+      //    share the server's IP bucket.
+      if (err.code === 'over_email_send_rate_limit' || /email rate limit/i.test(err.message || '')) {
+        return res.status(429).json({
+          error: 'Verification-email quota used up (built-in Supabase mailer: ~2 emails/hour). Your account is not lost — try again after the quota resets, or configure custom SMTP.',
+          code: 'email_quota'
+        });
+      }
+      if (err.status === 429 || err.code === 'over_request_rate_limit' || /rate limit|too many/i.test(err.message || '')) {
+        return res.status(429).json({ error: 'Too many signup attempts. Please wait a minute and try again.', code: 'rate_limited' });
       }
       if (/timed out|timeout|fetch failed|ENOTFOUND|ECONNRESET|network/i.test(err.message || '')) {
         return res.status(504).json({ error: 'The signup service is temporarily unreachable. Please try again in a moment.' });
@@ -161,6 +174,12 @@ class AuthController {
       });
     } catch (err) {
       console.error('[AUTH] Resend confirmation error:', err.message);
+      if (err.code === 'over_email_send_rate_limit' || err.status === 429 || /rate limit|too many/i.test(err.message || '')) {
+        return res.status(429).json({
+          error: 'Email quota reached (built-in Supabase mailer: ~2 emails/hour). Wait for the quota to reset, or configure custom SMTP.',
+          code: 'email_quota'
+        });
+      }
       res.status(500).json({ error: 'Could not send the email. Please try again.' });
     }
   }
