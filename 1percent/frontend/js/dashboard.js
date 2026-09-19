@@ -120,9 +120,12 @@ const Dashboard = {
     document.getElementById('skel-greeting').style.display = 'none';
     document.getElementById('skel-subtitle').style.display = 'none';
     const greetEl = document.getElementById('dash-greeting-text');
+    greetEl.hidden = false;             // markup ships with the [hidden] attribute — inline display can't beat it
     greetEl.style.display = '';
     greetEl.textContent = `Welcome back, ${name}`;
-    document.getElementById('dash-subtitle-text').style.display = '';      // Apply the membership tier theme (free / pro / pro+) + badge
+    const subEl = document.getElementById('dash-subtitle-text');
+    subEl.hidden = false;
+    subEl.style.display = '';      // Apply the membership tier theme (free / pro / pro+) + badge
     this._applyTierTheme();
 
     // Fetch enrolled courses (shows enrolled skeletons while loading)
@@ -240,6 +243,7 @@ const Dashboard = {
         const count = s.streak || 0;
         // Always show the streak badge — 0 with a nudge is more motivating
         // than hiding it (the old code hid the badge at 0).
+        streakEl.hidden = false;      // markup ships with the [hidden] attribute
         streakEl.style.display = 'inline-flex';
         streakEl.querySelector('.dash-streak-count').textContent = count;
         if (count === 0) {

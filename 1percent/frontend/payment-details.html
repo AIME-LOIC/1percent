@@ -426,6 +426,7 @@
         const data = await res.json();
         if (data.success && data.tier) {
           const tierEl = document.getElementById('current-tier');
+          tierEl.hidden = false;        // markup ships with the [hidden] attribute
           tierEl.classList.remove('hidden');
           document.getElementById('current-tier-name').textContent = data.tier.name || data.tier.slug || 'Free';
 
@@ -558,7 +559,9 @@
 
           document.getElementById('share-link-input').value = shareUrl;
           document.getElementById('whatsapp-link').href = `https://wa.me/?text=${encodeURIComponent('Please pay for my ' + plans[planSlug].name + ' subscription at 1% Expert Programme: ' + shareUrl)}`;
-          document.getElementById('share-link-box').classList.remove('hidden');
+          const shareBox = document.getElementById('share-link-box');
+          shareBox.hidden = false;      // markup ships with the [hidden] attribute
+          shareBox.classList.remove('hidden');
           btn.textContent = 'Share Another Link';
           btn.disabled = false;
         } else {

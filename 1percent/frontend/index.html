@@ -631,6 +631,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       tab.classList.add('active');
       const isLogin = tab.dataset.tab === 'login';
       loginForm.style.display = isLogin ? '' : 'none';
+      signupForm.hidden = isLogin;      // markup ships with the [hidden] attribute — clear it, don't fight it with display
       signupForm.style.display = isLogin ? 'none' : '';
       document.getElementById('auth-modal-title').textContent = isLogin ? 'Student Login' : 'Create Account';
     });
@@ -769,6 +770,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     e.preventDefault();
     loginForm.classList.add('hidden');
     signupForm.classList.add('hidden');
+    magicForm.hidden = false;          // markup ships with the [hidden] attribute
     magicForm.style.display = '';
     document.getElementById('auth-modal-title').textContent = 'Log in with email';
     document.getElementById('magic-email').focus();

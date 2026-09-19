@@ -921,7 +921,7 @@ let serverFiles = {}; // fileId -> { id, file_name, content, language }
   LoginPopup.setLoggedIn(!!currentUser);
   const gateBtn = document.getElementById('login-gate-btn');
   const dashBtn = document.getElementById('dash-btn');
-  if (gateBtn) gateBtn.style.display = currentUser ? 'none' : '';
+  if (gateBtn) { if (!currentUser) gateBtn.hidden = false; gateBtn.style.display = currentUser ? 'none' : ''; }
   if (dashBtn) dashBtn.style.display = currentUser ? '' : 'none';
   if (!currentUser) LoginPopup.show('lab');
 })();

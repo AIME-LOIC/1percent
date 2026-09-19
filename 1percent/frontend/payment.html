@@ -372,6 +372,7 @@
       if (cancelled && ends) document.getElementById('manage-end-date').textContent = ends;
       document.getElementById('cancel-btn').style.display = cancelled ? 'none' : 'inline-block';
       document.getElementById('resume-btn').style.display = cancelled ? 'inline-block' : 'none';
+      bar.hidden = false;             // markup ships with the [hidden] attribute
       bar.classList.remove('hidden');
     }
 
@@ -445,6 +446,7 @@
         authBtn.textContent = 'Dashboard';
         authBtn.href = (location.hostname==='learn.1percent.rw'?'/dashboard':'/learn/dashboard');
         userName.textContent = user.user_metadata?.full_name || user.email;
+        userName.hidden = false;      // markup ships with the [hidden] attribute
         userName.style.display = 'inline';
         // Show current tier badge
         showCurrentTier();

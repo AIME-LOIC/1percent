@@ -289,7 +289,9 @@ document.getElementById('onboard-finish')?.addEventListener('click',async()=>{
 
     // Show done state
     document.querySelectorAll('.onboard-step').forEach(s=>s.classList.add('hidden'));
-    document.getElementById('onboard-done').classList.remove('hidden');
+    const doneEl = document.getElementById('onboard-done');
+    doneEl.hidden = false;          // markup ships with the [hidden] attribute
+    doneEl.classList.remove('hidden');
     document.getElementById('onboard-progress').classList.add('hidden');
   }catch(e){
     Toast.error?.('Failed to save: '+e.message);

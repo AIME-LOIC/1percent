@@ -800,7 +800,7 @@ document.querySelectorAll('.settings-nav-item').forEach(item => {
     item.classList.add('active');
     document.querySelectorAll('.settings-tab').forEach(t => t.classList.add('hidden'));
     const target = document.getElementById('tab-' + tab);
-    if (target) target.style.display = '';
+    if (target) { target.hidden = false; target.style.display = ''; }  // markup ships with the [hidden] attribute
   });
 });
 
@@ -820,6 +820,7 @@ async function loadTestimonial() {
     const box = document.getElementById('testimonial-status');
     if (mine) {
       const s = TESTIMONIAL_STATUS_STYLE[mine.status] || TESTIMONIAL_STATUS_STYLE.pending;
+      box.hidden = false;             // markup ships with the [hidden] attribute
       box.classList.remove('hidden');
       box.style.background = s.bg;
       box.style.border = '1px solid ' + s.border;
@@ -1024,6 +1025,7 @@ async function checkMfaStatus() {
       badge.innerHTML = '<span class="mfa-status-dot"></span> Enabled';
       badge.className = 'mfa-status enabled';
       toggleRow.classList.add('hidden');
+      activeArea.hidden = false;      // markup ships with the [hidden] attribute
       activeArea.style.display = '';
       mfaFactorId = data.factors.find(f => f.factor_type === 'totp')?.id;
     } else {
@@ -1043,7 +1045,9 @@ document.getElementById('mfa-enable-btn')?.addEventListener('click', async () =>
     const { data, error } = await supabaseClient.auth.mfa.enroll({ factorType: 'totp', friendlyName: '1% Expert Programme' });
     if (error) throw error;
     mfaFactorId = data.id;
-    document.getElementById('mfa-enrollment').style.display = '';
+    const enrollEl = document.getElementById('mfa-enrollment');
+    enrollEl.hidden = false;          // markup ships with the [hidden] attribute
+    enrollEl.style.display = '';
     document.getElementById('mfa-qr-img').src = data.totp.qr_code;
     document.getElementById('mfa-secret-code').textContent = data.totp.secret;
     document.getElementById('mfa-toggle-row').classList.add('hidden');
@@ -1216,8 +1220,7 @@ document.getElementById('mcp-generate-btn')?.addEventListener('click', async () 
     if (!json.success) throw new Error(json.error || 'Failed');
 
     // Show token + connector URL once
-    document.getElementById('mcp-token-result').style.display = '';
-    document.getElementById('mcp-token-value').textContent = json.token;
+    document.getElementById('mcp-oauth-manual').hidden = false;  // markup ships with the [hidden] attribute
     mcpConnectorUrl = json.connector_url;
     document.getElementById('mcp-connector-url').textContent = mcpConnectorUrl;
 
@@ -1282,7 +1285,7 @@ document.getElementById('mcp-revoke-btn')?.addEventListener('click', async () =>
     }
 
     Toast.success('Disconnected');
-    document.getElementById('mcp-token-result').classList.add('hidden');
+    document.getElementById('mcp-oauth-manual').hidden = true;
     await loadMcpStatus();
   } catch (e) {
     Toast.error('Failed: ' + e.message);

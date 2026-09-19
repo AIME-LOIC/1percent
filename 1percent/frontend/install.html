@@ -622,7 +622,9 @@
       if (compareVersions(latestVersion, '1.0.0') > 0) {
         document.getElementById('version-status').textContent = `New release available: v${latestVersion}`;
         document.getElementById('version-status').className = 'version-status outdated';
-        document.getElementById('update-btn').style.display = 'inline-block';
+        const updBtn = document.getElementById('update-btn');
+        updBtn.hidden = false;        // markup ships with the [hidden] attribute
+        updBtn.style.display = 'inline-block';
       } else {
         document.getElementById('version-status').textContent = "You're up to date!";
         document.getElementById('version-status').className = 'version-status';

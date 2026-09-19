@@ -306,8 +306,10 @@ const certNumber = urlParams.get('number');
         hasUsedFreeView = usageJson.used_free_view || false;
         isPremium = usageJson.is_premium || false;
 
-        document.getElementById('view-count').style.display = 'inline';
-        document.getElementById('view-count').textContent = isPremium ? 'Unlimited views' : (hasUsedFreeView ? '0 free views left' : '1 free view');
+        const viewCount = document.getElementById('view-count');
+        viewCount.hidden = false;     // markup ships with the [hidden] attribute
+        viewCount.style.display = 'inline';
+        viewCount.textContent = isPremium ? 'Unlimited views' : (hasUsedFreeView ? '0 free views left' : '1 free view');
       }
     }
   } catch {}
