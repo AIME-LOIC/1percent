@@ -2123,6 +2123,9 @@ async function loadTestimonials(){
     const badge=document.getElementById('testimonials-pending-count');
     if(badge){badge.textContent=pending;badge.style.display=pending?'':'none';}
     loading.classList.add('hidden');
+    // The list div ships with the HTML `hidden` ATTRIBUTE — style.display alone
+    // cannot reveal it (CSS hidden wins over inline display:''). Must clear both.
+    list.hidden=false;
     list.style.display='';
     if(!items.length){
       list.innerHTML='<div class="adm-empty">No testimonial submissions yet.</div>';
@@ -2172,6 +2175,9 @@ async function loadAiReviews(){
       if(badge){badge.textContent=items.length;badge.style.display=items.length?'':'none';}
     }
     loading.classList.add('hidden');
+    // The list div ships with the HTML `hidden` ATTRIBUTE — style.display alone
+    // cannot reveal it (CSS hidden wins over inline display:''). Must clear both.
+    list.hidden=false;
     list.style.display='';
     if(!items.length){
       list.innerHTML='<div class="adm-empty">No ' + escHtml(status==='all'?'':status) + ' AI reviews.</div>';
