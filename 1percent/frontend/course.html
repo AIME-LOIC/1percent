@@ -1606,6 +1606,33 @@ function reopenLessonFromQuiz(lessonId){
   if(target&&typeof openLesson==='function'){openLesson(target.id);}
 }
 
+/* checkExistingCertificate + renderCertificate were accidentally deleted in
+   commit 824fed7 ("timer") while their call sites in loadCourse/loadProgress
+   stayed. The resulting ReferenceError aborted loadProgress → loadCourse's
+   Promise.all, so the course page showed "Error loading course" and lessons
+   never opened (no lesson content). Restored verbatim from that commit. */
+async function checkExistingCertificate(){
+  const res=await apiFetch('/api/certificates/mine');const json=await res.json();
+  if(json.success&&json.certificates){
+    const cert=json.certificates.find(c=>c.courses?.slug===slug);
+    if(cert)renderCertificate(cert);
+  }
+}
+
+function renderCertificate(cert){
+  const date=cert.completed_at?new Date(cert.completed_at).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}):cert.issued_at?new Date(cert.issued_at).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}):'';
+  document.getElementById('cert-section').innerHTML=`
+    <a href="/certificate?number=${cert.certificate_number}" class="sidebar-cert-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15v2m-6 4h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2zm10-10V7a4 4 0 0 0-8 0v4h8z"/></svg>
+      View Certificate
+    </a>
+    <div style="text-align:center;margin-top:6px;">
+      <button class="footer-btn outline" onclick="downloadCertPdf('${courseData.id}')" style="font-size:11px;padding:4px 10px;">Download PDF</button>
+    </div>`;
+  const statusEl=document.getElementById('quiz-status');
+  if(statusEl){statusEl.textContent='Completed';statusEl.classList.add('pass');}
+}
+
 async function checkCertificate(){
   const res=await apiFetch(`/api/courses/${courseData.id}/certificate`,{method:'POST'});const json=await res.json();
   if(json.success&&json.certificate)renderCertificate(json.certificate);
