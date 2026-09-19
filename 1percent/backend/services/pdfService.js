@@ -587,14 +587,17 @@ class PdfService {
       // on-screen view. Issue date lives in the bottom DATE ISSUED column.
       doc.moveDown(0.4);
       const detailsY = doc.y;
+      // Only print details that have real values (no "0 weeks", no "—"), capitalised,
+      // and centred whatever number of columns remain.
+      const levelRaw = String(cert.course_level || '').trim();
       const detailCols = [
-        { label: 'LEVEL', value: cert.course_level || 'Beginner' },
-        { label: 'DURATION', value: `${cert.duration_weeks || 0} weeks` },
-        { label: 'LESSONS', value: course?.lesson_count != null ? String(course.lesson_count) : '—' }
-      ];
+        levelRaw ? { label: 'LEVEL', value: levelRaw.charAt(0).toUpperCase() + levelRaw.slice(1).toLowerCase() } : null,
+        cert.duration_weeks > 0 ? { label: 'DURATION', value: `${cert.duration_weeks} ${cert.duration_weeks === 1 ? 'week' : 'weeks'}` } : null,
+        course?.lesson_count > 0 ? { label: 'LESSONS', value: String(course.lesson_count) } : null
+      ].filter(Boolean);
       const dColSpan = 150;
       detailCols.forEach((d, i) => {
-        const cx = w / 2 + (i - 1) * dColSpan;
+        const cx = w / 2 + (i - (detailCols.length - 1) / 2) * dColSpan;
         doc.fontSize(7).fillColor('#9ca3af').font('Helvetica')
           .text(d.label, cx - dColSpan / 2, detailsY, { width: dColSpan, align: 'center', characterSpacing: 1.5 });
         doc.fontSize(11).fillColor('#374151').font('Helvetica-Bold')
@@ -673,12 +676,11 @@ class PdfService {
         try {
           doc.image(sigBuffer, sigImgX, sigImgY, { fit: [sigW, sigH], align: 'center', valign: 'bottom' });
         } catch (e) {
-          console.warn('[PDF] Signature image failed, drawing script:', e.message);
-          this._drawScriptSignature(doc, sigX, colW, sigLineY - 2, sigH, signerName);
+          console.warn('[PDF] Signature image failed, leaving line blank:', e.message);
         }
       } else {
-        // No uploaded signature — render a real hand-drawn-style script name
-        this._drawScriptSignature(doc, sigX, colW, sigLineY - 2, sigH, signerName);
+        // No signature on file — leave the signing line blank. Never draw a fake
+        // signature nobody made.
       }
       if (signerName) {
         doc.fontSize(8).fillColor('#374151').font('Helvetica-Bold')
@@ -689,7 +691,7 @@ class PdfService {
 
       // ── Footer ────────────────────────────────────────
       doc.fontSize(7).fillColor('#c4c8cf').font('Helvetica')
-        .text('Verify at: 1percentrwanda.com/certificate  |  1percent Rwanda  |  Kigali, Rwanda', 0, h - 34, { align: 'center', width: w, characterSpacing: 1 });
+        .text(`Verify at: ${(process.env.PUBLIC_BASE_URL || '1percentrwanda.com').replace(/^https?:\/\//, '').replace(/\/$/, '')}/certificate?number=${cert.certificate_number}  |  1percent Rwanda  |  Kigali, Rwanda`, 0, h - 34, { align: 'center', width: w, characterSpacing: 1 });
 
       doc.end();
     });
@@ -741,20 +743,34 @@ class PdfService {
   /**
    * Fetch an image from a URL and return as Buffer
    */
-  _fetchImageBuffer(url) {
+  _fetchImageBuffer(url, depth = 0) {
     return new Promise((resolve, reject) => {
+      // Hardened: https only, 5s timeout, 1MB cap, max 2 redirects — a bad signature
+      // URL must never hang a request or pull arbitrary data into the server.
+      if (depth > 2) return reject(new Error('Too many redirects'));
+      if (!/^https:\/\//i.test(url)) return reject(new Error('Only https signature URLs are allowed'));
       const https = require('https');
-      const http = require('http');
-      const client = url.startsWith('https') ? https : http;
-      client.get(url, (res) => {
+      const req = https.get(url, { timeout: 5000 }, (res) => {
         if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-          return this._fetchImageBuffer(res.headers.location).then(resolve).catch(reject);
+          res.resume();
+          return this._fetchImageBuffer(new URL(res.headers.location, url).href, depth + 1).then(resolve).catch(reject);
+        }
+        if (res.statusCode !== 200) {
+          res.resume();
+          return reject(new Error('HTTP ' + res.statusCode));
         }
         const chunks = [];
-        res.on('data', chunk => chunks.push(chunk));
+        let size = 0;
+        res.on('data', chunk => {
+          size += chunk.length;
+          if (size > 1024 * 1024) { req.destroy(new Error('Signature image too large')); return; }
+          chunks.push(chunk);
+        });
         res.on('end', () => resolve(Buffer.concat(chunks)));
         res.on('error', reject);
-      }).on('error', reject);
+      });
+      req.on('timeout', () => req.destroy(new Error('Signature fetch timed out')));
+      req.on('error', reject);
     });
   }
 }

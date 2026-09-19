@@ -101,16 +101,10 @@ class CertificateController {
       let signatureUrl = null;
       let signerName = null;
       try {
-        // Try certificate owner's signature first
-        const { data: sig } = await adminClient
-          .from('signatures')
-          .select('signature_url')
-          .eq('user_id', cert.user_id)
-          .single();
-        if (sig?.signature_url) {
-          signatureUrl = sig.signature_url;
-        } else {
-          // Fallback: get any admin's signature
+        // The AUTHORIZED signature is an admin's — never the learner's own upload
+        // (otherwise students could sign their own certificates).
+        {
+          // Any admin's signature
           const { data: adminProfile } = await adminClient
             .from('profiles')
             .select('id, full_name')

@@ -27,14 +27,15 @@ class CertificateService {
    * Check if user already has a certificate for a course
    */
   async hasCertificate(userId, courseId) {
+    // limit(1) instead of single(): duplicate rows must not read as "no certificate"
     const { data, error } = await adminClient
       .from('certificates')
       .select('id')
       .eq('user_id', userId)
       .eq('course_id', courseId)
-      .single();
+      .limit(1);
 
-    return !error && !!data;
+    return !error && Array.isArray(data) && data.length > 0;
   }
 
   /**
@@ -44,13 +45,14 @@ class CertificateService {
     // Check if already has certificate
     const has = await this.hasCertificate(userId, courseId);
     if (has) {
-      const { data } = await adminClient
+      const { data: existingRows } = await adminClient
         .from('certificates')
         .select('*')
         .eq('user_id', userId)
         .eq('course_id', courseId)
-        .single();
-      return { certificate: data, already_issued: true };
+        .order('issued_at', { ascending: true })
+        .limit(1);
+      return { certificate: (existingRows && existingRows[0]) || null, already_issued: true };
     }
 
     // Get course progress
@@ -79,12 +81,14 @@ class CertificateService {
     }
 
     // Also check quiz if one exists
-    const { data: quiz } = await adminClient
+    // limit(1): with two published quizzes .single() errored and silently SKIPPED the quiz gate
+    const { data: quizRows } = await adminClient
       .from('quizzes')
       .select('id')
       .eq('course_id', courseId)
       .eq('is_published', true)
-      .single();
+      .limit(1);
+    const quiz = quizRows && quizRows[0];
 
     if (quiz) {
       const { data: bestAttempt } = await adminClient
@@ -122,14 +126,12 @@ class CertificateService {
       course_id: courseId,
       certificate_number: certNumber,
       learner_name: profile?.full_name || 'Student',
-      course_title: courseDetails?.title || course?.title || 'Course',
+      course_title: courseDetails?.title || 'Course',
       course_level: courseDetails?.level || 'beginner',
       duration_weeks: courseDetails?.duration_weeks || 0
     };
-    // Try adding completed_at if column exists
-    try {
-      insertData.completed_at = new Date().toISOString();
-    } catch {}
+    // (completed_at intentionally not written: issued_at already records it, and
+    // inserting a column that may not exist in production made issuance fail)
 
     const { data: cert, error } = await adminClient
       .from('certificates')
@@ -157,7 +159,7 @@ class CertificateService {
   async verify(certNumber) {
     const { data, error } = await adminClient
       .from('certificates')
-      .select('certificate_number, issued_at, profiles(full_name), courses(title)')
+      .select('certificate_number, issued_at, learner_name, course_title')
       .eq('certificate_number', certNumber)
       .single();
 
@@ -168,8 +170,8 @@ class CertificateService {
     return {
       valid: true,
       certificate_number: data.certificate_number,
-      student_name: data.profiles?.full_name || 'Unknown',
-      course_title: data.courses?.title || 'Unknown',
+      student_name: data.learner_name || 'Unknown',
+      course_title: data.course_title || 'Unknown',
       issued_at: data.issued_at
     };
   }

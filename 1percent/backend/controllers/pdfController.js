@@ -179,14 +179,9 @@ class PdfController {
       let signatureUrl = null;
       let signerName = null;
       const signerIds = [];
-      const { data: ownSig } = await adminClient
-        .from('signatures')
-        .select('signature_url')
-        .eq('user_id', userId)
-        .single();
-      if (ownSig?.signature_url) {
-        signatureUrl = ownSig.signature_url;
-      } else {
+      // The AUTHORIZED signature comes from an admin only — never the learner's
+      // own upload (students could otherwise sign their own certificates).
+      {
         const { data: admins } = await adminClient
           .from('profiles')
           .select('id, full_name')

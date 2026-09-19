@@ -12,6 +12,8 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Inter',sans-serif;background:#f0f2f5;min-height:100vh;display:flex;flex-direction:column;}
 
+.hidden{display:none !important;}
+
 /* Top bar */
 .topbar{background:#fff;border-bottom:1px solid #e5e7eb;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;}
 .topbar-logo{font-size:16px;font-weight:800;color:#1a1a2e;text-decoration:none;display:flex;align-items:center;gap:8px;}
@@ -170,7 +172,7 @@ body{-webkit-user-select:none;user-select:none;}
     </div>
 
     <!-- No cert overlay -->
-    <div class="cert-overlay" id="no-cert-overlay" hidden>
+    <div class="cert-overlay hidden" id="no-cert-overlay">
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
       <h2>No Certificate Found</h2>
       <p>Complete all lessons and pass the end-of-course quiz to earn your certificate.</p>
@@ -178,7 +180,7 @@ body{-webkit-user-select:none;user-select:none;}
     </div>
 
     <!-- Free view overlay (first time) -->
-    <div class="cert-overlay" id="free-view-overlay" hidden>
+    <div class="cert-overlay hidden" id="free-view-overlay">
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.5"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
       <h2>Your Certificate is Ready</h2>
       <p>You have <b>1 free view</b> of this certificate. After viewing, you'll need a subscription to see it again.</p>
@@ -188,7 +190,7 @@ body{-webkit-user-select:none;user-select:none;}
     </div>
 
     <!-- Restricted overlay (no free views left) -->
-    <div class="cert-overlay restricted-overlay" id="restricted-overlay" hidden>
+    <div class="cert-overlay restricted-overlay hidden" id="restricted-overlay">
       <div class="lock-icon">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
       </div>
@@ -240,9 +242,9 @@ body{-webkit-user-select:none;user-select:none;}
           <div class="cert-bottom-date" id="cert-date">January 1, 2026</div>
         </div>
         <div class="cert-signature-section">
-          <img class="cert-signature-img" id="cert-signature" src="" alt="Signature" hidden>
+          <img class="cert-signature-img hidden" id="cert-signature" alt="Signature">
           <div class="cert-signature-line"></div>
-          <div class="cert-signature-name" id="cert-signer" hidden></div>
+          <div class="cert-signature-name hidden" id="cert-signer"></div>
           <div class="cert-signature-label">Authorized Signature</div>
         </div>
         <div class="cert-bottom-section">
@@ -267,6 +269,7 @@ body{-webkit-user-select:none;user-select:none;}
   </button>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 let certData = null;
 let signatureUrl = null;
@@ -346,9 +349,8 @@ const certNumber = urlParams.get('number');
     if (signatureUrl) {
       document.getElementById('cert-signature').src = signatureUrl;
       document.getElementById('cert-signature').classList.remove('hidden');
-    } else {
-      /* No uploaded signature image — render the vector script signature
-         so the on-screen certificate matches the downloaded PDF. */
+    } else if (false) { // disabled on purpose: never draw a fake signature nobody made
+      /* (legacy) vector script signature */
       const sigImg = document.getElementById('cert-signature');
       sigImg.outerHTML = `<svg class="cert-signature-img pg-certificateview-szp4u" id="cert-signature" width="120" height="40" viewBox="0 0 120 40">
         <path d="M6 25 C 14 5, 26 8, 28 22 C 29 30, 34 30, 40 22 C 44 16, 48 18, 48 25 C 47 32, 54 30, 62 21 C 67 15, 72 18, 70 25 C 68 31, 76 27, 84 20 C 90 15, 94 18, 92 24 C 90 29, 98 26, 108 18" fill="none" stroke="#1e3a5f" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
@@ -371,10 +373,11 @@ const certNumber = urlParams.get('number');
       // Not logged in — show blurred with login prompt
       document.getElementById('cert-paper').classList.add('cert-blurred');
       const overlay = document.getElementById('free-view-overlay');
+      overlay.classList.remove('hidden');
       overlay.querySelector('h2').textContent = 'Log in to View';
       overlay.querySelector('p').textContent = 'Log in to view this certificate. You get 1 free view.';
       overlay.querySelector('button').textContent = 'Log In';
-      overlay.querySelector('button').onclick = () => window.location.href = (location.hostname==='learn.1percent.rw'?'/':'/learn');
+      overlay.querySelector('button').onclick = () => window.location.href = (location.hostname.startsWith('learn.')?'/':'/learn');
     }
   } catch (e) {
     document.getElementById('cert-loading').classList.add('hidden');
@@ -391,7 +394,7 @@ function showCertificate() {
 
 async function useFreeView() {
   if (!user || !session) {
-    window.location.href = (location.hostname==='learn.1percent.rw'?'/':'/learn');
+    window.location.href = (location.hostname.startsWith('learn.')?'/':'/learn');
     return;
   }
 
@@ -443,7 +446,8 @@ async function downloadPdf() {
     a.click();
     URL.revokeObjectURL(url);
   } catch (e) {
-    Toast.error('Download failed: ' + e.message);
+    if (window.Toast && typeof Toast.error === 'function') Toast.error('Download failed: ' + e.message);
+    else alert('Download failed: ' + e.message);
   }
 
   btn.disabled = false;

@@ -70,6 +70,12 @@ function createLimiter({ windowMs: win = windowMs, max = 100, prefix = 'api', co
         ? `${clientKey(req)}|${String(req.body?.email || '').trim().toLowerCase()}`
         : clientKey(req));
     const key = `${prefix}:${ident}`;
+
+    // Same limiter mounted twice on one request (global /api + a per-route copy) counted
+    // every hit TWICE, halving the real budget. Count each request once per bucket.
+    const seenFlag = `_rl_${key}`;
+    if (req[seenFlag]) return next();
+    req[seenFlag] = true;
     const now = Date.now();
     let entry = hits.get(key);
 
@@ -111,7 +117,8 @@ function createLimiter({ windowMs: win = windowMs, max = 100, prefix = 'api', co
 }
 
 /** General API ceiling — generous; normal usage never touches it. */
-const rateLimit = createLimiter({ max: 600, prefix: 'api', countMode: 'all' });
+// 600/15min per IP was far too low for a school lab behind ONE shared IP; override with API_RATE_LIMIT_MAX.
+const rateLimit = createLimiter({ max: parseInt(process.env.API_RATE_LIMIT_MAX || '3000', 10), prefix: 'api', countMode: 'all' });
 
 /* Per-action auth limits — failures only */
 const AUTH_LIMITS = {

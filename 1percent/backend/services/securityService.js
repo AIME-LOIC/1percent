@@ -29,7 +29,8 @@ const RULES = [
   { id: 'sqli_union',     re: /union[\s+/*]+(?:all[\s+/*]+)?select/i, sev: 'high' },
   { id: 'sqli_tautology', re: /(?:\bor\b|\band\b)\s+['"`]?\w+['"`]?\s*=\s*['"`]?\w+['"`]?\s*(?:--|#|\/\*)/i, sev: 'high' },
   { id: 'sqli_drop',      re: /;\s*(?:drop|truncate)\s+table/i, sev: 'critical' },
-  { id: 'sqli_sleep',     re: /\b(?:sleep|pg_sleep|benchmark|waitfor\s+delay)\s*\(/i, sev: 'high' },
+  // (?<![\w.]) so time.sleep( / asyncio.sleep( / Thread.sleep( in student code is NOT an attack
+  { id: 'sqli_sleep',     re: /(?<![\w.])(?:sleep|pg_sleep|benchmark|waitfor\s+delay)\s*\(/i, sev: 'high' },
   { id: 'sqli_schema',    re: /information_schema\.(?:tables|columns)/i, sev: 'high' },
   { id: 'sqli_quote',     re: /'\s*(?:or|and)\s*'[^']*'\s*=\s*'/i, sev: 'medium' },
   // XSS
@@ -62,7 +63,11 @@ const RULES = [
    still scanned for weirdness; only these values are exempt. */
 const CODE_FIELD_EXEMPT = new Set([
   'code', 'html', 'css', 'js', 'source', 'solution', 'content',
-  'html_code', 'css_code', 'js_code', 'markdown', 'script'
+  'html_code', 'css_code', 'js_code', 'markdown', 'script',
+  // Lesson text and learner answers legitimately contain SQL/shell/<script> examples
+  // (SQL, Linux and security courses) — they were being 403'd and earning IP strikes.
+  'content_md', 'sql', 'query', 'answer', 'answers', 'command', 'commands',
+  'transcript', 'terminal', 'explanation', 'output', 'stdout'
 ]);
 
 /* ── In-memory state ──────────────────────────────────────── */

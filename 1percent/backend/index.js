@@ -61,7 +61,9 @@ const app = express();
 // Trust the reverse proxy (nginx/Render/Heroku style) for X-Forwarded-*.
 // Without this, req.ip is the PROXY's IP: rate limiting would bucket ALL
 // users into one shared limit, and logs would record the proxy, not clients.
-app.set('trust proxy', 1);
+// TRUST_PROXY_HOPS = number of proxies in front of Node (Render alone = 1; Cloudflare + Render = 2).
+// If /api/health shows the SAME your_ip for users on different networks, raise this.
+app.set('trust proxy', process.env.TRUST_PROXY_HOPS ? Number(process.env.TRUST_PROXY_HOPS) : 1);
 
 /* ============================================================
    0. HTTPS ENFORCEMENT — before anything else
@@ -237,7 +239,8 @@ app.use(requestLogger);
    ============================================================ */
 app.use((req, res, next) => {
   const host = (req.headers.host || '').split(':')[0];
-  if (host === 'learn.1percent.rw' || host === 'www.learn.1percent.rw') {
+  // Any learn.* host (learn.1percent.rw, learn.1percentrwanda.com, …) serves the app at '/'.
+  if (host.startsWith('learn.') || host.startsWith('www.learn.')) {
     req.isLearnSubdomain = true;
     // Rewrite /learn/* paths to /* for the learn subdomain
     if (req.path.startsWith('/learn/')) {

@@ -18,7 +18,8 @@ function initSocket(server) {
 
   io = new Server(server, {
     cors: {
-      origin: '*', // will be restricted by Express CORS middleware at HTTP level
+      // Socket.IO has its OWN CORS — the Express cors() middleware does not cover it.
+      origin: (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(',').map(o => o.trim().replace(/\/$/, '')),
       methods: ['GET', 'POST']
     },
     // Allow long-polling fallback in case WS upgrade is blocked
@@ -38,7 +39,10 @@ function initSocket(server) {
         return next(new Error('Authentication required'));
       }
 
-      const { data: { user }, error } = await adminClient.auth.getUser(token);
+      // Cached verification: after a restart every client reconnects at once, and
+      // each handshake used to cost a Supabase Auth call.
+      const { getUserCached } = require('../middlewares/auth');
+      const { user, error } = await getUserCached(token);
       if (error || !user) {
         return next(new Error('Invalid token'));
       }

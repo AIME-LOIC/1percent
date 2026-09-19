@@ -5,7 +5,18 @@
    ============================================================ */
 
 // Load environment variables FIRST — override shell vars so .env takes precedence
-require('dotenv').config({ override: true });
+// Local dev: .env wins over stale shell vars. On a real host (Render / NODE_ENV=production)
+// the platform's own variables must win — otherwise a stray .env file silently
+// overrides NODE_ENV, PORT and ALLOWED_ORIGINS.
+require('dotenv').config({ override: !(process.env.RENDER || process.env.NODE_ENV === 'production') });
+
+// Last line of defence: one missed .catch() must not take the whole site down.
+process.on('unhandledRejection', (reason) => {
+  console.error('[FATAL] Unhandled rejection:', reason && reason.stack ? reason.stack : reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[FATAL] Uncaught exception:', err && err.stack ? err.stack : err);
+});
 
 // Validate environment
 const { validateEnv } = require('./backend/config/env');
