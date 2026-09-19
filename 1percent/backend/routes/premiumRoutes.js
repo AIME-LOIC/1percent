@@ -20,6 +20,11 @@
 const { Router } = require('express');
 const premiumController = require('../controllers/premiumController');
 const { authenticate } = require('../middlewares/auth');
+const { paymentsDisabled } = require('../middlewares/paymentsDisabled');
+
+// NOTE: /subscribe, /resume and /free-trial are hard-blocked below — no payment
+// gateway is integrated yet, so nobody can obtain premium. Remove the
+// `paymentsDisabled` middlewares once a gateway is wired in.
 
 const router = Router();
 
@@ -28,9 +33,9 @@ router.get('/tiers', (req, res, next) => premiumController.getTiers(req, res, ne
 
 // Auth required
 router.get('/status', authenticate, (req, res, next) => premiumController.getStatus(req, res, next));
-router.post('/subscribe', authenticate, (req, res, next) => premiumController.subscribe(req, res, next));
+router.post('/subscribe', authenticate, paymentsDisabled, (req, res, next) => premiumController.subscribe(req, res, next));
 router.post('/cancel', authenticate, (req, res, next) => premiumController.cancel(req, res, next));
-router.post('/resume', authenticate, (req, res, next) => premiumController.resume(req, res, next));
-router.post('/free-trial', authenticate, (req, res, next) => premiumController.freeTrial(req, res, next));
+router.post('/resume', authenticate, paymentsDisabled, (req, res, next) => premiumController.resume(req, res, next));
+router.post('/free-trial', authenticate, paymentsDisabled, (req, res, next) => premiumController.freeTrial(req, res, next));
 
 module.exports = router;

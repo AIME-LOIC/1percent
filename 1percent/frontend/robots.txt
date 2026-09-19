@@ -1,7 +1,8 @@
 User-agent: *
 Allow: /
 # Public SEO/documentation pages (indexable)
-# /, /courses, /pricing, /payments, /getting-started, /how-to-use, /install, /docs, /faq
+# /, /courses, /getting-started, /how-to-use, /install, /docs, /faq
+# /pricing, /payments, /payment are NOT indexable — payment gateway not added yet
 # Private app pages (require login, no SEO value)
 Disallow: /dashboard
 Disallow: /playground
@@ -9,7 +10,11 @@ Disallow: /lab
 Disallow: /settings
 Disallow: /onboarding
 Disallow: /admin
+Disallow: /payment
 Disallow: /payment-details
+Disallow: /payments
+Disallow: /pricing
+Disallow: /parent-payment
 Disallow: /reset-password
 Disallow: /learn/dashboard
 Disallow: /learn/playground
@@ -17,7 +22,11 @@ Disallow: /learn/lab
 Disallow: /learn/settings
 Disallow: /learn/onboarding
 Disallow: /learn/admin
+Disallow: /learn/payment
 Disallow: /learn/payment-details
+Disallow: /learn/payments
+Disallow: /learn/pricing
+Disallow: /learn/parent-payment
 Disallow: /learn/reset-password
 # API
 Disallow: /api/

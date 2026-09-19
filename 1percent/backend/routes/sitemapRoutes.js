@@ -29,14 +29,12 @@ const SITE_URL = 'https://learn.1percent.rw';
 const STATIC_PAGES = [
   { loc: '/',               changefreq: 'weekly',  priority: '1.0' },
   { loc: '/courses',        changefreq: 'weekly',  priority: '0.9' },
-  { loc: '/pricing',        changefreq: 'monthly', priority: '0.9' },
-  { loc: '/payments',       changefreq: 'monthly', priority: '0.8' },
+  // /pricing, /payments, /payment removed — payment gateway not integrated yet
   { loc: '/getting-started',changefreq: 'monthly', priority: '0.8' },
   { loc: '/how-to-use',     changefreq: 'monthly', priority: '0.8' },
   { loc: '/install',        changefreq: 'monthly', priority: '0.8' },
   { loc: '/docs',           changefreq: 'weekly',  priority: '0.8' },
   { loc: '/faq',            changefreq: 'monthly', priority: '0.7' },
-  { loc: '/payment',        changefreq: 'monthly', priority: '0.6' },
   { loc: '/contact',        changefreq: 'yearly',  priority: '0.5' },
   { loc: '/terms',          changefreq: 'yearly',  priority: '0.3' },
   { loc: '/privacy',        changefreq: 'yearly',  priority: '0.3' },

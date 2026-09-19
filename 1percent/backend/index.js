@@ -280,6 +280,12 @@ app.get(['/courses-page.html', '/course-page.html'], (req, res) => {
   res.status(404).sendFile(path.join(frontendDir, '404.html'));
 });
 
+// Payment gateway not integrated yet — anyone hitting the purchase HTML files
+// directly gets redirected to the notice page instead.
+app.get(['/payment.html', '/payment-details.html', '/parent-payment.html', '/pricing.html', '/payments.html'], (req, res) => {
+  res.redirect(302, '/learn/payment');
+});
+
 app.use(express.static(frontendDir, {
   etag: true,
   lastModified: true,
@@ -494,13 +500,14 @@ const htmlRoutes = {
   '/learn/lab': 'lab.html',
   '/learn/admin': 'admin.html',
   '/learn/admin/': 'admin.html',
-  '/learn/payment': 'payment.html',
-  '/learn/payment-details': 'payment-details.html',
-  '/learn/parent-payment': 'parent-payment.html',
+  // Payment gateway not integrated yet — purchase pages show the notice
+  '/learn/payment': 'payment-notice.html',
+  '/learn/payment-details': 'payment-notice.html',
+  '/learn/parent-payment': 'payment-notice.html',
   '/learn/sign': 'sign.html',
   '/learn/certificate': 'certificate-view.html',
-  '/payment': 'payment.html',
-  '/payment-details': 'payment-details.html',
+  '/payment': 'payment-notice.html',
+  '/payment-details': 'payment-notice.html',
   '/sign': 'sign.html',
   '/certificate': 'certificate-view.html',
   '/course': 'course.html',
@@ -508,8 +515,8 @@ const htmlRoutes = {
   '/admin/': 'admin.html',
   '/docs': 'docs.html',
   '/install': 'install.html',
-  '/pricing': 'pricing.html',
-  '/payments': 'payments.html',
+  '/pricing': 'payment-notice.html',
+  '/payments': 'payment-notice.html',
   '/how-to-use': 'how-to-use.html',
   '/getting-started': 'getting-started.html',
   '/faq': 'faq.html',
@@ -533,20 +540,20 @@ const learnSubdomainRoutes = {
   '/lab': 'lab.html',
   '/admin': 'admin.html',
   '/admin/': 'admin.html',
-  '/payment': 'payment.html',
-  '/payment-details': 'payment-details.html',
+  '/payment': 'payment-notice.html',
+  '/payment-details': 'payment-notice.html',
   '/sign': 'sign.html',
   '/certificate': 'certificate-view.html',
   '/course': 'course.html',
   '/install': 'install.html',
   '/docs': 'docs.html',
-  '/pricing': 'pricing.html',
-  '/payments': 'payments.html',
+  '/pricing': 'payment-notice.html',
+  '/payments': 'payment-notice.html',
   '/how-to-use': 'how-to-use.html',
   '/getting-started': 'getting-started.html',
   '/faq': 'faq.html',
   '/reset-password': 'reset-password.html',
-  '/parent-payment': 'parent-payment.html',
+  '/parent-payment': 'payment-notice.html',
   '/settings': 'settings.html',
   '/terms': 'terms.html',
   '/privacy': 'privacy.html',
@@ -584,8 +591,9 @@ app.get('*', (req, res) => {
   }
 
   // Parent payment page: /parent-payment/:token (or /learn/parent-payment/:token)
+  // Payment gateway not integrated yet — show the notice instead of the pay page
   if (req.path.startsWith('/learn/parent-payment/') || (req.isLearnSubdomain && req.path.startsWith('/parent-payment/'))) {
-    return sendHtml(res, 'parent-payment.html');
+    return sendHtml(res, 'payment-notice.html');
   }
 
   // Legacy redirects — old paths redirect to new /learn/* paths (main site only)
