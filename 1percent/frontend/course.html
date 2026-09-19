@@ -682,16 +682,28 @@ function patchVNode(parent,el,vnode){
     let child;
     if(key&&keyed.has(key)){child=keyed.get(key);keyed.delete(key);}
     else{while(cursor<elKids.length){const c=elKids[cursor++];const ck=c.nodeType===1?c.getAttribute('data-vkey'):null;if(!ck){child=c;break;}}}
-    if(!child){child=renderVNode(kid);el.insertBefore(child,lastPlaced?lastPlaced.nextSibling:el.firstChild);lastPlaced=child;patchVNode(el,child,kid);return;}
-    // Physically position the node (handles reordering), then diff in place
-    const ref=lastPlaced?lastPlaced.nextSibling:null;
+    /* Place the node at its correct slot. For the FIRST child the reference is
+       el.firstChild — passing null used to APPEND it to the end, shuffling
+       every child one slot right and leaving stale nodes (e.g. a row's lock
+       icon) stuck at the front — the source of duplicated/garbled rows. */
+    if(!child){
+      child=renderVNode(kid); // fully rendered — no re-patch needed
+      const ref=lastPlaced?lastPlaced.nextSibling:el.firstChild;
+      if(ref!==child)el.insertBefore(child,ref);
+      lastPlaced=child;
+      return;
+    }
+    const ref=lastPlaced?lastPlaced.nextSibling:el.firstChild;
     if(ref!==child)el.insertBefore(child,ref);
     lastPlaced=child;
-    patchVNode(el,child,kid);
+    /* patchVNode may REPLACE the node (text/tag mismatch) and returns the node
+       that is actually in the tree — track that, never the detached one. */
+    lastPlaced=patchVNode(el,child,kid)||child;
   });
   keyed.forEach(c=>c.remove());
-  // Drop any trailing nodes beyond the new children
-  let n=lastPlaced?lastPlaced.nextSibling:null;
+  /* Drop any leftover nodes: everything after the last placed child is stale
+     (and when there are no new children at all, that is every old node). */
+  let n=lastPlaced?lastPlaced.nextSibling:el.firstChild;
   while(n){const nxt=n.nextSibling;n.remove();n=nxt;}
   return el;
 }
