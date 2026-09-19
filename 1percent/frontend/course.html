@@ -188,9 +188,6 @@ body{padding-top:60px;}
 .sidebar-head button{background:none;border:1px solid var(--c-border);color:var(--c-muted);padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;display:none;align-items:center;gap:4px;}
 .sidebar-head button:hover{border-color:var(--c-muted);color:var(--c-text);}
 /* Full-course download — prominent, always visible once course loads */
-.sidebar-download{margin:10px 16px 0;padding:9px 14px;border-radius:8px;border:1.5px solid var(--c-accent);background:#f0fdf4;color:var(--c-accent);font-size:12.5px;font-weight:700;cursor:pointer;display:none;align-items:center;justify-content:center;gap:7px;transition:all .15s;flex-shrink:0;}
-.sidebar-download:hover{background:var(--c-accent);color:#fff;}
-.sidebar-download:disabled{opacity:.5;cursor:not-allowed;}
 .sidebar-progress{padding:10px 16px;border-bottom:1px solid var(--c-border);flex-shrink:0;}
 .progress-track{height:4px;background:var(--c-border);border-radius:100px;overflow:hidden;}
 .progress-fill{height:100%;background:var(--c-accent);border-radius:100px;transition:width .3s;}
@@ -490,10 +487,6 @@ body{padding-top:60px;}
       <button id="download-course-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> PDF</button>
     </div>
     <div class="sidebar-progress hidden" id="sidebar-progress">
-      <button class="sidebar-download" id="sidebar-download-btn">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Download Full Course
-      </button>
       <div class="progress-track"><div class="progress-fill meter-zero" id="progress-fill"></div></div>
       <div class="progress-text"><span id="progress-pct">0%</span><span id="progress-count">0/0</span></div>
     </div>
@@ -704,8 +697,17 @@ function patchVNode(parent,el,vnode){
 }
 function renderVDOM(container,vnode){
   const existing=Array.from(container.childNodes);
+  /* Important: the container ships with skeleton placeholders (and whitespace
+     text nodes). Patching only existing[0] used to leave every other stale
+     child in the DOM forever — old skeleton rows or previous renders could
+     sit beside the fresh list and show up as duplicated lesson rows. */
   if(existing.length===0){container.appendChild(renderVNode(vnode));return;}
-  patchVNode(container,existing[0],vnode);
+  const kept=patchVNode(container,existing[0],vnode);
+  // Drop every other stale sibling left over from a previous render/skeletons
+  let n=kept.nextSibling;
+  while(n){const nxt=n.nextSibling;n.remove();n=nxt;}
+  let p=kept.previousSibling;
+  while(p){const prev=p.previousSibling;p.remove();p=prev;}
 }
 
 /**
@@ -763,8 +765,10 @@ async function apiFetch(url,opts={}){
 }
 
 async function loadCourse(){
-  /* Cache-first: instant paint from sessionStorage, revalidate in background */
-  const cacheKey='course-'+slug;
+  /* Cache-first: instant paint from sessionStorage, revalidate in background.
+     v2: bumped after the duplicate-lesson fix so caches that stored a
+     duplicated lesson array are never painted again. */
+  const cacheKey='course-'+slug+'-v2';
   const{data:json,fromCache}=await fetchJSON(`/api/courses/${slug}`,{},cacheKey);
   if(!json||!json.success||!json.course){
     if(fromCache)return; // stale cache, wait for fresh fetch to decide
@@ -776,6 +780,13 @@ async function loadCourse(){
     return;
   }
   courseData=json.course;
+  /* Guard: if a stale cache delivered duplicated lessons, strip the repeats
+     immediately — every renderLessons() call below stays clean. */
+  if(courseData.lessons?.length){
+    const seen=new Set();
+    courseData.lessons=courseData.lessons.filter(l=>{const k=String(l.id);if(seen.has(k))return false;seen.add(k);return true;});
+    courseData.lessons.sort((a,b)=>(a.sort_order??0)-(b.sort_order??0));
+  }
   // ── SEO: reflect the actual course in title/meta/canonical + Course JSON-LD ──
   const COURSE_URL = `https://learn.1percent.rw/course/${slug}`;
   const courseDesc=(courseData.description||'').slice(0,300);
@@ -845,10 +856,6 @@ async function loadCourse(){
   saveCachedPremium();
   const dlBtn=document.getElementById('download-course-btn');
   if(dlBtn){dlBtn.style.display='inline-flex';dlBtn.onclick=()=>downloadCoursePdf(courseData.id);}
-  // Prominent sidebar download (visible for everyone; the PDF route
-  // enforces auth server-side)
-  const sdlBtn=document.getElementById('sidebar-download-btn');
-  if(sdlBtn){sdlBtn.style.display='flex';sdlBtn.onclick=()=>downloadCoursePdf(courseData.id);}
   renderLessons();
   const nextId=getNextLesson();
   if(nextId)openLesson(nextId);
@@ -936,7 +943,19 @@ function lessonItemVDOM(l,i){
 }
 function renderLessons(){
   const list=document.getElementById('lesson-list');
-  const lessons=courseData.lessons||[];
+  let lessons=courseData.lessons||[];
+  /* Defensive: a lesson list where the same id (or title) appears more than
+     once renders as duplicated rows. Dedupe by id first, then by title, so a
+     stale/corrupted cache or a double import can never show repeats. */
+  const seenIds=new Set(),seenTitles=new Set();
+  lessons=lessons.filter(l=>{
+    const id=String(l.id),title=String(l.title||'').toLowerCase().trim();
+    if(seenIds.has(id))return false;
+    if(title&&seenTitles.has(title))return false;
+    seenIds.add(id);if(title)seenTitles.add(title);
+    return true;
+  });
+  courseData.lessons=lessons;
   if(!lessons.length){
     renderVDOM(list,h('div',{style:'text-align:center;padding:30px;color:var(--c-muted);font-size:13px;'},'No lessons yet'));
     return;

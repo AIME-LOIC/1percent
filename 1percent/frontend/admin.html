@@ -578,9 +578,20 @@ tr.log-fatal:hover td{background:#feeeee !important;}
           <div><div class="stat-label">Students</div><div class="stat-value" id="stat-students">0</div><div class="stat-sub" id="stat-users-sub"></div></div>
         </div>
 
-        <!-- Hidden counters that feed the rings -->
-        <div id="stat-lessons" hidden>0</div>
-        <div id="stat-challenges" hidden>0</div>
+        <div class="stat-card">
+          <div class="stat-ring complete" style="--ring-color:#0d6e3f">
+            <svg viewBox="0 0 64 64"><circle class="ring-bg" cx="32" cy="32" r="26"/><circle class="ring-val" cx="32" cy="32" r="26" style="stroke:#0d6e3f;stroke-dashoffset:0"/></svg>
+            <div class="ring-txt"><span class="ring-pct" id="stat-lessons">0</span><span class="ring-cap">total</span></div>
+          </div>
+          <div><div class="stat-label">Lessons</div><div class="stat-sub">Across all courses</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-ring complete" style="--ring-color:#2563eb">
+            <svg viewBox="0 0 64 64"><circle class="ring-bg" cx="32" cy="32" r="26"/><circle class="ring-val" cx="32" cy="32" r="26" style="stroke:#2563eb;stroke-dashoffset:0"/></svg>
+            <div class="ring-txt"><span class="ring-pct" id="stat-challenges">0</span><span class="ring-cap">total</span></div>
+          </div>
+          <div><div class="stat-label">Challenges</div><div class="stat-sub">Coding challenges</div></div>
+        </div>
         <div class="stat-card">
           <div class="stat-ring" data-ring="enrolled" data-color="#2563eb">
             <svg viewBox="0 0 64 64"><circle class="ring-bg" cx="32" cy="32" r="26"/><circle class="ring-val" cx="32" cy="32" r="26"/></svg>
@@ -1294,7 +1305,6 @@ async function loadAnalytics(){
 function setStat(id,val){
   const el=document.getElementById(id);
   if(!el)return;
-  el.hidden=false;   // markup ships with the [hidden] attribute
   const target=Number(val)||0;
   if(el._anim)cancelAnimationFrame(el._anim);
   const start=Number(el.textContent)||0;
@@ -1979,7 +1989,6 @@ async function countLessonsParallel(){
 const _statAnims={};
 function animateStat(id,target){
   const el=document.getElementById(id);if(!el)return;
-  el.hidden=false;   // markup ships with the [hidden] attribute
   const to=Math.max(0,Math.round(Number(target)||0));
   if(_statAnims[id])cancelAnimationFrame(_statAnims[id]);
   const from=parseInt(String(el.textContent).replace(/[^\d]/g,''),10)||0;
