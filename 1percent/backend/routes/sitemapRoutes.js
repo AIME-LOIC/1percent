@@ -188,6 +188,11 @@ async function renderCoursePage(req, res, next) {
   // On the learn subdomain, /course/:slug is the in-app course viewer —
   // only the main host serves the public SEO page.
   if (req.isLearnSubdomain) return next();
+  // Legacy CTA target (?action=enroll) — send humans to the in-app viewer.
+  // Keeps old links working; crawlers still index the clean /course/:slug page.
+  if (req.query.action === 'enroll') {
+    return res.redirect(302, `/learn/course/${encodeURIComponent(String(req.params.slug || ''))}`);
+  }
   const fs = require('fs');
   const path = require('path');
   res.set('Cache-Control', 'public, max-age=300');
