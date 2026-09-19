@@ -15,6 +15,10 @@ const crypto = require('crypto');
 const { adminClient } = require('../config/database');
 const logService = require('./logService');
 
+/* Verified-admin cache — see isVerifiedAdmin() below. */
+const adminCheckCache = new Map(); // tokenHash → { isAdmin, checkedAt }
+const ADMIN_CHECK_TTL_MS = 5 * 60 * 1000;
+
 /* ── Detection rules ──────────────────────────────────────
    Kept deliberately tight: only patterns that essentially never
    appear in legitimate traffic. Each rule maps to a severity —
@@ -72,6 +76,59 @@ const ALERT_DEDUP_MS = 10 * 60 * 1000;
 const NOTIF_DEDUP_MS = 30 * 60 * 1000;
 const CACHE_TTL_MS = 30 * 1000;
 const BLOCK_THRESHOLD = parseInt(process.env.SECURITY_BLOCK_THRESHOLD || '5', 10);
+
+/* ── Strike decay + per-rule dedup ──────────────────────────
+   Strikes used to be FOREVER: a single noisy rule (a lesson about XSS
+   matching the xss scanner, a school NAT behind one shared IP, a
+   security course itself tripping the payload rules) could walk any
+   visitor — including the site owner — into a 1h→6h→24h block that
+   never healed. That was the "I open the site and see the hack page"
+   bug. Two fixes:
+   • TIME DECAY — strikes older than STRIKE_DECAY_MS stop counting.
+     Real attackers probing continuously re-earn their strikes within
+     the window; a user who clicked something odd once is clean an
+     hour later.
+   • PER-RULE DEDUP — the same pattern (e.g. every request to a
+     WordPress-probing path, or a URL containing "wp-admin") counted
+     once per HIT, so one shared link could rack up 5 strikes in 5
+     page loads. Now repeated hits of the SAME rule count once per
+     window; only genuinely varied attack patterns escalate. */
+const STRIKE_DECAY_MS = parseInt(process.env.SECURITY_STRIKE_DECAY_MS || String(60 * 60 * 1000), 10);
+const RULE_STRIKE_WINDOW_MS = 10 * 60 * 1000;
+const MAX_STRIKE_AGE_MS = 24 * 60 * 60 * 1000; // strike log per IP never exceeds a day
+
+function addStrike(ipHash, ipPreview, reason, ruleId = null) {
+  const now = Date.now();
+  const cur = strikeMemory.get(ipHash) || { strikes: 0, blockedUntil: null, recentRules: new Map() };
+
+  // Time-decay: drop strikes older than the decay window.
+  if (!Array.isArray(cur.strikeLog)) cur.strikeLog = [];
+  cur.strikeLog = cur.strikeLog.filter(ts => now - ts < MAX_STRIKE_AGE_MS);
+  const liveStrikes = cur.strikeLog.filter(ts => now - ts < STRIKE_DECAY_MS).length;
+
+  // Per-rule dedup: one strike per distinct rule per window.
+  if (ruleId) {
+    if (!(cur.recentRules instanceof Map)) cur.recentRules = new Map();
+    const lastHit = cur.recentRules.get(ruleId) || 0;
+    if (now - lastHit < RULE_STRIKE_WINDOW_MS) {
+      strikeMemory.set(ipHash, cur);
+      return false; // same rule already counted — no new strike
+    }
+    cur.recentRules.set(ruleId, now);
+  }
+
+  cur.strikeLog.push(now);
+  cur.strikes = liveStrikes + 1;
+  strikeMemory.set(ipHash, cur);
+
+  if (cur.strikes >= BLOCK_THRESHOLD && (!cur.blockedUntil || cur.blockedUntil < now)) {
+    const until = now + blockDurationMs(cur.strikes);
+    memoryBlock(ipHash, until, reason);
+    persistBlock(ipHash, ipPreview, reason, until);
+    return true; // newly blocked
+  }
+  return false;
+}
 
 let warnedTableMissing = false;
 
@@ -184,6 +241,44 @@ function scanRequest(req) {
   return hits;
 }
 
+/* ── Verified-admin escape hatch ────────────────────────────
+   A block on a shared/office/NAT IP can lock the ADMIN out of the very
+   panel that lifts blocks — and since blocks persist in the DB, the
+   lockout outlives restarts. A CRYPTOGRAPHICALLY VERIFIED admin JWT
+   (signature checked against Supabase's JWKS + role re-checked in the
+   DB, same standard as requireAdmin) is exempt from the blocklist.
+   Forgery is useless: a forged token fails verification and stays
+   blocked. Cached 5 min so the hot path stays cheap. */
+async function isVerifiedAdmin(req) {
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+  if (!token || token.length > 2048) return false;
+
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  const cached = adminCheckCache.get(tokenHash);
+  if (cached && Date.now() - cached.checkedAt < ADMIN_CHECK_TTL_MS) return cached.isAdmin;
+
+  let isAdmin = false;
+  try {
+    const user = await identifyAttacker(req);
+    if (user?.id && adminClient) {
+      const { data: profile } = await adminClient
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      isAdmin = profile?.role === 'admin';
+    }
+  } catch { /* verification failed → treat as non-admin */ }
+
+  adminCheckCache.set(tokenHash, { isAdmin, checkedAt: Date.now() });
+  if (adminCheckCache.size > 500) {
+    const cutoff = Date.now() - ADMIN_CHECK_TTL_MS;
+    for (const [k, v] of adminCheckCache) if (v.checkedAt < cutoff) adminCheckCache.delete(k);
+  }
+  return isAdmin;
+}
+
 /* ── Blocking ─────────────────────────────────────────────── */
 function blockDurationMs(strikeCount) {
   // 1st block: 1h, 2nd: 6h, 3+: 24h
@@ -240,20 +335,7 @@ async function isBlocked(ipHash) {
   return !!blockedUntil && blockedUntil > now;
 }
 
-/* ── Strikes + block escalation ───────────────────────────── */
-async function addStrike(ipHash, ipPreview, reason) {
-  const cur = strikeMemory.get(ipHash) || { strikes: 0, blockedUntil: null };
-  cur.strikes += 1;
-  strikeMemory.set(ipHash, cur);
 
-  if (cur.strikes >= BLOCK_THRESHOLD && (!cur.blockedUntil || cur.blockedUntil < Date.now())) {
-    const until = Date.now() + blockDurationMs(cur.strikes);
-    memoryBlock(ipHash, until, reason);
-    await persistBlock(ipHash, ipPreview, reason, until);
-    return true; // newly blocked
-  }
-  return false;
-}
 
 /* ── Alerts + attacker notification ───────────────────────── */
 async function alertAdmins(event) {
@@ -334,7 +416,7 @@ async function recordAttack(req, hit) {
     const denyNow = event.severity === 'high' || event.severity === 'critical';
     if (denyNow || event.severity === 'medium') {
       const reason = `${event.matched_pattern} on ${event.method} ${event.path}`;
-      const newlyBlocked = await addStrike(ipHash, event.ip_preview, reason);
+      const newlyBlocked = await addStrike(ipHash, event.ip_preview, reason, event.matched_pattern);
       event.blocked = denyNow || newlyBlocked;
     }
 
@@ -463,7 +545,7 @@ async function unblockIp(ipPlain) {
   if (strikeMemory.has(ipHash)) {
     const cur = strikeMemory.get(ipHash);
     found = found || !!cur.blockedUntil;
-    strikeMemory.set(ipHash, { strikes: 0, blockedUntil: null });
+    strikeMemory.set(ipHash, { strikes: 0, blockedUntil: null, strikeLog: [], recentRules: new Map() });
   }
   if (blockCache.has(ipHash)) {
     blockCache.set(ipHash, { blockedUntil: null, checkedAt: Date.now() });
@@ -492,11 +574,12 @@ module.exports = {
   identifyAttacker,
   isBlocked,
   isWhitelisted,
+  isVerifiedAdmin,
   recordAttack,
   recordRateLimitAbuse,
   previewIp,
   listBlocks,
   unblockIp,
   // exposed for tests
-  _internals: { strikeMemory, blockCache, alertThrottle, notifThrottle, BLOCK_THRESHOLD }
+  _internals: { strikeMemory, blockCache, alertThrottle, notifThrottle, BLOCK_THRESHOLD, STRIKE_DECAY_MS }
 };

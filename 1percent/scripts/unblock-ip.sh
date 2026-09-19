@@ -10,10 +10,11 @@
 # Usage:
 #   ./scripts/unblock-ip.sh                  # list currently-blocked IPs
 #   ./scripts/unblock-ip.sh 102.89.34.10     # unblock a specific IP
+#   ./scripts/unblock-ip.sh --all            # clear EVERY block (lockout recovery)
 #
-# Needs SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (reads .env if present)
-# and LOG_HASH_SECRET / JWT_SECRET (must MATCH the server's value — the
-# hash is derived from it).
+# Needs SUPABASE_URL + a service key — SUPABASE_SERVICE_ROLE_KEY (legacy)
+# or SUPABASE_SECRET_KEY (new Supabase key format) — and LOG_HASH_SECRET /
+# JWT_SECRET (must MATCH the server's value — the hash is derived from it).
 # ============================================================
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -26,8 +27,12 @@ if [ -f .env ]; then
   set +a
 fi
 
+# New-format Supabase keys win over legacy names (mirrors env.js)
+if [ -n "${SUPABASE_SECRET_KEY:-}" ]; then export SUPABASE_SERVICE_ROLE_KEY="$SUPABASE_SECRET_KEY"; fi
+if [ -n "${SUPABASE_PUBLISHABLE_KEY:-}" ]; then export SUPABASE_ANON_KEY="$SUPABASE_PUBLISHABLE_KEY"; fi
+
 if [ -z "${SUPABASE_URL:-}" ] || [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
-  echo "✗ SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set (check .env)" >&2
+  echo "✗ SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SECRET_KEY) must be set (check .env)" >&2
   exit 1
 fi
 
@@ -55,10 +60,17 @@ function previewIp(ip) {
   const parts = s.split('.');
   if (parts.length === 4) return `${parts[0]}.${parts[1]}.*.*`;
   return s.slice(0, 8) + '…';
-}
-
-(async () => {
+}  (async () => {
   const ip = process.env.UNBLOCK_IP;
+
+  // ── Clear-all mode: lift every block (full lockout recovery) ──
+  if (ip === '--all') {
+    const { data, error } = await db.from('ip_blocklist').delete().neq('ip_hash', '').select();
+    if (error) { console.error('✗ Delete failed:', error.message); process.exit(1); }
+    console.log(`✅ Cleared ${data ? data.length : 0} blocklist row(s).`);
+    console.log('   Note: in-memory blocks on the running server clear within 30s (or on restart).');
+    return;
+  }
 
   if (!ip) {
     // ── List mode ──

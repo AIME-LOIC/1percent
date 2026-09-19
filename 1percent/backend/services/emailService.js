@@ -39,20 +39,35 @@ async function resolveAudience(audience) {
       .map(u => ({ email: u.email, name: u.user_metadata?.full_name || '', id: u.id }));
   }
 
-  // all / active / premium → profiles table (has tier info + confirmed
-  // users have logged in at least once). Union with auth users for full reach.
+  // all / active / premium → profiles table + auth users. Union for full reach.
+  // NOTE: profiles has NO tier / is_premium / subscription_status columns
+  // (selecting them 500s the whole panel → "Failed to load counts"). Premium
+  // lives in user_subscriptions and is resolved below, mirroring
+  // premiumService.getUserTier().
   const { data: profiles, error } = await adminClient
     .from('profiles')
-    .select('id, email, full_name, tier, is_premium, subscription_status')
+    .select('id, email, full_name')
     .order('created_at', { ascending: false });
   if (error) throw new Error(`profiles query failed: ${error.message}`);
+
+  // Premium tier = an active, unexpired subscription row (same rule as
+  // premiumService.getUserTier). One query avoids an N+1 per profile.
+  const premiumUserIds = new Set();
+  try {
+    const { data: subs } = await adminClient
+      .from('user_subscriptions')
+      .select('user_id')
+      .eq('is_active', true)
+      .gt('expires_at', new Date().toISOString());
+    for (const s of subs || []) premiumUserIds.add(s.user_id);
+  } catch { /* user_subscriptions not migrated — premium audience = empty */ }
 
   const seen = new Set();
   const out = [];
   for (const p of profiles || []) {
     if (!p.email || seen.has(p.email.toLowerCase())) continue;
     seen.add(p.email.toLowerCase());
-    if (audience === 'premium' && !(p.is_premium === true || p.subscription_status === 'active' || p.tier === 'premium')) continue;
+    if (audience === 'premium' && !premiumUserIds.has(p.id)) continue;
     out.push({ email: p.email, name: p.full_name || '', id: p.id });
   }
 

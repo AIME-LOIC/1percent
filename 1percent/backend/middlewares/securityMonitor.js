@@ -76,8 +76,13 @@ async function securityMonitor(req, res, next) {
 
     if (securityService.isWhitelisted(ipHash)) return next();
 
-    // 1. Blocklist check (memory-cached, ~0 cost on the hot path)
+    // 1. Blocklist check (memory-cached, ~0 cost on the hot path).
+    //    A verified admin is exempt: blocks persist in the DB, so without
+    //    this an admin behind a blocked shared IP stays locked out of the
+    //    panel that lifts blocks. (Forged tokens fail verification and
+    //    remain blocked — see securityService.isVerifiedAdmin.)
     if (await securityService.isBlocked(ipHash)) {
+      if (await securityService.isVerifiedAdmin(req)) return next();
       // Log the blocked attempt too — blocked attackers still probe.
       securityService.recordAttack(req, {
         event_type: 'blocked_probe',
@@ -99,6 +104,10 @@ async function securityMonitor(req, res, next) {
       securityService.recordAttack(req, top).catch(() => {});
 
       if (top.severity === 'high' || top.severity === 'critical') {
+        // Deny the REQUEST but only persist a block after the strike
+        // threshold is genuinely crossed (recordAttack → addStrike).
+        // Persisting on every critical hit blocked whole office NATs for
+        // a day off a single false positive.
         return sendBlockResponse(req, res);
       }
       // Medium hits continue (recorded + strike) — avoids false-positive
@@ -130,6 +139,8 @@ function securityBodyScan(req, res, next) {
       if (bodyHit) {
         securityService.recordAttack(req, bodyHit).catch(() => {});
         if (bodyHit.severity === 'high' || bodyHit.severity === 'critical') {
+          // Same policy as the early gate: deny the request; the block
+          // itself is decided by the strike system in recordAttack.
           return sendBlockResponse(req, res);
         }
       }
