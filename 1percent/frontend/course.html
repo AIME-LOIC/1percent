@@ -1172,8 +1172,14 @@ function renderMarkdown(md){
   if(!html.includes('\n')&&html.includes('\\n')){
     html=html.replace(/\\r\\n/g,'\n').replace(/\\n/g,'\n').replace(/\\"/g,'"');
   }
-  html=html.replace(/```(\w*)\n([\s\S]*?)```/g,(_,lang,code)=>`<pre><code>${escapeHTML(code.trim())}</code></pre>`);
-  html=html.replace(/`([^`]+)`/g,'<code>$1</code>');
+  /* Stash fenced code and inline code as placeholders FIRST: their content
+     is HTML-escaped exactly once and shielded from every later pass. Inline
+     fragments like `<p>` used to be emitted raw, so the browser swallowed
+     them as real tags — empty code boxes, blank table cells, missing links. */
+  const stash=[];
+  const keep=escaped=>{stash.push(escaped);return`\u0002${stash.length-1}\u0002`;};
+  html=html.replace(/```(\w*)\n([\s\S]*?)```/g,(_,lang,code)=>keep(`<pre><code>${escapeHTML(code.trim())}</code></pre>`));
+  html=html.replace(/`([^`]+)`/g,(_,code)=>keep(`<code>${escapeHTML(code)}</code>`));
   html=html.replace(/\|(.+)\|\n\|[-| ]+\|\n((?:\|.*\|\n?)*)/g,(_,header,rows)=>{
     const ths=header.split('|').filter(Boolean).map(h=>`<th>${h.trim()}</th>`).join('');
     const trs=rows.trim().split('\n').map(row=>`<tr>${row.split('|').filter(Boolean).map(d=>`<td>${d.trim()}</td>`).join('')}</tr>`).join('');
@@ -1186,13 +1192,19 @@ function renderMarkdown(md){
   html=html.replace(/\*(.+?)\*/g,'<em>$1</em>');
   html=html.replace(/^- (.+)$/gm,'<li>$1</li>');
   html=html.replace(/^(\d+)\. (.+)$/gm,'<li class="pg-course-1k1je">$2</li>');
-  html=html.replace(/^> (.+)$/gm,'<blockquote>$1</blockquote>');
+  /* Blockquotes: convert every ">" line (bare ">" too — the spacer lines)
+     then merge consecutive ones into ONE quote. The old per-line version
+     split the quote apart and leaked stray ">" glyphs into the text. */
+  html=html.replace(/^>[ \t]?(.*)$/gm,'<blockquote>$1</blockquote>');
+  html=html.replace(/<\/blockquote>\n<blockquote>/g,'<br>');
   html=html.replace(/^---$/gm,'<hr>');
   html=html.split('\n\n').map(block=>{
     block=block.trim();if(!block)return'';
-    if(block.startsWith('<'))return block;
+    if(block.startsWith('<')||/^\u0002\d+\u0002$/.test(block))return block;
     return'<p>'+block.replace(/\n/g,'<br>')+'</p>';
   }).join('\n');
+  /* Restore stashed, already-escaped code fragments. */
+  html=html.replace(/\u0002(\d+)\u0002/g,(_,i)=>stash[+i]);
   return html;
 }
 
