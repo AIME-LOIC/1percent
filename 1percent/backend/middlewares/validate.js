@@ -58,6 +58,12 @@ const SENSITIVE_KEYS = new Set([
   'token', 'refresh_token', 'access_token', 'api_key', 'secret'
 ]);
 
+/* Markdown content fields — HTML-escaping corrupts them (code fences like
+   <html> become &lt;html&gt;, so lessons teach escaped soup). They are not
+   rendered as raw HTML: the frontend passes them through escapeHTML() for
+   prose and wraps code blocks in <pre><code> with escaping applied. */
+const MARKDOWN_KEYS = new Set(['content_md']);
+
 function sanitizeStrings(maxLength = 5000) {
   return (req, res, next) => {
     if (req.body && typeof req.body === 'object') {
@@ -65,6 +71,10 @@ function sanitizeStrings(maxLength = 5000) {
         if (typeof value === 'string') {
           if (SENSITIVE_KEYS.has(key)) {
             req.body[key] = value.slice(0, maxLength); // no HTML escaping
+          } else if (MARKDOWN_KEYS.has(key)) {
+            // Trim trailing whitespace only — trimming leading spaces would
+            // destroy markdown indentation (nested lists, code blocks).
+            req.body[key] = value.replace(/\s+$/, '').slice(0, maxLength); // no HTML escaping
           } else {
             req.body[key] = escapeHtml(value.trim().slice(0, maxLength));
           }

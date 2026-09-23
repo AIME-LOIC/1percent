@@ -1010,6 +1010,10 @@ function openLesson(lessonId){
 async function doOpenLesson(lessonId){
   const lesson=(courseData.lessons||[]).find(l=>l.id===lessonId);
   if(!lesson)return;
+  /* Flush the OLD lesson's timer BEFORE switching activeLessonId —
+     stopStudyTimer() saves under activeLessonId, so switching first
+     would credit the previous lesson's study time to this one. */
+  stopStudyTimer();
   activeLessonId=lessonId;
 
   document.querySelectorAll('.lesson-item').forEach(el=>el.classList.remove('active'));
@@ -1021,8 +1025,6 @@ async function doOpenLesson(lessonId){
   const prev=(courseData.lessons||[])[idx-1];
   const next=(courseData.lessons||[])[idx+1];
 
-  /* ── Study timer — 10-minute minimum per lesson ── */
-  stopStudyTimer();
   studyComplete=isCompleted;
   // Resume from where the student left off: sessionStorage counter
   // (survives refresh) and the server's recorded time — never reset.
@@ -1162,6 +1164,14 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 function renderMarkdown(md){
   let html=md;
+  /* Defensive: content pasted through some admin flows can store literal
+     "\\n" sequences instead of real newlines, which collapses the lesson
+     into one dense blob (bold works, spacing doesn't). Unescape only when
+     the text has no real newlines at all — healthy markdown and legit
+     "\\n" examples inside code fences are left untouched. */
+  if(!html.includes('\n')&&html.includes('\\n')){
+    html=html.replace(/\\r\\n/g,'\n').replace(/\\n/g,'\n').replace(/\\"/g,'"');
+  }
   html=html.replace(/```(\w*)\n([\s\S]*?)```/g,(_,lang,code)=>`<pre><code>${escapeHTML(code.trim())}</code></pre>`);
   html=html.replace(/`([^`]+)`/g,'<code>$1</code>');
   html=html.replace(/\|(.+)\|\n\|[-| ]+\|\n((?:\|.*\|\n?)*)/g,(_,header,rows)=>{
@@ -1252,7 +1262,9 @@ function startStudyTimer(lessonId,isCompleted){
 }
 function stopStudyTimer(){
   if(studyTimerId){clearInterval(studyTimerId);studyTimerId=null;}
-  if(activeLessonId)saveStudyTime(activeLessonId,studySeconds); // keep, don't wipe
+  // Flush only when a timer was actually running for this lesson —
+  // otherwise studySeconds may still belong to a different lesson.
+  if(studyTickTs!=null&&activeLessonId)saveStudyTime(activeLessonId,studySeconds);
   studyTickTs=null;
 }
 
