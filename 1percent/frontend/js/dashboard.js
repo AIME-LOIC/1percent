@@ -247,23 +247,8 @@ const Dashboard = {
       }
     } catch {}
 
-    document.getElementById('dash-stats').innerHTML = `
-      <div class="dash-stat">
-        <div class="dash-stat-icon courses">${Icons.get('book-open', 20)}</div>
-        <div><b>${enrolled.length}</b><span>Enrolled</span></div>
-      </div>
-      <div class="dash-stat">
-        <div class="dash-stat-icon progress">${Icons.get('target', 20)}</div>
-        <div><b>${avgProgress}%</b><span>Avg Progress</span></div>
-      </div>
-      <div class="dash-stat">
-        <div class="dash-stat-icon completed">${Icons.get('award', 20)}</div>
-        <div><b>${completed}</b><span>Completed</span></div>
-      </div>
-      <div class="dash-stat">
-        <div class="dash-stat-icon coins">${Icons.get('award', 20)}</div>
-        <div><b>${coins}</b><span>Coins</span></div>
-      </div>`;
+    // Learning Progress card (right column) — real data only, no placeholders
+    this._renderLearningCard({ enrolled, avgProgress, completed, coins });
     app.querySelector('.dash-enrolled-count').textContent = `${enrolled.length} enrolled`;
 
     this._renderEnrolled(enrolled);
@@ -277,6 +262,35 @@ const Dashboard = {
     // Initialize notification and rating handlers
     this._initNotificationHandlers();
     this._initRatingHandlers();
+  },
+
+  /* Learning Progress card: donut = average course progress, rows = real
+     counters. Challenge/certificate percentages update later via their
+     loaders (ids dv2-lp-challenges / dv2-lp-certs). */
+  _renderLearningCard({ enrolled, avgProgress, completed, coins }) {
+    const root = document.getElementById('dv2-learning-root');
+    if (!root) return;
+    const rows = [
+      { label: 'Courses', color: '#0d6e3f', pct: avgProgress, note: `${enrolled.length} enrolled` },
+      { label: 'Completed', color: '#10b981', pct: enrolled.length ? Math.round((completed / enrolled.length) * 100) : 0, note: `${completed} done` },
+      { label: 'Coins', color: '#f59e0b', pct: null, note: String(coins) },
+      { label: 'Challenges', color: '#8b5cf6', pct: null, id: 'dv2-lp-challenges' },
+      { label: 'Certificates', color: '#ec4899', pct: null, id: 'dv2-lp-certs' }
+    ];
+    root.innerHTML = `
+      <div class="dv2-learning">
+        <div class="dv2-donut" style="--pct:${Math.min(avgProgress, 100)}" role="img" aria-label="Learning progress ${avgProgress}%">
+          <div class="center"><b>${avgProgress}%</b><span>Overall Learning Progress</span></div>
+        </div>
+        <div class="dv2-dims">
+          ${rows.map(r => `
+            <div class="dv2-dim">
+              <span class="cdot" style="background:${r.color}"></span>
+              <span class="track"><span style="width:${r.pct ?? 0}%;background:${r.color}"></span></span>
+              <span class="pct" ${r.id ? `id="${r.id}"` : ''}>${r.pct != null ? r.pct + '%' : escapeHTML(r.note)}</span>
+            </div>`).join('')}
+        </div>
+      </div>`;
   },
 
   async _applyTierTheme() {
@@ -529,6 +543,8 @@ const Dashboard = {
         return;
       }
       document.querySelector('.dash-certs-count').textContent = `${json.certificates.length} earned`;
+      const certsCell = document.getElementById('dv2-lp-certs');
+      if (certsCell) certsCell.textContent = String(json.certificates.length);
       grid.innerHTML = json.certificates.map(c => {
         const date = c.issued_at ? new Date(c.issued_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
         return `<div class="dash-cert-card" style="background:linear-gradient(135deg,#fef3c7,#fff7ed);border:1px solid #f59e0b;border-radius:var(--radius-md);padding:16px;display:flex;align-items:center;gap:14px;">
@@ -697,6 +713,9 @@ const Dashboard = {
           const count = allChallenges.filter(c => c.difficulty === d).length;
           return `<span class="dash-challenge-chip" data-diff="${d}">${d} (${count})</span>`;
         }).join('')}`;
+
+      const chCell = document.getElementById('dv2-lp-challenges');
+      if (chCell) chCell.textContent = `${passedSet.size}/${allChallenges.length}`;
 
       filtersEl.addEventListener('click', (e) => {
         const chip = e.target.closest('.dash-challenge-chip');
