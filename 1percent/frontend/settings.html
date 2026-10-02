@@ -884,9 +884,22 @@ document.querySelectorAll('.settings-nav-item').forEach(item => {
     const tab = item.dataset.tab;
     document.querySelectorAll('.settings-nav-item').forEach(i => i.classList.remove('active'));
     item.classList.add('active');
-    document.querySelectorAll('.settings-tab').forEach(t => t.classList.add('hidden'));
+
+    // Hide every panel, then explicitly remove both hiding mechanisms
+    // from the selected panel. Some shared CSS uses .hidden in addition
+    // to the native [hidden] attribute.
+    document.querySelectorAll('.settings-tab').forEach(t => {
+      t.classList.add('hidden');
+      t.hidden = true;
+      t.style.display = 'none';
+    });
+
     const target = document.getElementById('tab-' + tab);
-    if (target) { target.hidden = false; target.style.display = ''; }  // markup ships with the [hidden] attribute
+    if (target) {
+      target.classList.remove('hidden');
+      target.hidden = false;
+      target.style.display = '';
+    }
   });
 });
 
