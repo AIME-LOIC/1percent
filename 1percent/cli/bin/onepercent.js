@@ -35,6 +35,8 @@ require('../commands/rm').register(program);
 require('../commands/premium').register(program);
 require('../commands/download').register(program);
 require('../commands/project').register(program);
+require('../commands/workspace').register(program);
+require('../commands/devstatus').register(program);
 require('../commands/whoami').register(program);
 
 program.parse();

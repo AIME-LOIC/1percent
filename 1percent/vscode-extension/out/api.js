@@ -112,6 +112,10 @@ class ApiClient {
     async getPremiumStatus() {
         return this.request('GET', '/api/premium/status');
     }
+    /** Developer workspace: current project, tasks, 14-day activity (project system). */
+    async getDevWorkspace() {
+        return this.request('GET', '/api/student/dev/dev-workspace');
+    }
     request(method, path, body) {
         return new Promise((resolve, reject) => {
             try {

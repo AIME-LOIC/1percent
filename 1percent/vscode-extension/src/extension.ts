@@ -6,6 +6,7 @@ import * as vscode from 'vscode';
 import { ApiClient } from './api';
 import { ChallengeProvider } from './challengeProvider';
 import { CourseProvider } from './courseProvider';
+import { ProjectProvider } from './projectProvider';
 import { FileTracker } from './fileTracker';
 import { TerminalReader } from './terminalReader';
 import { CodeAnalyzer } from './codeAnalyzer';
@@ -14,6 +15,7 @@ import { Challenge } from './types';
 let api: ApiClient;
 let challengeProvider: ChallengeProvider;
 let courseProvider: CourseProvider;
+let projectProvider: ProjectProvider;
 let fileTracker: FileTracker;
 let terminalReader: TerminalReader;
 let codeAnalyzer: CodeAnalyzer;
@@ -26,12 +28,14 @@ export async function activate(context: vscode.ExtensionContext) {
 
   challengeProvider = new ChallengeProvider(api);
   courseProvider = new CourseProvider(api);
+  projectProvider = new ProjectProvider(api);
   fileTracker = new FileTracker(api, context);
   terminalReader = new TerminalReader(context);
   codeAnalyzer = new CodeAnalyzer(context);
 
   vscode.window.registerTreeDataProvider('onepercent-challenges', challengeProvider);
   vscode.window.registerTreeDataProvider('onepercent-courses', courseProvider);
+  vscode.window.registerTreeDataProvider('onepercent-project', projectProvider);
   fileTracker.start();
 
   // Analyze code on editor change (debounced)
@@ -56,6 +60,13 @@ export async function activate(context: vscode.ExtensionContext) {
   if (vscode.window.activeTextEditor) {
     codeAnalyzer.analyze(vscode.window.activeTextEditor);
   }
+
+  // ---- Project system ----
+  context.subscriptions.push(
+    vscode.commands.registerCommand('1percent.refreshProject', () => projectProvider.refresh())
+  );
+  // Refresh the project view on activation (async, non-blocking)
+  projectProvider.refresh();
 
   // ---- Analyze Current File ----
   context.subscriptions.push(

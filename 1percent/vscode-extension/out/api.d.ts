@@ -17,6 +17,8 @@ export declare class ApiClient {
     getFiles(): Promise<FileItem[]>;
     syncFile(fileName: string, content: string, language: string): Promise<void>;
     getPremiumStatus(): Promise<PremiumStatus>;
+    /** Developer workspace: current project, tasks, 14-day activity (project system). */
+    getDevWorkspace(): Promise<any>;
     private request;
 }
 //# sourceMappingURL=api.d.ts.map

@@ -35,7 +35,8 @@
       { "command": "1percent.runInTerminal", "title": "1% Learn: Run File", "icon": "$(play)" },
       { "command": "1percent.openTerminal", "title": "1% Learn: Open Terminal" },
       { "command": "1percent.analyzeFile", "title": "1% Learn: Analyze File", "icon": "$(search)" },
-      { "command": "1percent.setChallenge", "title": "1% Learn: Set Active Challenge" }
+      { "command": "1percent.setChallenge", "title": "1% Learn: Set Active Challenge" },
+      { "command": "1percent.refreshProject", "title": "1% Learn: Refresh Project", "icon": "$(refresh)" }
     ],
     "viewsContainers": {
       "activitybar": [
@@ -48,6 +49,7 @@
     },
     "views": {
       "onepercent-sidebar": [
+        { "id": "onepercent-project", "name": "My Project" },
         { "id": "onepercent-challenges", "name": "Challenges" },
         { "id": "onepercent-courses", "name": "Courses" }
       ]

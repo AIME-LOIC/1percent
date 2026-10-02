@@ -85,6 +85,26 @@ class ApiClient {
     return this.request('GET', '/api/files/usage');
   }
 
+  // ---- Developer workspace (project system) ----
+
+  async getDevWorkspace() {
+    return this.request('GET', '/api/student/dev/dev-workspace');
+  }
+
+  async listMyTasks(filters = {}) {
+    const params = new URLSearchParams();
+    for (const [k, v] of Object.entries(filters)) if (v) params.set(k, v);
+    return this.request('GET', `/api/tasks?${params.toString()}`);
+  }
+
+  async transitionTask(taskId, action) {
+    return this.request('POST', `/api/tasks/${taskId}/transition`, { action });
+  }
+
+  async getDevelopmentActivity(limit = 20) {
+    return this.request('GET', `/api/github/activity?limit=${limit}`);
+  }
+
   // ---- Premium ----
 
   async getPremiumStatus() {

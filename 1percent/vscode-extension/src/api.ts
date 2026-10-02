@@ -92,6 +92,11 @@ export class ApiClient {
     return this.request('GET', '/api/premium/status');
   }
 
+  /** Developer workspace: current project, tasks, 14-day activity (project system). */
+  async getDevWorkspace(): Promise<any> {
+    return this.request('GET', '/api/student/dev/dev-workspace');
+  }
+
   private request(method: string, path: string, body?: any): Promise<any> {
     return new Promise((resolve, reject) => {
       try {

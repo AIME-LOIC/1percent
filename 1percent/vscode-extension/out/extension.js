@@ -42,12 +42,14 @@ const vscode = __importStar(require("vscode"));
 const api_1 = require("./api");
 const challengeProvider_1 = require("./challengeProvider");
 const courseProvider_1 = require("./courseProvider");
+const projectProvider_1 = require("./projectProvider");
 const fileTracker_1 = require("./fileTracker");
 const terminalReader_1 = require("./terminalReader");
 const codeAnalyzer_1 = require("./codeAnalyzer");
 let api;
 let challengeProvider;
 let courseProvider;
+let projectProvider;
 let fileTracker;
 let terminalReader;
 let codeAnalyzer;
@@ -57,11 +59,13 @@ async function activate(context) {
     await api.ready;
     challengeProvider = new challengeProvider_1.ChallengeProvider(api);
     courseProvider = new courseProvider_1.CourseProvider(api);
+    projectProvider = new projectProvider_1.ProjectProvider(api);
     fileTracker = new fileTracker_1.FileTracker(api, context);
     terminalReader = new terminalReader_1.TerminalReader(context);
     codeAnalyzer = new codeAnalyzer_1.CodeAnalyzer(context);
     vscode.window.registerTreeDataProvider('onepercent-challenges', challengeProvider);
     vscode.window.registerTreeDataProvider('onepercent-courses', courseProvider);
+    vscode.window.registerTreeDataProvider('onepercent-project', projectProvider);
     fileTracker.start();
     // Analyze code on editor change (debounced)
     let analyzeTimeout;
@@ -84,6 +88,10 @@ async function activate(context) {
     if (vscode.window.activeTextEditor) {
         codeAnalyzer.analyze(vscode.window.activeTextEditor);
     }
+    // ---- Project system ----
+    context.subscriptions.push(vscode.commands.registerCommand('1percent.refreshProject', () => projectProvider.refresh()));
+    // Refresh the project view on activation (async, non-blocking)
+    projectProvider.refresh();
     // ---- Analyze Current File ----
     context.subscriptions.push(vscode.commands.registerCommand('1percent.analyzeFile', () => {
         const editor = vscode.window.activeTextEditor;
