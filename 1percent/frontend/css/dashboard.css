@@ -426,3 +426,43 @@ html.theme-premium .dash-lb-move.up{color:#d97706;background:#fffbeb;border-colo
     padding-top: 8px;
   }
 }
+
+/* ============================================================
+   Student developer dashboard composition — mockup-aligned
+   ============================================================ */
+#dashboard-app.has-dev-workspace .dashboard-shell{padding:24px 28px 72px;background:#f7faf8;}
+#dashboard-app.has-dev-workspace .student-dashboard-frame{max-width:1540px;margin:0 auto;display:grid;grid-template-columns:260px minmax(0,1fr);gap:22px;align-items:start;}
+#dashboard-app.has-dev-workspace .student-sidebar{position:sticky;top:82px;min-height:calc(100vh - 110px);display:flex;flex-direction:column;padding:18px 14px;background:#fff;border:1px solid #e1ebe5;border-radius:18px;box-shadow:0 8px 30px rgba(13,110,63,.055);}
+.student-sidebar-brand{display:flex;align-items:center;gap:11px;padding:4px 8px 20px;border-bottom:1px solid #edf3ef;}
+.student-sidebar-mark{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:#0d6e3f;color:#fff;font-weight:900;font-size:15px;}
+.student-sidebar-brand strong{display:block;font-size:13px;color:#111827;}
+.student-sidebar-brand span{display:block;margin-top:2px;font-size:10px;color:#94a3b8;}
+.student-sidebar-nav{padding-top:18px;display:flex;flex-direction:column;gap:4px;}
+.student-sidebar-label{padding:0 10px;margin:8px 0 5px;color:#94a3b8;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;}
+.student-nav-item{min-height:42px;padding:0 11px;display:flex;align-items:center;gap:11px;border-radius:10px;text-decoration:none;color:#64748b;font-size:12px;font-weight:650;transition:background .15s,color .15s;}
+.student-nav-item:hover{background:#f0fdf4;color:#0d6e3f;}
+.student-nav-item.active{background:#ecfdf5;color:#0d6e3f;box-shadow:inset 3px 0 0 #0d6e3f;}
+.student-nav-icon{width:25px;height:25px;display:grid;place-items:center;border-radius:7px;background:#f8faf9;color:#64748b;font-size:11px;font-weight:800;flex:0 0 auto;}
+.student-nav-item.active .student-nav-icon{background:#d1fae5;color:#0d6e3f;}
+.student-sidebar-footer{margin-top:auto;padding-top:14px;border-top:1px solid #edf3ef;}
+.student-sidebar-status{margin:12px 4px 0;padding:10px;border:1px solid #e5eee9;border-radius:10px;background:#fbfefc;display:flex;gap:8px;align-items:center;}
+.student-sidebar-status>span{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 4px #dcfce7;}
+.student-sidebar-status strong{display:block;font-size:10px;color:#1f2937;}
+.student-sidebar-status small{display:block;margin-top:2px;font-size:9px;color:#94a3b8;}
+#dashboard-app.has-dev-workspace .dash-layout{min-width:0;display:block;max-width:none;margin:0;padding:0;}
+#dashboard-app.has-dev-workspace .dash-main{min-width:0;}
+#dashboard-app.has-dev-workspace .dash-header{padding:2px 4px 4px;margin-bottom:14px;}
+#dashboard-app.has-dev-workspace .dash-greeting{font-size:clamp(24px,2.5vw,30px);}
+#dashboard-app.has-dev-workspace #dev-workspace-root{min-width:0;}
+#dashboard-app.has-dev-workspace .dash-lb{display:none!important;}
+#dashboard-app.has-dev-workspace .dash-main>.dash-stats,
+#dashboard-app.has-dev-workspace .dash-main>.dash-section,
+#dashboard-app.has-dev-workspace .dash-main>.dash-enrolled,
+#dashboard-app.has-dev-workspace .dash-main>.dash-challenges,
+#dashboard-app.has-dev-workspace .dash-main>.dash-courses,
+#dashboard-app.has-dev-workspace .dash-main>.dash-certificates,
+#dashboard-app.has-dev-workspace .dash-main>.dash-roadmap{display:none;}
+#dashboard-app.has-dev-workspace .opdev{max-width:none;padding:0;}
+#dashboard-app.has-dev-workspace .opdev-profile{min-height:92px;}
+@media(max-width:1100px){#dashboard-app.has-dev-workspace .student-dashboard-frame{grid-template-columns:220px minmax(0,1fr);gap:16px;}}
+@media(max-width:900px){#dashboard-app.has-dev-workspace .dashboard-shell{padding:10px 12px 82px;}#dashboard-app.has-dev-workspace .student-dashboard-frame{display:block;}#dashboard-app.has-dev-workspace .student-sidebar{display:none;}#dashboard-app.has-dev-workspace .dash-header{padding:0 4px;margin-bottom:10px;}}
