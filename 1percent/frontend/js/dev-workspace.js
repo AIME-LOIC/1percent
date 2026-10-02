@@ -127,7 +127,8 @@
       else renderLegacy(roots.hero, ws);
     } catch (err) {
       console.warn('[dev-workspace]', err.message);
-      const msg = `Could not load your workspace: ${esc(err.message)}`;
+      // Never surface raw errors — friendly empty state instead (no ✕)
+      const msg = 'Couldn’t load this section yet — check your connection and refresh.';
       for (const el of Object.values(roots)) {
         if (el) el.innerHTML = `<div class="dv2-empty">${msg}</div>`;
       }
@@ -199,16 +200,13 @@
       </section>`;
 
     // Current project card
-    let projectCard;
-    if (!p) {
+    let projectCard;      if (!p) {
       projectCard = `
         <section class="dv2-card" aria-label="Current project">
           <div class="dv2-projectcard-head">
             <h3>Current Project</h3>
           </div>
-          <div class="dv2-empty">You don't have an active project yet.<br>
-            <span style="font-size:12px">Ask your mentor or an admin to be added to a project team.</span>
-          </div>
+          <div class="dv2-empty">No project yet — ask your mentor or an admin to add you to a team.</div>
         </section>`;
     } else {
       const overall = p.progress?.overall_percent ?? 0;
@@ -257,7 +255,7 @@
     const p = ws.current_project;
     if (!root) return;
     if (!p?.progress) {
-      root.innerHTML = '<div class="dv2-empty">Join a project to see requirement-driven progress here.</div>';
+      root.innerHTML = '<div class="dv2-empty">No project progress yet — join a project to start tracking.</div>';
       return;
     }
     const overall = p.progress.overall_percent ?? 0;
@@ -312,7 +310,7 @@
   function renderTasks(root, tasks) {
     if (!root) return;
     if (!tasks.length) {
-      root.innerHTML = '<div class="dv2-empty">No tasks assigned yet — your mentor will assign them from the project board.</div>';
+      root.innerHTML = '<div class="dv2-empty">No tasks yet — your mentor will assign them from the project board.</div>';
       return;
     }
     root.innerHTML = `<div class="dv2-tasks">${tasks.map(t => `
@@ -334,7 +332,7 @@
   function renderHeat(root, days) {
     if (!root) return;
     if (!days.length || days.every(d => !d.total)) {
-      root.innerHTML = '<div class="dv2-empty">No development activity in the last 14 days. Push a commit to a connected repo — or complete tasks — and it shows up here.</div>';
+      root.innerHTML = '<div class="dv2-empty">No development activity yet — push a commit to a connected repo or complete a task and it shows up here.</div>';
       return;
     }
     const rows = [
@@ -431,7 +429,7 @@
   function renderFeed(root, items) {
     if (!root) return;
     if (!items.length) {
-      root.innerHTML = '<div class="dv2-empty">No recent activity yet. Connect a repository and start building!</div>';
+      root.innerHTML = '<div class="dv2-empty">No recent activity yet — connect a repository and start building.</div>';
       return;
     }
     root.innerHTML = `<div class="dv2-feed">${items.slice(0, 8).map(a => {

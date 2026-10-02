@@ -70,6 +70,23 @@
 </head>
 <body class="dv2">
 
+<header id="header" class="scrolled">
+  <div class="container header-shell">
+    <a href="/" class="logo">
+      <div class="logo-text">
+        <span class="name">1% Expert Programme</span>
+        <span class="tagline">Student Dashboard</span>
+      </div>
+    </a>
+    <div class="header-tools">
+      <button class="header-notify-btn" id="header-notify-btn" type="button" aria-label="Open notifications">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+      </button>
+      <nav id="main-nav" aria-label="Primary"></nav>
+    </div>
+  </div>
+</header>
+
 <main id="dashboard-app" class="dashboard-loading">
   <div class="container dashboard-loading-state" role="status" aria-live="polite">
     <p>Loading your dashboard…</p>
@@ -101,33 +118,27 @@
   <div class="dv2-app">
     <aside class="dv2-sidebar" id="dv2-sidebar" aria-label="Dashboard navigation">
       <a class="dv2-brand" href="/"><span class="mark">1%</span> 1percent</a>
-      <a class="dv2-navlink active" href="#dashboard-sec" data-dv2="dashboard">
+      <a class="dv2-navlink active" href="#dashboard" data-pane="dashboard">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         Dashboard</a>
-      <a class="dv2-navlink" href="#project-sec" data-dv2="project">
+      <a class="dv2-navlink" href="#project" data-pane="project">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 9.4 7.55 4.24"/><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4"/><path d="M8 10v4"/><path d="M15 13v2"/><path d="M17.5 12h.01"/></svg>
         My Projects</a>
-      <a class="dv2-navlink" href="#tasks-sec" data-dv2="tasks">
+      <a class="dv2-navlink" href="#tasks" data-pane="tasks">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 10h8"/><path d="M8 14h5"/></svg>
         Tasks</a>
-      <a class="dv2-navlink" href="#activity-sec" data-dv2="activity">
+      <a class="dv2-navlink" href="#activity" data-pane="activity">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         Activity</a>
-      <a class="dv2-navlink" href="${_url('/settings#github')}">
+      <a class="dv2-navlink" href="#github" data-pane="github">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
         GitHub</a>
-      <a class="dv2-navlink" href="#learning-sec" data-dv2="learning">
+      <a class="dv2-navlink" href="#learning" data-pane="learning">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
         Learning</a>
-      <a class="dv2-navlink" href="#certs-sec" data-dv2="certs">
+      <a class="dv2-navlink" href="#resources" data-pane="resources">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
         Resources</a>
-      <a class="dv2-navlink" href="${_url('/mentors')}">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        Mentors</a>
-      <a class="dv2-navlink" href="${_url('/robotics-club')}">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        Community</a>
       <a class="dv2-navlink" href="${_url('/settings')}">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
         Settings</a>
@@ -164,6 +175,7 @@
               <a href="${_url('/settings')}">Settings</a>
               <a href="${_url('/settings#github')}">GitHub connection</a>
               <a href="${_url('/')}">Homepage</a>
+              <button type="button" id="dv2-switch-learn">Switch to Learn dashboard</button>
               <button type="button" id="dv2-logout">Log Out</button>
             </div>
           </div>
@@ -171,24 +183,25 @@
       </div>
 
       <!-- Content grid -->
-      <div class="dv2-main">
+      <div class="dv2-main" id="dv2-main">
+        <h1 class="dv2-pane-title" id="dv2-pane-title" hidden></h1>
         <div class="dv2-grid">
           <div class="dv2-col">
-            <div class="dv2-greeting" id="dv2-greeting">
+            <div class="dv2-greeting" id="dv2-greeting" data-panes="dashboard">
               <div class="dv2-skel" style="width:260px;height:24px"></div>
             </div>
 
             <!-- Hero: profile + current project (rendered by dev-workspace.js) -->
-            <div id="dv2-hero-root" class="dv2-hero"></div>
+            <div id="dv2-hero-root" class="dv2-hero" data-panes="dashboard,project"></div>
 
-            <section class="dv2-card" id="sec-progress" aria-label="Project progress">
+            <section class="dv2-card" id="sec-progress" aria-label="Project progress" data-panes="dashboard,project">
               <div class="dv2-card-head">
                 <h2>Project Progress</h2>
               </div>
               <div id="dv2-progress-root"><div class="dv2-empty">Loading…</div></div>
             </section>
 
-            <section class="dv2-card" id="sec-heat" aria-label="14-day development activity">
+            <section class="dv2-card" id="sec-heat" aria-label="14-day development activity" data-panes="dashboard,activity">
               <div class="dv2-card-head">
                 <h2>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
@@ -197,14 +210,14 @@
               <div id="dv2-heat-root"><div class="dv2-empty">Loading…</div></div>
             </section>
 
-            <section class="dv2-card" id="sec-team" aria-label="Team and project information">
+            <section class="dv2-card" id="sec-team" aria-label="Team and project information" data-panes="dashboard,project">
               <div class="dv2-card-head">
                 <h2>Team &amp; Project Information</h2>
               </div>
               <div id="dv2-team-root"><div class="dv2-empty">Loading…</div></div>
             </section>
 
-            <section class="dv2-card" id="sec-courses" aria-label="Your courses">
+            <section class="dv2-card" id="sec-courses" aria-label="Your courses" data-panes="dashboard,learning">
               <div class="dv2-card-head">
                 <h2>Your Courses</h2>
                 <span class="count dash-enrolled-count">Loading...</span>
@@ -216,7 +229,7 @@
               </div>
             </section>
 
-            <section class="dv2-card" id="sec-challenges" aria-label="Challenges">
+            <section class="dv2-card" id="sec-challenges" aria-label="Challenges" data-panes="dashboard,learning">
               <div class="dv2-card-head">
                 <h2>Challenges</h2>
                 <a href="${_url('/playground')}" class="dv2-link">View All →</a>
@@ -231,38 +244,19 @@
               </div>
             </section>
 
-            <section class="dv2-card" id="sec-allcourses" aria-label="Browse all courses">
-              <div class="dv2-card-head">
-                <h2>Browse All Courses</h2>
-                <span class="count dash-courses-count">Loading...</span>
-              </div>
-              <div class="dash-course-toolbar">
-                <div class="dash-course-search">
-                  <span class="dash-search-icon" aria-hidden="true">⌕</span>
-                  <input type="search" id="dash-course-search" placeholder="Search courses..." aria-label="Search courses" autocomplete="off">
-                </div>
-              </div>
-          <div class="dash-courses" id="dash-all-courses">
-            <div class="skel-course skeleton"></div>
-            <div class="skel-course skeleton"></div>
-            <div class="skel-course skeleton"></div>
-            <div class="skel-course skeleton"></div>
-            <div class="skel-course skeleton"></div>
-            <div class="skel-course skeleton"></div>
-          </div>
-            </section>
 
-            <section class="dv2-card" id="sec-certs" aria-label="Certificates">
+
+            <section class="dv2-card" id="sec-certs" aria-label="Certificates" data-panes="dashboard,resources">
               <div class="dv2-card-head">
                 <h2>Certificates</h2>
                 <span class="count dash-certs-count">Loading...</span>
               </div>
               <div class="dash-certificates" id="dash-certificates">
-                <div class="dash-empty">Complete a course and pass the quiz to earn certificates.</div>
+                <div class="dash-empty">No certificates yet — complete a course and pass the quiz.</div>
               </div>
             </section>
 
-            <section class="dv2-card" id="sec-roadmap" aria-label="Learning roadmap">
+            <section class="dv2-card" id="sec-roadmap" aria-label="Learning roadmap" data-panes="dashboard,resources">
               <div class="dv2-card-head">
                 <h2>Learning Roadmap</h2>
               </div>
@@ -275,7 +269,7 @@
 
           <!-- Right column -->
           <div class="dv2-col">
-            <section class="dv2-card" id="sec-tasks" aria-label="Current tasks">
+            <section class="dv2-card" id="sec-tasks" aria-label="Current tasks" data-panes="dashboard,tasks">
               <div class="dv2-card-head">
                 <h2>Current Tasks</h2>
                 <a href="#tasks-sec" class="dv2-link" hidden>View All →</a>
@@ -283,7 +277,7 @@
               <div id="dv2-tasks-root"><div class="dv2-empty">Loading…</div></div>
             </section>
 
-            <section class="dv2-card" id="sec-activity" aria-label="Recent activity">
+            <section class="dv2-card" id="sec-activity" aria-label="Recent activity" data-panes="dashboard,activity">
               <div class="dv2-card-head">
                 <h2>Recent Activity</h2>
                 <a href="#activity-sec" class="dv2-link" hidden>View All →</a>
@@ -291,7 +285,7 @@
               <div id="dv2-feed-root"><div class="dv2-empty">Loading…</div></div>
             </section>
 
-            <section class="dv2-card" id="sec-learning" aria-label="Learning progress">
+            <section class="dv2-card" id="sec-learning" aria-label="Learning progress" data-panes="dashboard,learning">
               <div class="dv2-card-head">
                 <h2>Learning Progress</h2>
                 <a href="#learning-sec" class="dv2-link" hidden>View All →</a>
@@ -299,7 +293,37 @@
               <div id="dv2-learning-root"><div class="dv2-empty">Loading…</div></div>
             </section>
 
-            <section class="dv2-card dv2-cta" aria-label="Explore projects">
+            <!-- Courses live in the RIGHT column (not under Challenges) -->
+            <section class="dv2-card" id="sec-allcourses" aria-label="Browse all courses" data-panes="dashboard,learning">
+              <div class="dv2-card-head">
+                <h2>Browse All Courses</h2>
+                <span class="count dash-courses-count">Loading...</span>
+              </div>
+              <div class="dash-course-toolbar">
+                <div class="dash-course-search">
+                  <span class="dash-search-icon" aria-hidden="true">⌕</span>
+                  <input type="search" id="dash-course-search" placeholder="Search courses..." aria-label="Search courses" autocomplete="off">
+                </div>
+              </div>
+              <div class="dash-courses" id="dash-all-courses">
+                <div class="skel-course skeleton"></div>
+                <div class="skel-course skeleton"></div>
+                <div class="skel-course skeleton"></div>
+                <div class="skel-course skeleton"></div>
+                <div class="skel-course skeleton"></div>
+                <div class="skel-course skeleton"></div>
+              </div>
+            </section>
+
+            <!-- GitHub connection status pane -->
+            <section class="dv2-card" id="sec-github" aria-label="GitHub connection" data-panes="github">
+              <div class="dv2-card-head">
+                <h2>GitHub</h2>
+              </div>
+              <div id="dv2-github-root"><div class="dv2-empty">Loading…</div></div>
+            </section>
+
+            <section class="dv2-card dv2-cta" aria-label="Explore projects" data-panes="dashboard">
               <div class="ic">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
               </div>
@@ -310,7 +334,7 @@
               <a class="go" href="${_url('/projects')}">Explore Projects →</a>
             </section>
 
-            <section class="dv2-card" id="sec-lb" aria-label="Leaderboard">
+            <section class="dv2-card" id="sec-lb" aria-label="Leaderboard" data-panes="dashboard">
               <div class="dv2-card-head">
                 <h3><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> Leaderboard</h3>
                 <div class="dash-lb-tabs">
@@ -323,7 +347,7 @@
               </div>
             </section>
 
-            <div class="dash-lb-section">
+            <div class="dash-lb-section" data-panes="dashboard">
               <div class="dash-lb-section-head">
                 <span>This Week's Goal</span>
                 <strong id="weekly-goal-progress">0/6</strong>
@@ -333,12 +357,7 @@
               <div id="goal-encouragement" class="pg-dashboard-18jk1"></div>
             </div>
 
-            <div class="dash-lb-section">
-              <div class="dash-lb-section-head"><span>Last 14 Days</span></div>
-              <div id="dash-activity-chart" class="min-h70"></div>
-            </div>
-
-            <div class="dash-lb-section" id="dash-club-promo" hidden>
+            <div class="dash-lb-section" id="dash-club-promo" data-panes="dashboard" hidden>
               <a href="${_url('/robotics-club')}" class="pg-dashboard-1n75i">
                 <div class="adm-tile-green">
                   <div class="success-orb">
@@ -350,10 +369,95 @@
               </a>
             </div>
 
-            <div class="dash-lb-footer" id="dash-lb-footer"></div>
+            <div class="dash-lb-footer" id="dash-lb-footer" data-panes="dashboard"></div>
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</template>
+
+<!-- Backup/classic template — shown when the student has no project
+     assigned (or chose "Learn" in the one-time dashboard picker) -->
+<template id="dashboard-classic-template">
+  <div class="dashboard-shell">
+    <div class="dash-layout">
+      <!-- Main column -->
+      <div class="dash-main">
+        <div class="dash-header">
+          <div>
+            <div class="skel-greeting skeleton" id="skel-greeting"></div>
+            <div class="skel-subtitle skeleton" id="skel-subtitle"></div>
+            <h1 class="dash-greeting" id="dash-greeting-text" hidden></h1>
+            <p class="dash-subtitle" id="dash-subtitle-text" hidden></p>
+          </div>
+          <span class="dash-streak" id="dash-streak" hidden>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+            <span class="dash-streak-count">0</span>-day streak
+          </span>
+        </div>
+
+        <div class="dash-stats" id="dash-stats">
+          <div class="dash-stat skel-stat skeleton"></div>
+          <div class="dash-stat skel-stat skeleton"></div>
+          <div class="dash-stat skel-stat skeleton"></div>
+        </div>
+
+        <div class="dash-section"><h2>Your Courses</h2><span class="count dash-enrolled-count">Loading...</span></div>
+        <div class="dash-enrolled" id="dash-enrolled">
+          <div class="skel-enrolled skeleton"></div>
+          <div class="skel-enrolled skeleton"></div>
+          <div class="skel-enrolled skeleton"></div>
+        </div>
+
+        <div class="dash-section">
+          <h2>Challenges</h2>
+          <a href="/playground" class="pg-dashboard-1qm4y">View All &rarr;</a>
+        </div>
+        <div class="dash-challenges" id="dash-challenges">
+          <div class="dash-challenge-filters" id="challenge-filters"></div>
+          <div class="dash-challenge-grid" id="challenge-grid">
+            <div class="skel-course skeleton"></div>
+            <div class="skel-course skeleton"></div>
+            <div class="skel-course skeleton"></div>
+          </div>
+        </div>
+
+        <div class="dash-section dash-courses-header">
+          <div>
+            <h2>Explore Courses</h2>
+            <p class="dash-section-subtitle">Find your next skill to build.</p>
+          </div>
+          <span class="count dash-courses-count">Loading...</span>
+        </div>
+        <div class="dash-course-toolbar">
+          <div class="dash-course-search">
+            <span class="dash-search-icon" aria-hidden="true">⌕</span>
+            <input type="search" id="dash-course-search" placeholder="Search courses..." aria-label="Search courses" autocomplete="off">
+          </div>
+        </div>
+        <div class="dash-courses" id="dash-all-courses">
+          <div class="skel-course skeleton"></div>
+          <div class="skel-course skeleton"></div>
+          <div class="skel-course skeleton"></div>
+          <div class="skel-course skeleton"></div>
+          <div class="skel-course skeleton"></div>
+          <div class="skel-course skeleton"></div>
+        </div>
+
+        <div class="dash-section"><h2>Certificates</h2><span class="count dash-certs-count">Loading...</span></div>
+        <div class="dash-certificates" id="dash-certificates">
+          <div class="dash-empty">No certificates yet — complete a course and pass the quiz.</div>
+        </div>
+
+        <div class="dash-section"><h2>Learning Roadmap</h2></div>
+        <div class="dash-roadmap" id="roadmap-container">
+          <div class="skel-roadmap skeleton"></div>
+          <div class="skel-roadmap skeleton"></div>
+          <div class="skel-roadmap skeleton"></div>
+        </div>
+      </div>
+
     </div>
   </div>
 </template>

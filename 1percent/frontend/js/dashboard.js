@@ -64,6 +64,104 @@ const Dashboard = {
     }
   },
 
+  /* Fetch the dev workspace once for mode gating (read-only, safe to fail). */
+  async _fetchWorkspace() {
+    try {
+      const token = typeof OPSession !== 'undefined'
+        ? await OPSession.getToken()
+        : (await this.supabase?.auth.getSession())?.data?.session?.access_token;
+      const res = await fetch('/api/student/dev/dev-workspace', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch { return null; }
+  },
+
+  /* Classic (backup) UI greeting + "open Dev dashboard" switch when the
+     student is project-assigned. */
+  _renderClassicGreeting(user, name) {
+    const skel = document.getElementById('skel-greeting');
+    if (skel) skel.style.display = 'none';
+    const skelSub = document.getElementById('skel-subtitle');
+    if (skelSub) skelSub.style.display = 'none';
+    const greetEl = document.getElementById('dash-greeting-text');
+    if (greetEl) {
+      greetEl.hidden = false;
+      greetEl.style.display = '';
+      greetEl.textContent = `Welcome back, ${name}`;
+    }
+    const subEl = document.getElementById('dash-subtitle-text');
+    if (subEl) {
+      subEl.hidden = false;
+      subEl.style.display = '';
+    }
+    // Project-assigned students can jump to the Dev UI explicitly
+    if (this._hasProject) {
+      const header = document.querySelector('.dash-header');
+      if (header && !header.querySelector('#classic-dev-switch')) {
+        const btn = document.createElement('button');
+        btn.id = 'classic-dev-switch';
+        btn.type = 'button';
+        btn.textContent = 'Open Dev dashboard →';
+        btn.style.cssText = 'display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:none;background:linear-gradient(135deg,#0d6e3f,#0a5c34);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;';
+        btn.addEventListener('click', () => this._switchMode('dev'));
+        header.appendChild(btn);
+      }
+    }
+  },
+
+  /* Persist a dashboard-mode choice and reload to re-render. */
+  _switchMode(val) {
+    try { localStorage.setItem('op_dash_choice', val); } catch {}
+    location.reload();
+  },
+
+  /* One-time "Learn or Dev" picker shown until a choice is stored.
+     Dev stays locked until the student is assigned to a project. */
+  _offerModeChoice(hasProject, mode) {
+    let seen = null;
+    try { seen = localStorage.getItem('op_dash_choice'); } catch {}
+    if (seen || document.getElementById('op-mode-choice')) return;
+
+    const ov = document.createElement('div');
+    ov.id = 'op-mode-choice';
+    ov.className = 'mode-choice-backdrop';
+    ov.innerHTML = `
+      <div class="mode-choice" role="dialog" aria-modal="true" aria-label="Choose your dashboard">
+        <h3>Welcome! Choose your dashboard</h3>
+        <p>You can switch any time from the top menu.</p>
+        <div class="mode-choice-grid">
+          <button type="button" class="mode-choice-card" data-mode="learn">
+            <span class="mc-ic">🎓</span>
+            <b>Learn</b>
+            <span>Courses, challenges and certificates.</span>
+          </button>
+          <button type="button" class="mode-choice-card ${hasProject ? '' : 'locked'}" data-mode="dev" ${hasProject ? '' : 'disabled'}>
+            <span class="mc-ic">💻</span>
+            <b>Dev</b>
+            <span>${hasProject ? 'Projects, tasks and code activity.' : 'Available once you are assigned to a project.'}</span>
+          </button>
+        </div>
+        <button type="button" class="mode-choice-dismiss">Continue with ${escapeHTML(mode === 'dev' ? 'Dev' : 'Learn')} →</button>
+      </div>`;
+    document.body.appendChild(ov);
+
+    const close = () => ov.remove();
+    ov.querySelectorAll('.mode-choice-card:not([disabled])').forEach(btn => {
+      btn.addEventListener('click', () => {
+        try { localStorage.setItem('op_dash_choice', btn.dataset.mode); } catch {}
+        close();
+        if (btn.dataset.mode !== mode) location.reload();
+      });
+    });
+    ov.querySelector('.mode-choice-dismiss')?.addEventListener('click', () => {
+      // Remember the current default so the card never shows again
+      try { localStorage.setItem('op_dash_choice', mode); } catch {}
+      close();
+    });
+  },
+
   /* v2 topbar: user chip, menu, notifications, mobile sidebar. Called after
      the template is mounted. Also hides the legacy shared header (#header) —
      the sidebar owns navigation now. */
@@ -99,6 +197,10 @@ const Dashboard = {
       else await this.supabase.auth.signOut();
       window.location.href = _url('/');
     });
+    document.getElementById('dv2-switch-learn')?.addEventListener('click', () => {
+      menu?.classList.remove('open');
+      this._switchMode('learn');
+    });
 
     // Notifications: reuse NotificationPopup + unread badge
     document.getElementById('dv2-bell')?.addEventListener('click', async () => {
@@ -125,6 +227,9 @@ const Dashboard = {
       if (q) window.location.href = _url('/playground') + '?q=' + encodeURIComponent(q);
     });
 
+    this._initPaneNav();
+    this._loadGithubCard();
+
     // Mobile sidebar drawer
     const sidebar = document.getElementById('dv2-sidebar');
     const backdrop = document.getElementById('dv2-backdrop');
@@ -136,6 +241,74 @@ const Dashboard = {
     });
     backdrop?.addEventListener('click', close);
     sidebar?.querySelectorAll('.dv2-navlink').forEach(a => a.addEventListener('click', close));
+  },
+
+  /* SPA pane switching: sidebar links show/hide sections on the right
+     instead of navigating. Hash-synced so refresh keeps the pane. */
+  _initPaneNav() {
+    const PANES = ['dashboard', 'project', 'tasks', 'activity', 'github', 'learning', 'resources'];
+    const TITLES = {
+      project: 'My Projects', tasks: 'Tasks', activity: 'Activity',
+      github: 'GitHub', learning: 'Learning', resources: 'Resources'
+    };
+    const main = document.getElementById('dv2-main');
+    const title = document.getElementById('dv2-pane-title');
+    const links = document.querySelectorAll('.dv2-navlink[data-pane]');
+    if (!main || !links.length) return;
+
+    const setPane = (name) => {
+      if (!PANES.includes(name)) name = 'dashboard';
+      document.querySelectorAll('[data-panes]').forEach(el => {
+        el.hidden = !el.dataset.panes.split(',').includes(name);
+      });
+      links.forEach(a => a.classList.toggle('active', a.dataset.pane === name));
+      if (title) {
+        title.hidden = name === 'dashboard';
+        if (name !== 'dashboard') title.textContent = TITLES[name] || name;
+      }
+      main.dataset.pane = name;
+      try { history.replaceState(null, '', '#' + name); } catch {}
+    };
+
+    links.forEach(a => a.addEventListener('click', (e) => {
+      e.preventDefault();
+      setPane(a.dataset.pane);
+    }));
+
+    setPane((location.hash || '').replace('#', ''));
+    window.addEventListener('hashchange', () => setPane((location.hash || '').replace('#', '')));
+  },
+
+  /* GitHub connection status (its own pane + dashboard card). */
+  async _loadGithubCard() {
+    const root = document.getElementById('dv2-github-root');
+    if (!root) return;
+    const notConnected = `
+      <div class="dv2-empty">
+        No GitHub account connected yet.<br>
+        <span style="font-size:12px">Connect it so your commits and pull requests count as your activity.</span><br>
+        <a href="${escapeHTML(_url('/settings#github'))}" class="dv2-link" style="display:inline-block;margin-top:8px">Connect GitHub →</a>
+      </div>`;
+    try {
+      const token = typeof OPSession !== 'undefined' ? await OPSession.getToken() : null;
+      const res = await fetch('/api/auth/github-link', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      const json = await res.json();
+      const u = json.github_username;
+      if (!json.success || !u) { root.innerHTML = notConnected; return; }
+      root.innerHTML = `
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+          <img src="https://github.com/${encodeURIComponent(u)}.png?size=104" alt="" width="52" height="52" style="border-radius:50%;border:1px solid rgba(148,163,184,0.4);">
+          <div style="flex:1;min-width:160px;">
+            <div style="font-weight:700;">@${escapeHTML(u)}</div>
+            <a href="https://github.com/${encodeURIComponent(u)}" target="_blank" rel="noopener" class="dv2-link">View GitHub profile →</a>
+          </div>
+          <a href="${escapeHTML(_url('/settings#github'))}" class="dv2-mini-btn">Manage</a>
+        </div>
+        <p style="font-size:12px;color:var(--dv2-muted);margin-top:12px;">
+          Pushes, pull requests and reviews on connected repositories are credited to your dashboard activity.</p>`;
+    } catch { root.innerHTML = notConnected; }
   },
 
   _showGuest() {
@@ -185,11 +358,25 @@ const Dashboard = {
       else await this.supabase.auth.signOut();
       window.location.href = _url('/');
     });
-  },
-
-  async _renderDashboard(user) {
+  },  async _renderDashboard(user) {
     const app = document.getElementById('dashboard-app');
-    const tpl = document.getElementById('dashboard-main-template');
+
+    /* ── Mode gate ────────────────────────────────────────────────
+       The v2 (Dev) UI is only for students assigned to a project.
+       Everyone else — or anyone who chose "Learn" in the one-time
+       picker — gets the classic backup UI. */
+    const ws = await this._fetchWorkspace();
+    this._ws = ws;
+    const hasProject = !!ws?.states?.has_project;
+    let choice = null;
+    try { choice = localStorage.getItem('op_dash_choice'); } catch {}
+    const mode = (hasProject && choice !== 'learn') ? 'dev' : 'classic';
+    this._mode = mode;
+    this._hasProject = hasProject;
+
+    const tpl = document.getElementById(mode === 'dev'
+      ? 'dashboard-main-template'
+      : 'dashboard-classic-template');
     app.className = '';
     app.innerHTML = '';
 
@@ -201,31 +388,23 @@ const Dashboard = {
     tmp.innerHTML = tmp.innerHTML.replace(/\$\{_url\('([^']+)'\)\}/g, (_, p) => _url(p));
     while (tmp.firstChild) app.appendChild(tmp.firstChild);
 
-    // Keep the classic learning dashboard as the primary view.
-    // The developer workspace is moved below the learning sections so
-    // enrolled courses and their progress are immediately visible.
-    const devRoot = document.getElementById('dev-workspace-root');
-    if (devRoot) {
-      app.classList.remove('has-dev-workspace');
-      const roadmap = document.getElementById('roadmap-container');
-      if (roadmap) {
-        roadmap.parentElement?.after(devRoot);
-      } else {
-        app.querySelector('.dash-main')?.appendChild(devRoot);
-      }
-    }
-
     const name = user.user_metadata?.full_name?.split(' ')[0] || 'there';
 
-    // Time-based greeting (mockup: "Good morning, Aime Loic 👋")
-    const hour = new Date().getHours();
-    const dayPart = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
-    const greetWrap = document.getElementById('dv2-greeting');
-    if (greetWrap) {
-      greetWrap.innerHTML = `<h1>Good ${dayPart}, ${escapeHTML(name)} 👋</h1><p>Keep building. You're making progress!</p>`;
+    if (mode === 'dev') {
+      // Time-based greeting (mockup: "Good morning, Aime Loic 👋")
+      const hour = new Date().getHours();
+      const dayPart = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
+      const greetWrap = document.getElementById('dv2-greeting');
+      if (greetWrap) {
+        greetWrap.innerHTML = `<h1>Good ${dayPart}, ${escapeHTML(name)} 👋</h1><p>Keep building. You're making progress!</p>`;
+      }
+      this._initTopbar(user);
+    } else {
+      this._renderClassicGreeting(user, name);
+      const header = document.getElementById('header');
+      if (header) header.style.display = '';
     }
-
-    this._initTopbar(user);      // Apply the membership tier theme (free / pro / pro+) + badge
+      // Apply the membership tier theme (free / pro / pro+) + badge
     this._applyTierTheme();
 
     // Fetch enrolled courses (shows enrolled skeletons while loading)
@@ -247,8 +426,31 @@ const Dashboard = {
       }
     } catch {}
 
-    // Learning Progress card (right column) — real data only, no placeholders
-    this._renderLearningCard({ enrolled, avgProgress, completed, coins });
+    // Learning Progress card (dev UI) + stats strip (classic UI) — real data
+    if (mode === 'dev') {
+      this._renderLearningCard({ enrolled, avgProgress, completed, coins });
+    } else {
+      const statsEl = document.getElementById('dash-stats');
+      if (statsEl) {
+        statsEl.innerHTML = `
+          <div class="dash-stat">
+            <div class="dash-stat-icon courses">${Icons.get('book-open', 20)}</div>
+            <div><b>${enrolled.length}</b><span>Enrolled</span></div>
+          </div>
+          <div class="dash-stat">
+            <div class="dash-stat-icon progress">${Icons.get('target', 20)}</div>
+            <div><b>${avgProgress}%</b><span>Avg Progress</span></div>
+          </div>
+          <div class="dash-stat">
+            <div class="dash-stat-icon completed">${Icons.get('award', 20)}</div>
+            <div><b>${completed}</b><span>Completed</span></div>
+          </div>
+          <div class="dash-stat">
+            <div class="dash-stat-icon coins">${Icons.get('award', 20)}</div>
+            <div><b>${coins}</b><span>Coins</span></div>
+          </div>`;
+      }
+    }
     app.querySelector('.dash-enrolled-count').textContent = `${enrolled.length} enrolled`;
 
     this._renderEnrolled(enrolled);
@@ -262,6 +464,9 @@ const Dashboard = {
     // Initialize notification and rating handlers
     this._initNotificationHandlers();
     this._initRatingHandlers();
+
+    // One-time Learn/Dev picker (shown until a choice is stored)
+    this._offerModeChoice(hasProject, mode);
   },
 
   /* Learning Progress card: donut = average course progress, rows = real
@@ -270,6 +475,10 @@ const Dashboard = {
   _renderLearningCard({ enrolled, avgProgress, completed, coins }) {
     const root = document.getElementById('dv2-learning-root');
     if (!root) return;
+    if (!enrolled.length && !completed && !coins) {
+      root.innerHTML = '<div class="dv2-empty">No learning data yet — enroll in a course to start.</div>';
+      return;
+    }
     const rows = [
       { label: 'Courses', color: '#0d6e3f', pct: avgProgress, note: `${enrolled.length} enrolled` },
       { label: 'Completed', color: '#10b981', pct: enrolled.length ? Math.round((completed / enrolled.length) * 100) : 0, note: `${completed} done` },
@@ -302,7 +511,7 @@ const Dashboard = {
          dashboard load, so the theme persists across visits and after a
          payment refreshes the subscription row. */
       const theme = await TierTheme.init(token);
-      const greet = document.getElementById('dv2-greeting');
+      const greet = document.getElementById('dv2-greeting') || document.querySelector('.dash-header');
       if (greet && !greet.querySelector('.dash-tier-row')) {
         const row = document.createElement('div');
         row.className = 'dash-tier-row';
@@ -538,7 +747,7 @@ const Dashboard = {
       const res = await fetch('/api/certificates/mine', { headers: { Authorization: `Bearer ${token}` } });
       const json = await res.json();
       if (!json.success || !json.certificates?.length) {
-        grid.innerHTML = '<div class="dash-empty">Complete a course and pass the quiz to earn certificates.</div>';
+        grid.innerHTML = '<div class="dash-empty">No certificates yet — complete a course and pass the quiz.</div>';
         document.querySelector('.dash-certs-count').textContent = '0 earned';
         return;
       }
@@ -557,7 +766,7 @@ const Dashboard = {
         </div>`;
       }).join('');
     } catch {
-      grid.innerHTML = '<div class="dash-empty">Could not load certificates.</div>';
+      grid.innerHTML = '<div class="dash-empty">No certificates yet.</div>';
     }
   },
 
@@ -594,7 +803,7 @@ const Dashboard = {
       const res = await fetch('/api/courses');
       const json = await res.json();
       if (!json.success || !json.courses?.length) {
-        grid.innerHTML = '<div class="dash-empty">No courses available yet.</div>';
+        grid.innerHTML = '<div class="dash-empty">No courses yet.</div>';
         return;
       }
 
@@ -648,8 +857,7 @@ const Dashboard = {
       }
 
       updateResults();
-    } catch {
-      grid.innerHTML = '<div class="dash-empty">Could not load courses.</div>';
+    } catch {        grid.innerHTML = '<div class="dash-empty">No courses to show yet.</div>';
     }
   },
   async _loadChallenges() {
@@ -674,7 +882,7 @@ const Dashboard = {
       }
 
       if (!allChallenges.length) {
-        grid.innerHTML = '<div class="dash-empty">No challenges available yet.</div>';
+        grid.innerHTML = '<div class="dash-empty">No challenges yet.</div>';
         return;
       }
 
@@ -729,7 +937,7 @@ const Dashboard = {
 
       renderGrid();
     } catch {
-      grid.innerHTML = '<div class="dash-empty">Could not load challenges.</div>';
+      grid.innerHTML = '<div class="dash-empty">No challenges to show yet.</div>';
     }
   },
 
@@ -741,7 +949,7 @@ const Dashboard = {
       const res = await fetch('/api/roadmap');
       const json = await res.json();
       if (!json.success || !json.roadmap?.phases) {
-        container.innerHTML = '<div class="dash-empty">Roadmap not available.</div>';
+        container.innerHTML = '<div class="dash-empty">No roadmap yet.</div>';
         return;
       }
 
@@ -775,7 +983,7 @@ const Dashboard = {
           </div>`;
       }).join('');
     } catch {
-      container.innerHTML = '<div class="dash-empty">Could not load roadmap.</div>';
+      container.innerHTML = '<div class="dash-empty">No roadmap yet.</div>';
     }
   },
 
@@ -828,7 +1036,7 @@ const Dashboard = {
         tierSlug = json.tier && json.tier.slug ? json.tier.slug : 'free';
         isPro = tierSlug === 'pro' || tierSlug === 'unlimited';
       }
-      const greet = document.getElementById('dv2-greeting');
+      const greet = document.getElementById('dv2-greeting') || document.querySelector('.dash-header');
       if (!greet) return;
       /* Consolidated premium indicator: paid users get NO second button —
          their single gold crown badge already sits by the greeting
@@ -968,7 +1176,7 @@ const Dashboard = {
         [list, mobileList].forEach(target => renderList(target, json.leaderboard, json.currentUserRank));
       } catch {
         [list, mobileList].forEach(target => {
-          if (target) target.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px;">Could not load</div>';
+          if (target) target.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px;">No data yet</div>';
         });
       }
     };

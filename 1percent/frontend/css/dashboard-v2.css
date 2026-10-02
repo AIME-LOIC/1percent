@@ -33,6 +33,112 @@ body.dv2 {
   background: var(--dv2-bg);
 }
 
+/* Pane switching hides cards via the [hidden] attribute — make sure it
+   always wins (some card classes set display:flex themselves). */
+[hidden] {
+  display: none !important;
+}
+
+/* SPA pane title (hidden on the dashboard pane) */
+.dv2-pane-title {
+  margin: 0 0 16px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--dv2-text);
+}
+
+/* Collapse the grid to one column when a side is empty */
+.dv2-col:empty { display: none; }
+.dv2-grid:has(.dv2-col:empty) { grid-template-columns: 1fr; }
+
+/* ── One-time Learn / Dev picker ───────────────────── */
+.mode-choice-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.mode-choice {
+  background: #fff;
+  border-radius: 18px;
+  max-width: 520px;
+  width: 100%;
+  padding: 26px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.mode-choice h3 {
+  margin: 0 0 4px;
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--dv2-text);
+}
+
+.mode-choice p {
+  margin: 0 0 18px;
+  font-size: 12.5px;
+  color: var(--dv2-muted);
+}
+
+.mode-choice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.mode-choice-card {
+  border: 1.5px solid var(--dv2-border);
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px 14px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transition: border-color .12s, transform .12s, box-shadow .12s;
+}
+
+.mode-choice-card:hover:not([disabled]) {
+  border-color: var(--dv2-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(13, 110, 63, 0.12);
+}
+
+.mode-choice-card .mc-ic { font-size: 26px; }
+.mode-choice-card b { font-size: 15px; color: var(--dv2-text); }
+.mode-choice-card span:last-child { font-size: 11.5px; color: var(--dv2-muted); line-height: 1.4; }
+
+.mode-choice-card.locked,
+.mode-choice-card[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.mode-choice-dismiss {
+  margin-top: 16px;
+  border: none;
+  background: none;
+  color: var(--dv2-muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.mode-choice-dismiss:hover { color: var(--dv2-text); }
+
 .dv2-app {
   display: flex;
   min-height: 100vh;
