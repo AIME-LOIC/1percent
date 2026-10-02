@@ -490,6 +490,7 @@ const Dashboard = {
 
   async _loadAllCourses() {
     const grid = document.getElementById('dash-all-courses');
+    const searchInput = document.getElementById('dash-course-search');
     if (!grid) return;
 
     try {
@@ -500,7 +501,9 @@ const Dashboard = {
         return;
       }
 
-      document.querySelector('.dash-courses-count').textContent = `${json.courses.length} courses`;
+      const courses = json.courses;
+      const countEl = document.querySelector('.dash-courses-count');
+      if (countEl) countEl.textContent = courses.length + ' courses';
 
       const colorMap = {
         beginner: 'linear-gradient(135deg,#d1fae5,#a7f3d0)',
@@ -511,26 +514,47 @@ const Dashboard = {
         beginner: '#059669', intermediate: '#2563eb', advanced: '#b45309'
       };
 
-      grid.innerHTML = json.courses.map(c => `
-        <a href="${_url('/course/' + escapeHTML(c.slug))}" class="dash-course-card">
-          <div class="dash-course-thumb" style="background:${colorMap[c.level] || colorMap.beginner};">
-            ${Icons.get(c.icon || 'book-open', 36)}
-            <span class="level-tag" style="color:${levelColor[c.level] || levelColor.beginner};">${escapeHTML(c.level || '')}</span>
-          </div>
-          <div class="dash-course-body">
-            <h4>${escapeHTML(c.title)}</h4>
-            <p>${escapeHTML(c.description || '').slice(0, 90)}${(c.description||'').length > 90 ? '…' : ''}</p>
-            <div class="dash-course-footer">
-              <span>${Icons.get('clock', 11)} ${c.duration_weeks || 8} weeks</span>
-              <span style="font-weight:600;color:var(--primary);font-size:12px;">View →</span>
-            </div>
-          </div>
-        </a>`).join('');
+      const render = (items) => {
+        if (!items.length) {
+          grid.innerHTML = '<div class="dash-empty">No courses match your search.</div>';
+          return;
+        }
+        grid.innerHTML = items.map(c =>
+          '<a href="' + _url('/course/' + escapeHTML(c.slug)) + '" class="dash-course-card">' +
+            '<div class="dash-course-thumb" style="background:' + (colorMap[c.level] || colorMap.beginner) + ';">' +
+              Icons.get(c.icon || 'book-open', 36) +
+              '<span class="level-tag" style="color:' + (levelColor[c.level] || levelColor.beginner) + ';">' + escapeHTML(c.level || '') + '</span>' +
+            '</div>' +
+            '<div class="dash-course-body">' +
+              '<h4>' + escapeHTML(c.title) + '</h4>' +
+              '<p>' + escapeHTML(c.description || '').slice(0, 90) + ((c.description || '').length > 90 ? '…' : '') + '</p>' +
+              '<div class="dash-course-footer">' +
+                '<span>' + Icons.get('clock', 11) + ' ' + (c.duration_weeks || 8) + ' weeks</span>' +
+                '<span style="font-weight:600;color:var(--primary);font-size:12px;">View →</span>' +
+              '</div>' +
+            '</div>' +
+          '</a>'
+        ).join('');
+      };
+
+      const updateResults = () => {
+        const query = (searchInput?.value || '').trim().toLowerCase();
+        const filtered = query
+          ? courses.filter(c => (c.title || '').toLowerCase().includes(query) || (c.description || '').toLowerCase().includes(query) || (c.level || '').toLowerCase().includes(query))
+          : courses;
+        render(query ? filtered.slice(0, 6) : filtered.slice(0, 6));
+      };
+
+      if (searchInput && !searchInput.dataset.bound) {
+        searchInput.dataset.bound = 'true';
+        searchInput.addEventListener('input', updateResults);
+      }
+
+      updateResults();
     } catch {
       grid.innerHTML = '<div class="dash-empty">Could not load courses.</div>';
     }
   },
-
   async _loadChallenges() {
     const grid = document.getElementById('challenge-grid');
     const filtersEl = document.getElementById('challenge-filters');
