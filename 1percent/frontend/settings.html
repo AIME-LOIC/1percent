@@ -265,6 +265,10 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
           Connect to Claude
         </a>
+        <a class="settings-nav-item" data-tab="github" href="#github">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+          GitHub
+        </a>
         <a class="settings-nav-item" data-tab="legal" href="#legal">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>
           Legal
@@ -312,6 +316,26 @@
                 Save Changes
               </button>
             </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-header">
+            <h2>Feedback & Rating</h2>
+            <p>Tell us how your learning experience is going</p>
+          </div>
+          <div class="settings-rating-widget">
+            <div class="rating-stars" id="settings-rating-stars">
+              <button class="rating-star" data-value="1" type="button">★</button>
+              <button class="rating-star" data-value="2" type="button">★</button>
+              <button class="rating-star" data-value="3" type="button">★</button>
+              <button class="rating-star" data-value="4" type="button">★</button>
+              <button class="rating-star" data-value="5" type="button">★</button>
+            </div>
+            <div class="rating-text" id="settings-rating-text">Select a rating</div>
+            <textarea class="rating-feedback" id="settings-rating-feedback" placeholder="Share your feedback (optional)"></textarea>
+            <button class="settings-btn primary rating-submit" id="settings-rating-submit" type="button">Submit Rating</button>
+            <div class="rating-average" id="settings-rating-average"></div>
           </div>
         </div>
       </div>
@@ -384,26 +408,6 @@
           </div>
         </div>
 
-        <div class="settings-section">
-          <div class="settings-section-header">
-            <h2>Feedback & Rating</h2>
-            <p>Tell us how your learning experience is going</p>
-          </div>
-          <div class="settings-rating-widget">
-            <div class="rating-stars" id="settings-rating-stars">
-              <button class="rating-star" data-value="1" type="button">★</button>
-              <button class="rating-star" data-value="2" type="button">★</button>
-              <button class="rating-star" data-value="3" type="button">★</button>
-              <button class="rating-star" data-value="4" type="button">★</button>
-              <button class="rating-star" data-value="5" type="button">★</button>
-            </div>
-            <div class="rating-text" id="settings-rating-text">Select a rating</div>
-            <textarea class="rating-feedback" id="settings-rating-feedback" placeholder="Share your feedback (optional)"></textarea>
-            <button class="settings-btn primary rating-submit" id="settings-rating-submit" type="button">Submit Rating</button>
-            <div class="rating-average" id="settings-rating-average"></div>
-          </div>
-        </div>
-
         <div class="settings-section settings-danger-zone">
           <div class="settings-section-header">
             <h2>Danger Zone</h2>
@@ -416,6 +420,25 @@
             </div>
             <div class="settings-field-action">
               <button class="settings-btn danger" id="settings-delete-account">Delete Account</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-header">
+            <h2>Session</h2>
+            <p>Manage your current session</p>
+          </div>
+          <div class="settings-field">
+            <div>
+              <div class="settings-field-label">Log Out</div>
+              <div class="settings-field-desc">Sign out of your account on this device</div>
+            </div>
+            <div class="settings-field-action">
+              <button class="settings-btn danger" id="settings-logout">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Log Out
+              </button>
             </div>
           </div>
         </div>
@@ -531,6 +554,36 @@
         </div>
       </div>
 
+      <!-- GitHub Connect Tab (project system) -->
+      <div class="settings-tab" id="tab-github" hidden>
+        <div class="settings-section">
+          <div class="settings-section-header">
+            <h2>Connect GitHub</h2>
+            <p>Link your GitHub account so your commits, pull requests, and reviews are credited to your dashboard activity and project work.</p>
+          </div>
+
+          <div id="github-connected-box" style="display:none;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap;">
+            <img id="github-avatar" alt="GitHub avatar" width="52" height="52" style="border-radius:50%;border:1px solid rgba(148,163,184,0.4);">
+            <div style="flex:1;min-width:180px;">
+              <div style="font-weight:700;" id="github-login"></div>
+              <a id="github-link" href="#" target="_blank" rel="noopener" style="font-size:13px;color:#6366f1;text-decoration:none;">View GitHub profile →</a>
+            </div>
+            <button class="settings-btn danger" id="github-disconnect" type="button">Disconnect</button>
+          </div>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <input type="text" id="github-username" class="settings-input" style="max-width:280px;" placeholder="Your GitHub username, e.g. aimeloic" autocomplete="off">
+            <button class="settings-btn primary" id="github-connect" type="button">Connect</button>
+          </div>
+          <div id="github-status" style="margin-top:14px;font-size:13px;display:none;"></div>
+
+          <p style="font-size:12px;color:#94a3b8;margin-top:16px;">
+            We store only your public GitHub identity (username and avatar) — no tokens, no repo access.
+            Your team's repositories are connected by admins; this link makes sure <em>your</em> pushes show up as <em>your</em> activity.
+          </p>
+        </div>
+      </div>
+
       <!-- Legal Tab -->
       <div class="settings-tab" id="tab-legal" hidden>
         <div class="settings-section">
@@ -560,24 +613,6 @@
           </a>
         </div>
 
-        <div class="settings-section">
-          <div class="settings-section-header">
-            <h2>Session</h2>
-            <p>Manage your current session</p>
-          </div>
-          <div class="settings-field">
-            <div>
-              <div class="settings-field-label">Log Out</div>
-              <div class="settings-field-desc">Sign out of your account on this device</div>
-            </div>
-            <div class="settings-field-action">
-              <button class="settings-btn danger" id="settings-logout">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                Log Out
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- My Testimonial Tab -->
@@ -914,6 +949,7 @@ async function initSettings() {
       loadPreferences();
       loadMcpStatus();
       loadTestimonial();
+      loadGithubState();
     }
   } catch (e) { console.error('[SETTINGS] Init error:', e); }
 }
@@ -994,6 +1030,84 @@ document.getElementById('settings-delete-account')?.addEventListener('click', as
 document.getElementById('settings-logout')?.addEventListener('click', async () => {
   await supabaseClient.auth.signOut();
   window.location.href = '/';
+});
+
+// ── GitHub connect (project system) ──────────────────
+const GITHUB_USERNAME_RE = /^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$/;
+
+function renderGithubState(username) {
+  const box = document.getElementById('github-connected-box');
+  if (!box) return;
+  const input = document.getElementById('github-username');
+  const btn = document.getElementById('github-connect');
+  if (username) {
+    box.style.display = 'flex';
+    document.getElementById('github-login').textContent = '@' + username;
+    const avatar = document.getElementById('github-avatar');
+    avatar.style.visibility = 'visible';
+    avatar.onerror = function () { this.style.visibility = 'hidden'; };
+    avatar.src = 'https://github.com/' + encodeURIComponent(username) + '.png?size=104';
+    document.getElementById('github-link').href = 'https://github.com/' + encodeURIComponent(username);
+    input.value = username;
+    btn.textContent = 'Update';
+  } else {
+    box.style.display = 'none';
+    btn.textContent = 'Connect';
+  }
+}
+
+async function loadGithubState() {
+  try {
+    const res = await apiFetch('/api/auth/github-link');
+    const json = await res.json();
+    if (json.success) renderGithubState(json.github_username || null);
+  } catch { /* leave the tab in its default state */ }
+}
+
+document.getElementById('github-connect')?.addEventListener('click', async () => {
+  const username = document.getElementById('github-username').value.trim().replace(/^@/, '');
+  const status = document.getElementById('github-status');
+  if (!GITHUB_USERNAME_RE.test(username)) {
+    Toast.error('That does not look like a valid GitHub username');
+    return;
+  }
+  const btn = document.getElementById('github-connect');
+  btn.disabled = true;
+  status.style.display = 'block';
+  status.style.color = '#64748b';
+  status.textContent = 'Verifying with GitHub…';
+  try {
+    const res = await apiFetch('/api/auth/github-link', { method: 'POST', body: JSON.stringify({ username }) });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.error?.message || 'Could not connect GitHub');
+    status.style.color = '#059669';
+    status.textContent = '✓ Connected as @' + json.github.login + (json.github.name ? ' (' + json.github.name + ')' : '');
+    renderGithubState(json.github.login);
+    Toast.success('GitHub connected');
+  } catch (e) {
+    status.style.color = '#dc2626';
+    status.textContent = '✕ ' + e.message;
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+document.getElementById('github-disconnect')?.addEventListener('click', async () => {
+  const confirmed = await Toast.confirm({
+    title: 'Disconnect GitHub',
+    message: 'Your commits and pull requests will no longer be credited to your dashboard activity.',
+    confirmText: 'Disconnect'
+  });
+  if (!confirmed) return;
+  try {
+    await apiFetch('/api/auth/github-link', { method: 'POST', body: JSON.stringify({ username: null }) });
+    renderGithubState(null);
+    const status = document.getElementById('github-status');
+    status.style.display = 'block';
+    status.style.color = '#64748b';
+    status.textContent = 'GitHub disconnected.';
+    Toast.success('GitHub disconnected');
+  } catch (e) { Toast.error('Failed: ' + e.message); }
 });
 
 // ── Avatar edit → profile tab ────────────────────────

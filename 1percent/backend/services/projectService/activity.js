@@ -41,15 +41,28 @@ async function resolveUser(githubLogin) {
   if (!githubLogin) return null;
   if (loginCache.has(githubLogin)) return loginCache.get(githubLogin);
 
+  // 1. Explicit link wins: Settings → Connect GitHub stores profiles.github_username.
+  const { data: exact } = await adminClient
+    .from('profiles')
+    .select('id')
+    .eq('github_username', githubLogin)
+    .limit(1);
+  if (exact && exact.length) {
+    loginCache.set(githubLogin, exact[0].id);
+    return exact[0].id;
+  }
+
+  // 2. Fall back to email local-part / full-name slug heuristics.
   const slug = githubLogin.toLowerCase().replace(/[^a-z0-9]/g, '');
   let userId = null;
   const { data, error } = await adminClient
     .from('profiles')
-    .select('id, email, full_name')
+    .select('id, email, full_name, github_username')
     .or(`email.ilike.${githubLogin}%,full_name.ilike.${githubLogin}%`)
     .limit(5);
   if (!error && data) {
     const hit = data.find(p =>
+      (p.github_username || '').toLowerCase() === githubLogin.toLowerCase() ||
       (p.email || '').split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '') === slug ||
       (p.full_name || '').toLowerCase().replace(/[^a-z0-9]/g, '') === slug
     );
