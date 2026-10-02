@@ -102,13 +102,38 @@ router.put('/profile',
 const GITHUB_USERNAME_RE = /^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$/;
 
 async function fetchGithubUser(username) {
-  const res = await fetch(`https://api.github.com/users/${encodeURIComponent(username)}`, {
-    headers: { Accept: 'application/vnd.github+json', 'User-Agent': '1percent-projects' }
-  });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`GitHub lookup failed (${res.status})`);
-  const u = await res.json();
-  return { login: u.login, name: u.name || '', avatar_url: u.avatar_url || '', html_url: u.html_url || '' };
+  const login = encodeURIComponent(username);
+  try {
+    const res = await fetch(`https://api.github.com/users/${login}`, {
+      headers: { Accept: 'application/vnd.github+json', 'User-Agent': '1percent-projects' }
+    });
+    if (res.status === 404) return null;
+    if (res.ok) {
+      const u = await res.json();
+      return { login: u.login, name: u.name || '', avatar_url: u.avatar_url || '', html_url: u.html_url || '' };
+    }
+    // 403/429 = unauthenticated API rate limit (60/hr per server IP, shared
+    // across ALL Render users of this endpoint). Fall through to the avatar
+    // check instead of failing the link — it verifies the account exists
+    // without touching the rate-limited API.
+  } catch (_) { /* network hiccup — try the avatar fallback below */ }
+
+  // Fallback: the avatar endpoint is CDN-backed and NOT API-rate-limited.
+  // 200 = user exists, 404 = no such user.
+  try {
+    const avatar = await fetch(`https://github.com/${login}.png?size=200`, { method: 'HEAD' });
+    if (avatar.status === 404) return null;
+    if (avatar.ok) {
+      return {
+        login: username,
+        name: '',
+        avatar_url: `https://github.com/${login}.png`,
+        html_url: `https://github.com/${login}`,
+        verified_via: 'avatar'
+      };
+    }
+  } catch (_) { /* fall through */ }
+  throw new Error('GitHub is not reachable right now — please try again in a minute.');
 }
 
 router.get('/github-link', authenticate, async (req, res) => {

@@ -33,10 +33,10 @@ router.get('/dev-workspace', async (req, res) => {
   try {
     const { adminClient } = require('../config/database');
 
-    // profile (existing profiles table)
+    // profile (existing profiles table) + GitHub link status (project system)
     const { data: profile } = await adminClient
       .from('profiles')
-      .select('id, full_name, email, avatar_url, role, streak_count, coins')
+      .select('id, full_name, email, avatar_url, role, streak_count, coins, github_username')
       .eq('id', req.user.id).maybeSingle();
 
     // projects accessible (usually exactly one for a student)
@@ -61,8 +61,17 @@ router.get('/dev-workspace', async (req, res) => {
       ]);
       currentTeam = team;
       currentRepositories = repositories;
+      // Business name for the project card (nullable — internal projects have none)
+      let businessName = null;
+      if (current.business_id) {
+        const { data: company } = await adminClient
+          .from('companies').select('name').eq('id', current.business_id).maybeSingle();
+        businessName = company?.name || null;
+      }
+
       currentProject = {
         ...current,
+        business_name: businessName,
         progress,
         my_role: (team.find(t => t.user_id === req.user.id)?.role) || 'developer',
         team,
@@ -87,10 +96,15 @@ router.get('/dev-workspace', async (req, res) => {
       current_project: currentProject,
       team: currentTeam,
       repositories: currentRepositories,
+      repository: currentRepositories[0]?.repositories || null,
       tasks: myTasks,
       activity_14d: activity14d,
       recent_activity: recentActivity,
       github_connected: githubConnected,
+      task_stats: {
+        mine_total: myTasks.length,
+        mine_done: myTasks.filter(t => t.status === 'DONE').length
+      },
       states: {
         has_project: !!current,
         has_tasks: myTasks.length > 0,

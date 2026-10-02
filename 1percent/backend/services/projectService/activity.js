@@ -411,7 +411,7 @@ async function getActivity14d(userId) {
     const d = new Date(since.getTime() + i * 24 * 3600 * 1000);
     buckets.push({
       date: d.toISOString().slice(0, 10),
-      commits: 0, tasks: 0, prs: 0, reviews: 0, tests: 0, other: 0, total: 0
+      commits: 0, tasks: 0, prs: 0, reviews: 0, tests: 0, deployments: 0, docs: 0, other: 0, total: 0
     });
   }
   const byDate = new Map(buckets.map(b => [b.date, b]));
@@ -425,6 +425,8 @@ async function getActivity14d(userId) {
     else if (a.type === 'REVIEW_SUBMITTED') b.reviews++;
     else if (a.type === 'TEST_PASSED' || a.type === 'TEST_FAILED') b.tests++;
     else if (a.type === 'TASK_COMPLETED') b.tasks++;
+    else if (a.type === 'DEPLOYMENT_COMPLETED') b.deployments++;
+    else if (a.type === 'DOC_UPDATED') b.docs++;
     else b.other++;
     b.total++;
   }
