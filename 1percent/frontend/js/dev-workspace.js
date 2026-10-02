@@ -127,7 +127,7 @@
               <div class="sub" style="font-size:13px;color:#64748b">
                 Role: <strong>${esc(p.my_role)}</strong>
                 ${p.milestones?.[0] ? ` · Milestone: ${esc(p.milestones[0].name)}` : ''}
-                ${p.repositories?.[0]?.repositories?.url ? ` · <a href="${esc(p.repositories[0].url)}" target="_blank" rel="noopener">GitHub ↗</a>` : ''}
+                ${p.repositories?.[0]?.repositories?.url ? ` · <a href="${esc(p.repositories[0].repositories.url)}" target="_blank" rel="noopener">GitHub ↗</a>` : ''}
               </div>
             </div>
             <span class="opdev-status">${esc(STATUS_LABEL[p.status] || p.status)}</span>
