@@ -116,7 +116,25 @@
 <!-- Main dashboard template -->
 <template id="dashboard-main-template">
   <div class="dashboard-shell">
-    <div class="dash-layout">
+    <div class="student-dashboard-frame">
+      <aside class="student-sidebar" aria-label="Student dashboard navigation">
+        <div class="student-sidebar-brand"><div class="student-sidebar-mark">1%</div><div><strong>Student Workspace</strong><span>1percent Rwanda</span></div></div>
+        <nav class="student-sidebar-nav">
+          <div class="student-sidebar-label">Workspace</div>
+          <a class="student-nav-item active" href="/dashboard"><span class="student-nav-icon">⌂</span><span>Overview</span></a>
+          <a class="student-nav-item" href="#dev-workspace-root"><span class="student-nav-icon">▣</span><span>My Project</span></a>
+          <a class="student-nav-item" href="/project.html"><span class="student-nav-icon">✓</span><span>Tasks</span></a>
+          <a class="student-nav-item" href="#opdev-activity-grid"><span class="student-nav-icon">◫</span><span>Activity</span></a>
+          <a class="student-nav-item" href="#student-team"><span class="student-nav-icon">◉</span><span>Team</span></a>
+          <div class="student-sidebar-label">Learning</div>
+          <a class="student-nav-item" href="/courses"><span class="student-nav-icon">◇</span><span>Courses</span></a>
+          <a class="student-nav-item" href="/playground"><span class="student-nav-icon">&lt;/&gt;</span><span>Challenges</span></a>
+          <a class="student-nav-item" href="#roadmap-container"><span class="student-nav-icon">↗</span><span>Roadmap</span></a>
+          <a class="student-nav-item" href="#dash-certificates"><span class="student-nav-icon">□</span><span>Certificates</span></a>
+        </nav>
+        <div class="student-sidebar-footer"><a class="student-nav-item" href="/settings"><span class="student-nav-icon">⚙</span><span>Settings</span></a><div class="student-sidebar-status"><span></span><div><strong>Developer mode</strong><small>Workspace active</small></div></div></div>
+      </aside>
+      <div class="dash-layout">
       <!-- Main column -->
       <div class="dash-main">
         <div class="dash-header">
@@ -185,7 +203,7 @@
         </div>
       </div>
 
-      <!-- Leaderboard sidebar -->
+      <!-- Legacy leaderboard content is retained for existing JS/mobile flows. -->
       <div class="dash-lb">
         <div class="dash-lb-head">
           <h3><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> Leaderboard</h3>
