@@ -433,3 +433,46 @@ html.theme-premium .dash-lb-move.up{color:#d97706;background:#fffbeb;border-colo
 .dash-course-search { margin: -8px 0 16px; }
 .dash-course-search input { width: 100%; box-sizing: border-box; padding: 11px 14px; border: 1px solid var(--border); border-radius: 10px; background: #fff; color: var(--text); font: inherit; outline: none; transition: border-color .15s, box-shadow .15s; }
 .dash-course-search input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(13,110,63,.10); }
+
+
+/* Refined student learning dashboard */
+.dashboard-shell { padding-top: 28px; }
+.dash-layout { display:block; max-width:1120px; padding:0 24px; margin:0 auto; }
+.dash-main { min-width:0; }
+.dash-header { margin-bottom:22px; }
+.dash-greeting { letter-spacing:-.025em; }
+.dash-stats { grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:28px; }
+.dash-stat { min-height:76px; border-radius:14px; }
+.dash-section { margin-top:28px; margin-bottom:12px; align-items:flex-start; }
+.dash-section h2 { font-size:18px; letter-spacing:-.015em; }
+.dash-section-subtitle { margin:3px 0 0; color:var(--text-muted); font-size:12px; line-height:1.4; }
+.dash-enrolled { gap:12px; margin-bottom:28px; }
+.dash-enrolled-card { border-radius:14px; transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease; }
+.dash-enrolled-card:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(15,23,42,.07); }
+.dash-courses-header { margin-top:34px; }
+.dash-course-toolbar { margin-bottom:14px; }
+.dash-course-search { position:relative; margin:0; }
+.dash-search-icon { position:absolute; left:13px; top:50%; transform:translateY(-51%); color:var(--text-muted); font-size:21px; line-height:1; pointer-events:none; }
+.dash-course-search input { padding:12px 14px 12px 38px; border-radius:11px; background:var(--surface,#fff); }
+.dash-courses { grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-bottom:10px; }
+.dash-course-card { border-radius:14px; overflow:hidden; transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease; }
+.dash-course-card:hover { transform:translateY(-3px); box-shadow:0 10px 28px rgba(15,23,42,.08); }
+.dash-course-thumb { min-height:116px; }
+.dash-course-more { text-align:center; margin:4px 0 34px; }
+.dash-course-more a { color:var(--primary); font-size:13px; font-weight:700; text-decoration:none; }
+.dash-course-more a:hover { text-decoration:underline; }
+@media (max-width:900px) {
+  .dash-layout { padding:0 18px; }
+  .dash-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .dash-courses { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width:600px) {
+  .dashboard-shell { padding-top:18px; }
+  .dash-layout { padding:0 14px; }
+  .dash-header { margin-bottom:16px; }
+  .dash-stats { gap:8px; margin-bottom:22px; }
+  .dash-stat { min-height:68px; }
+  .dash-section { margin-top:22px; }
+  .dash-courses { grid-template-columns:1fr; }
+  .dash-course-thumb { min-height:105px; }
+}
