@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project — 1percent</title>
+<link rel="stylesheet" href="/css/main.css">
+<link rel="stylesheet" href="/css/dev-workspace.css">
+<style>
+  .proj-wrap { max-width: 1440px; margin: 0 auto; padding: 24px 32px 64px; }
+  @media (max-width: 1199px) { .proj-wrap { padding: 24px; } }
+  @media (max-width: 767px)  { .proj-wrap { padding: 16px; } }
+
+  .proj-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+  .proj-header h1 { margin: 0; font-size: 30px; line-height: 1.25; }
+  .proj-sub { color: #64748b; font-size: 14px; margin-top: 4px; }
+
+  .proj-tabs {
+    display: flex; gap: 4px; overflow-x: auto;
+    border-bottom: 1px solid rgba(148,163,184,0.25);
+    margin-bottom: 20px; padding-bottom: 0;
+  }
+  .proj-tabs button {
+    background: none; border: none; cursor: pointer;
+    font: inherit; font-size: 14px; font-weight: 600;
+    padding: 12px 16px; color: #64748b;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+  }
+  .proj-tabs button.active { color: #6366f1; border-bottom-color: #6366f1; }
+  .proj-tabs button:focus-visible { outline: 2px solid #6366f1; outline-offset: -2px; border-radius: 6px; }
+
+  .proj-panel { display: none; }
+  .proj-panel.active { display: block; }
+
+  .proj-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+  .proj-grid > * { min-width: 0; }
+  .proj-col-4 { grid-column: span 4; }
+  .proj-col-6 { grid-column: span 6; }
+  .proj-col-8 { grid-column: span 8; }
+  .proj-col-12 { grid-column: span 12; }
+  @media (max-width: 1199px) {
+    .proj-col-4, .proj-col-6, .proj-col-8 { grid-column: span 6; }
+  }
+  @media (max-width: 767px) {
+    .proj-col-4, .proj-col-6, .proj-col-8, .proj-col-12 { grid-column: span 12; }
+  }
+
+  table.proj-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .proj-table th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; color: #64748b; padding: 8px 12px; border-bottom: 1px solid rgba(148,163,184,0.25); }
+  .proj-table td { padding: 10px 12px; border-bottom: 1px solid rgba(148,163,184,0.15); }
+  .proj-table tr:last-child td { border-bottom: none; }
+  .table-scroll { overflow-x: auto; } /* Phase 15: tables scroll on mobile */
+
+  .commit-sha { font-family: ui-monospace, monospace; font-size: 12px; color: #64748b; }
+</style>
+</head>
+<body>
+<div id="nav-placeholder"></div>
+
+<div class="proj-wrap">
+  <div id="proj-loading" class="opdev-loading">Loading project…</div>
+  <div id="proj-error" class="opdev-error" hidden></div>
+
+  <div id="proj-content" hidden>
+    <div class="proj-header">
+      <div>
+        <h1 id="proj-name"></h1>
+        <div class="proj-sub" id="proj-sub"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="opdev-status" id="proj-status"></span>
+        <a class="opdev-btn" href="/dashboard">← Dashboard</a>
+      </div>
+    </div>
+
+    <div class="proj-tabs" role="tablist" aria-label="Project sections">
+      <button role="tab" data-tab="overview" class="active">Overview</button>
+      <button role="tab" data-tab="tasks">Tasks</button>
+      <button role="tab" data-tab="activity">Activity</button>
+      <button role="tab" data-tab="commits">Commits</button>
+      <button role="tab" data-tab="pulls">Pull Requests</button>
+      <button role="tab" data-tab="team">Team</button>
+      <button role="tab" data-tab="milestones">Milestones</button>
+      <button role="tab" data-tab="requirements">Requirements</button>
+      <button role="tab" data-tab="docs">Documentation</button>
+      <button role="tab" data-tab="deployments">Deployments</button>
+    </div>
+
+    <!-- OVERVIEW -->
+    <section class="proj-panel active" id="panel-overview">
+      <div class="proj-grid">
+        <div class="opdev-card proj-col-6">
+          <h3>Progress</h3>
+          <div id="proj-dims"></div>
+        </div>
+        <div class="opdev-card proj-col-6">
+          <h3>Requirements progress</h3>
+          <div id="proj-reqs-mini"></div>
+        </div>
+        <div class="opdev-card proj-col-12">
+          <h3>About</h3>
+          <p id="proj-desc" style="font-size:14px;line-height:1.6;color:#334155"></p>
+          <div class="opdev-stats" id="proj-stats"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TASKS -->
+    <section class="proj-panel" id="panel-tasks">
+      <div class="proj-grid">
+        <div class="opdev-card proj-col-12">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px" id="proj-task-filters">
+            <select id="filter-status" class="opdev-btn" aria-label="Filter by status">
+              <option value="">All statuses</option>
+              <option>TODO</option><option>IN_PROGRESS</option><option>BLOCKED</option>
+              <option>IN_REVIEW</option><option>TESTING</option><option>DONE</option>
+            </select>
+            <select id="filter-priority" class="opdev-btn" aria-label="Filter by priority">
+              <option value="">All priorities</option>
+              <option>CRITICAL</option><option>HIGH</option><option>MEDIUM</option><option>LOW</option>
+            </select>
+          </div>
+          <div class="table-scroll" id="proj-tasks"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ACTIVITY -->
+    <section class="proj-panel" id="panel-activity">
+      <div class="opdev-card"><h3>Activity</h3><ul class="opdev-feed" id="proj-activity"></ul></div>
+    </section>
+
+    <!-- COMMITS -->
+    <section class="proj-panel" id="panel-commits">
+      <div class="opdev-card"><h3>Commits</h3><ul class="opdev-feed" id="proj-commits"></ul></div>
+    </section>
+
+    <!-- PULL REQUESTS -->
+    <section class="proj-panel" id="panel-pulls">
+      <div class="opdev-card"><h3>Pull requests</h3><div class="table-scroll" id="proj-pulls"></div></div>
+    </section>
+
+    <!-- TEAM -->
+    <section class="proj-panel" id="panel-team">
+      <div class="opdev-card"><h3>Team</h3><div class="table-scroll" id="proj-team"></div></div>
+    </section>
+
+    <!-- MILESTONES -->
+    <section class="proj-panel" id="panel-milestones">
+      <div class="opdev-card"><h3>Milestones</h3><div id="proj-milestones"></div></div>
+    </section>
+
+    <!-- REQUIREMENTS -->
+    <section class="proj-panel" id="panel-requirements">
+      <div class="opdev-card"><h3>Requirements (weighted)</h3><div id="proj-requirements"></div></div>
+    </section>
+
+    <!-- DOCUMENTATION -->
+    <section class="proj-panel" id="panel-docs">
+      <div class="opdev-card"><h3>Documentation</h3><div id="proj-docs"></div></div>
+    </section>
+
+    <!-- DEPLOYMENTS -->
+    <section class="proj-panel" id="panel-deployments">
+      <div class="opdev-card"><h3>Deployments</h3><div class="table-scroll" id="proj-deployments"></div></div>
+    </section>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+<script src="/js/session.js" defer></script>
+<script src="/js/dev-activity.js" defer></script>
+<script>
+(function () {
+  'use strict';
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const STATUS_LABEL = {REQUESTED:'Requested',REVIEW:'In review',APPROVED:'Approved',PLANNING:'Planning',IN_DEVELOPMENT:'In development',TESTING:'Testing',DEPLOYMENT:'Deployment',DELIVERED:'Delivered',ARCHIVED:'Archived',BLOCKED:'Blocked'};
+  const TYPE_LABEL = {COMMIT_PUSHED:'commit',PR_OPENED:'opened PR',PR_MERGED:'merged PR',PR_CLOSED:'closed PR',REVIEW_SUBMITTED:'review',ISSUE_OPENED:'opened issue',ISSUE_CLOSED:'closed issue',ISSUE_COMMENT:'commented',TEST_PASSED:'tests passed',TEST_FAILED:'tests failed',DEPLOYMENT_STARTED:'deploying',DEPLOYMENT_COMPLETED:'deployed',DEPLOYMENT_STATUS:'deployment',TASK_ASSIGNED:'task assigned',TASK_COMPLETED:'completed task',TASK_BLOCKED:'blocked task',MENTOR_FEEDBACK:'mentor feedback',MILESTONE_COMPLETED:'milestone',PROJECT_STATUS_CHANGED:'status',REPO_CONNECTED:'repo connected',BRANCH_CREATED:'branch',DOC_UPDATED:'docs'};
+
+  async function api(path) {
+    const token = window.OPSession ? await OPSession.getToken() : null;
+    const res = await fetch(path, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body?.error?.message || `Request failed (${res.status})`);
+    return body;
+  }
+
+  const projectId = new URLSearchParams(location.search).get('id');
+
+  async function loadProject() {
+    const loading = document.getElementById('proj-loading');
+    const errEl = document.getElementById('proj-error');
+    const content = document.getElementById('proj-content');
+    if (!projectId) {
+      loading.hidden = true;
+      errEl.hidden = false;
+      errEl.textContent = 'No project specified.';
+      return;
+    }
+    try {
+      const data = await api(`/api/projects/${projectId}`);
+      loading.hidden = true;
+      content.hidden = false;
+      render(data);
+      loadTabPanels(projectId);
+    } catch (err) {
+      loading.hidden = true;
+      errEl.hidden = false;
+      errEl.textContent = err.status === 404 || /not found/i.test(err.message)
+        ? 'Project not found or you do not have access.'
+        : `Could not load project: ${err.message}`;
+    }
+  }
+
+  function render({ project, progress, milestones, repositories, team }) {
+    document.title = `${project.name} — 1percent`;
+    document.getElementById('proj-name').textContent = project.name;
+    document.getElementById('proj-status').textContent = STATUS_LABEL[project.status] || project.status;
+    document.getElementById('proj-sub').textContent =
+      `${project.priority} priority${project.target_date ? ` · target ${project.target_date}` : ''}${repositories?.length ? ` · ${repositories.length} repo(s)` : ''}`;
+    document.getElementById('proj-desc').textContent = project.description || 'No description yet.';
+
+    // dimensions
+    const dims = progress?.dimensions || {};
+    const rows = [['Overall', dims.overall ?? 0], ['Requirements', dims.requirements ?? 0], ['Development', dims.development ?? 0], ['Testing', dims.testing ?? 0], ['Documentation', dims.documentation ?? 0], ['Deployment', dims.deployment ?? 0]];
+    document.getElementById('proj-dims').innerHTML = rows.map(([label, val]) => `
+      <div class="opdev-dim">
+        <div class="row"><span>${esc(label)}</span><span class="val">${val}%</span></div>
+        <div class="opdev-bar ${val >= 70 ? 'ok' : ''}"><span style="width:${Math.min(val,100)}%"></span></div>
+      </div>`).join('');
+
+    // requirement mini-bars
+    const reqs = progress?.requirement_progress || [];
+    document.getElementById('proj-reqs-mini').innerHTML = reqs.length ? reqs.map(r => `
+      <div class="opdev-req">
+        <div class="row"><span>${esc(r.name)}</span><span class="w">${r.weight}% · ${r.completion_percent}%</span></div>
+        <div class="opdev-bar ${r.completion_percent >= 70 ? 'ok' : ''}"><span style="width:${Math.min(r.completion_percent,100)}%"></span></div>
+      </div>`).join('') : '<div class="opdev-empty">No requirements defined yet.</div>';
+
+    // stats
+    const commits = commitsCache.length;
+    document.getElementById('proj-stats').innerHTML = `
+      <div class="opdev-stat"><div class="num">${team?.length || 0}</div><div class="lbl">Team members</div></div>
+      <div class="opdev-stat"><div class="num">${milestones?.filter(m => m.status === 'COMPLETED').length || 0}/${milestones?.length || 0}</div><div class="lbl">Milestones</div></div>
+      <div class="opdev-stat"><div class="num">${repositories?.length || 0}</div><div class="lbl">Repositories</div></div>`;
+  }
+
+  /* ---- tab panels (lazy-loaded) ---- */
+  const loaded = {};
+  async function loadTabPanels(id) {
+    try {
+      const [tasksRes, activityRes, pullsRes, teamRes, milestonesRes, reqsRes, docsRes, depsRes] = await Promise.all([
+        api(`/api/projects/${id}/tasks`), api(`/api/projects/${id}/activity?limit=100`),
+        api(`/api/projects/${id}/pulls`), api(`/api/projects/${id}/team`),
+        api(`/api/projects/${id}/milestones`), api(`/api/projects/${id}/requirements`),
+        api(`/api/projects/${id}/documents`), api(`/api/projects/${id}/deployments`)
+      ]).catch(() => [null, null, null, null, null, null, null, null]);
+
+      // tasks
+      const tasks = tasksRes?.tasks || [];
+      renderTasks(tasks);
+      document.getElementById('filter-status').onchange = () => renderTasks(tasks);
+      document.getElementById('filter-priority').onchange = () => renderTasks(tasks);
+
+      // activity (all + commits-filtered)
+      const activity = activityRes?.activity || [];
+      const feed = document.getElementById('proj-activity');
+      feed.innerHTML = activity.length ? activity.map(a => `
+        <li><span class="type">${esc(TYPE_LABEL[a.type] || a.type)}</span>
+        <span style="flex:1">${esc(a.title)}</span>
+        <span class="when">${esc(a.actor || '')} · ${when(a.occurred_at)}</span></li>`).join('')
+        : '<li class="opdev-empty" style="display:block;border:none">No development activity recorded yet.</li>';
+
+      const commits = activity.filter(a => a.type === 'COMMIT_PUSHED');
+      commitsCache = commits;
+      document.getElementById('proj-commits').innerHTML = commits.length ? commits.map(c => `
+        <li><span class="type">${esc(c.actor || 'someone')}</span>
+        <span style="flex:1">${esc(c.title)}</span>
+        <span class="when">${when(c.occurred_at)}</span></li>`).join('')
+        : '<li class="opdev-empty" style="display:block;border:none">No commits recorded yet.</li>';
+
+      // pulls
+      const pulls = pullsRes?.pull_requests || [];
+      document.getElementById('proj-pulls').innerHTML = pulls.length ? `
+        <table class="proj-table"><thead><tr><th>#</th><th>Title</th><th>Author</th><th>State</th><th>Updated</th></tr></thead><tbody>
+        ${pulls.map(p => `<tr><td>${p.number}</td><td><a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.title)}</a></td><td>${esc(p.author)}</td><td>${esc(p.state)}</td><td>${when(p.updated_at)}</td></tr>`).join('')}
+        </tbody></table>` : '<div class="opdev-empty">No pull requests yet.</div>';
+
+      // team
+      const team = teamRes?.team || [];
+      document.getElementById('proj-team').innerHTML = team.length ? `
+        <table class="proj-table"><thead><tr><th>Member</th><th>Role</th><th>Joined</th></tr></thead><tbody>
+        ${team.map(m => `<tr><td>${esc(m.profiles?.full_name || m.profiles?.email || 'Member')}</td><td>${esc(m.role)}</td><td>${when(m.joined_at)}</td></tr>`).join('')}
+        </tbody></table>` : '<div class="opdev-empty">No team members yet.</div>';
+
+      // milestones
+      const ms = milestonesRes?.milestones || [];
+      document.getElementById('proj-milestones').innerHTML = ms.length ? ms.map(m => `
+        <div class="opdev-task"><div class="t-main"><div class="t-title">${esc(m.name)}</div>
+        <div class="t-meta">${esc(m.status)}${m.due_date ? ` · due ${esc(m.due_date)}` : ''}${m.completed_at ? ` · completed ${when(m.completed_at)}` : ''}</div></div></div>`).join('')
+        : '<div class="opdev-empty">No milestones yet.</div>';
+
+      // requirements
+      const requirements = reqsRes?.requirements || [];
+      document.getElementById('proj-requirements').innerHTML = requirements.length ? requirements.map(r => `
+        <div class="opdev-req">
+          <div class="row"><span><strong>${esc(r.name)}</strong> ${esc(r.status)}</span><span class="w">weight ${r.weight}%</span></div>
+          <div class="opdev-bar ${r.status === 'DONE' ? 'ok' : ''}"><span style="width:${r.status === 'DONE' ? 100 : r.status === 'TESTING' ? 80 : r.status === 'IN_REVIEW' ? 60 : r.status === 'IN_PROGRESS' ? 30 : 5}%"></span></div>
+          ${r.acceptance_criteria ? `<div style="font-size:12px;color:#64748b;margin-top:4px">Acceptance: ${esc(r.acceptance_criteria)}</div>` : ''}
+        </div>`).join('')
+        : '<div class="opdev-empty">No requirements yet.</div>';
+
+      // docs
+      const docs = docsRes?.documents || [];
+      document.getElementById('proj-docs').innerHTML = docs.length ? docs.map(d => `
+        <div class="opdev-task"><div class="t-main"><div class="t-title">${esc(d.title)}</div>
+        <div class="t-meta">${esc(d.kind)} · updated ${when(d.updated_at)}</div></div></div>`).join('')
+        : '<div class="opdev-empty">No documentation yet.</div>';
+
+      // deployments
+      const deployments = depsRes?.deployments || [];
+      document.getElementById('proj-deployments').innerHTML = deployments.length ? `
+        <table class="proj-table"><thead><tr><th>Environment</th><th>Status</th><th>Ref</th><th>When</th></tr></thead><tbody>
+        ${deployments.map(d => `<tr><td>${esc(d.environment)}</td><td>${esc(d.status)}</td><td class="commit-sha">${esc(d.ref || '')}</td><td>${when(d.deployed_at)}</td></tr>`).join('')}
+        </tbody></table>` : '<div class="opdev-empty">No deployments yet.</div>';
+
+      loaded.all = true;
+    } catch (err) {
+      console.warn('panel load failed:', err.message);
+    }
+  }
+
+  function renderTasks(tasks) {
+    const status = document.getElementById('filter-status').value;
+    const priority = document.getElementById('filter-priority').value;
+    const filtered = tasks.filter(t => (!status || t.status === status) && (!priority || t.priority === priority));
+    const TASK_LABEL = { TODO: 'To do', IN_PROGRESS: 'In progress', BLOCKED: 'Blocked', IN_REVIEW: 'In review', TESTING: 'Testing', DONE: 'Done' };
+    document.getElementById('proj-tasks').innerHTML = filtered.length ? `
+      <table class="proj-table"><thead><tr><th>Task</th><th>Status</th><th>Priority</th><th>Due</th></tr></thead><tbody>
+      ${filtered.map(t => `<tr><td>${esc(t.title)}</td><td>${esc(TASK_LABEL[t.status] || t.status)}</td><td>${esc(t.priority)}</td><td>${esc(t.due_date || '—')}</td></tr>`).join('')}
+      </tbody></table>` : '<div class="opdev-empty">No tasks match these filters.</div>';
+  }
+
+  function when(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    const diff = Date.now() - d.getTime();
+    if (diff < 60 * 1000) return 'just now';
+    if (diff < 3600 * 1000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 24 * 3600 * 1000) return `${Math.floor(diff / 3600000)}h ago`;
+    return d.toLocaleDateString();
+  }
+
+  // tabs
+  document.querySelectorAll('.proj-tabs button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.proj-tabs button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.proj-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(`panel-${btn.dataset.tab}`).classList.add('active');
+    });
+  });
+
+  let commitsCache = [];
+  loadProject();
+})();
+</script>
+</body>
+</html>

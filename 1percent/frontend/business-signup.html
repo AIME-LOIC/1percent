@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Business Signup — 1percent</title>
+<link rel="stylesheet" href="/css/main.css">
+<style>
+  .bs-wrap { max-width: 560px; margin: 0 auto; padding: 48px 16px 64px; }
+  .bs-card { background: #fff; border: 1px solid rgba(148,163,184,0.25); border-radius: 16px; padding: 32px; box-shadow: 0 1px 2px rgba(15,23,42,0.06); }
+  .bs-card h1 { margin: 0 0 6px; font-size: 28px; }
+  .bs-card .sub { color: #64748b; font-size: 14px; margin-bottom: 24px; }
+  .bs-field { margin-bottom: 16px; }
+  .bs-field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  .bs-field input, .bs-field select {
+    width: 100%; height: 46px; padding: 0 14px;
+    border: 1px solid rgba(148,163,184,0.5); border-radius: 10px;
+    font: inherit; font-size: 14px; background: #fff;
+  }
+  .bs-field input:focus-visible, .bs-field select:focus-visible { outline: 2px solid #6366f1; outline-offset: 1px; border-color: #6366f1; }
+  .bs-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 600px) { .bs-row { grid-template-columns: 1fr; } }
+  .bs-btn {
+    width: 100%; height: 48px; border: none; border-radius: 10px;
+    background: #6366f1; color: #fff; font: inherit; font-size: 15px; font-weight: 700;
+    cursor: pointer; margin-top: 8px;
+  }
+  .bs-btn:hover { filter: brightness(1.05); }
+  .bs-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .bs-error { color: #dc2626; font-size: 13px; margin-top: 12px; display: none; }
+  .bs-error ul { margin: 6px 0 0; padding-left: 18px; }
+  .bs-success { color: #059669; font-size: 14px; margin-top: 12px; display: none; }
+  .bs-login { text-align: center; font-size: 14px; color: #64748b; margin-top: 16px; }
+</style>
+</head>
+<body>
+<div id="nav-placeholder"></div>
+
+<div class="bs-wrap">
+  <div class="bs-card">
+    <h1>Partner with 1percent</h1>
+    <p class="sub">Register your company. Our student developers — guided by mentors — build real software for real businesses.</p>
+
+    <form id="bs-form" novalidate>
+      <div class="bs-field">
+        <label for="f-name">Company name *</label>
+        <input id="f-name" name="name" type="text" required minlength="2" autocomplete="organization">
+      </div>
+      <div class="bs-row">
+        <div class="bs-field">
+          <label for="f-email">Company email *</label>
+          <input id="f-email" name="email" type="email" required autocomplete="email">
+        </div>
+        <div class="bs-field">
+          <label for="f-phone">Phone</label>
+          <input id="f-phone" name="phone" type="tel" autocomplete="tel">
+        </div>
+      </div>
+      <div class="bs-row">
+        <div class="bs-field">
+          <label for="f-website">Website</label>
+          <input id="f-website" name="website" type="url" placeholder="https://…">
+        </div>
+        <div class="bs-field">
+          <label for="f-industry">Industry</label>
+          <input id="f-industry" name="industry" type="text" placeholder="e.g. Agriculture">
+        </div>
+      </div>
+      <div class="bs-row">
+        <div class="bs-field">
+          <label for="f-country">Country</label>
+          <input id="f-country" name="country" type="text" value="Rwanda">
+        </div>
+        <div class="bs-field">
+          <label for="f-city">City</label>
+          <input id="f-city" name="city" type="text" placeholder="Kigali">
+        </div>
+      </div>
+      <div class="bs-field">
+        <label for="f-size">Company size</label>
+        <select id="f-size" name="company_size">
+          <option value="">Select…</option>
+          <option value="1-2">1–2</option>
+          <option value="3-10">3–10</option>
+          <option value="10-50">10–50</option>
+          <option value="50-200">50–200</option>
+          <option value="200+">200+</option>
+        </select>
+      </div>
+      <div class="bs-row">
+        <div class="bs-field">
+          <label for="f-contact">Contact person *</label>
+          <input id="f-contact" name="contact_person" type="text" required>
+        </div>
+        <div class="bs-field">
+          <label for="f-role">Contact role</label>
+          <input id="f-role" name="contact_role" type="text" placeholder="e.g. Operations Manager">
+        </div>
+      </div>
+      <div class="bs-row">
+        <div class="bs-field">
+          <label for="f-password">Password *</label>
+          <input id="f-password" name="password" type="password" required minlength="8" autocomplete="new-password">
+        </div>
+        <div class="bs-field">
+          <label for="f-confirm">Confirm password *</label>
+          <input id="f-confirm" name="confirm_password" type="password" required minlength="8" autocomplete="new-password">
+        </div>
+      </div>
+
+      <div id="bs-error" class="bs-error" role="alert"></div>
+      <div id="bs-success" class="bs-success" role="status"></div>
+
+      <button type="submit" class="bs-btn" id="bs-submit">Create business account</button>
+    </form>
+
+    <p class="bs-login">Already registered? <a href="/business">Go to your dashboard →</a></p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+<script src="/js/session.js" defer></script>
+<script>
+(function () {
+  'use strict';
+  const form = document.getElementById('bs-form');
+  const errBox = document.getElementById('bs-error');
+  const okBox = document.getElementById('bs-success');
+  const submitBtn = document.getElementById('bs-submit');
+
+  function showErrors(list) {
+    errBox.style.display = 'block';
+    errBox.innerHTML = '<ul>' + list.map(e => `<li>${e.replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</li>`).join('') + '</ul>';
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errBox.style.display = 'none';
+    okBox.style.display = 'none';
+
+    const v = (id) => document.getElementById(id).value.trim();
+    const payload = {
+      name: v('f-name'), email: v('f-email'), phone: v('f-phone'),
+      website: v('f-website'), industry: v('f-industry'),
+      country: v('f-country'), city: v('f-city'), company_size: v('f-size'),
+      contact_person: v('f-contact'), contact_role: v('f-role'),
+      password: document.getElementById('f-password').value,
+      confirm_password: document.getElementById('f-confirm').value
+    };
+
+    // client-side validation (server re-validates — never trust the client)
+    const errors = [];
+    if (payload.name.length < 2) errors.push('Company name is required.');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) errors.push('A valid company email is required.');
+    if (payload.password.length < 8) errors.push('Password must be at least 8 characters.');
+    if (payload.password !== payload.confirm_password) errors.push('Passwords do not match.');
+    if (payload.phone && !/^[+0-9()\-\s]{7,20}$/.test(payload.phone)) errors.push('Phone number is not valid.');
+    if (payload.website && !/^https?:\/\/.+\..+/.test(payload.website)) errors.push('Website must be a valid URL (https://…).');
+    if (errors.length) { showErrors(errors); return; }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating account…';
+    try {
+      const res = await fetch('/api/business/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const body = await res.json();
+      if (!res.ok || !body.success) {
+        showErrors([body?.error?.message || 'Signup failed. Please try again.']);
+        return;
+      }
+      okBox.style.display = 'block';
+      okBox.textContent = 'Account created! Redirecting to your dashboard…';
+      // persist session like the rest of the app does (Supabase client-side)
+      setTimeout(() => { location.href = '/business'; }, 800);
+    } catch {
+      showErrors(['Network error. Please try again.']);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Create business account';
+    }
+  });
+})();
+</script>
+</body>
+</html>

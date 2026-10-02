@@ -1,0 +1,260 @@
+/* ============================================================
+   dev-workspace.css — Developer Workspace (Phases 5-7, 14-16)
+   ============================================================
+   Extends the existing dashboard design system. 4px spacing unit,
+   10-16px radii, restrained shadows, high density without clutter.
+   Max content width 1440px, page padding 24-32px desktop / 24 tablet
+   / 16 mobile. Responsive: 12-col desktop → 2-col tablet → 1 mobile.
+   ============================================================ */
+
+:root {
+  --opdev-max-w: 1440px;
+  --opdev-gap: 16px;
+  --opdev-radius: 12px;
+  --opdev-border: 1px solid rgba(148, 163, 184, 0.25);
+  --opdev-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --opdev-primary: #6366f1;
+  --opdev-ok: #10b981;
+  --opdev-warn: #f59e0b;
+  --opdev-bad: #ef4444;
+}
+
+/* ---------- layout ---------- */
+.opdev {
+  max-width: var(--opdev-max-w);
+  margin: 0 auto;
+  padding: 24px 32px 48px;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--opdev-gap);
+}
+.opdev > * { min-width: 0; }
+
+.opdev-profile  { grid-column: span 12; }
+.opdev-project  { grid-column: span 12; }
+.opdev-progress { grid-column: span 4; }
+.opdev-tasks    { grid-column: span 8; }
+.opdev-activity { grid-column: span 7; }
+.opdev-recent   { grid-column: span 5; }
+.opdev-team     { grid-column: span 12; }
+
+@media (max-width: 1199px) {
+  .opdev { padding: 24px; }
+  .opdev-progress, .opdev-tasks { grid-column: span 6; }
+  .opdev-activity, .opdev-recent { grid-column: span 6; }
+}
+@media (max-width: 767px) {
+  .opdev { padding: 16px; grid-template-columns: 1fr; }
+  .opdev > * { grid-column: auto; }
+}
+
+/* ---------- cards ---------- */
+.opdev-card {
+  background: var(--bg, #fff);
+  border: var(--opdev-border);
+  border-radius: var(--opdev-radius);
+  box-shadow: var(--opdev-shadow);
+  padding: 20px;
+}
+.opdev-card h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* ---------- profile strip ---------- */
+.opdev-profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.opdev-avatar {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--opdev-primary);
+  display: grid; place-items: center;
+  font-weight: 700; font-size: 20px;
+}
+.opdev-profile-meta { flex: 1; min-width: 200px; }
+.opdev-profile-meta .name { font-size: 20px; font-weight: 700; line-height: 1.3; }
+.opdev-profile-meta .sub  { font-size: 13px; color: #64748b; margin-top: 2px; }
+.opdev-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.opdev-chip {
+  font-size: 12px; font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--opdev-primary);
+}
+.opdev-chip.ok   { background: rgba(16, 185, 129, 0.12); color: #047857; }
+.opdev-chip.warn { background: rgba(245, 158, 11, 0.14); color: #b45309; }
+
+/* ---------- project card ---------- */
+.opdev-project-top {
+  display: flex; justify-content: space-between;
+  align-items: flex-start; gap: 16px; flex-wrap: wrap;
+}
+.opdev-status {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.4px;
+  padding: 4px 10px; border-radius: 999px;
+  background: rgba(99, 102, 241, 0.12); color: var(--opdev-primary);
+  text-transform: uppercase;
+}
+.opdev-stats { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 12px; }
+.opdev-stat .num { font-size: 24px; font-weight: 700; line-height: 1.2; }
+.opdev-stat .lbl { font-size: 12px; color: #64748b; }
+
+/* ---------- progress bars ---------- */
+.opdev-bar {
+  height: 8px; border-radius: 999px;
+  background: rgba(148, 163, 184, 0.2);
+  overflow: hidden;
+}
+.opdev-bar > span {
+  display: block; height: 100%;
+  border-radius: 999px;
+  background: var(--opdev-primary);
+  transition: width 200ms ease;
+}
+.opdev-bar.ok > span    { background: var(--opdev-ok); }
+.opdev-bar.warn > span  { background: var(--opdev-warn); }
+.opdev-bar.bad > span   { background: var(--opdev-bad); }
+
+.opdev-dim { margin-bottom: 10px; }
+.opdev-dim .row {
+  display: flex; justify-content: space-between;
+  font-size: 13px; margin-bottom: 4px;
+}
+.opdev-dim .row .val { color: #64748b; }
+
+/* ---------- requirement bars ---------- */
+.opdev-req { margin-bottom: 10px; }
+.opdev-req .row {
+  display: flex; justify-content: space-between;
+  font-size: 13px; margin-bottom: 4px; gap: 8px;
+}
+.opdev-req .w { color: #64748b; white-space: nowrap; }
+
+/* ---------- task cards ---------- */
+.opdev-task {
+  border: var(--opdev-border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  display: flex; align-items: center; gap: 12px;
+  background: #fff;
+}
+.opdev-task .t-main { flex: 1; min-width: 0; }
+.opdev-task .t-title { font-weight: 600; font-size: 14px; }
+.opdev-task .t-meta  { font-size: 12px; color: #64748b; margin-top: 2px; }
+.opdev-task .t-actions { display: flex; gap: 8px; }
+.opdev-btn {
+  height: 36px; padding: 0 14px;
+  border-radius: 8px; border: var(--opdev-border);
+  background: #fff; font-weight: 600; font-size: 13px;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+.opdev-btn:hover { background: rgba(99, 102, 241, 0.06); }
+.opdev-btn:focus-visible { outline: 2px solid var(--opdev-primary); outline-offset: 2px; }
+.opdev-btn.primary { background: var(--opdev-primary); border-color: var(--opdev-primary); color: #fff; }
+.opdev-btn.primary:hover { filter: brightness(1.05); }
+.opdev-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ---------- 14-day heatmap ---------- */
+.opdev-grid {
+  display: grid;
+  grid-template-columns: repeat(14, 1fr);
+  gap: 4px;
+}
+.opdev-cell {
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  transition: transform 150ms ease;
+}
+.opdev-cell:hover { transform: scale(1.12); }
+.opdev-cell:focus-visible { outline: 2px solid var(--opdev-primary); outline-offset: 1px; }
+.opdev-cell.lvl0 { background: rgba(148, 163, 184, 0.18); }
+.opdev-cell.lvl1 { background: #c7d2fe; }
+.opdev-cell.lvl2 { background: #818cf8; }
+.opdev-cell.lvl3 { background: #4f46e5; }
+
+.opdev-tip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%; transform: translateX(-50%);
+  background: #0f172a; color: #f8fafc;
+  font-size: 12px; line-height: 1.5;
+  padding: 8px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+  z-index: 30;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+}
+
+/* tooltip via data attribute (hover + focus) */
+.opdev-cell:hover::after,
+.opdev-cell:focus-visible::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%; transform: translateX(-50%);
+  background: #0f172a; color: #f8fafc;
+  font-size: 12px; line-height: 1.6;
+  padding: 8px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+  z-index: 30;
+  text-align: left;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+}
+
+/* ---------- activity feed ---------- */
+.opdev-feed { list-style: none; margin: 0; padding: 0; }
+.opdev-feed li {
+  display: flex; gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+  font-size: 13px;
+}
+.opdev-feed li:last-child { border-bottom: none; }
+.opdev-feed .when { color: #64748b; white-space: nowrap; font-size: 12px; }
+.opdev-feed .type {
+  font-weight: 600; color: var(--opdev-primary);
+  font-size: 12px; white-space: nowrap;
+}
+
+/* ---------- states (Phase 16) ---------- */
+.opdev-empty, .opdev-loading, .opdev-error {
+  padding: 32px 20px;
+  text-align: center;
+  color: #64748b;
+  font-size: 14px;
+}
+.opdev-error { color: var(--opdev-bad); }
+.opdev-skeleton {
+  border-radius: 8px;
+  background: linear-gradient(90deg, rgba(148,163,184,0.12) 25%, rgba(148,163,184,0.22) 50%, rgba(148,163,184,0.12) 75%);
+  background-size: 200% 100%;
+  animation: opdev-shimmer 1.4s infinite;
+  height: 16px;
+  margin-bottom: 10px;
+}
+@keyframes opdev-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .opdev-cell, .opdev-bar > span, .opdev-btn { transition: none; }
+  .opdev-skeleton { animation: none; }
+}

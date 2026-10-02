@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Request a Project — 1percent</title>
+<link rel="stylesheet" href="/css/main.css">
+<style>
+  .br-wrap { max-width: 640px; margin: 0 auto; padding: 48px 16px 64px; }
+  .br-card { background: #fff; border: 1px solid rgba(148,163,184,0.25); border-radius: 16px; padding: 32px; }
+  .br-card h1 { margin: 0 0 6px; font-size: 28px; }
+  .br-card .sub { color: #64748b; font-size: 14px; margin-bottom: 24px; }
+  .br-field { margin-bottom: 16px; }
+  .br-field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  .br-field input, .br-field select, .br-field textarea {
+    width: 100%; padding: 12px 14px;
+    border: 1px solid rgba(148,163,184,0.5); border-radius: 10px;
+    font: inherit; font-size: 14px; background: #fff;
+  }
+  .br-field textarea { min-height: 110px; resize: vertical; }
+  .br-field input:focus, .br-field select:focus, .br-field textarea:focus { outline: 2px solid #6366f1; outline-offset: 1px; border-color: #6366f1; }
+  .br-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 600px) { .br-row { grid-template-columns: 1fr; } }
+  .br-btn {
+    width: 100%; height: 48px; border: none; border-radius: 10px;
+    background: #6366f1; color: #fff; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
+  }
+  .br-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .br-error { color: #dc2626; font-size: 13px; margin-top: 12px; display: none; }
+  .br-ok { color: #059669; font-size: 14px; margin-top: 12px; display: none; }
+  .br-hint { font-size: 12px; color: #64748b; margin-top: 4px; }
+</style>
+</head>
+<body>
+<div id="nav-placeholder"></div>
+
+<div class="br-wrap">
+  <div class="br-card">
+    <h1>Request a project</h1>
+    <p class="sub">Tell us the problem you want solved. Our team reviews every request, then plans the build with student developers guided by mentors.</p>
+
+    <form id="br-form" novalidate>
+      <div class="br-field">
+        <label for="r-name">Project name *</label>
+        <input id="r-name" type="text" required minlength="3">
+      </div>
+      <div class="br-field">
+        <label for="r-problem">Problem description *</label>
+        <textarea id="r-problem" required minlength="20" placeholder="What problem does your business face? What should the software solve? (min 20 characters)"></textarea>
+      </div>
+      <div class="br-field">
+        <label for="r-solution">Desired solution</label>
+        <textarea id="r-solution" placeholder="If you have an idea of the solution, describe it."></textarea>
+      </div>
+      <div class="br-field">
+        <label for="r-reqs">Business requirements</label>
+        <textarea id="r-reqs" placeholder="One per line: e.g. 'Customers can order online'"></textarea>
+      </div>
+      <div class="br-field">
+        <label for="r-users">Target users</label>
+        <input id="r-users" type="text" placeholder="e.g. Smallholder farmers, retail customers">
+      </div>
+      <div class="br-row">
+        <div class="br-field">
+          <label for="r-priority">Priority</label>
+          <select id="r-priority">
+            <option value="MEDIUM">Medium</option>
+            <option value="HIGH">High</option>
+            <option value="CRITICAL">Critical</option>
+            <option value="LOW">Low</option>
+          </select>
+        </div>
+        <div class="br-field">
+          <label for="r-timeline">Desired timeline</label>
+          <input id="r-timeline" type="text" placeholder="e.g. 3 months">
+        </div>
+      </div>
+      <div class="br-field">
+        <label for="r-budget">Budget range</label>
+        <input id="r-budget" type="text" placeholder="e.g. 500,000–1,500,000 RWF">
+      </div>
+      <div class="br-field">
+        <label for="r-notes">Additional notes</label>
+        <textarea id="r-notes"></textarea>
+      </div>
+
+      <div id="br-error" class="br-error" role="alert"></div>
+      <div id="br-ok" class="br-ok" role="status"></div>
+
+      <button type="submit" class="br-btn" id="br-submit">Submit request</button>
+      <p class="br-hint">Attachments: share links in the notes for now (secure upload coming).</p>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+<script src="/js/session.js" defer></script>
+<script>
+(function () {
+  'use strict';
+  const esc = (s) => String(s ?? '').replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+  const form = document.getElementById('br-form');
+  const errBox = document.getElementById('br-error');
+  const okBox = document.getElementById('br-ok');
+  const submitBtn = document.getElementById('br-submit');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errBox.style.display = 'none';
+    okBox.style.display = 'none';
+
+    const v = (id) => document.getElementById(id).value.trim();
+    const payload = {
+      name: v('r-name'),
+      problem: v('r-problem'),
+      desired_solution: v('r-solution'),
+      requirements: v('r-reqs'),
+      target_users: v('r-users'),
+      priority: document.getElementById('r-priority').value,
+      timeline: v('r-timeline'),
+      budget_range: v('r-budget'),
+      notes: v('r-notes'),
+      attachments: []
+    };
+
+    const errors = [];
+    if (payload.name.length < 3) errors.push('Project name must be at least 3 characters.');
+    if (payload.problem.length < 20) errors.push('Problem description must be at least 20 characters.');
+    if (errors.length) {
+      errBox.style.display = 'block';
+      errBox.innerHTML = '<ul>' + errors.map(e2 => `<li>${esc(e2)}</li>`).join('') + '</ul>';
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting…';
+    try {
+      const token = window.OPSession ? await OPSession.getToken() : null;
+      if (!token) {
+        location.href = '/business/signup';
+        return;
+      }
+      const res = await fetch('/api/business/projects/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload)
+      });
+      const body = await res.json();
+      if (!res.ok || !body.success) {
+        errBox.style.display = 'block';
+        errBox.textContent = body?.error?.message || 'Submission failed. Please try again.';
+        return;
+      }
+      okBox.style.display = 'block';
+      okBox.textContent = 'Request submitted! Our team will review it and get back to you.';
+      form.reset();
+      setTimeout(() => { location.href = '/business'; }, 1500);
+    } catch {
+      errBox.style.display = 'block';
+      errBox.textContent = 'Network error. Please try again.';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit request';
+    }
+  });
+})();
+</script>
+</body>
+</html>

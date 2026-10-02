@@ -49,7 +49,12 @@ const Dashboard = {
       Nav.user = session.user;
       Nav.init();
       await this._renderDashboard(session.user);
-      
+
+      // Developer Workspace (project system) — only for logged-in users
+      if (window.OPDevWorkspace) {
+        window.OPDevWorkspace.init('#dev-workspace-root');
+      }
+
       // Initialize notification popup system
       await NotificationPopup.init(this.supabase);
     } catch (err) {

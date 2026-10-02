@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Business Portal — 1percent</title>
+<link rel="stylesheet" href="/css/main.css">
+<link rel="stylesheet" href="/css/dev-workspace.css">
+<style>
+  .biz-wrap { max-width: 1440px; margin: 0 auto; padding: 32px 32px 64px; }
+  @media (max-width: 1199px) { .biz-wrap { padding: 24px; } }
+  @media (max-width: 767px)  { .biz-wrap { padding: 16px; } }
+  .biz-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+  .biz-header h1 { margin: 0; font-size: 32px; }
+  .biz-sub { color: #64748b; font-size: 14px; }
+  .biz-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+  .biz-grid > * { min-width: 0; }
+  .c4 { grid-column: span 4; } .c6 { grid-column: span 6; } .c8 { grid-column: span 8; } .c12 { grid-column: span 12; }
+  @media (max-width: 1199px) { .c4, .c6, .c8 { grid-column: span 6; } }
+  @media (max-width: 767px)  { .c4, .c6, .c8, .c12 { grid-column: span 12; } }
+  .proj-row { border: 1px solid rgba(148,163,184,0.25); border-radius: 10px; padding: 16px; margin-bottom: 10px; cursor: pointer; transition: background 150ms; }
+  .proj-row:hover { background: rgba(99,102,241,0.04); }
+  .proj-row .name { font-weight: 700; }
+  .proj-row .meta { font-size: 13px; color: #64748b; margin-top: 4px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .req-item { border-bottom: 1px solid rgba(148,163,184,0.15); padding: 10px 0; font-size: 14px; }
+  .req-item:last-child { border-bottom: none; }
+</style>
+</head>
+<body>
+<div id="nav-placeholder"></div>
+
+<div class="biz-wrap">
+  <div id="biz-loading" class="opdev-loading">Loading your company portal…</div>
+  <div id="biz-error" class="opdev-error" hidden></div>
+
+  <div id="biz-content" hidden>
+    <div class="biz-header">
+      <div>
+        <h1 id="biz-name">Company</h1>
+        <div class="biz-sub" id="biz-meta"></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <a class="opdev-btn" href="/business/signup">Edit profile</a>
+        <a class="opdev-btn primary" style="display:inline-flex;align-items:center;text-decoration:none" href="/business/projects/request">Request a project →</a>
+      </div>
+    </div>
+
+    <div class="biz-grid">
+      <div class="opdev-card c4">
+        <h3>Company profile</h3>
+        <div id="biz-profile" style="font-size:14px;line-height:1.8"></div>
+      </div>
+
+      <div class="opdev-card c8">
+        <h3>Projects</h3>
+        <div id="biz-projects"></div>
+      </div>
+
+      <div class="opdev-card c12">
+        <h3>Project requests</h3>
+        <div id="biz-requests"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+<script src="/js/session.js" defer></script>
+<script>
+(function () {
+  'use strict';
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const STATUS_LABEL = {REQUESTED:'Requested',REVIEW:'In review',APPROVED:'Approved',PLANNING:'Planning',IN_DEVELOPMENT:'In development',TESTING:'Testing',DEPLOYMENT:'Deployment',DELIVERED:'Delivered',ARCHIVED:'Archived',BLOCKED:'Blocked'};
+
+  async function api(path) {
+    const token = window.OPSession ? await OPSession.getToken() : null;
+    if (!token) { location.href = '/business/signup'; throw new Error('unauthorized'); }
+    const res = await fetch(path, { headers: { Authorization: `Bearer ${token}` } });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body?.error?.message || `Request failed (${res.status})`);
+    return body;
+  }
+
+  async function init() {
+    const loading = document.getElementById('biz-loading');
+    const errEl = document.getElementById('biz-error');
+    const content = document.getElementById('biz-content');
+    try {
+      const [profileRes, projectsRes, requestsRes] = await Promise.all([
+        api('/api/business/profile'), api('/api/business/projects'), api('/api/business/projects/requests')
+      ]);
+      loading.hidden = true;
+      content.hidden = false;
+
+      const c = profileRes.company;
+      document.title = `${c.name} — 1percent Business`;
+      document.getElementById('biz-name').textContent = c.name;
+      document.getElementById('biz-meta').textContent =
+        [c.industry, c.city, c.country, c.company_size].filter(Boolean).join(' · ');
+      document.getElementById('biz-profile').innerHTML = [
+        c.website ? `<div>🌐 <a href="${esc(c.website)}" target="_blank" rel="noopener">${esc(c.website)}</a></div>` : '',
+        c.email ? `<div>✉️ ${esc(c.email)}</div>` : '',
+        c.phone ? `<div>📞 ${esc(c.phone)}</div>` : '',
+        c.contact_person ? `<div>👤 ${esc(c.contact_person)}${c.contact_role ? `, ${esc(c.contact_role)}` : ''}</div>` : ''
+      ].filter(Boolean).join('') || '<div class="opdev-empty">Complete your company profile.</div>';
+
+      // projects
+      const projects = projectsRes.projects || [];
+      document.getElementById('biz-projects').innerHTML = projects.length
+        ? projects.map(p => `
+          <div class="proj-row" data-id="${esc(p.id)}">
+            <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap">
+              <span class="name">${esc(p.name)}</span>
+              <span class="opdev-status">${esc(STATUS_LABEL[p.status] || p.status)}</span>
+            </div>
+            <div class="meta">
+              <span>Progress: <strong>${p.progress?.overall_percent ?? 0}%</strong></span>
+              ${p.target_date ? `<span>Target: ${esc(p.target_date)}</span>` : ''}
+            </div>
+            <div class="opdev-bar" style="margin-top:8px"><span style="width:${Math.min(p.progress?.overall_percent ?? 0, 100)}%"></span></div>
+          </div>`).join('')
+        : '<div class="opdev-empty">No projects yet. Request your first project →</div>';
+
+      document.querySelectorAll('.proj-row').forEach(row => {
+        row.addEventListener('click', () => openProject(row.dataset.id));
+      });
+
+      // requests
+      const requests = requestsRes.requests || [];
+      document.getElementById('biz-requests').innerHTML = requests.length
+        ? requests.map(r => `
+          <div class="req-item" style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <span><strong>${esc(r.name)}</strong> — ${esc((r.problem || '').slice(0, 80))}…</span>
+            <span class="opdev-status">${esc(r.status)}</span>
+          </div>`).join('')
+        : '<div class="opdev-empty">No project requests yet.</div>';
+
+    } catch (err) {
+      loading.hidden = true;
+      errEl.hidden = false;
+      errEl.textContent = /unauthorized/i.test(err.message) ? '' : `Could not load your portal: ${err.message}`;
+    }
+  }
+
+  async function openProject(id) {
+    try {
+      const { project } = await api(`/api/business/projects/${id}`);
+      const dims = project.progress?.dimensions || {};
+      const milestoneList = (project.milestones || []).map(m =>
+        `<div class="req-item"><strong>${esc(m.name)}</strong> — ${esc(m.status)}${m.due_date ? ` · due ${esc(m.due_date)}` : ''}</div>`).join('');
+      const docList = (project.documents || []).map(d =>
+        `<div class="req-item">${esc(d.title)} <span style="color:#64748b">(${esc(d.kind)})</span></div>`).join('');
+      const depList = (project.deployments || []).map(d =>
+        `<div class="req-item">${esc(d.environment)}: <strong>${esc(d.status)}</strong>${d.url ? ` — <a href="${esc(d.url)}" target="_blank" rel="noopener">open</a>` : ''}</div>`).join('');
+
+      alert(`=== ${project.name} (${STATUS_LABEL[project.status] || project.status}) ===\n\n` +
+        `Overall progress: ${project.progress?.overall_percent ?? 0}%\n` +
+        `Development: ${dims.development ?? 0}% · Testing: ${dims.testing ?? 0}% · Deployment: ${dims.deployment ?? 0}%\n\n` +
+        `Milestones:\n${(project.milestones || []).map(m => `• ${m.name} (${m.status})`).join('\n') || '—'}\n\n` +
+        `Deliverables/docs: ${(project.documents || []).length}\n` +
+        `Latest deployment: ${(project.deployments || [])[0]?.status || '—'}`);
+      // Note: full detail view renders in the modal-free quick summary above;
+      // milestone/doc/deployment lists are available via the same API.
+    } catch (err) {
+      alert(`Could not load project: ${err.message}`);
+    }
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
