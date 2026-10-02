@@ -232,8 +232,8 @@ body.dv2 {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(8px);
+  /* Fully opaque — content must never bleed through behind the nav */
+  background: #ffffff;
   border-bottom: 1px solid var(--dv2-border);
   padding: 12px 28px;
   display: flex;
