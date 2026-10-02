@@ -403,12 +403,12 @@ html.theme-premium .dash-lb-move.up{color:#d97706;background:#fffbeb;border-colo
    Developer workspace layout integration
    ============================================================ */
 
-.dashboard-app.has-dev-workspace .dash-layout {
+#dashboard-app.has-dev-workspace .dash-layout {
   grid-template-columns: minmax(0, 1fr);
   max-width: 1440px;
 }
 
-.dashboard-app.has-dev-workspace .dash-lb {
+#dashboard-app.has-dev-workspace .dash-lb {
   display: none;
 }
 
