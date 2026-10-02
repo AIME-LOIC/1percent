@@ -119,13 +119,18 @@ const Dashboard = {
     app.innerHTML = '';
     app.appendChild(tpl.content.cloneNode(true));
 
-    // Keep the developer workspace inside the dashboard so development is the primary view while existing learning sections remain available below it.
+    // Keep the classic learning dashboard as the primary view.
+    // The developer workspace is moved below the learning sections so
+    // enrolled courses and their progress are immediately visible.
     const devRoot = document.getElementById('dev-workspace-root');
     if (devRoot) {
-      app.classList.add('has-dev-workspace');
-      const dashHeader = app.querySelector('.dash-header');
-      if (dashHeader) dashHeader.after(devRoot);
-      else app.prepend(devRoot);
+      app.classList.remove('has-dev-workspace');
+      const roadmap = document.getElementById('roadmap-container');
+      if (roadmap) {
+        roadmap.parentElement?.after(devRoot);
+      } else {
+        app.querySelector('.dash-main')?.appendChild(devRoot);
+      }
     }
 
     const name = user.user_metadata?.full_name?.split(' ')[0] || 'there';
