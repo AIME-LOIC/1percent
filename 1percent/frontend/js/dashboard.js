@@ -122,6 +122,7 @@ const Dashboard = {
     // Keep the developer workspace inside the dashboard so development is the primary view while existing learning sections remain available below it.
     const devRoot = document.getElementById('dev-workspace-root');
     if (devRoot) {
+      app.classList.add('has-dev-workspace');
       const dashHeader = app.querySelector('.dash-header');
       if (dashHeader) dashHeader.after(devRoot);
       else app.prepend(devRoot);
