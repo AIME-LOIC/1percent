@@ -127,7 +127,7 @@
               <div class="sub" style="font-size:13px;color:#64748b">
                 Role: <strong>${esc(p.my_role)}</strong>
                 ${p.milestones?.[0] ? ` · Milestone: ${esc(p.milestones[0].name)}` : ''}
-                ${p.repositories?.[0]?.url ? ` · <a href="${esc(p.repositories[0].url)}" target="_blank" rel="noopener">GitHub ↗</a>` : ''}
+                ${p.repositories?.[0]?.repositories?.url ? ` · <a href="${esc(p.repositories[0].url)}" target="_blank" rel="noopener">GitHub ↗</a>` : ''}
               </div>
             </div>
             <span class="opdev-status">${esc(STATUS_LABEL[p.status] || p.status)}</span>
@@ -224,11 +224,11 @@
         ${team.length ? `
           <div class="opdev-team-grid">
             ${team.slice(0, 6).map(member => {
-              const name = member.full_name || member.name || member.email || 'Team member';
+              const name = member.profiles?.full_name || member.full_name || member.name || member.email || 'Team member';
               const initials = name.trim().split(/\s+/).map(x => x[0]).slice(0, 2).join('').toUpperCase();
               return `
                 <div class="opdev-member">
-                  ${member.avatar_url ? `<img class="opdev-member-avatar" src="${esc(member.avatar_url)}" alt="">` : `<div class="opdev-member-avatar">${esc(initials)}</div>`}
+                  ${member.profiles?.avatar_url || member.avatar_url ? `<img class="opdev-member-avatar" src="${esc(member.profiles?.avatar_url || member.avatar_url)}" alt="">` : `<div class="opdev-member-avatar">${esc(initials)}</div>`}
                   <div class="opdev-member-meta">
                     <strong>${esc(name)}</strong>
                     <span>${esc(member.role || 'Developer')}${member.user_id === prof.id ? ' · You' : ''}</span>
