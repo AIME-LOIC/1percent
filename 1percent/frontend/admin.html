@@ -475,6 +475,10 @@ tr.log-fatal:hover td{background:#feeeee !important;}
         <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg></span>
         Dashboard
       </a>
+      <a class="sidebar-item" data-panel="projects" onclick="showPanel('projects')">
+        <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>
+        Projects
+      </a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-label">Content</div>
@@ -663,6 +667,37 @@ tr.log-fatal:hover td{background:#feeeee !important;}
     </div>
 
     <!-- Testimonials Panel -->
+    <!-- Projects & Requests Panel (project system) -->
+    <div class="panel" id="panel-projects">
+      <h1>Projects &amp; Requests</h1>
+      <p class="subtitle">Business project requests and the delivery pipeline. Approving a request creates a real project with teams, requirement-driven progress, and GitHub tracking.</p>
+
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-label">Businesses</div><div class="stat-value" id="pjstat-businesses">0</div><div class="stat-sub">Registered companies</div></div>
+        <div class="stat-card"><div class="stat-label">Active Projects</div><div class="stat-value" id="pjstat-active">0</div><div class="stat-sub">Not archived / delivered</div></div>
+        <div class="stat-card"><div class="stat-label">In Development</div><div class="stat-value" id="pjstat-dev">0</div><div class="stat-sub">Building right now</div></div>
+        <div class="stat-card"><div class="stat-label">Teams</div><div class="stat-value" id="pjstat-teams">0</div><div class="stat-sub">Student teams</div></div>
+        <div class="stat-card"><div class="stat-label">Open Tasks</div><div class="stat-value" id="pjstat-tasks">0</div><div class="stat-sub">Not yet DONE</div></div>
+        <div class="stat-card"><div class="stat-label">Pending Requests</div><div class="stat-value" id="pjstat-requests">0</div><div class="stat-sub">Awaiting review</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2>Business Requests</h2><button class="btn-admin outline" onclick="loadProjectsPanel()">Refresh</button></div>
+        <table class="data-table">
+          <thead><tr><th>Company</th><th>Request</th><th>Priority</th><th>Status</th><th>Submitted</th><th class="ta-right">Actions</th></tr></thead>
+          <tbody id="projects-requests-tbody"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2>Recent Project Activity</h2><button class="btn-admin outline" onclick="loadProjectsPanel()">Refresh</button></div>
+        <table class="data-table">
+          <thead><tr><th>When</th><th>Type</th><th>Actor</th><th>What</th></tr></thead>
+          <tbody id="projects-activity-tbody"><tr><td colspan="4" class="empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- AI Reviews Panel -->
     <div class="panel" id="panel-ai-reviews">
       <h1>AI Reviews</h1>
@@ -2064,7 +2099,7 @@ function showPanel(name){
   if(!panelEl)return;
   panelEl.classList.add('active');
   document.querySelectorAll('.sidebar-item').forEach(a=>{a.classList.toggle('active',a.dataset.panel===name);});
-  const titles={dashboard:'Dashboard',courses:'Courses',lessons:'Lessons',quizzes:'Quizzes',challenges:'Challenges',aiReviews:'AI Reviews',enrollments:'Enrollments',mentors:'Mentors',logs:'Logs & Errors',security:'Security',notifications:'Notifications',testimonials:'Testimonials','robotics-club':'Robotics Club'};
+  const titles={dashboard:'Dashboard',projects:'Projects & Requests',courses:'Courses',lessons:'Lessons',quizzes:'Quizzes',challenges:'Challenges',aiReviews:'AI Reviews',enrollments:'Enrollments',mentors:'Mentors',logs:'Logs & Errors',security:'Security',notifications:'Notifications',testimonials:'Testimonials','robotics-club':'Robotics Club'};
   document.getElementById('topbar-section-title').textContent=titles[name]||name;
   if(name==='dashboard')loadAnalytics();
   if(name==='quizzes')loadQuizzes();
@@ -2075,11 +2110,101 @@ function showPanel(name){
   if(name==='lessons'){const sel=document.getElementById('lesson-course-select');if(sel.options.length>1&&!sel.value){sel.value=sel.options[1].value;}if(sel.value)loadLessons();}
   if(name==='logs')loadLogsPanel();
   if(name==='security')loadBlockedIps();
+  if(name==='projects')loadProjectsPanel();
 }
 
 /* ═════════════════════════════════════════════════
    SECURITY — blocked IPs (list + unblock)
    ═════════════════════════════════════════════════ */
+/* ═════════════════════════════════════════════
+   PROJECTS — overview, request review, activity
+   (project system: /api/admin/projects/*)
+   ═════════════════════════════════════════════ */
+function pjEsc(str){
+  if(str==null)return'';
+  return String(str).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function loadProjectsPanel(){
+  try{
+    const [ovRes, reqRes] = await Promise.all([
+      apiFetch('/api/admin/projects/overview'),
+      apiFetch('/api/admin/projects/requests')
+    ]);
+    const ovJson = await ovRes.json();
+    const ov = ovJson.overview || {};
+    const acts = ovJson.recent_activity || [];
+    const reqJson = await reqRes.json();
+    const requests = reqJson.requests || [];
+
+    const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+    set('pjstat-businesses', ov.businesses ?? 0);
+    set('pjstat-active', ov.projects?.active ?? 0);
+    set('pjstat-dev', ov.projects?.in_development ?? 0);
+    set('pjstat-teams', ov.teams ?? 0);
+    set('pjstat-tasks', ov.tasks?.open ?? 0);
+    set('pjstat-requests', ov.requests_pending ?? 0);
+
+    const tbody=document.getElementById('projects-requests-tbody');
+    if(!requests.length){
+      tbody.innerHTML='<tr><td colspan="6" class="empty">No business requests yet. They arrive when a company signs up and submits a project request.</td></tr>';
+    } else {
+      tbody.innerHTML=requests.map(r=>{
+        const company=(r.companies&&r.companies.name)||'—';
+        const statusColor=r.status==='REQUESTED'?'#d97706':r.status==='APPROVED'?'#059669':r.status==='REJECTED'?'#dc2626':'#6366f1';
+        const actions=r.status==='REQUESTED'
+          ?`<button class="btn-admin primary" onclick="reviewProjectRequest('${r.id}','approve')">Approve</button> <button class="btn-admin outline" onclick="reviewProjectRequest('${r.id}','reject')">Reject</button>`
+          :`<span style="color:#94a3b8;font-size:12px;">reviewed</span>`;
+        const problem=r.problem||'';
+        return `<tr>
+          <td><strong>${pjEsc(company)}</strong><br><span style="color:#9ca3af;font-size:12px;">${pjEsc((r.companies&&r.companies.email)||'')}</span></td>
+          <td><strong>${pjEsc(r.name||'')}</strong><br><span style="color:#6b7280;font-size:12px;">${pjEsc(problem.slice(0,120))}${problem.length>120?'…':''}</span></td>
+          <td>${pjEsc(r.priority||'MEDIUM')}</td>
+          <td><span style="color:${statusColor};font-weight:700;">${pjEsc(r.status)}</span></td>
+          <td>${r.created_at?new Date(r.created_at).toLocaleDateString():'—'}</td>
+          <td class="ta-right">${actions}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    const actBody=document.getElementById('projects-activity-tbody');
+    if(!acts.length){
+      actBody.innerHTML='<tr><td colspan="4" class="empty">No project activity yet. Connect a GitHub repository to a project to see commits, PRs, and reviews land here.</td></tr>';
+    } else {
+      actBody.innerHTML=acts.map(a=>`<tr>
+        <td>${a.occurred_at?new Date(a.occurred_at).toLocaleString():'—'}</td>
+        <td><strong>${pjEsc(a.type||'')}</strong></td>
+        <td>${pjEsc(a.actor||'—')}</td>
+        <td>${pjEsc(a.title||'')}</td>
+      </tr>`).join('');
+    }
+  }catch(e){
+    console.error('[PROJECTS]',e);
+    const tbody=document.getElementById('projects-requests-tbody');
+    if(tbody)tbody.innerHTML='<tr><td colspan="6" class="empty">Failed to load — check the server logs.</td></tr>';
+  }
+}
+
+async function reviewProjectRequest(id, action){
+  const ok = action==='reject'
+    ? confirm('Reject this business request? The company will see it was reviewed.')
+    : confirm('Approve this request and create the project?');
+  if(!ok)return;
+  try{
+    const res=await apiFetch(`/api/admin/projects/requests/${id}/review`,{
+      method:'POST',
+      body:JSON.stringify({action})
+    });
+    const json=await res.json();
+    if(json.success){
+      alert(action==='approve' ? 'Project created: '+(json.project&&json.project.name ? json.project.name : '') : 'Request rejected.');
+      loadProjectsPanel();
+    } else {
+      alert((json.error&&json.error.message)||'Failed to review request.');
+    }
+  }catch(e){ alert('Failed: '+e.message); }
+}
+
 async function loadBlockedIps(){
   const tbody=document.getElementById('blocks-tbody');
   if(!tbody)return;
