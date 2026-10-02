@@ -93,9 +93,6 @@
   </div>
 </main>
 
-<!-- Developer Workspace (project system) — populated by js/dev-workspace.js -->
-<div id="dev-workspace-root"></div>
-
 <noscript>
   <div class="container"><p>This dashboard requires JavaScript. Please enable it and refresh.</p></div>
 </noscript>
@@ -134,6 +131,10 @@
             <span class="dash-streak-count">0</span>-day streak
           </span>
         </div>
+
+        <!-- My Project — requirement-driven progress, tasks and 14-day activity.
+             Rendered by js/dev-workspace.js into this root (project system). -->
+        <div id="dev-workspace-root"></div>
 
         <div class="dash-stats" id="dash-stats">
           <div class="dash-stat skel-stat skeleton"></div>
