@@ -52,6 +52,17 @@ const { adminTestimonialRoutes } = require('./routes/testimonialRoutes');
 const { mentorRoutes, adminMentorRoutes } = require('./routes/mentorRoutes');
 const { roboticsClubRouter, roboticsClubAdminRouter } = require('./controllers/roboticsClubController');
 
+// Project system (GitHub App + project engine + business portal)
+const { githubWebhookRouter } = require('./routes/githubWebhookRoutes');
+const { projectRouter } = require('./routes/projectRoutes');
+const { taskRouter } = require('./routes/taskRoutes');
+const { studentDevRouter } = require('./routes/studentDevRoutes');
+const { mentorProjectRouter } = require('./routes/mentorProjectRoutes');
+const { adminProjectRouter } = require('./routes/adminProjectRoutes');
+const { businessRouter } = require('./routes/businessRoutes');
+const { githubApiRouter } = require('./routes/githubApiRoutes');
+const { projectMcpRpcRoutes } = require('./routes/projectMcpRoutes');
+
 // Middlewares
 const { requestLogger } = require('./middlewares/requestLogger');
 const logService = require('./services/logService');
@@ -171,6 +182,13 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
   maxAge: 86400
 }));
+
+/* ============================================================
+   GITHUB WEBHOOKS — mounted BEFORE express.json() so the raw body
+   survives for HMAC-SHA256 signature verification (X-Hub-Signature-256).
+   Verifying against the parsed body would ALWAYS fail. Do not move.
+   ============================================================ */
+app.use('/webhooks/github', githubWebhookRouter);
 
 // Compression
 app.use(compression());
@@ -430,6 +448,21 @@ app.use('/api/robotics-club/admin', roboticsClubAdminRouter); // admin: members,
 app.use('/api/docs', docsRoutes);
 app.use('/api/mcp', studentMcpTokenRoutes);
 
+// ── Project system API (all authenticate server-side; see routes/*) ──
+app.use('/api/projects', projectRouter);
+app.use('/api/tasks', taskRouter);
+app.use('/api/student/dev', studentDevRouter);
+app.use('/api/mentor/projects-hub', mentorProjectRouter);
+app.use('/api/admin/projects', adminProjectRouter);
+app.use('/api/business', businessRouter);
+app.use('/api/github', githubApiRouter);
+
+// MCP project tools — mounted BEFORE the /mcp/:token catch-all
+app.use('/mcp/projects/:token?', (req, res, next) => {
+  if (req.params.token) req.mcpPathToken = req.params.token;
+  next();
+}, projectMcpRpcRoutes);
+
 app.get('/.well-known/oauth-protected-resource', (req, res) => {
   const proto = req.headers['x-forwarded-proto'] || req.protocol || 'https';
   const host = req.headers['x-forwarded-host'] || req.headers.host || 'learn.1percent.rw';
@@ -528,6 +561,10 @@ const htmlRoutes = {
   '/onboarding': 'onboarding.html',
   '/mentors': 'mentors.html',
   '/robotics-club': 'robotics-club.html',
+  '/projects': 'project.html',
+  '/business/signup': 'business-signup.html',
+  '/business': 'business.html',
+  '/business/projects/request': 'business-request.html',
 };
 
 // Learn subdomain routes — same pages, no /learn prefix
@@ -561,6 +598,10 @@ const learnSubdomainRoutes = {
   '/onboarding': 'onboarding.html',
   '/mentors': 'mentors.html',
   '/robotics-club': 'robotics-club.html',
+  '/projects': 'project.html',
+  '/business/signup': 'business-signup.html',
+  '/business': 'business.html',
+  '/business/projects/request': 'business-request.html',
 };
 
 /* ============================================================
@@ -588,6 +629,11 @@ app.get('*', (req, res) => {
   // Course detail page: /learn/course/:slug (or /course/:slug on subdomain)
   if (req.path.startsWith('/learn/course/') || (req.isLearnSubdomain && req.path.startsWith('/course/'))) {
     return sendHtml(res, 'course.html');
+  }
+
+  // Project detail page: /projects/:id (or /project?id=…)
+  if (req.path.startsWith('/projects/') || req.path === '/project') {
+    return sendHtml(res, 'project.html');
   }
 
   // Parent payment page: /parent-payment/:token (or /learn/parent-payment/:token)
