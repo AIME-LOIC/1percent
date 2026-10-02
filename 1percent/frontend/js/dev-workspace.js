@@ -101,7 +101,7 @@
           : `<div class="opdev-avatar" aria-hidden="true">${esc(initials)}</div>`}
         <div class="opdev-profile-meta">
           <div class="name">${esc(prof.full_name || 'Student')}</div>
-          <div class="sub">Software Developer${prof.streak_count ? ` · 🔥 ${prof.streak_count}-day streak` : ''}</div>
+          <div class="sub">Software Developer${prof.grade ? ` · ${esc(prof.grade)}` : ''}${prof.streak_count ? ` · ${prof.streak_count}-day streak` : ''}</div>
         </div>
         <div class="opdev-chips">
           ${ws.github_connected ? '<span class="opdev-chip ok">GitHub connected</span>' : '<span class="opdev-chip">GitHub not connected</span>'}
@@ -127,6 +127,7 @@
               <div class="sub" style="font-size:13px;color:#64748b">
                 Role: <strong>${esc(p.my_role)}</strong>
                 ${p.milestones?.[0] ? ` · Milestone: ${esc(p.milestones[0].name)}` : ''}
+                ${p.repositories?.[0]?.repositories?.url ? ` · <a href="${esc(p.repositories[0].repositories.url)}" target="_blank" rel="noopener">GitHub ↗</a>` : ''}
               </div>
             </div>
             <span class="opdev-status">${esc(STATUS_LABEL[p.status] || p.status)}</span>
@@ -191,6 +192,59 @@
         <p style="font-size:12px;color:#64748b;margin:10px 0 0">Commits · tasks · PRs · reviews · tests — evidence of building, not a score.</p>
       </section>`);
 
+    /* ---- recent activity ---- */
+    const recent = Array.isArray(ws.recent_activity) ? ws.recent_activity : [];
+    html.push(`
+      <section class="opdev-card opdev-recent" aria-label="Recent development activity">
+        <div class="opdev-section-head">
+          <h3>Recent activity</h3>
+          <span class="opdev-section-note">${recent.length} events</span>
+        </div>
+        <ul class="opdev-feed">
+          ${recent.length ? recent.slice(0, 6).map(a => `
+            <li>
+              <span class="opdev-feed-dot" aria-hidden="true"></span>
+              <div class="opdev-feed-main">
+                <div class="opdev-feed-title">${esc(a.title || a.type || 'Development activity')}</div>
+                <div class="opdev-feed-meta">${esc(String(a.type || '').replaceAll('_', ' '))} · ${esc(when(a.occurred_at))}</div>
+              </div>
+              ${a.metadata?.url ? `<a class="opdev-feed-link" href="${esc(a.metadata.url)}" target="_blank" rel="noopener" aria-label="Open activity">↗</a>` : ''}
+            </li>`).join('') : '<li class="opdev-feed-empty">No development activity recorded yet.</li>'}
+        </ul>
+      </section>`);
+
+    /* ---- team ---- */
+    const team = Array.isArray(p?.team) ? p.team : (Array.isArray(ws.team) ? ws.team : []);
+    html.push(`
+      <section class="opdev-card opdev-team" aria-label="Team and project information">
+        <div class="opdev-section-head">
+          <h3>Team &amp; project information</h3>
+          <a class="opdev-section-link" href="${p ? `/project.html?id=${esc(p.id)}` : '#'}">${p ? 'View project →' : 'Project details'}</a>
+        </div>
+        ${team.length ? `
+          <div class="opdev-team-grid">
+            ${team.slice(0, 6).map(member => {
+              const name = member.profiles?.full_name || member.full_name || member.name || member.email || 'Team member';
+              const initials = name.trim().split(/\s+/).map(x => x[0]).slice(0, 2).join('').toUpperCase();
+              return `
+                <div class="opdev-member">
+                  ${member.profiles?.avatar_url || member.avatar_url ? `<img class="opdev-member-avatar" src="${esc(member.profiles?.avatar_url || member.avatar_url)}" alt="">` : `<div class="opdev-member-avatar">${esc(initials)}</div>`}
+                  <div class="opdev-member-meta">
+                    <strong>${esc(name)}</strong>
+                    <span>${esc(member.role || 'Developer')}${member.user_id === prof.id ? ' · You' : ''}</span>
+                  </div>
+                </div>`;
+            }).join('')}
+          </div>` : '<div class="opdev-empty opdev-team-empty">Your project team will appear here when you are assigned.</div>'}
+        ${p ? `
+          <div class="opdev-project-meta">
+            <div><span>Project</span><strong>${esc(p.name)}</strong></div>
+            <div><span>Status</span><strong>${esc(STATUS_LABEL[p.status] || p.status)}</strong></div>
+            <div><span>Assigned tasks</span><strong>${tasks.length}</strong></div>
+            <div><span>Milestone</span><strong>${esc(p.milestones?.[0]?.name || '—')}</strong></div>
+          </div>` : ''}
+      </section>`);
+
     root.innerHTML = `<div class="opdev">${html.join('')}</div>`;
 
     // bind activity grid
@@ -203,7 +257,7 @@
     root.querySelectorAll('[data-task-action]').forEach(btn => {
       btn.addEventListener('click', async () => {
         const taskId = btn.dataset.taskId;
-        const action = btn.dataset.taskAction;
+        const action = btn.dataset.action;
         btn.disabled = true;
         try {
           await api(`/api/tasks/${taskId}/transition`, {
@@ -242,7 +296,7 @@
         </div>
         <div class="t-actions">
           ${actions.map(([a, label, cls]) =>
-            `<button class="opdev-btn ${cls}" data-task-action data-task-id="${esc(t.id)}" data-task-action="${esc(a)}">${esc(label)}</button>`
+            `<button class="opdev-btn ${cls}" data-task-action data-task-id="${esc(t.id)}" data-action="${esc(a)}">${esc(label)}</button>`
           ).join('')}
         </div>
       </div>`;

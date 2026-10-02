@@ -46,36 +46,50 @@ router.get('/dev-workspace', async (req, res) => {
     let currentProject = null;
     let myTasks = [];
     let activity14d = [];
+    let recentActivity = [];
+    let currentTeam = [];
+    let currentRepositories = [];
 
     if (current) {
-      const [progress, tasks, team, activity] = await Promise.all([
+      const [progress, tasks, team, activity, recent, repositories] = await Promise.all([
         projectService.getProjectProgress(current.id).catch(() => null),
         projectService.listTasksForUser(req.user, req.profile, { project_id: current.id, assignee_id: req.user.id, limit: 20 }),
         projectService.listTeamMembers(current.id).catch(() => []),
-        activityEngine.getActivity14d(req.user.id).catch(() => [])
+        activityEngine.getActivity14d(req.user.id).catch(() => []),
+        activityEngine.getProjectActivity(current.id, { limit: 8 }).catch(() => []),
+        projectService.listProjectRepositories(current.id).catch(() => [])
       ]);
+      currentTeam = team;
+      currentRepositories = repositories;
       currentProject = {
         ...current,
         progress,
         my_role: (team.find(t => t.user_id === req.user.id)?.role) || 'developer',
+        team,
+        repositories,
         milestones: await projectService.listMilestones(current.id).catch(() => [])
       };
       myTasks = tasks.tasks || [];
       activity14d = activity;
+      recentActivity = recent;
     }
 
     // GitHub connection status (existing integration: profile-level flag is not
     // stored; report whether any of the student's projects have repos connected)
-    const githubConnected = current
-      ? (await projectService.listProjectRepositories(current.id)).length > 0
-      : false;
+    const githubConnected = current ? currentRepositories.length > 0 : false;
 
     res.json({
       success: true,
-      profile: profile || { id: req.user.id },
+      profile: {
+        ...(profile || { id: req.user.id }),
+        grade: req.user?.user_metadata?.grade || req.user?.user_metadata?.class_level || ''
+      },
       current_project: currentProject,
+      team: currentTeam,
+      repositories: currentRepositories,
       tasks: myTasks,
       activity_14d: activity14d,
+      recent_activity: recentActivity,
       github_connected: githubConnected,
       states: {
         has_project: !!current,

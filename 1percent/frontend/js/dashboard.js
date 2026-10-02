@@ -119,6 +119,15 @@ const Dashboard = {
     app.innerHTML = '';
     app.appendChild(tpl.content.cloneNode(true));
 
+    // Keep the developer workspace inside the dashboard so development is the primary view while existing learning sections remain available below it.
+    const devRoot = document.getElementById('dev-workspace-root');
+    if (devRoot) {
+      app.classList.add('has-dev-workspace');
+      const dashHeader = app.querySelector('.dash-header');
+      if (dashHeader) dashHeader.after(devRoot);
+      else app.prepend(devRoot);
+    }
+
     const name = user.user_metadata?.full_name?.split(' ')[0] || 'there';
 
     // Show real greeting, hide skeleton
