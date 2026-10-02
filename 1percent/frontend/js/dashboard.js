@@ -50,9 +50,10 @@ const Dashboard = {
       Nav.init();
       await this._renderDashboard(session.user);
 
-      // Developer Workspace (project system) — only for logged-in users
+      // Developer Workspace (project system) — renders into the v2 card grid
+      // (#dv2-*-root targets); falls back to #dev-workspace-root if present.
       if (window.OPDevWorkspace) {
-        window.OPDevWorkspace.init('#dev-workspace-root');
+        window.OPDevWorkspace.init();
       }
 
       // Initialize notification popup system
@@ -61,6 +62,80 @@ const Dashboard = {
       console.error('Dashboard init error:', err);
       this._showGuest();
     }
+  },
+
+  /* v2 topbar: user chip, menu, notifications, mobile sidebar. Called after
+     the template is mounted. Also hides the legacy shared header (#header) —
+     the sidebar owns navigation now. */
+  _initTopbar(user) {
+    const legacyHeader = document.getElementById('header');
+    if (legacyHeader) legacyHeader.style.display = 'none';
+
+    const name = user.user_metadata?.full_name || user.email || 'Student';
+    const initials = name.trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase() || 'U';
+
+    const avatar = document.getElementById('dv2-avatar');
+    if (avatar) {
+      const pic = user.user_metadata?.avatar_url;
+      if (pic) avatar.innerHTML = `<img src="${escapeHTML(pic)}" alt="">`;
+      else avatar.textContent = initials;
+    }
+    const whoName = document.getElementById('dv2-who-name');
+    if (whoName) whoName.textContent = name;
+    const whoRole = document.getElementById('dv2-who-role');
+    if (whoRole) whoRole.textContent = user.user_metadata?.role === 'mentor' ? 'Mentor' : 'Student';
+
+    // User menu
+    const chip = document.getElementById('dv2-userchip');
+    const menu = document.getElementById('dv2-usermenu');
+    chip?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menu?.classList.toggle('open');
+      chip.setAttribute('aria-expanded', String(menu?.classList.contains('open') || false));
+    });
+    document.addEventListener('click', () => menu?.classList.remove('open'));
+    document.getElementById('dv2-logout')?.addEventListener('click', async () => {
+      if (typeof OPSession !== 'undefined') await OPSession.signOut();
+      else await this.supabase.auth.signOut();
+      window.location.href = _url('/');
+    });
+
+    // Notifications: reuse NotificationPopup + unread badge
+    document.getElementById('dv2-bell')?.addEventListener('click', async () => {
+      if (window.NotificationPopup) {
+        await NotificationPopup.checkNow();
+        if (NotificationPopup._pendingNotifications?.length) NotificationPopup._showNext();
+        else NotificationPopup.showPopup('Notifications', 'You are all caught up.', 'info');
+      }
+    });
+    try {
+      const badge = document.getElementById('dv2-bell-badge');
+      if (badge && window.NotificationPopup) {
+        NotificationPopup.checkNow().then(() => {
+          const n = NotificationPopup._pendingNotifications?.length || 0;
+          if (n > 0) { badge.textContent = n > 9 ? '9+' : String(n); badge.style.display = 'flex'; }
+        }).catch(() => {});
+      }
+    } catch (e) { /* cosmetic */ }
+
+    // Search: jump to challenges page with the query for now
+    document.getElementById('dv2-search')?.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      const q = e.target.value.trim();
+      if (q) window.location.href = _url('/playground') + '?q=' + encodeURIComponent(q);
+    });
+
+    // Mobile sidebar drawer
+    const sidebar = document.getElementById('dv2-sidebar');
+    const backdrop = document.getElementById('dv2-backdrop');
+    const burger = document.getElementById('dv2-burger');
+    const close = () => { sidebar?.classList.remove('open'); backdrop?.classList.remove('show'); };
+    burger?.addEventListener('click', () => {
+      sidebar?.classList.add('open');
+      backdrop?.classList.add('show');
+    });
+    backdrop?.addEventListener('click', close);
+    sidebar?.querySelectorAll('.dv2-navlink').forEach(a => a.addEventListener('click', close));
   },
 
   _showGuest() {
@@ -117,7 +192,14 @@ const Dashboard = {
     const tpl = document.getElementById('dashboard-main-template');
     app.className = '';
     app.innerHTML = '';
-    app.appendChild(tpl.content.cloneNode(true));
+
+    // Resolve ${_url('/path')} placeholders in the inert template BEFORE
+    // insertion (template content is not live JS — literals stay literal).
+    const frag = tpl.content.cloneNode(true);
+    const tmp = document.createElement('div');
+    tmp.appendChild(frag);
+    tmp.innerHTML = tmp.innerHTML.replace(/\$\{_url\('([^']+)'\)\}/g, (_, p) => _url(p));
+    while (tmp.firstChild) app.appendChild(tmp.firstChild);
 
     // Keep the classic learning dashboard as the primary view.
     // The developer workspace is moved below the learning sections so
@@ -135,16 +217,15 @@ const Dashboard = {
 
     const name = user.user_metadata?.full_name?.split(' ')[0] || 'there';
 
-    // Show real greeting, hide skeleton
-    document.getElementById('skel-greeting').style.display = 'none';
-    document.getElementById('skel-subtitle').style.display = 'none';
-    const greetEl = document.getElementById('dash-greeting-text');
-    greetEl.hidden = false;             // markup ships with the [hidden] attribute — inline display can't beat it
-    greetEl.style.display = '';
-    greetEl.textContent = `Welcome back, ${name}`;
-    const subEl = document.getElementById('dash-subtitle-text');
-    subEl.hidden = false;
-    subEl.style.display = '';      // Apply the membership tier theme (free / pro / pro+) + badge
+    // Time-based greeting (mockup: "Good morning, Aime Loic 👋")
+    const hour = new Date().getHours();
+    const dayPart = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
+    const greetWrap = document.getElementById('dv2-greeting');
+    if (greetWrap) {
+      greetWrap.innerHTML = `<h1>Good ${dayPart}, ${escapeHTML(name)} 👋</h1><p>Keep building. You're making progress!</p>`;
+    }
+
+    this._initTopbar(user);      // Apply the membership tier theme (free / pro / pro+) + badge
     this._applyTierTheme();
 
     // Fetch enrolled courses (shows enrolled skeletons while loading)
@@ -207,15 +288,15 @@ const Dashboard = {
          dashboard load, so the theme persists across visits and after a
          payment refreshes the subscription row. */
       const theme = await TierTheme.init(token);
-      const header = document.querySelector('.dash-header');
-      if (header && !header.querySelector('.dash-tier-row')) {
+      const greet = document.getElementById('dv2-greeting');
+      if (greet && !greet.querySelector('.dash-tier-row')) {
         const row = document.createElement('div');
         row.className = 'dash-tier-row';
         // Paid tiers get a crown inside the badge — the single premium indicator
         const crown = theme.isPaid ? `<span class="crown-ic">${Icons.get('crown', 12)}</span>` : '';
         row.innerHTML = TierTheme.badgeHTML(theme.slug).replace('</span>', `${crown}</span>`);
-        const subtitle = document.getElementById('dash-subtitle-text');
-        if (subtitle) subtitle.after(row); else header.querySelector('div').appendChild(row);
+        row.style.marginTop = '8px';
+        greet.appendChild(row);
       }
       this._loadTestimonialBadge();
     } catch (e) { console.warn('[DASHBOARD] Tier theme failed:', e.message); }
@@ -728,18 +809,19 @@ const Dashboard = {
         tierSlug = json.tier && json.tier.slug ? json.tier.slug : 'free';
         isPro = tierSlug === 'pro' || tierSlug === 'unlimited';
       }
-      const header = document.querySelector('.dash-header');
-      if (!header) return;
+      const greet = document.getElementById('dv2-greeting');
+      if (!greet) return;
       /* Consolidated premium indicator: paid users get NO second button —
          their single gold crown badge already sits by the greeting
          (see _applyTierTheme). Free users get one gold upgrade CTA. */
       if (isPro) return;
+      if (greet.querySelector('.dash-upgrade-btn')) return;
       const upgradeBtn = document.createElement('a');
       upgradeBtn.href = _url('/payment');
       upgradeBtn.className = 'dash-upgrade-btn';
       upgradeBtn.innerHTML = `${Icons.get('zap', 14)} Upgrade to Pro`;
-      upgradeBtn.style.cssText = 'display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;background:linear-gradient(135deg,#f59e0b,#b45309);color:#fff;text-decoration:none;border:none;cursor:pointer;transition:all .15s;';
-      header.appendChild(upgradeBtn);
+      upgradeBtn.style.cssText = 'display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;background:linear-gradient(135deg,#f59e0b,#b45309);color:#fff;text-decoration:none;border:none;cursor:pointer;margin-top:10px;transition:all .15s;';
+      greet.appendChild(upgradeBtn);
     } catch {}
   },
 
