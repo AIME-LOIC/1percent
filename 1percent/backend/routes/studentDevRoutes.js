@@ -76,9 +76,7 @@ router.get('/dev-workspace', async (req, res) => {
 
     // GitHub connection status (existing integration: profile-level flag is not
     // stored; report whether any of the student's projects have repos connected)
-    const githubConnected = current
-      ? (await projectService.listProjectRepositories(current.id)).length > 0
-      : false;
+    const githubConnected = current ? currentRepositories.length > 0 : false;
 
     res.json({
       success: true,
