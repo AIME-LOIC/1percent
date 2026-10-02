@@ -195,6 +195,61 @@
   .settings-field-action{margin-left:0;}
 }
 
+/* Refined settings UX */
+.settings-page{max-width:1180px;padding:34px 24px 88px;}
+.settings-page::before{content:'Account settings';display:block;font-size:26px;font-weight:800;letter-spacing:-.03em;color:var(--text);margin:0 0 6px;}
+.settings-page::after{content:'Manage your profile, security, notifications, integrations, and account preferences.';display:block;color:var(--text-muted);font-size:13px;margin:-2px 0 26px;}
+.settings-grid{grid-template-columns:230px minmax(0,760px);gap:28px;justify-content:center;}
+.settings-sidebar{top:82px;}
+.settings-profile-card{padding:20px 18px;border-radius:16px;box-shadow:0 8px 24px rgba(15,23,42,.04);}
+.settings-avatar{width:64px;height:64px;font-size:21px;margin-bottom:12px;}
+.settings-nav{border-radius:14px;padding:5px;box-shadow:0 8px 24px rgba(15,23,42,.03);}
+.settings-nav-item{border:0;border-radius:9px;margin:2px 0;padding:10px 12px;}
+.settings-nav-item.active{border:0;background:var(--surface);}
+.settings-main{min-width:0;}
+.settings-section{border-radius:16px;margin-bottom:16px;box-shadow:0 8px 28px rgba(15,23,42,.045);}
+.settings-section-header{padding:22px 24px 17px;}
+.settings-section-header h2{font-size:17px;letter-spacing:-.015em;}
+.settings-section-header p{font-size:12px;line-height:1.55;max-width:620px;}
+.settings-field,.pref-row{padding:15px 24px;min-height:64px;}
+.settings-field-label,.pref-label{font-size:13px;}
+.settings-field-desc,.pref-desc{font-size:11px;line-height:1.45;max-width:560px;}
+.settings-input{height:40px;border-radius:9px;background:var(--bg-card);}
+.settings-btn{min-height:38px;padding:9px 15px;border-radius:9px;}
+.settings-rating-widget{padding:18px 24px 22px;}
+.rating-star{font-size:26px;}
+.legal-link{padding:15px 24px;}
+.mcp-steps{margin:0 24px 20px;}
+@media(max-width:900px){
+ .settings-page{padding:26px 16px 92px;}
+ .settings-page::before{font-size:23px;}
+ .settings-grid{grid-template-columns:1fr;gap:16px;}
+ .settings-sidebar{top:auto;}
+ .settings-profile-card{display:grid;grid-template-columns:auto 1fr;grid-template-areas:'avatar name' 'avatar email' 'avatar badge';column-gap:14px;text-align:left;align-items:center;}
+ .settings-avatar{grid-area:avatar;margin:0;}
+ .settings-profile-name{grid-area:name;}
+ .settings-profile-email{grid-area:email;margin:0 0 4px;}
+ .settings-profile-badge{grid-area:badge;justify-self:start;}
+ .settings-nav{display:flex;overflow-x:auto;scrollbar-width:none;}
+ .settings-nav::-webkit-scrollbar{display:none;}
+ .settings-nav-item{flex:0 0 auto;}
+}
+@media(max-width:600px){
+ .settings-page{padding:20px 12px 88px;}
+ .settings-section-header,.settings-field,.pref-row,.settings-rating-widget,.legal-link{padding-left:17px;padding-right:17px;}
+ .settings-field{gap:10px;}
+ .settings-field-action{width:100%;}
+ .settings-field-action .settings-btn{width:100%;justify-content:center;}
+ .settings-input{width:100%;}
+ .settings-section-header.flex-between{align-items:flex-start;flex-direction:column;gap:10px;}
+ .mfa-active-card{margin-left:17px;margin-right:17px;flex-direction:column;align-items:stretch;}
+ .mfa-active-card .settings-btn{width:100%;justify-content:center;}
+ .mfa-verify-row{flex-direction:column;}
+ .mfa-verify-input{width:100%;}
+ .mfa-verify-row .settings-btn{width:100%;justify-content:center;}
+ .pg-settings-1m55v{grid-template-columns:1fr;gap:0;margin:10px 0;}
+}
+
 /* auto-extracted page classes (settings.html) */
 .text-muted-x{color:var(--muted);}
 
@@ -686,10 +741,6 @@
   <a href="/dashboard" class="active">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     Dashboard
-  </a>
-  <a href="/dashboard#leaderboard" id="mobile-leaderboard-link">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
-    Leaderboard
   </a>
   <a href="/lab">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
