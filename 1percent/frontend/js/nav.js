@@ -14,7 +14,7 @@
 const Nav = {
   supabase: null,
   user: null,
-  role: 'student', // 'student' | 'mentor' | 'admin' — drives Mentor Hub / Admin links
+  role: 'student', // 'student' | 'mentor' | 'admin' | 'business' — drives Mentor Hub / Admin / Business links
   _notifications: [],
   _unreadCount: 0,
   _panelOpen: false,
@@ -43,6 +43,9 @@ const Nav = {
         console.warn('[NAV] Init error:', e.message);
       }
       await this._loadRole();
+      // Pages with only #nav-placeholder (business portal, project page) get
+      // the shared header built first so render() can fill its #main-nav.
+      this._renderInjectedHeader();
       this.render();
       this._renderMobileNav();
     })();
@@ -60,7 +63,7 @@ const Nav = {
       if (!res.ok) { this.role = 'student'; return; }
       const json = await res.json();
       const r = json.user?.role;
-      this.role = (r === 'mentor' || r === 'admin') ? r : 'student';
+      this.role = (r === 'mentor' || r === 'admin' || r === 'business') ? r : 'student';
     } catch {
       this.role = 'student';
     }
@@ -131,11 +134,16 @@ const Nav = {
     }
 
     const currentPath = this._currentPath();
-    const links = [
+    const links = [];
+    // Business accounts get their portal first — student pages are not theirs.
+    if (this.role === 'business') {
+      links.push({ href: '/business', label: 'Business' });
+    }
+    links.push(
       { href: '/dashboard', label: 'Dashboard' },
       { href: '/playground', label: 'Challenges' },
       { href: '/lab', label: 'Code Lab' }
-    ];
+    );
     if (this.role === 'mentor' || this.role === 'admin') {
       links.push({ href: '/mentors', label: 'Mentor Hub' });
     }
@@ -164,6 +172,54 @@ const Nav = {
       });
       nav.appendChild(loginBtn);
     }
+  },
+
+  /* ==========================================================
+     INJECTED HEADER — pages that only ship <div id="nav-placeholder">
+     (business portal, project page). Builds the shared 1percent
+     header plus an empty #main-nav, which render() fills right after.
+     No-op on pages that already have a real header.
+     ========================================================== */
+  _renderInjectedHeader() {
+    const placeholder = document.getElementById('nav-placeholder');
+    if (!placeholder || placeholder.childElementCount > 0) return;
+
+    const style = document.createElement('style');
+    style.id = 'nav-injected-header-styles';
+    style.textContent = `
+      .nav-injected-header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.94);backdrop-filter:blur(12px);border-bottom:1px solid #e5e7eb;}
+      .nav-injected-shell{max-width:1440px;margin:0 auto;padding:0 32px;height:68px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
+      .nav-injected-header nav{display:flex;align-items:center;gap:6px;}
+      .nav-injected-header nav a{color:#374151;text-decoration:none;font-size:14px;font-weight:600;padding:7px 12px;border-radius:8px;}
+      .nav-injected-header nav a:hover,.nav-injected-header nav a.active{color:#0d6e3f;background:#f0fdf4;}
+      @media(max-width:900px){.nav-injected-header{display:none;}}
+    `;
+    document.head.appendChild(style);
+
+    const header = document.createElement('header');
+    header.className = 'nav-injected-header';
+
+    const shell = document.createElement('div');
+    shell.className = 'nav-injected-shell';
+
+    const logo = document.createElement('a');
+    logo.href = this._url('/');
+    logo.style.cssText = 'display:flex;align-items:center;gap:10px;text-decoration:none;';
+    logo.innerHTML =
+      '<span style="width:36px;height:36px;border-radius:8px;background:#0d6e3f;color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-family:ui-monospace,SFMono-Regular,monospace;font-size:15px;">1%</span>' +
+      '<span style="display:flex;flex-direction:column;line-height:1.15;">' +
+      '<span style="font-weight:800;font-size:14px;color:#111827;">1percent Rwanda</span>' +
+      '<span style="font-size:11px;color:#6b7280;">Software · Training</span>' +
+      '</span>';
+
+    const nav = document.createElement('nav');
+    nav.id = 'main-nav';
+    nav.setAttribute('aria-label', 'Primary');
+
+    shell.appendChild(logo);
+    shell.appendChild(nav);
+    header.appendChild(shell);
+    placeholder.appendChild(header);
   },
 
   /* ==========================================================
@@ -475,11 +531,16 @@ const Nav = {
     nav.replaceChildren();
 
     const currentPath = this._currentPath();
-    const primary = [
+    const primary = [];
+    // Business accounts land on their portal, not the student dashboard.
+    if (this.role === 'business') {
+      primary.push({ href: '/business', label: 'Business', icon: '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>' });
+    }
+    primary.push(
       { href: '/dashboard', label: 'Dashboard', icon: '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>' },
       { href: '/playground', label: 'Challenges', icon: '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>' },
       { href: '/lab', label: 'Lab', icon: '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/><line x1="12" y1="2" x2="12" y2="22"/>' }
-    ];
+    );
 
     primary.forEach(item => {
       const a = document.createElement('a');
