@@ -132,14 +132,16 @@ router.post('/auth/signup', async (req, res) => {
 const businessAuth = [authenticate, async (req, res, next) => {
   const { data: profile } = await adminClient
     .from('profiles').select('role').eq('id', req.user.id).maybeSingle();
-  if (!profile || profile.role !== 'business') {
-    return res.status(403).json({ success: false, error: { code: 'FORBIDDEN', message: 'Business account required.' } });
+  if (!profile || !['business', 'admin'].includes(profile.role)) {
+    return res.status(403).json({ success: false, error: { code: 'FORBIDDEN', message: 'Business or admin account required.' } });
   }
   req.profile = profile;
+  req.isBusinessAdmin = profile.role === 'admin';
   next();
 }];
 
 router.get('/profile', ...businessAuth, async (req, res) => {
+  if (req.isBusinessAdmin) return res.json({ success: true, admin: true, company: null });
   const { data, error } = await adminClient
     .from('companies').select('*').eq('owner_id', req.user.id).maybeSingle();
   if (error || !data) {
@@ -149,6 +151,7 @@ router.get('/profile', ...businessAuth, async (req, res) => {
 });
 
 router.put('/profile', ...businessAuth, async (req, res) => {
+  if (req.isBusinessAdmin) return res.status(403).json({ success: false, error: { code: 'ADMIN_READ_ONLY', message: 'Use the admin project tools to manage companies.' } });
   try {
     const allowed = ['name', 'phone', 'website', 'industry', 'country', 'city', 'company_size', 'contact_person', 'contact_role'];
     const patch = {};
@@ -193,18 +196,18 @@ function toDeliverySafeProject(p, progress) {
 
 router.get('/projects', ...businessAuth, async (req, res) => {
   try {
-    const company = await getOwnCompany(req.user.id);
-    if (!company) return res.json({ success: true, projects: [] });
-    const { data, error } = await adminClient
-      .from('projects').select('*').eq('business_id', company.id)
-      .order('created_at', { ascending: false });
+    const company = req.isBusinessAdmin ? null : await getOwnCompany(req.user.id);
+    let query = adminClient.from('projects').select('*, companies(name, email, contact_person)').order('created_at', { ascending: false });
+    if (company) query = query.eq('business_id', company.id);
+    const { data, error } = await query;
+    if (!company && !req.isBusinessAdmin) return res.json({ success: true, projects: [] });
     if (error) throw error;
 
     const projects = [];
     for (const p of data || []) {
       const progress = await require('../services/projectService/progress')
         .recalculateProjectProgress(p.id).catch(() => null);
-      projects.push(toDeliverySafeProject(p, progress));
+      projects.push({ ...toDeliverySafeProject(p, progress), ...(req.isBusinessAdmin ? { company: p.companies || null } : {}) });
     }
     res.json({ success: true, projects });
   } catch (err) {
@@ -214,11 +217,12 @@ router.get('/projects', ...businessAuth, async (req, res) => {
 
 router.get('/projects/:id', ...businessAuth, async (req, res) => {
   try {
-    const company = await getOwnCompany(req.user.id);
-    if (!company) return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Project not found.' } });
+    const company = req.isBusinessAdmin ? null : await getOwnCompany(req.user.id);
+    if (!company && !req.isBusinessAdmin) return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Project not found.' } });
 
-    const { data: project } = await adminClient
-      .from('projects').select('*').eq('id', req.params.id).eq('business_id', company.id).maybeSingle();
+    let projectQuery = adminClient.from('projects').select('*, companies(name, email, contact_person)').eq('id', req.params.id);
+    if (company) projectQuery = projectQuery.eq('business_id', company.id);
+    const { data: project } = await projectQuery.maybeSingle();
     if (!project) return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Project not found.' } });
 
     const { adminClient: db } = require('../config/database');
@@ -234,6 +238,7 @@ router.get('/projects/:id', ...businessAuth, async (req, res) => {
       success: true,
       project: {
         ...toDeliverySafeProject(project, progress),
+        ...(req.isBusinessAdmin ? { company: project.companies || null } : {}),
         milestones: milestones.data || [],
         documents: docs.data || [],
         deployments: deployments.data || [],
@@ -248,6 +253,7 @@ router.get('/projects/:id', ...businessAuth, async (req, res) => {
 /* ── project request (Phase 12) ──────────────────────────────── */
 
 router.post('/projects/request', ...businessAuth, async (req, res) => {
+  if (req.isBusinessAdmin) return res.status(403).json({ success: false, error: { code: 'ADMIN_USE_PROJECTS', message: 'Admins should create or approve projects from the admin project tools.' } });
   try {
     const company = await getOwnCompany(req.user.id);
     if (!company) return res.status(400).json({ success: false, error: { code: 'NO_COMPANY', message: 'Create your company profile first.' } });
@@ -298,11 +304,13 @@ router.post('/projects/request', ...businessAuth, async (req, res) => {
 });
 
 router.get('/projects/requests', ...businessAuth, async (req, res) => {
-  const company = await getOwnCompany(req.user.id);
-  if (!company) return res.json({ success: true, requests: [] });
-  const { data, error } = await adminClient
-    .from('project_requests').select('*').eq('business_id', company.id)
-    .order('created_at', { ascending: false });
+  let query = adminClient.from('project_requests').select('*, companies(name, email, contact_person)').order('created_at', { ascending: false });
+  if (!req.isBusinessAdmin) {
+    const company = await getOwnCompany(req.user.id);
+    if (!company) return res.json({ success: true, requests: [] });
+    query = query.eq('business_id', company.id);
+  }
+  const { data, error } = await query;
   if (error) return res.status(500).json({ success: false, error: { code: 'LOAD_FAILED', message: 'Failed to load requests.' } });
   res.json({ success: true, requests: data || [] });
 });

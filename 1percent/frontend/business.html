@@ -30,6 +30,7 @@
 <div id="nav-placeholder"></div>
 
 <div class="biz-wrap">
+  <div id="biz-admin-banner" hidden class="opdev-card" style="margin-bottom:16px;background:#ecfdf5;border-color:#bbf7d0;color:#065f46">Admin business operations view — company data is read-only here.</div>
   <div id="biz-loading" class="opdev-loading">Loading your company portal…</div>
   <div id="biz-error" class="opdev-error" hidden></div>
 
@@ -40,8 +41,8 @@
         <div class="biz-sub" id="biz-meta"></div>
       </div>
       <div style="display:flex;gap:8px">
-        <a class="opdev-btn" href="/business/signup">Edit profile</a>
-        <a class="opdev-btn primary" style="display:inline-flex;align-items:center;text-decoration:none" href="/business/projects/request">Request a project →</a>
+        <a id="biz-edit-link" class="opdev-btn" href="/business/signup">Edit profile</a>
+        <a id="biz-request-link" class="opdev-btn primary" style="display:inline-flex;align-items:center;text-decoration:none" href="/business/projects/request">Request a project →</a>
       </div>
     </div>
 
@@ -94,16 +95,29 @@
       content.hidden = false;
 
       const c = profileRes.company;
-      document.title = `${c.name} — 1percent Business`;
-      document.getElementById('biz-name').textContent = c.name;
-      document.getElementById('biz-meta').textContent =
+      const isAdmin = !!profileRes.admin;
+      if (isAdmin) {
+        document.getElementById('biz-admin-banner').hidden = false;
+        document.getElementById('biz-edit-link').hidden = true;
+        document.getElementById('biz-request-link').hidden = true;
+        document.getElementById('biz-name').textContent = 'Business Operations';
+        document.title = 'Business Operations — 1percent';
+        document.getElementById('biz-meta').textContent = 'Admin view · all companies and projects';
+      } else {
+        document.title = `${c.name} — 1percent Business`;
+        document.getElementById('biz-name').textContent = c.name;
+      }
+      if (!isAdmin) document.getElementById('biz-meta').textContent =
         [c.industry, c.city, c.country, c.company_size].filter(Boolean).join(' · ');
-      document.getElementById('biz-profile').innerHTML = [
+      document.getElementById('biz-profile').innerHTML = isAdmin
+        ? '<div>Use the admin project tools for approvals, teams, requirements, milestones, repositories, and lifecycle changes.</div>'
+        : [
         c.website ? `<div>🌐 <a href="${esc(c.website)}" target="_blank" rel="noopener">${esc(c.website)}</a></div>` : '',
         c.email ? `<div>✉️ ${esc(c.email)}</div>` : '',
         c.phone ? `<div>📞 ${esc(c.phone)}</div>` : '',
         c.contact_person ? `<div>👤 ${esc(c.contact_person)}${c.contact_role ? `, ${esc(c.contact_role)}` : ''}</div>` : ''
       ].filter(Boolean).join('') || '<div class="opdev-empty">Complete your company profile.</div>';
+      if (isAdmin) document.getElementById('biz-profile').innerHTML = '<div>Use the admin project tools for approvals, teams, requirements, milestones, repositories, and lifecycle changes.</div>';
 
       // projects
       const projects = projectsRes.projects || [];
@@ -115,6 +129,7 @@
               <span class="opdev-status">${esc(STATUS_LABEL[p.status] || p.status)}</span>
             </div>
             <div class="meta">
+              ${p.company?.name ? `<span>Company: <strong>${esc(p.company.name)}</strong></span>` : ''}
               <span>Progress: <strong>${p.progress?.overall_percent ?? 0}%</strong></span>
               ${p.target_date ? `<span>Target: ${esc(p.target_date)}</span>` : ''}
             </div>
@@ -131,7 +146,7 @@
       document.getElementById('biz-requests').innerHTML = requests.length
         ? requests.map(r => `
           <div class="req-item" style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap">
-            <span><strong>${esc(r.name)}</strong> — ${esc((r.problem || '').slice(0, 80))}…</span>
+            <span><strong>${esc(r.name)}</strong>${r.companies?.name ? ` · ${esc(r.companies.name)}` : ''} — ${esc((r.problem || '').slice(0, 80))}…</span>
             <span class="opdev-status">${esc(r.status)}</span>
           </div>`).join('')
         : '<div class="opdev-empty">No project requests yet.</div>';
