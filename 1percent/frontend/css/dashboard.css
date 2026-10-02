@@ -436,8 +436,15 @@ html.theme-premium .dash-lb-move.up{color:#d97706;background:#fffbeb;border-colo
 
 
 /* Refined student learning dashboard */
-.dashboard-shell { padding-top: 28px; }
-.dash-layout { display:block; max-width:1120px; padding:0 24px; margin:0 auto; }
+/* padding-top must clear the fixed #header (68px + 1px border = 69px),
+   otherwise the greeting/stats render behind the nav. */
+.dashboard-shell { padding-top: 92px; }
+/* Base: single column up to 1100px (matches .dash-lb stacking below). */
+.dash-layout { display:grid; grid-template-columns:minmax(0,1fr); gap:40px; align-items:start; max-width:1120px; padding:0 24px; margin:0 auto; }
+/* Desktop: restore the right-hand leaderboard rail (1fr + 320px). */
+@media (min-width:1101px){
+  .dash-layout { grid-template-columns:minmax(0,1fr) 320px; max-width:1400px; }
+}
 .dash-main { min-width:0; }
 .dash-header { margin-bottom:22px; }
 .dash-greeting { letter-spacing:-.025em; }
@@ -467,7 +474,7 @@ html.theme-premium .dash-lb-move.up{color:#d97706;background:#fffbeb;border-colo
   .dash-courses { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
 @media (max-width:600px) {
-  .dashboard-shell { padding-top:18px; }
+  .dashboard-shell { padding-top:84px; }
   .dash-layout { padding:0 14px; }
   .dash-header { margin-bottom:16px; }
   .dash-stats { gap:8px; margin-bottom:22px; }
