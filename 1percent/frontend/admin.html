@@ -694,6 +694,34 @@ tr.log-fatal:hover td{background:#feeeee !important;}
       </div>
 
       <div class="card">
+        <div class="card-header">
+          <h2>All Projects</h2>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn-admin outline" onclick="pjToggleNew()">+ New Project</button>
+            <button class="btn-admin outline" onclick="loadProjectsPanel()">Refresh</button>
+          </div>
+        </div>
+
+        <div id="pj-new-form" hidden style="margin-bottom:16px;padding:16px;background:#f9fafb;border:1px solid var(--border);border-radius:10px;">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">
+            <div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:700;">Name *</label><input id="pj-n-name" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font:inherit;"></div>
+            <div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:700;">Status</label><select id="pj-n-status" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font:inherit;"><option>PLANNING</option><option selected>IN_DEVELOPMENT</option><option>TESTING</option><option>APPROVED</option></select></div>
+            <div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:700;">Priority</label><select id="pj-n-prio" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font:inherit;"><option>MEDIUM</option><option>HIGH</option><option>LOW</option><option>CRITICAL</option></select></div>
+            <div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:700;">Start date</label><input type="date" id="pj-n-start" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font:inherit;"></div>
+            <div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:700;">Target date</label><input type="date" id="pj-n-target" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font:inherit;"></div>
+          </div>
+          <div class="form-group" style="margin:10px 0 0;"><label style="font-size:11px;font-weight:700;">Description</label><textarea id="pj-n-desc" rows="2" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font:inherit;"></textarea></div>
+          <div style="margin-top:10px;"><button class="btn-admin primary" onclick="pjCreate()">Create project</button></div>
+        </div>
+
+        <table class="data-table">
+          <thead><tr><th>Project</th><th>Status</th><th>Priority</th><th>Target</th><th class="ta-right">Actions</th></tr></thead>
+          <tbody id="projects-list-tbody"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody>
+        </table>
+        <div id="pj-manage" hidden style="margin-top:14px;"></div>
+      </div>
+
+      <div class="card">
         <div class="card-header"><h2>Recent Project Activity</h2><button class="btn-admin outline" onclick="loadProjectsPanel()">Refresh</button></div>
         <table class="data-table">
           <thead><tr><th>When</th><th>Type</th><th>Actor</th><th>What</th></tr></thead>
@@ -2140,6 +2168,7 @@ async function loadProjectsPanel(){
     const acts = ovJson.recent_activity || [];
     const reqJson = await reqRes.json();
     const requests = reqJson.requests || [];
+    loadProjectsList();
 
     const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
     set('pjstat-businesses', ov.businesses ?? 0);
@@ -2208,6 +2237,267 @@ async function reviewProjectRequest(id, action){
     }
   }catch(e){ alert('Failed: '+e.message); }
 }
+
+/* ══════════════════════════════════════════════════════
+   PROJECT MANAGEMENT — list, create, update, and manage
+   teams / requirements / milestones / repositories.
+   ══════════════════════════════════════════════════════ */
+const PJ_STATUS=['REQUESTED','REVIEW','APPROVED','PLANNING','IN_DEVELOPMENT','TESTING','DEPLOYMENT','DELIVERED','ARCHIVED','BLOCKED'];
+const PJ_PRIORITY=['LOW','MEDIUM','HIGH','CRITICAL'];
+const PJ_REQ_STATUS=['TODO','IN_PROGRESS','IN_REVIEW','TESTING','DONE'];
+let pjUsersCache=null;
+let pjReposCache=null;
+
+function pjToggleNew(){
+  const f=document.getElementById('pj-new-form');
+  if(f)f.hidden=!f.hidden;
+}
+
+async function pjCreate(){
+  const name=(document.getElementById('pj-n-name')?.value||'').trim();
+  if(!name){ alert('Project name is required.'); return; }
+  try{
+    const res=await apiFetch('/api/admin/projects',{
+      method:'POST',body:JSON.stringify({
+        name,
+        description:(document.getElementById('pj-n-desc')?.value||'').trim(),
+        status:document.getElementById('pj-n-status')?.value,
+        priority:document.getElementById('pj-n-prio')?.value,
+        start_date:document.getElementById('pj-n-start')?.value||null,
+        target_date:document.getElementById('pj-n-target')?.value||null
+      })
+    });
+    const j=await res.json();
+    if(!j.success)throw new Error((j.error&&j.error.message)||'Failed');
+    document.getElementById('pj-new-form').hidden=true;
+    ['pj-n-name','pj-n-desc','pj-n-start','pj-n-target'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    loadProjectsPanel();
+  }catch(e){ alert('Failed: '+e.message); }
+}
+
+async function loadProjectsList(){
+  const tb=document.getElementById('projects-list-tbody');
+  if(!tb)return;
+  try{
+    const res=await apiFetch('/api/projects?limit=100');
+    const j=await res.json();
+    const projects=j.projects||[];
+    if(!projects.length){
+      tb.innerHTML='<tr><td colspan="5" class="empty">No projects yet — create one with “+ New Project” or approve a business request.</td></tr>';
+      return;
+    }
+    tb.innerHTML=projects.map(p=>`<tr>
+      <td><strong>${pjEsc(p.name||'')}</strong><br><span style="color:#6b7280;font-size:12px;">${pjEsc((p.description||'').slice(0,110))}${(p.description||'').length>110?'…':''}</span></td>
+      <td><select onchange="pjUpdate('${p.id}',{status:this.value})" style="padding:5px 7px;border:1px solid var(--border);border-radius:7px;font:inherit;font-size:12px;">
+        ${PJ_STATUS.map(s=>`<option value="${s}"${p.status===s?' selected':''}>${s.replace(/_/g,' ')}</option>`).join('')}
+      </select></td>
+      <td><select onchange="pjUpdate('${p.id}',{priority:this.value})" style="padding:5px 7px;border:1px solid var(--border);border-radius:7px;font:inherit;font-size:12px;">
+        ${PJ_PRIORITY.map(s=>`<option value="${s}"${p.priority===s?' selected':''}>${s}</option>`).join('')}
+      </select></td>
+      <td>${p.target_date?esc(p.target_date):'—'}</td>
+      <td class="ta-right"><button class="btn-admin outline" onclick="pjManage('${p.id}')">Manage</button></td>
+    </tr>`).join('');
+  }catch(e){
+    tb.innerHTML='<tr><td colspan="5" class="empty">Failed to load projects — '+pjEsc(e.message)+'</td></tr>';
+  }
+}
+
+async function pjUpdate(id, patch){
+  try{
+    const res=await apiFetch('/api/admin/projects/'+id,{method:'PUT',body:JSON.stringify(patch)});
+    const j=await res.json();
+    if(!j.success)throw new Error((j.error&&j.error.message)||'Failed');
+    loadProjectsList();
+  }catch(e){ alert('Failed: '+e.message); }
+}
+
+async function pjLoadUsers(){
+  if(pjUsersCache)return pjUsersCache;
+  try{
+    const res=await apiFetch('/api/admin/users');
+    const j=await res.json();
+    pjUsersCache=(j.users||[]).filter(u=>u.role!=='admin');
+  }catch{ pjUsersCache=[]; }
+  return pjUsersCache;
+}
+
+async function pjManage(projectId){
+  const box=document.getElementById('pj-manage');
+  if(!box)return;
+  box.hidden=false;
+  box.innerHTML='<div class="empty">Loading project…</div>';
+  try{
+    const res=await apiFetch('/api/admin/projects/'+projectId);
+    const j=await res.json();
+    if(!j.success)throw new Error((j.error&&j.error.message)||'Failed');
+    const p=j.project||{};
+    const teams=j.teams||[], members=j.members||[], reqs=j.requirements||[], ms=j.milestones||[], repos=j.repositories||[];
+    const users=await pjLoadUsers();
+    const userOpts='<option value="">Pick a user…</option>'+users.map(u=>`<option value="${u.id}">${pjEsc(u.full_name||u.email||u.id)} (${pjEsc(u.role)})</option>`).join('');
+
+    box.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+        <strong style="font-size:15px;">Managing: ${pjEsc(p.name||'')}</strong>
+        <button class="btn-admin outline" onclick="document.getElementById('pj-manage').hidden=true">Close</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;">
+
+        <div style="border:1px solid var(--border);border-radius:10px;padding:14px;">
+          <strong style="font-size:13px;">Teams &amp; Members</strong>
+          <div style="display:flex;gap:6px;margin:10px 0;">
+            <input id="pj-team-name" placeholder="New team name" style="flex:1;padding:7px 9px;border:1px solid var(--border);border-radius:7px;font:inherit;font-size:12px;">
+            <button class="btn-admin outline" onclick="pjAddTeam('${projectId}')">Add team</button>
+          </div>
+          ${teams.length?teams.map(t=>{
+            const tMembers=members.filter(m=>m.team_id===t.id);
+            return `<div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);">
+              <strong style="font-size:12.5px;">${pjEsc(t.name)}</strong>
+              <div style="font-size:12px;color:#6b7280;margin:4px 0;">${tMembers.length?tMembers.map(m=>pjEsc((m.profiles&&m.profiles.full_name)||m.user_id||'Member')+` <span style="color:#9ca3af;">(${pjEsc(m.role||'developer')})</span>`).join(' · '):'No members yet'}</div>
+              <div style="display:flex;gap:6px;margin-top:6px;">
+                <select id="pj-member-${t.id}" style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:7px;font:inherit;font-size:12px;">${userOpts}</select>
+                <button class="btn-admin outline" onclick="pjAddMember('${t.id}')">Add</button>
+              </div>
+            </div>`;
+          }).join(''):'<div class="empty" style="margin-top:8px;">No teams yet — create the first one.</div>'}
+        </div>
+
+        <div style="border:1px solid var(--border);border-radius:10px;padding:14px;">
+          <strong style="font-size:13px;">Requirements <span style="color:#9ca3af;font-weight:400;">(weights drive progress)</span></strong>
+          <div style="display:flex;gap:6px;margin:10px 0;">
+            <input id="pj-req-name" placeholder="Requirement name" style="flex:1;padding:7px 9px;border:1px solid var(--border);border-radius:7px;font:inherit;font-size:12px;">
+            <input id="pj-req-weight" type="number" min="1" max="100" value="10" style="width:64px;padding:7px;border:1px solid var(--border);border-radius:7px;font:inherit;font-size:12px;">
+            <button class="btn-admin outline" onclick="pjAddReq('${projectId}')">Add</button>
+          </div>
+          ${reqs.length?reqs.map(r=>`<div style="display:flex;gap:8px;align-items:center;justify-content:space-between;padding:6px 0;border-top:1px dashed var(--border);font-size:12.5px;">
+            <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${pjEsc(r.name)} <span style="color:#9ca3af;">${r.weight}%</span></span>
+            <select onchange="pjSetReqStatus('${r.id}',this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:6px;font:inherit;font-size:11px;">
+              ${PJ_REQ_STATUS.map(s=>`<option value="${s}"${r.status===s?' selected':''}>${s.replace(/_/g,' ')}</option>`).join('')}
+            </select>
+          </div>`).join(''):'<div class="empty" style="margin-top:8px;">No requirements yet.</div>'}
+        </div>
+
+        <div style="border:1px solid var(--border);border-radius:10px;padding:14px;">
+          <strong style="font-size:13px;">Milestones</strong>
+          <div style="display:flex;gap:6px;margin:10px 0;">
+            <input id="pj-ms-name" placeholder="Milestone name" style="flex:1;padding:7px 9px;border:1px solid var(--border);border-radius:7px;font:inherit;font-size:12px;">
+            <input id="pj-ms-due" type="date" style="padding:7px;border:1px solid var(--border);border-radius:7px;font:inherit;font-size:12px;">
+            <button class="btn-admin outline" onclick="pjAddMilestone('${projectId}')">Add</button>
+          </div>
+          ${ms.length?ms.map(m=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px dashed var(--border);font-size:12.5px;">
+            <span>${pjEsc(m.name)}${m.due_date?` <span style="color:#9ca3af;">· ${pjEsc(m.due_date)}</span>`:''}</span>
+            <span style="font-weight:700;color:${m.status==='DONE'?'#059669':'#6b7280'};">${pjEsc(m.status||'TODO').replace(/_/g,' ')}</span>
+          </div>`).join(''):'<div class="empty" style="margin-top:8px;">No milestones yet.</div>'}
+        </div>
+
+        <div style="border:1px solid var(--border);border-radius:10px;padding:14px;">
+          <strong style="font-size:13px;">Repository (GitHub)</strong>
+          <div style="font-size:12px;color:#6b7280;margin-top:6px;">${repos.length?repos.map(r=>`<a href="${pjEsc(r.url||'#')}" target="_blank" rel="noopener" style="color:#0d6e3f;font-weight:700;">${pjEsc(r.full_name||'repo')} ↗</a>`).join(' · '):'Not connected yet.'}</div>
+          <div style="display:flex;gap:6px;margin-top:10px;">
+            <select id="pj-repo-pick" style="flex:1;padding:7px 8px;border:1px solid var(--border);border-radius:7px;font:inherit;font-size:12px;"><option value="">Loading repositories…</option></select>
+            <button class="btn-admin outline" onclick="pjConnectRepo('${projectId}')">Connect</button>
+          </div>
+          <div style="font-size:11px;color:#9ca3af;margin-top:6px;">Only repositories on the installed GitHub App can be connected.</div>
+        </div>
+
+      </div>`;
+    pjFillRepos();
+  }catch(e){
+    box.innerHTML='<div class="empty">Failed to load project — '+pjEsc(e.message)+'</div>';
+  }
+}
+
+async function pjFillRepos(){
+  const sel=document.getElementById('pj-repo-pick');
+  if(!sel)return;
+  if(!pjReposCache){
+    try{
+      const res=await apiFetch('/api/github/repositories');
+      const j=await res.json();
+      const list=Array.isArray(j.repositories)?j.repositories:(j.repositories?.repositories||[]);
+      pjReposCache=list;
+    }catch{ pjReposCache=[]; }
+  }
+  if(!pjReposCache.length){ sel.innerHTML='<option value="">No repositories on the GitHub App</option>'; return; }
+  sel.innerHTML='<option value="">Pick a repository…</option>'+
+    pjReposCache.map(r=>`<option value="${r.id}">${pjEsc(r.full_name||r.name||r.id)}</option>`).join('');
+}
+
+async function pjAddTeam(projectId){
+  const name=(document.getElementById('pj-team-name')?.value||'').trim();
+  if(!name){ alert('Team name is required.'); return; }
+  try{
+    const res=await apiFetch(`/api/admin/projects/${projectId}/teams`,{method:'POST',body:JSON.stringify({name})});
+    const j=await res.json();
+    if(!j.success)throw new Error((j.error&&j.error.message)||'Failed');
+    pjManage(projectId);
+  }catch(e){ alert('Failed: '+e.message); }
+}
+
+async function pjAddMember(teamId){
+  const sel=document.getElementById('pj-member-'+teamId);
+  const userId=sel?.value;
+  if(!userId){ alert('Pick a user first.'); return; }
+  try{
+    const res=await apiFetch(`/api/admin/projects/teams/${teamId}/members`,{method:'POST',body:JSON.stringify({user_id:userId,role:'developer'})});
+    const j=await res.json();
+    if(!j.success)throw new Error((j.error&&j.error.message)||'Failed');
+    const box=document.getElementById('pj-manage');
+    const m=box?.querySelector('strong');
+    pjRefreshCurrentManage();
+  }catch(e){ alert('Failed: '+e.message); }
+}
+
+async function pjAddReq(projectId){
+  const name=(document.getElementById('pj-req-name')?.value||'').trim();
+  const weight=Number(document.getElementById('pj-req-weight')?.value||10);
+  if(!name){ alert('Requirement name is required.'); return; }
+  try{
+    const res=await apiFetch(`/api/admin/projects/${projectId}/requirements`,{method:'POST',body:JSON.stringify({name,weight})});
+    const j=await res.json();
+    if(!j.success)throw new Error((j.error&&j.error.message)||'Failed');
+    pjRefreshCurrentManage();
+  }catch(e){ alert('Failed: '+e.message); }
+}
+
+async function pjSetReqStatus(reqId, status){
+  try{
+    const res=await apiFetch('/api/admin/projects/requirements/'+reqId,{method:'PUT',body:JSON.stringify({status})});
+    const j=await res.json();
+    if(!j.success)throw new Error((j.error&&j.error.message)||'Failed');
+  }catch(e){ alert('Failed: '+e.message); }
+}
+
+async function pjAddMilestone(projectId){
+  const name=(document.getElementById('pj-ms-name')?.value||'').trim();
+  const due=document.getElementById('pj-ms-due')?.value||undefined;
+  if(!name){ alert('Milestone name is required.'); return; }
+  try{
+    const res=await apiFetch(`/api/admin/projects/${projectId}/milestones`,{method:'POST',body:JSON.stringify({name,due_date:due})});
+    const j=await res.json();
+    if(!j.success)throw new Error((j.error&&j.error.message)||'Failed');
+    pjRefreshCurrentManage();
+  }catch(e){ alert('Failed: '+e.message); }
+}
+
+async function pjConnectRepo(projectId){
+  const sel=document.getElementById('pj-repo-pick');
+  const repoId=sel?.value;
+  if(!repoId){ alert('Pick a repository first.'); return; }
+  try{
+    const res=await apiFetch(`/api/admin/projects/${projectId}/repositories`,{method:'POST',body:JSON.stringify({github_repo_id:Number(repoId)})});
+    const j=await res.json();
+    if(!j.success)throw new Error((j.error&&j.error.message)||'Failed');
+    alert('Repository connected ✓');
+    pjRefreshCurrentManage();
+    loadProjectsPanel();
+  }catch(e){ alert('Failed: '+e.message); }
+}
+
+// Re-open the manage box for the currently managed project (after a change).
+let pjCurrentManage=null;
+const _pjManage=pjManage;
+pjManage=async function(id){ pjCurrentManage=id; return _pjManage(id); };
+function pjRefreshCurrentManage(){ if(pjCurrentManage) _pjManage(pjCurrentManage); }
 
 async function loadBlockedIps(){
   const tbody=document.getElementById('blocks-tbody');

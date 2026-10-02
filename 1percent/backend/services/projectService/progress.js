@@ -70,6 +70,7 @@ function computeProjectProgress(requirements, tasks, dims = {}) {
     requirementProgress.push({
       requirement_id: r.id,
       name: r.name,
+      status: r.status || 'TODO',
       weight,
       completion_percent: Math.round(completion * 100),
       contribution_percent: Math.round(contribution * 10) / 10

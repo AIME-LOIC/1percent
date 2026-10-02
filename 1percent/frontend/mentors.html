@@ -225,6 +225,22 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--bg);co
       </table>
     </div>
   </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2>Project Hub</h2>
+      <div class="card-tools">
+        <select id="ph-project" onchange="phOpen()"><option value="">Select a project…</option></select>
+        <button class="btn btn-outline" onclick="phLoad()">Refresh</button>
+      </div>
+    </div>
+    <div id="ph-body"><div class="empty">Select a project to review tasks, requirements and milestones.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h2>Assigned Students</h2><button class="btn btn-outline" onclick="phStudents()">Refresh</button></div>
+    <div id="ph-students"><div class="empty">Loading…</div></div>
+  </div>
 </main>
 
 <div class="denied" id="denied" hidden>
@@ -284,6 +300,8 @@ async function init(){
       mc.hidden = false;          // remove the hidden ATTRIBUTE (style.display='' alone never unhid the page)
       mc.style.display = '';
       await Promise.all([loadLearners(),loadShares()]);
+      phLoad();                   // project system (mentor hub additions)
+      phStudents();
     }else{denied();}
   }catch(e){console.error('[MENTORS] init error:',e);denied();}
 }
@@ -521,6 +539,237 @@ async function loadShares(){
 
 async function markRead(id){
   try{await apiFetch(`/api/mentor/shares/${id}/read`,{method:'POST'});loadShares();}catch{}
+}
+
+/* ══════════════════════════════════════════════════════
+   PROJECT HUB — mentor project actions (tasks, reviews,
+   requirements, milestones, students). Phase: project system.
+   ══════════════════════════════════════════════════════ */
+let phProjects=[];
+
+const PH_REQ_STATUS=['TODO','IN_PROGRESS','IN_REVIEW','TESTING','DONE'];
+const PH_TASK_STATUS={TODO:'To do',IN_PROGRESS:'In progress',BLOCKED:'Blocked',IN_REVIEW:'In review',TESTING:'Testing',DONE:'Done'};
+const PH_PRIORITY={LOW:'Low',MEDIUM:'Medium',HIGH:'High',CRITICAL:'Critical'};
+const PH_MILESTONE_STATUS={TODO:'To do',IN_PROGRESS:'In progress',DONE:'Done'};
+
+async function phLoad(){
+  try{
+    const res=await apiFetch('/api/mentor/projects-hub/projects');
+    const j=await res.json();
+    if(!j.success)throw new Error((j.error&&j.error.message)||'Failed to load projects');
+    phProjects=j.projects||[];
+    const sel=document.getElementById('ph-project');
+    const keep=sel.value;
+    sel.innerHTML='<option value="">Select a project…</option>'+
+      phProjects.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');
+    if(keep&&phProjects.some(p=>p.id===keep)) sel.value=keep;
+    else if(phProjects.length===1){ sel.value=phProjects[0].id; phOpen(); }
+  }catch(e){
+    const b=document.getElementById('ph-body');
+    if(b)b.innerHTML=`<div class="empty">Could not load your projects — ${esc(e.message)}</div>`;
+  }
+}
+
+async function phOpen(){
+  const id=document.getElementById('ph-project').value;
+  const body=document.getElementById('ph-body');
+  if(!id){ body.innerHTML='<div class="empty">Select a project to review tasks, requirements and milestones.</div>'; return; }
+  body.innerHTML='<div class="empty">Loading…</div>';
+  try{
+    const res=await apiFetch('/api/mentor/projects-hub/projects/'+id);
+    const j=await res.json();
+    if(!j.success)throw new Error((j.error&&j.error.message)||'Failed to load project');
+    phRender(j);
+  }catch(e){ body.innerHTML=`<div class="empty">${esc(e.message)}</div>`; }
+}
+
+function phRender(j){
+  const body=document.getElementById('ph-body');
+  const p=j.project||{};
+  const dist=j.task_distribution||{};
+  const overall=Math.round(j.progress?.overall_percent ?? 0);
+  const STATUS_LABEL={REQUESTED:'Requested',REVIEW:'In review',APPROVED:'Approved',PLANNING:'Planning',IN_DEVELOPMENT:'In development',TESTING:'Testing',DEPLOYMENT:'Deployment',DELIVERED:'Delivered',ARCHIVED:'Archived',BLOCKED:'Blocked'};
+
+  const distChips=Object.entries(dist).map(([k,v])=>
+    `<span style="display:inline-block;padding:3px 10px;border-radius:100px;background:#f1f5f9;color:#475569;font-size:11px;font-weight:700;margin-right:6px;">${PH_TASK_STATUS[k]||k}: ${v}</span>`).join('');
+
+  const team=(j.team||[]).map(m=>{
+    const pr=m.profiles||{};
+    return {id:m.user_id,name:pr.full_name||pr.email||'Member',role:m.role||'developer'};
+  });
+
+  const assigneeOptions=team.map(t=>`<option value="${esc(t.id)}">${esc(t.name)}</option>`).join('');
+
+  const milestones=(j.milestones||[]);
+  const requirements=(j.progress?.requirement_progress)||[];
+  const tasks=j.tasks||[];
+  const prs=j.open_pull_requests||[];
+
+  body.innerHTML=`
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
+      <strong style="font-size:15px;">${esc(p.name||'')}</strong>
+      <span style="padding:3px 10px;border-radius:100px;background:#eef2ff;color:#4338ca;font-size:11px;font-weight:700;">${esc(STATUS_LABEL[p.status]||p.status||'')}</span>
+      <span style="font-size:12px;color:#6b7280;">Overall: <strong style="color:#0d6e3f;">${overall}%</strong></span>
+      <span style="font-size:12px;color:#6b7280;">Team: ${team.length}</span>
+    </div>
+    <div style="margin-bottom:16px;">${distChips}</div>
+
+    <h3 style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin:18px 0 8px;">Tasks (${tasks.length})</h3>
+    <div class="overflow-x">
+    <table class="data-table">
+      <thead><tr><th>Task</th><th>Assignee</th><th>Priority</th><th>Status</th><th class="ta-right">Review</th></tr></thead>
+      <tbody>
+        ${tasks.length?tasks.map(t=>{
+          const who=team.find(x=>x.id===t.assignee_id);
+          const reviewable=['IN_REVIEW','TESTING'].includes(t.status);
+          const actions=[];
+          if(reviewable){
+            actions.push(`<button class="btn btn-outline" style="border-color:#059669;color:#059669;" onclick="phReview('${t.id}','approve')">✓ Approve</button>`);
+            actions.push(`<button class="btn btn-outline" onclick="phReview('${t.id}','request_changes')">Request changes</button>`);
+          }
+          if(t.status!=='BLOCKED'&&t.status!=='DONE')actions.push(`<button class="btn btn-outline" style="border-color:#dc2626;color:#dc2626;" onclick="phReview('${t.id}','block')">Block</button>`);
+          if(t.status==='BLOCKED')actions.push(`<span style="color:#dc2626;font-size:11px;font-weight:700;">Blocked</span>`);
+          if(!actions.length)actions.push('<span style="color:#9ca3af;font-size:11px;">—</span>');
+          return `<tr>
+            <td><strong>${esc(t.title)}</strong>${t.due_date?`<br><span style="color:#9ca3af;font-size:11px;">due ${esc(t.due_date)}</span>`:''}</td>
+            <td>${esc(who?who.name:'—')}</td>
+            <td>${esc(PH_PRIORITY[t.priority]||t.priority||'—')}</td>
+            <td>${esc(PH_TASK_STATUS[t.status]||t.status)}</td>
+            <td class="ta-right" style="white-space:nowrap;">${actions.join(' ')}</td>
+          </tr>`;
+        }).join(''):'<tr><td colspan="5" class="empty">No tasks yet — assign the first one below.</td></tr>'}
+      </tbody>
+    </table>
+    </div>
+
+    <details style="margin-top:12px;">
+      <summary style="cursor:pointer;font-size:13px;font-weight:700;color:#0d6e3f;">+ Assign a new task</summary>
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:8px;margin-top:10px;align-items:end;flex-wrap:wrap;">
+        <div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:700;">Title *</label><input id="ph-t-title" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font:inherit;"></div>
+        <div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:700;">Priority</label><select id="ph-t-prio" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font:inherit;"><option>MEDIUM</option><option>HIGH</option><option>LOW</option><option>CRITICAL</option></select></div>
+        <div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:700;">Assignee</label><select id="ph-t-assignee" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font:inherit;"><option value="">Unassigned</option>${assigneeOptions}</select></div>
+        <div class="form-group" style="margin:0;"><label style="font-size:11px;font-weight:700;">Due date</label><input type="date" id="ph-t-due" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font:inherit;"></div>
+        <button class="btn btn-outline" onclick="phNewTask('${esc(p.id)}')" style="height:38px;">Assign</button>
+      </div>
+    </details>
+
+    <h3 style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin:20px 0 8px;">Requirements (${requirements.length})</h3>
+    ${requirements.length?`<div class="overflow-x"><table class="data-table">
+      <thead><tr><th>Requirement</th><th>Weight</th><th>Completion</th><th>Status</th></tr></thead>
+      <tbody>${requirements.map(r=>`<tr>
+        <td><strong>${esc(r.name)}</strong></td>
+        <td>${r.weight}%</td>
+        <td>${r.completion_percent}%</td>
+        <td><select onchange="phReqStatus('${esc(r.requirement_id)}',this.value)" style="padding:6px 8px;border:1px solid var(--border);border-radius:8px;font:inherit;font-size:12px;">
+          ${PH_REQ_STATUS.map(s=>`<option value="${s}"${(r.status||'TODO')===s?' selected':''}>${PH_TASK_STATUS[s]}</option>`).join('')}
+        </select></td>
+      </tr>`).join('')}</tbody></table></div>`:'<div class="empty">No requirements yet — an admin defines them when setting up the project.</div>'}
+
+    <h3 style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin:20px 0 8px;">Milestones (${milestones.length})</h3>
+    ${milestones.length?`<div class="overflow-x"><table class="data-table">
+      <thead><tr><th>Milestone</th><th>Due</th><th>Status</th><th class="ta-right">Action</th></tr></thead>
+      <tbody>${milestones.map(m=>`<tr>
+        <td><strong>${esc(m.name)}</strong></td>
+        <td>${esc(m.due_date||'—')}</td>
+        <td>${esc(PH_MILESTONE_STATUS[m.status]||m.status||'—')}</td>
+        <td class="ta-right">${m.status==='DONE'?'<span style="color:#059669;font-size:12px;font-weight:700;">✓ Complete</span>':`<button class="btn btn-outline" style="border-color:#059669;color:#059669;" onclick="phCompleteMilestone('${esc(m.id)}')">Mark complete</button>`}</td>
+      </tr>`).join('')}</tbody></table></div>`:'<div class="empty">No milestones yet.</div>'}
+
+    <h3 style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin:20px 0 8px;">Open Pull Requests (${prs.length})</h3>
+    ${prs.length?`<div class="overflow-x"><table class="data-table">
+      <thead><tr><th>PR</th><th>Author</th><th>Updated</th><th class="ta-right">Link</th></tr></thead>
+      <tbody>${prs.map(pr=>`<tr>
+        <td><strong>${esc(pr.title||('PR #'+(pr.number||'')))}</strong></td>
+        <td>${esc(pr.author_login||pr.head_ref||'—')}</td>
+        <td>${pr.updated_at?timeAgo(pr.updated_at):'—'}</td>
+        <td class="ta-right">${pr.html_url?`<a href="${esc(pr.html_url)}" target="_blank" rel="noopener" style="color:#0d6e3f;font-weight:700;font-size:12px;">Open ↗</a>`:'—'}</td>
+      </tr>`).join('')}</tbody></table></div>`:'<div class="empty">No open pull requests.</div>'}
+  `;
+}
+
+async function phReview(taskId, action){
+  let comment='';
+  if(action==='request_changes'){
+    const v=prompt('Feedback for the student (what should they change?):');
+    if(v===null)return;
+    comment=v.trim()||'Please revise your work.';
+  } else if(action==='block'){
+    const v=prompt('Why is this task blocked?');
+    if(v===null)return;
+    comment=v.trim()||'Blocked by mentor.';
+  } else if(action==='approve' && !confirm('Approve this task? It moves to Done.')) return;
+
+  try{
+    const res=await apiFetch(`/api/mentor/projects-hub/tasks/${taskId}/review`,{
+      method:'POST',body:JSON.stringify({action,comment})
+    });
+    const j=await res.json();
+    if(!j.success)throw new Error((j.error&&j.error.message)||'Review failed');
+    toast(action==='approve'?'Task approved 🎉':action==='block'?'Task blocked':'Changes requested');
+    phOpen();
+  }catch(e){ toast(e.message,'error'); }
+}
+
+async function phNewTask(projectId){
+  const title=(document.getElementById('ph-t-title')?.value||'').trim();
+  if(!title){ toast('Task title is required','error'); return; }
+  try{
+    const res=await apiFetch(`/api/mentor/projects-hub/projects/${projectId}/tasks`,{
+      method:'POST',body:JSON.stringify({
+        title,
+        priority:document.getElementById('ph-t-prio')?.value||'MEDIUM',
+        assignee_id:document.getElementById('ph-t-assignee')?.value||undefined,
+        due_date:document.getElementById('ph-t-due')?.value||undefined
+      })
+    });
+    const j=await res.json();
+    if(!j.success)throw new Error((j.error&&j.error.message)||'Failed to create task');
+    toast('Task assigned ✓');
+    phOpen();
+  }catch(e){ toast(e.message,'error'); }
+}
+
+async function phReqStatus(reqId, status){
+  try{
+    const res=await apiFetch(`/api/mentor/projects-hub/requirements/${reqId}/status`,{
+      method:'POST',body:JSON.stringify({status})
+    });
+    const j=await res.json();
+    if(!j.success)throw new Error((j.error&&j.error.message)||'Failed to update requirement');
+    toast('Requirement status updated ✓');
+    phOpen();
+  }catch(e){ toast(e.message,'error'); }
+}
+
+async function phCompleteMilestone(id){
+  if(!confirm('Mark this milestone complete?'))return;
+  try{
+    const res=await apiFetch(`/api/mentor/projects-hub/milestones/${id}/complete`,{method:'POST',body:'{}'});
+    const j=await res.json();
+    if(!j.success)throw new Error((j.error&&j.error.message)||'Failed to complete milestone');
+    toast('Milestone completed 🎉');
+    phOpen();
+  }catch(e){ toast(e.message,'error'); }
+}
+
+async function phStudents(){
+  const el=document.getElementById('ph-students');
+  if(!el)return;
+  try{
+    const res=await apiFetch('/api/mentor/projects-hub/students');
+    const j=await res.json();
+    if(!j.success)throw new Error((j.error&&j.error.message)||'Failed');
+    const list=j.students||[];
+    if(!list.length){ el.innerHTML='<div class="empty">No students assigned to you yet — ask an admin to assign learners to you.</div>'; return; }
+    el.innerHTML=`<div class="overflow-x"><table class="data-table">
+      <thead><tr><th>Student</th><th class="ta-center">Open tasks</th><th class="ta-center">Blocked</th><th class="ta-center">Activity (14d)</th></tr></thead>
+      <tbody>${list.map(s=>`<tr>
+        <td><strong>${esc(s.full_name||s.email||'Student')}</strong><br><span style="color:#9ca3af;font-size:12px;">${esc(s.email||'')}</span></td>
+        <td class="ta-center">${s.open_tasks??0}</td>
+        <td class="ta-center">${(s.blocked_tasks??0)>0?`<span style="color:#dc2626;font-weight:700;">${s.blocked_tasks}</span>`:'0'}</td>
+        <td class="ta-center">${s.activity_14d_total??0}</td>
+      </tr>`).join('')}</tbody></table></div>`;
+  }catch(e){ el.innerHTML=`<div class="empty">Could not load students — ${esc(e.message)}</div>`; }
 }
 
 document.addEventListener('DOMContentLoaded',init);

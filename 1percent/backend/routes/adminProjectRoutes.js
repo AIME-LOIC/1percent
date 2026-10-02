@@ -165,6 +165,45 @@ router.post('/requests/:id/review', async (req, res) => {
   } catch (err) { fail(res, err, 'Failed to review request'); }
 });
 
+/* ── project detail for management (teams, requirements, milestones, repos) ── */
+
+router.get('/:id', async (req, res) => {
+  try {
+    const { data: project, error } = await adminClient
+      .from('projects').select('*').eq('id', req.params.id).maybeSingle();
+    if (!project) {
+      return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Project not found.' } });
+    }
+
+    const [{ data: teams }, { data: requirements }, { data: milestones }, { data: connections }] = await Promise.all([
+      adminClient.from('teams').select('id, name, description').eq('project_id', project.id).order('created_at'),
+      adminClient.from('project_requirements').select('id, name, weight, status, priority, milestone_id').eq('project_id', project.id).order('created_at'),
+      adminClient.from('project_milestones').select('id, name, status, due_date, sort_order').eq('project_id', project.id).order('sort_order'),
+      adminClient.from('project_repositories').select('repository_id, repositories(id, full_name, github_repo_id, url)').eq('project_id', project.id)
+    ]);
+
+    const teamIds = (teams || []).map(t => t.id);
+    let members = [];
+    if (teamIds.length) {
+      const { data } = await adminClient
+        .from('team_members')
+        .select('id, team_id, user_id, role, profiles!team_members_user_id_fkey(id, full_name, email)')
+        .in('team_id', teamIds);
+      members = data || [];
+    }
+
+    res.json({
+      success: true,
+      project,
+      teams: teams || [],
+      members,
+      requirements: requirements || [],
+      milestones: milestones || [],
+      repositories: (connections || []).map(c => c.repositories).filter(Boolean)
+    });
+  } catch (err) { fail(res, err, 'Failed to load project'); }
+});
+
 /* ── project CRUD ────────────────────────────────────────────── */
 
 router.post('/', async (req, res) => {
