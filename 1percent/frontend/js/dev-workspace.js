@@ -170,7 +170,6 @@
   function renderHero(root, ws) {
     const p = ws.current_project;
     const prof = ws.profile || {};
-    const tasks = ws.tasks || [];
     const pic = prof.avatar_url
       ? `<img src="${esc(prof.avatar_url)}" alt="">`
       : esc(initialsOf(prof.full_name || prof.email));
@@ -185,7 +184,7 @@
               <svg width="15" height="15" viewBox="0 0 24 24" fill="#10b981" stroke="#fff" stroke-width="1.5" aria-label="Verified"><path d="M12 2l2.4 2.4 3.4-.5 1 3.3 3 1.6-1.5 3.2 1.5 3.2-3 1.6-1 3.3-3.4-.5L12 22l-2.4-2.4-3.4.5-1-3.3-3-1.6L3.7 12 2.2 8.8l3-1.6 1-3.3 3.4.5z"/><path d="M9 12l2 2 4-4" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </div>
             <div class="role-row">
-              Software Developer <span class="dot-sep">•</span> ${esc(p?.my_role ? String(p.my_role).replace(/_/g, ' ') : 'Developer')}
+              Software Developer${prof.grade ? ` <span class="dot-sep">•</span> ${esc(prof.grade)}` : ''} <span class="dot-sep">•</span> ${esc(p?.my_role ? String(p.my_role).replace(/_/g, ' ') : 'Developer')}
             </div>
             <div class="team-row">${ws.team?.length ? `Team: <b>${esc(teamName(ws))}</b>` : ''}</div>
             ${p ? `<div class="team-row">Project: <b>${esc(p.name)}</b></div>` : ''}
@@ -215,6 +214,7 @@
       const overall = p.progress?.overall_percent ?? 0;
       const milestone = p.milestones?.find(m => m.status !== 'DONE') || p.milestones?.[0];
       const due = p.target_date || milestone?.due_date;
+      const repoUrl = p.repositories?.[0]?.repositories?.url || ws.repository?.url || '';
       projectCard = `
         <section class="dv2-card" aria-label="Current project">
           <div class="dv2-projectcard-head">
@@ -226,7 +226,7 @@
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
             </div>
             <div style="min-width:0">
-              <div class="name">${esc(p.name)}</div>
+              <div class="name">${esc(p.name)}${repoUrl ? ` <a href="${esc(repoUrl)}" target="_blank" rel="noopener" title="Open repository" style="color:var(--dv2-muted)"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55v-2.15c-3.2.7-3.87-1.36-3.87-1.36-.52-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.75 2.69 1.25 3.34.95.1-.74.4-1.25.72-1.54-2.55-.29-5.23-1.28-5.23-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.78 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12v3.14c0 .3.21.67.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg></a>` : ''}</div>
               <div class="desc">${esc(p.description || 'No description yet.')}</div>
             </div>
             <span class="dv2-pill status">${esc(STATUS_LABEL[p.status] || p.status)}</span>
@@ -237,6 +237,9 @@
             <div><div class="lbl">Team</div><div class="val">${ws.team?.length || 0} members</div></div>
             <div><div class="lbl">Milestone</div><div class="val">${esc(milestone?.name || '—')}</div></div>
             <div><div class="lbl">Due Date</div><div class="val">${esc(fmtDate(due))}</div></div>
+            <div><div class="lbl">Business</div><div class="val">${esc(p.business_name || '1percent Rwanda')}</div></div>
+            <div><div class="lbl">Status</div><div class="val">${esc(STATUS_LABEL[p.status] || p.status)}</div></div>
+            <div><div class="lbl">Priority</div><div class="val"><span class="dv2-tag prio-${esc(p.priority || 'MEDIUM')}">${esc(PRIORITY_LABEL[p.priority] || p.priority)}</span></div></div>
           </div>
         </section>`;
     }
@@ -245,8 +248,7 @@
   }
 
   function teamName(ws) {
-    // team rows carry team_id — show the first team's id-derived label only if
-    // a name wasn't provided by the API.
+    // Prefer the API-provided team name; fall back to the member count.
     return ws.team_name || (ws.team?.length ? `${ws.team.length} members` : '—');
   }
 
@@ -378,12 +380,15 @@
 
     const members = team.length
       ? `<div class="dv2-team">${team.map(m => {
-          const prof = m.profiles || {};
+          // Robust member fields: remote API shape varies (profiles!fkey row,
+          // flattened profile, or bare name) — take the first that exists.
+          const name = m.profiles?.full_name || m.full_name || m.name || m.email || 'Team member';
+          const pic = m.profiles?.avatar_url || m.avatar_url || '';
           const isMe = m.user_id === meId;
           return `
             <div class="dv2-member ${isMe ? 'me' : ''}">
-              <span class="pic">${prof.avatar_url ? `<img src="${esc(prof.avatar_url)}" alt="">` : esc(initialsOf(prof.full_name || prof.email))}</span>
-              <span class="who"><b>${esc(prof.full_name || 'Member')}${isMe ? ' · You' : ''}</b><span>${esc(String(m.role || 'developer').replace(/_/g, ' '))}</span></span>
+              <span class="pic">${pic ? `<img src="${esc(pic)}" alt="">` : esc(initialsOf(name))}</span>
+              <span class="who"><b>${esc(name)}${isMe ? ' · You' : ''}</b><span>${esc(String(m.role || 'developer').replace(/_/g, ' '))}</span></span>
             </div>`;
         }).join('')}</div>`
       : '<div class="dv2-empty">No team members yet.</div>';
@@ -397,7 +402,7 @@
       <div class="dv2-project-meta" style="grid-template-columns:repeat(3,1fr);margin-top:14px">
         <div><div class="lbl">Project Name</div><div class="val">${esc(p.name)}</div></div>
         <div><div class="lbl">Start Date</div><div class="val">${esc(fmtDate(p.start_date))}</div></div>
-        <div><div class="lbl">Repository</div><div class="val">${repo ? `<a href="${esc(repo.html_url || '#')}" target="_blank" rel="noopener" style="color:var(--dv2-primary);text-decoration:none">${esc(repo.full_name || 'repo')}</a>` : '—'}</div></div>
+        <div><div class="lbl">Repository</div><div class="val">${repo?.url || repo?.full_name ? `<a href="${esc(repo.url || `https://github.com/${repo.full_name}`)}" target="_blank" rel="noopener" style="color:var(--dv2-primary);text-decoration:none">${esc(repo.full_name || 'repo')}</a>` : '—'}</div></div>
         <div><div class="lbl">Business</div><div class="val">${esc(p.business_name || '1percent Rwanda')}</div></div>
         <div><div class="lbl">Target Date</div><div class="val">${esc(fmtDate(p.target_date))}</div></div>
         <div><div class="lbl">Current Milestone</div><div class="val">${esc(milestone?.name || '—')}</div></div>
@@ -433,6 +438,7 @@
       const icon = FEED_ICON[a.type] || FEED_ICON.ISSUE_OPENED;
       const l1 = a.title || a.type.replace(/_/g, ' ').toLowerCase();
       const l2 = a.metadata?.repo_full_name || a.metadata?.repo || (a.actor ? `by ${a.actor}` : '');
+      const link = a.metadata?.url;
       return `
         <div class="dv2-feed-item">
           <span class="ic t-${esc(a.type)}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icon}</svg></span>
@@ -440,7 +446,7 @@
             <div class="l1">${esc(l1)}</div>
             ${l2 ? `<div class="l2">${esc(l2)}</div>` : ''}
           </div>
-          <span class="when">${esc(when(a.occurred_at))}</span>
+          ${link ? `<a class="when" href="${esc(link)}" target="_blank" rel="noopener" aria-label="Open">↗</a>` : `<span class="when">${esc(when(a.occurred_at))}</span>`}
         </div>`;
     }).join('')}</div>`;
   }
