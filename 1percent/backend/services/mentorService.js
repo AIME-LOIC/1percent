@@ -277,6 +277,118 @@ class MentorService {
 
   /* ---------- ADMIN: overview ---------- */
 
+  /**
+   * Mentor sends an email to an assigned learner.
+   * - Verifies the learner is assigned to this mentor.
+   * - Rate limits to 1 per learner per 3h (buffered by the 24h
+   *   referral cooldown) and one per mentor per 24h.
+   * - Sends Brevo to the learner's stored email.
+   * - ALWAYS creates an in-app mentor_email notification.
+   *
+   * Returns { success, recipient, rateLimited, sent }.
+   */
+  async sendLearnerEmail(mentorId, learnerId, subject, body) {
+    // 1. Verify the learner is assigned to this mentor
+    const { data: assignment, error: aErr } = await adminClient
+      .from('mentor_assignments')
+      .select('learner_id')
+      .eq('mentor_id', mentorId)
+      .eq('learner_id', learnerId)
+      .maybeSingle();
+    if (aErr) throw aErr;
+    if (!assignment) throw new Error('This learner is not assigned to you.');
+
+    // 2. Rate limit: 1 email per learner per 3h (buffered behind the
+    //    24h referral cooldown), plus 1 per mentor per 24h.
+    const since3h = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
+    const { count: recent3h } = await adminClient
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', learnerId)
+      .eq('type', 'mentor_email')
+      .gte('created_at', since3h);
+    if ((recent3h || 0) >= 1) {
+      return { success: true, recipient: learnerId, rateLimited: true, sent: false };
+    }
+
+    const { count: recent24h } = await adminClient
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', learnerId)
+      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+    if ((recent24h || 0) >= 1) {
+      return { success: true, recipient: learnerId, rateLimited: true, sent: false };
+    }
+
+    // 3. Resolve the learner's current email
+    const { data: learner, error: lErr } = await adminClient
+      .from('profiles')
+      .select('email')
+      .eq('id', learnerId)
+      .single();
+    if (lErr) throw lErr;
+    const recipientEmail = learner?.email;
+    if (!recipientEmail) {
+      return { success: true, recipient: learnerId, rateLimited: false, sent: false };
+    }
+
+    // 4. Send via Brevo (guarded in try/catch; a failure never kills
+    //    the in-app notification below)
+    let sentToBrevo = false;
+    try {
+      const emailService = require('./emailService');
+      const apiKey = process.env.BREVO_API_KEY;
+      if (!apiKey) {
+        console.error('[MENTOR_EMAIL] BREVO_API_KEY not configured; skipping Brevo send.');
+      } else {
+        const fromRaw = process.env.EMAIL_FROM || process.env.CONTACT_EMAIL || '';
+        const m = /^(.*?)\s*<([^>]+)>\s*$/.exec(fromRaw.trim());
+        const from = m ? { name: m[1].trim(), email: m[2].trim() } : { name: '1% Learn', email: fromRaw.trim() };
+        const msg = {
+          sender: from,
+          subject: String(subject || '').slice(0, 200),
+          htmlContent: emailService._render(String(body || '').replace(/<br\s*/i, '<br>')),
+          to: [{ email: recipientEmail, name: learner?.full_name || '' }]
+        };
+        const resp = await fetch('https://api.brevo.com/v3/smtp/email', {
+          method: 'POST',
+          headers: {
+            'api-key': apiKey,
+            'content-type': 'application/json',
+            'accept': 'application/json'
+          },
+          body: JSON.stringify(msg)
+        });
+        if (resp.ok) {
+          sentToBrevo = true;
+        } else {
+          const detail = await resp.text().catch(() => '');
+          console.error('[MENTOR_EMAIL] Brevo failed:', resp.status, detail.slice(0, 300));
+        }
+      }
+    } catch (e) {
+      console.error('[MENTOR_EMAIL] Brevo request error:', e.message);
+    }
+
+    // 5. ALWAYS create the in-app mentor_email notification (rate-limited)
+    const { data: mentor, error: mErr } = await adminClient
+      .from('profiles')
+      .select('full_name')
+      .eq('id', mentorId)
+      .single();
+    if (mErr) throw mErr;
+    const mentorName = mentor?.full_name || 'Your mentor';
+    const notification = await notificationService.createNotification({
+      user_id: learnerId,
+      title: `Email from ${mentorName}`,
+      message: String(body || '').slice(0, 300),
+      type: 'mentor_email',
+      link: '/dashboard'
+    });
+
+    return { success: true, recipient: learnerId, rateLimited: false, sent: sentToBrevo, notification };
+  }
+
   async getAdminOverview() {
     const mentors = await this.listMentors();
     const { count: assignments } = await adminClient

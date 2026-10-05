@@ -540,8 +540,9 @@ tr.log-fatal:hover td{background:#feeeee !important;}
       <a class="sidebar-item" data-panel="security" onclick="showPanel('security')">
         <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg></span>
         Security
-      </a>
-      <a class="sidebar-item" data-panel="email-users" onclick="showPanel('email-users')">
+      </a>       <a class="sidebar-item" data-panel="email-users" onclick="showPanel('email-users')">
+       <a class="sidebar-item" data-panel="ai-connections" onclick="showPanel('ai-connections')">
+
         <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
         Email Users
       </a>
@@ -1166,6 +1167,85 @@ tr.log-fatal:hover td{background:#feeeee !important;}
       <div class="card">
         <div class="card-header"><h2>Preview</h2></div>
         <div class="card-body" id="email-preview" style="color:var(--admin-text-muted)">Compose a message and click Preview.</div>
+      </div>
+    </div>
+
+    <!-- AI connections panel (ChatGPT + Gemini provider bridge) -->
+    <div class="panel" id="panel-ai-connections">
+      <h1>AI connections</h1>
+      <p class="subtitle">Manage the multi-AI bridge — ChatGPT and Gemini are registered public clients, each its own OAuth connection. Connect / disconnect per account; admins can register a new public provider client.</p>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>Provider status</h2>
+          <button class="btn-admin outline" onclick="loadAiConnections()">Refresh</button>
+        </div>
+        <div class="card-body" id="ai-connections-body">
+          <div class="flex-row flex-row-wrap" style="gap:12px;align-items:center;">
+            <div style="flex:1 1 240px;min-width:240px;background:#f8fafc;border:1px solid var(--admin-border);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <strong>ChatGPT</strong>
+                <span id="ai-chatgpt-pill" class="pill-green" style="padding:4px 10px;border-radius:100px;font-size:12px;font-weight:600;">Not connected</span>
+              </div>
+              <div class="flex-row flex-row-wrap" style="gap:8px;">
+                <button class="btn-admin primary px-4-10" onclick="connectAi('chatgpt')">Connect</button>
+                <button class="btn-admin outline px-4-10" onclick="revokeAiConnection('chatgpt')" id="ai-revoke-chatgpt" style="display:none;">Revoke</button>
+              </div>
+            </div>
+            <div style="flex:1 1 240px;min-width:240px;background:#f8fafc;border:1px solid var(--admin-border);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <strong>Gemini</strong>
+                <span id="ai-gemini-pill" class="pill-green" style="padding:4px 10px;border-radius:100px;font-size:12px;font-weight:600;">Not connected</span>
+              </div>
+              <div class="flex-row flex-row-wrap" style="gap:8px;">
+                <button class="btn-admin primary px-4-10" onclick="connectAi('gemini')">Connect</button>
+                <button class="btn-admin outline px-4-10" onclick="revokeAiConnection('gemini')" id="ai-revoke-gemini" style="display:none;">Revoke</button>
+              </div>
+            </div>
+            <div style="flex:1 1 240px;min-width:240px;background:#f8fafc;border:1px solid var(--admin-border);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <strong>Claude (your account)</strong>
+                <span id="ai-claude-pill" class="pill-green" style="padding:4px 10px;border-radius:100px;font-size:12px;font-weight:600;">Not connected</span>
+              </div>
+              <div class="flex-row flex-row-wrap" style="gap:8px;">
+                <button class="btn-admin primary px-4-10" onclick="connectAi('claude')">Connect</button>
+                <button class="btn-admin outline px-4-10" onclick="revokeAiConnection('claude')" id="ai-revoke-claude" style="display:none;">Revoke</button>
+              </div>
+            </div>
+          </div>
+          <p class="adm-t12-muted" style="margin-top:8px">ChatGPT + Gemini are public clients (PKCE-only). The /mcp/oauth endpoints already know them — this panel just shows you which accounts are connected and lets you register a brand-new public provider.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>Register a new public AI provider</h2>
+          <span class="adm-t12-muted">Creates a new mcp_oauth_clients row; the frontend forwards the new client_id as client_id on authorize. Requires a valid https:// redirect_uri.</span>
+        </div>
+        <div class="card-body">
+          <div class="flex-row flex-row-wrap" style="gap:8px;margin-bottom:12px">
+            <input id="ai-register-name" class="adm-input" placeholder="Client name" style="max-width:260px">
+            <input id="ai-register-uri" class="adm-input" placeholder="https://example.com/mcp/:provider" style="max-width:280px">
+            <button class="btn-admin primary" onclick="registerAiConnection()">Register provider</button>
+          </div>
+          <div id="ai-register-status" class="adm-t12-muted"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>Revoke a connection (admin)</h2>
+          <span class="adm-t12-muted">Updates ai_connections.revoked_at for the chosen account. The provider still works for other accounts.</span>
+        </div>
+        <div class="card-body">
+          <div class="flex-row flex-row-wrap" style="gap:8px;margin-bottom:12px">
+            <select id="ai-select-connection" class="adm-input" style="max-width:260px">
+              <option value="">— choose a connection —</option>
+            </select>
+            <button class="btn-admin danger" onclick="revokeConnectionSelected()">Revoke selected</button>
+          </div>
+          <div id="ai-revoke-status" class="adm-t12-muted"></div>
+        </div>
       </div>
     </div>
   </main>
@@ -2131,7 +2211,7 @@ function showPanel(name){
   if(!panelEl)return;
   panelEl.classList.add('active');
   document.querySelectorAll('.sidebar-item').forEach(a=>{a.classList.toggle('active',a.dataset.panel===name);});
-  const titles={dashboard:'Dashboard',projects:'Projects & Requests',courses:'Courses',lessons:'Lessons',quizzes:'Quizzes',challenges:'Challenges',aiReviews:'AI Reviews',enrollments:'Enrollments',mentors:'Mentors',logs:'Logs & Errors',security:'Security',notifications:'Notifications',testimonials:'Testimonials','robotics-club':'Robotics Club'};
+  const titles={dashboard:'Dashboard',projects:'Projects & Requests',courses:'Courses',lessons:'Lessons',quizzes:'Quizzes',challenges:'Challenges',aiReviews:'AI Reviews',enrollments:'Enrollments',mentors:'Mentors',logs:'Logs & Errors',security:'Security',notifications:'Notifications',testimonials:'Testimonials','robotics-club':'Robotics Club',aiConnections:'AI Connections'};
   document.getElementById('topbar-section-title').textContent=titles[name]||name;
   if(name==='dashboard')loadAnalytics();
   if(name==='quizzes')loadQuizzes();
@@ -2143,10 +2223,180 @@ function showPanel(name){
   if(name==='logs')loadLogsPanel();
   if(name==='security')loadBlockedIps();
   if(name==='projects')loadProjectsPanel();
+  if(name==='ai-connections')loadAiConnections();
 }
 
 /* ═════════════════════════════════════════════════
-   SECURITY — blocked IPs (list + unblock)
+   AI CONNECTIONS — register/revoke provider clients
+   ═════════════════════════════════════════════════ */
+const AI_PROVIDERS = ['claude', 'chatgpt', 'gemini'];
+
+async function loadAiConnections() {
+  try {
+    const res = await apiFetch('/api/admin/ai/connections');
+    const json = await res.json();
+    if (!res.ok) {
+      document.getElementById('ai-connections-body').innerHTML = '<p class="adm-t12-muted">Failed to load connections.</p>';
+      return;
+    }
+    const body = document.getElementById('ai-connections-body');
+    const c = json.connections || {};
+
+    body.innerHTML = AI_PROVIDERS.map((provider) => {
+      const pill = c[provider];
+      const connected = pill && pill.connected;
+      const pillClass = connected ? 'pill-green' : 'pill-gray';
+      const pillText = connected ? 'Connected' : 'Not connected';
+      return `
+        <div style="flex:1 1 240px;min-width:240px;background:#f8fafc;border:1px solid var(--admin-border);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <strong>${provider === 'claude' ? 'Claude (your account)' : provider.charAt(0).toUpperCase() + provider.slice(1)}</strong>
+            <span id="ai-${provider}-pill" class="${pillClass}" style="padding:4px 10px;border-radius:100px;font-size:12px;font-weight:600;">${pillText}</span>
+          </div>
+          <div class="flex-row flex-row-wrap" style="gap:8px;">
+            <button class="btn-admin primary px-4-10" onclick="connectAi('${provider}')">Connect</button>
+            <button class="btn-admin outline px-4-10" onclick="revokeAiConnection('${provider}')" id="ai-revoke-${provider}" style="display:${connected ? '' : 'none'};">Revoke</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // connect/revoke buttons already wired in HTML; just refresh the
+    // selected-connection dropdown for the revoke-by-connection list.
+    const sel = document.getElementById('ai-select-connection');
+    if (sel) {
+      const opts = (json.connections || {});
+      const current = sel.value;
+      sel.innerHTML = '<option value="">— choose a connection —</option>' + Object.entries(opts).map(([p, r]) => {
+        const label = p === 'claude' ? 'Claude (your account)' : p.charAt(0).toUpperCase() + p.slice(1);
+        return `<option value="${p}" ${current === p ? 'selected' : ''}>${label} — ${r?.connected ? 'connected' : 'not connected'}</option>`;
+      }).join('');
+    }
+  } catch (e) {
+    console.error('[ADMIN] AI connections load failed:', e);
+    document.getElementById('ai-connections-body').innerHTML = '<p class="adm-t12-muted">Could not load connections.</p>';
+  }
+}
+
+async function connectAi(provider) {
+  const confirmed = await Toast.confirm({
+    title: `${provider === 'claude' ? 'Disconnect Claude?' : provider === 'chatgpt' ? 'Disconnect ChatGPT?' : 'Disconnect Gemini?'}`,
+    message: 'Approve with your account — no tokens to copy. Claude/GPT/Gemini will be able to read your learning data. This cannot be undone without disconnecting again.',
+    confirmText: 'Connect',
+    confirmClass: 'primary'
+  });
+  if (!confirmed) return;
+
+  const btn = document.getElementById('ai-' + provider + '-pill');
+  const btn2 = document.getElementById('ai-revoke-' + provider);
+  if (btn) btn.textContent = 'Connecting…';
+  if (btn2) btn2.style.display = 'none';
+
+  try {
+    const res = await fetch('/api/ai/connections', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ provider, state: '' })
+    });
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}));
+      throw new Error(j.error || 'Connection failed');
+    }
+    Toast.success('Connected to ' + provider + '!');
+    await loadAiConnections();
+  } catch (e) {
+    Toast.error(e.message);
+    if (btn) btn.textContent = 'Connect';
+    if (btn2) btn2.style.display = '';
+  }
+}
+
+async function revokeAiConnection(provider) {
+  const confirmed = await Toast.confirm({
+    title: 'Disconnect ' + provider + '?',
+    message: 'This account will immediately lose access to your learning data.',
+    confirmText: 'Disconnect',
+    confirmClass: 'danger'
+  });
+  if (!confirmed) return;
+
+  const btn = document.getElementById('ai-' + provider + '-pill');
+  const btn2 = document.getElementById('ai-revoke-' + provider);
+  if (btn) btn.textContent = 'Disconnecting…';
+  if (btn2) btn2.style.display = 'none';
+
+  try {
+    await fetch('/api/admin/ai/connections/' + encodeURIComponent(provider), { method: 'DELETE' });
+    Toast.success('Disconnected from ' + provider + '!');
+    await loadAiConnections();
+  } catch (e) {
+    Toast.error('Revoke failed. Reload the page and try again.');
+    if (btn) btn.textContent = 'Not connected';
+    if (btn2) btn2.style.display = '';
+  }
+}
+
+async function registerAiConnection() {
+  const name = document.getElementById('ai-register-name').value.trim();
+  const uri = document.getElementById('ai-register-uri').value.trim();
+  if (!name || !uri) {
+    document.getElementById('ai-register-status').textContent = 'Client name and redirect URI are required.';
+    return;
+  }
+  if (!/^https:\/\//.test(uri)) {
+    document.getElementById('ai-register-status').textContent = 'redirect_uri must be a valid https:// URL.';
+    return;
+  }
+
+  const status = document.getElementById('ai-register-status');
+  status.textContent = 'Registering…';
+  try {
+    const res = await apiFetch('/api/admin/ai/connections/register', {
+      method: 'POST',
+      body: JSON.stringify({ client_name: name, redirect_uris: [uri] })
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'Registration failed');
+    Toast.success('Provider registered: ' + json.client_id);
+    document.getElementById('ai-register-name').value = '';
+    document.getElementById('ai-register-uri').value = '';
+    document.getElementById('ai-register-status').textContent = 'Registered.';
+    await loadAiConnections();
+  } catch (e) {
+    Toast.error(e.message);
+    status.textContent = 'Registration failed.';
+  }
+}
+
+async function revokeConnectionSelected() {
+  const id = document.getElementById('ai-select-connection').value;
+  if (!id) { Toast.error('Choose a connection first.'); return; }
+  const confirmed = await Toast.confirm({
+    title: 'Revoke this connection?',
+    message: 'The selected account will immediately lose access. This cannot be undone.',
+    confirmText: 'Revoke',
+    confirmClass: 'danger'
+  });
+  if (!confirmed) return;
+
+  const status = document.getElementById('ai-revoke-status');
+  status.textContent = 'Revoking…';
+  try {
+    const res = await apiFetch('/api/admin/ai/connections/' + encodeURIComponent(id), { method: 'DELETE' });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'Revoke failed');
+    Toast.success('Connection revoked.');
+    document.getElementById('ai-select-connection').value = '';
+    status.textContent = 'Revoked.';
+    await loadAiConnections();
+  } catch (e) {
+    Toast.error(e.message);
+    status.textContent = 'Revoke failed.';
+  }
+}
+
+/* ═════════════════════════════════════════════════
+   EMAIL USERS — Brevo broadcast
    ═════════════════════════════════════════════════ */
 /* ═════════════════════════════════════════════
    PROJECTS — overview, request review, activity

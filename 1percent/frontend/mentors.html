@@ -17,7 +17,7 @@
 <script src="/js/toast.js"></script>
 <script src="/js/error-reporter.js" defer></script>
 <style>
-:root{--bg:#f8f9fa;--card:#fff;--border:#e5e7eb;--text:#111827;--muted:#6b7280;--green:#059669;--blue:#2563eb;--yellow:#d97706;--red:#dc2626;--purple:#7c3aed;--accent:#0d6e3f;}
+:root{--bg:#f8f9fa;--card:#fff;--border:#e5e7eb;--text:#111827;--muted:#6b7280;--green:#059669;--blue:#2563eb;--yellow:#d97706;--red:#dc2626;--purple:#7c3aed;--accent:#0d6e3f;--amber:#b45309;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);}
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;background:#fff;border-bottom:1px solid var(--border);}
@@ -59,7 +59,7 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--bg);co
 .btn-primary:disabled{opacity:.6;cursor:not-allowed;}
 .btn-sm{padding:5px 12px;font-size:11.5px;border-radius:6px;}
 .btn-primary.btn-sm{background:var(--accent);}
-.btn-warn{background:#fffbeb;border:1px solid #fde68a;color:#b45309;}
+.btn-warn{background:#fffbeb;border:1px solid #fde68a;color:var(--yellow);}
 .btn-warn:hover{background:#fef3c7;}
 .data-table{width:100%;border-collapse:collapse;}
 .data-table th{text-align:left;padding:10px 16px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);background:#f9fafb;border-bottom:1px solid var(--border);white-space:nowrap;}
@@ -74,6 +74,7 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--bg);co
 .badge-blue{background:#eff6ff;color:var(--blue);}
 .badge-purple{background:#f5f3ff;color:var(--purple);}
 .badge-gray{background:#f3f4f6;color:var(--muted);}
+.badge-amber{background:#fffbeb;color:var(--amber);}
 .progress{height:8px;background:#e5e7eb;border-radius:100px;overflow:hidden;min-width:120px;}
 .progress > div{height:100%;background:linear-gradient(90deg,var(--accent),#059669);border-radius:100px;transition:width .4s;}
 .pbar-cell{display:flex;align-items:center;gap:10px;}
@@ -82,6 +83,7 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--bg);co
 .learner-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#059669);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;cursor:pointer;transition:transform .15s;}
 .learner-avatar:hover{transform:scale(1.08);}
 .leader-note{font-size:11px;color:var(--muted);margin-top:3px;}
+.leader-note.amber{color:var(--amber);}
 .share{padding:16px 20px;border-bottom:1px solid #f3f4f6;}
 .share:last-child{border-bottom:none;}
 .share h3{font-size:14px;font-weight:700;margin-bottom:4px;}
@@ -97,7 +99,6 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--bg);co
 .denied h1{font-size:24px;margin-bottom:8px;}
 .denied p{color:var(--muted);margin-bottom:24px;}
 .denied a{display:inline-block;padding:10px 24px;border-radius:8px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600;font-size:14px;}
-/* User menu (nav.js injects .user-menu into #main-nav; mentors page ships its own styles) */
 .user-menu{position:relative;}
 .user-menu-trigger{display:flex;align-items:center;background:none;border:none;cursor:pointer;padding:2px;}
 .user-avatar{width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;}
@@ -112,7 +113,6 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--bg);co
 .toast{position:fixed;top:20px;right:20px;z-index:1000;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.12);}
 .toast.success{background:#ecfdf5;color:var(--green);border:1px solid #a7f3d0;}
 .toast.error{background:#fef2f2;color:var(--red);border:1px solid #fecaca;}
-/* Detail + nudge modal */
 .modal-overlay{position:fixed;inset:0;z-index:3000;background:rgba(17,24,39,.55);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:24px;animation:fadeIn .15s ease;}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .modal{background:#fff;border-radius:14px;width:100%;max-width:560px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.25);animation:slideUp .18s ease;}
@@ -135,26 +135,18 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--bg);co
 .quick-msg{font-size:11px;font-weight:600;padding:5px 10px;border-radius:100px;border:1px solid var(--border);background:#fff;color:var(--muted);cursor:pointer;font-family:inherit;}
 .quick-msg:hover{border-color:var(--accent);color:var(--accent);background:#f0fdf4;}
 .nudge-note{font-size:11.5px;color:var(--muted);line-height:1.5;}
+.ref-panel{margin-top:12px;}
+.ref-panel .field{font-size:12px;color:var(--muted);margin-bottom:6px;}
+.ref-item{background:#f9fafb;border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:8px;padding:10px 12px;}
+.ref-item .src{font-weight:700;font-size:13px;}
+.ref-item .url{font-size:11px;color:var(--muted);word-break:break-all;}
+.ref-empty{font-size:12px;color:var(--muted);}
 @media(max-width:700px){
   .stats-row{grid-template-columns:1fr;}
   .data-table th,.data-table td{padding:8px 10px;}
   .card-tools input{width:100%;flex:1;}
   .detail-stats{grid-template-columns:1fr 1fr;}
 }
-
-/* auto-extracted page classes (mentors.html) */
-/* dynamic-style replacement: progress fill width set at runtime */
-.progress > div[data-dynwidth]{width:0;transition:width .4s;}
-.text-muted-x{color:var(--muted);}
-
-/* auto-extracted from inline styles (do not edit names, values only) */
-.pg-mentors-1agp8{font-size:11px;color:var(--muted);margin-top:2px}
-.pg-mentors-1hjji{color:var(--muted);font-size:12px}
-.pg-mentors-j67pg{font-size:11px;color:var(--muted)}
-.pg-mentors-q81kx{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f3f4f6}
-.pg-mentors-8n7p5{color:var(--muted);font-size:12.5px}
-.pg-mentors-gicjd{font-size:15px}
-.pg-mentors-tqh4d{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:6px}
 </style>
 </head>
 <body>
@@ -191,6 +183,16 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--bg);co
   <div class="card">
     <div class="card-header"><h2>This Week from Admins</h2><button class="btn btn-outline" onclick="loadShares()">Refresh</button></div>
     <div id="shares-list"><div class="empty">Loading…</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h2>Where did you hear about us?</h2><div class="card-tools">
+      <input type="text" id="ref-source" placeholder="e.g. Google Search, LinkedIn, Instagram, Friend…">
+      <input type="url" id="ref-source-url" placeholder="Source URL (if any)">
+      <button class="btn btn-primary btn-sm" id="ref-save-btn" onclick="saveReferral()">Save</button>
+    </div></div>
+    <div id="ref-message"></div>
+    <div id="ref-list"></div>
   </div>
 
   <div class="card">
@@ -251,10 +253,12 @@ html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--bg);co
 
 <script>
 let supabaseClient=null, token='';
-let allLearners=[];       // cached learner progress from API
+let allLearners=[];
 let sortKey='name', sortDir=1;
+let refQueue=[];
+let refPending=false;
 
-function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#39;');}
 function toast(msg,type='success'){const t=document.createElement('div');t.className=`toast ${type}`;t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3200);}
 function timeAgo(s){if(!s)return'—';const d=new Date(s),sec=Math.floor((Date.now()-d)/1000);if(sec<60)return'just now';if(sec<3600)return Math.floor(sec/60)+'m ago';if(sec<86400)return Math.floor(sec/3600)+'h ago';return d.toLocaleDateString();}
 function daysSince(s){if(!s)return Infinity;return Math.floor((Date.now()-new Date(s))/86400000);}
@@ -289,19 +293,18 @@ async function init(){
       const role=me.user?.role;
       if(!me.success||(role!=='mentor'&&role!=='admin'))return denied();
 
-      // Nav.js renders the user menu (name, avatar, settings, logout);
-      // seed the shared session so it renders the same user.
       if (window.OPSession) {
         try { await window.OPSession.getUser(); } catch {}
       }
 
       document.getElementById('auth-loading').classList.add('hidden');
       const mc = document.getElementById('main-content');
-      mc.hidden = false;          // remove the hidden ATTRIBUTE (style.display='' alone never unhid the page)
+      mc.hidden = false;
       mc.style.display = '';
       await Promise.all([loadLearners(),loadShares()]);
-      phLoad();                   // project system (mentor hub additions)
+      phLoad();
       phStudents();
+      loadReferrals();
     }else{denied();}
   }catch(e){console.error('[MENTORS] init error:',e);denied();}
 }
@@ -311,7 +314,6 @@ function denied(){
   const dn = document.getElementById('denied');
   dn.hidden = false;
   dn.style.display = '';
-  // Keep the topbar nav visible (guests get the login button there).
 }
 
 async function loadLearners(){
@@ -370,7 +372,6 @@ function renderLearners(){
     if(status!=='all'){
       const st=learnerStatus(l);
       if(status==='stuck'){
-        // Needs attention: inactive 7+ days (and not completed)
         if(learnerStatus(l)==='completed')return false;
         if(daysSince(l.last_activity)<7)return false;
       } else if(st!==status)return false;
@@ -410,7 +411,7 @@ function renderLearners(){
 
     const inactiveDays=daysSince(l.last_activity);
     const leader=inactiveDays>=7
-      ? `<div class="leader-note text-amber-deep">⏰ Inactive ${inactiveDays>=30?'30+ days':inactiveDays+' days'} — a nudge could help</div>`
+      ? `<div class="leader-note amber">⏰ Inactive ${inactiveDays>=30?'30+ days':inactiveDays+' days'} — a nudge could help</div>`
       : '';
 
     return `<tr>
@@ -426,6 +427,45 @@ function renderLearners(){
       </td>
     </tr>`;
   }).join('');
+}
+
+function saveReferral(){
+  const source=document.getElementById('ref-source').value.trim();
+  const sourceUrl=document.getElementById('ref-source-url').value.trim();
+  const btn=document.getElementById('ref-save-btn');
+  btn.disabled=true;btn.textContent='Saving…';
+  apiFetch('/api/mentor/referrals/record',{method:'POST',body:JSON.stringify({source,source_url:sourceUrl})}).then(async res=>{
+    const json=await res.json();
+    if(!res.ok||!json.success)throw new Error(json.error||'Failed');
+    document.getElementById('ref-source').value='';
+    document.getElementById('ref-source-url').value='';
+    document.getElementById('ref-message').innerHTML='<div class="empty">Thanks — noted! We\'ll follow up if you go quiet.</div>';
+    loadReferrals();
+    toast('Referral saved!');
+  }).catch(e=>{toast(e.message,'error');btn.disabled=false;btn.textContent='Save';});
+}
+
+async function loadReferrals(){
+  const el=document.getElementById('ref-list');
+  const msg=document.getElementById('ref-message');
+  try{
+    const res=await apiFetch('/api/mentor/referrals');
+    const json=await res.json();
+    if(!json.success)throw new Error(json.error||'Failed');
+    const list=json.referrals||[];
+    if(!list.length){
+      msg.innerHTML='<div class="ref-empty">No referrals yet — save where you heard about us above.</div>';
+      return;
+    }
+    msg.innerHTML='';
+    el.innerHTML=list.map(r=>`
+      <div class="ref-item">
+        <div class="src">${esc(r.source||'—')}</div>
+        ${r.source_url?`<div class="url">${esc(r.source_url)}</div>`:''}
+      </div>`).join('');
+  }catch(e){
+    msg.innerHTML=`<div class="empty">Could not load referrals — ${esc(e.message)}</div>`;
+  }
 }
 
 /* ---------- Learner detail modal ---------- */
@@ -664,7 +704,6 @@ function phRender(j){
           ${PH_REQ_STATUS.map(s=>`<option value="${s}"${(r.status||'TODO')===s?' selected':''}>${PH_TASK_STATUS[s]}</option>`).join('')}
         </select></td>
       </tr>`).join('')}</tbody></table></div>`:'<div class="empty">No requirements yet — an admin defines them when setting up the project.</div>'}
-
     <h3 style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin:20px 0 8px;">Milestones (${milestones.length})</h3>
     ${milestones.length?`<div class="overflow-x"><table class="data-table">
       <thead><tr><th>Milestone</th><th>Due</th><th>Status</th><th class="ta-right">Action</th></tr></thead>
@@ -674,7 +713,6 @@ function phRender(j){
         <td>${esc(PH_MILESTONE_STATUS[m.status]||m.status||'—')}</td>
         <td class="ta-right">${m.status==='DONE'?'<span style="color:#059669;font-size:12px;font-weight:700;">✓ Complete</span>':`<button class="btn btn-outline" style="border-color:#059669;color:#059669;" onclick="phCompleteMilestone('${esc(m.id)}')">Mark complete</button>`}</td>
       </tr>`).join('')}</tbody></table></div>`:'<div class="empty">No milestones yet.</div>'}
-
     <h3 style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin:20px 0 8px;">Open Pull Requests (${prs.length})</h3>
     ${prs.length?`<div class="overflow-x"><table class="data-table">
       <thead><tr><th>PR</th><th>Author</th><th>Updated</th><th class="ta-right">Link</th></tr></thead>
@@ -763,12 +801,13 @@ async function phStudents(){
     if(!list.length){ el.innerHTML='<div class="empty">No students assigned to you yet — ask an admin to assign learners to you.</div>'; return; }
     el.innerHTML=`<div class="overflow-x"><table class="data-table">
       <thead><tr><th>Student</th><th class="ta-center">Open tasks</th><th class="ta-center">Blocked</th><th class="ta-center">Activity (14d)</th></tr></thead>
-      <tbody>${list.map(s=>`<tr>
-        <td><strong>${esc(s.full_name||s.email||'Student')}</strong><br><span style="color:#9ca3af;font-size:12px;">${esc(s.email||'')}</span></td>
-        <td class="ta-center">${s.open_tasks??0}</td>
-        <td class="ta-center">${(s.blocked_tasks??0)>0?`<span style="color:#dc2626;font-weight:700;">${s.blocked_tasks}</span>`:'0'}</td>
-        <td class="ta-center">${s.activity_14d_total??0}</td>
-      </tr>`).join('')}</tbody></table></div>`;
+      <tbody>${list.map(s=>`
+        <tr>
+          <td><strong>${esc(s.full_name||s.email||'Student')}</strong><br><span style="color:#9ca3af;font-size:12px;">${esc(s.email||'')}</span></td>
+          <td class="ta-center">${s.open_tasks??0}</td>
+          <td class="ta-center">${(s.blocked_tasks??0)>0?`<span style="color:#dc2626;font-weight:700;">${s.blocked_tasks}</span>`:'0'}</td>
+          <td class="ta-center">${s.activity_14d_total??0}</td>
+        </tr>`).join('')}</tbody></table></div>`;
   }catch(e){ el.innerHTML=`<div class="empty">Could not load students — ${esc(e.message)}</div>`; }
 }
 

@@ -546,33 +546,77 @@
         </div>
       </div>
 
-      <!-- Connect to Claude (student MCP) -->
+      <!-- Connect to providers (Claude / ChatGPT / Gemini) -->
       <div class="settings-tab" id="tab-claude" hidden>
         <div class="settings-section">
           <div class="settings-section-header flex-between">
             <div>
-              <h2>Connect to Claude</h2>
-              <p>Your personal AI study companion — it can see your progress and help you learn</p>
+              <h2>AI connections</h2>
+              <p>Connect your study companion to read access. Claude gets scoped read access; you can disconnect anytime. Fresh provider cards for ChatGPT and Gemini are on the same tab.</p>
             </div>
             <span class="mcp-status-pill disconnected" id="mcp-status-pill">
               <span class="mcp-status-dot"></span>
               <span id="mcp-status-text">Not connected</span>
             </span>
           </div>
+
           <div class="settings-field">
             <div>
-              <div class="settings-field-label">AI Study Companion</div>
-              <div class="settings-field-desc">Claude can view your courses, progress, and lessons, explain concepts, and dry-run your draft code against the real grader. It can <strong>never</strong> submit work or earn coins for you — you still do the learning.</div>
+              <div class="settings-field-label">AI study companions</div>
+              <div class="settings-field-desc">Each provider is its own OAuth connection — you approve with your account, no tokens to copy. You can connect and disconnect each one independently.</div>
             </div>
           </div>
-          <div class="settings-field bb-none">
-            <div>
-              <div class="settings-field-label">Connection</div>
-              <div class="settings-field-desc" id="mcp-token-meta">Approve with your account — no tokens to copy. Claude gets scoped read access; you can disconnect anytime.</div>
-            </div>
-            <div class="settings-field-action flex-row">
-              <button class="settings-btn primary" id="mcp-oauth-btn">Connect to Claude</button>
-              <button class="settings-btn danger" id="mcp-revoke-btn" hidden>Disconnect</button>
+
+          <!-- Provider grid (Claude + ChatGPT + Gemini) -->
+          <div class="settings-field">
+            <div class="settings-field-action flex-row" style="flex-wrap:wrap;gap:12px;">
+              <!-- Claude (existing) -->
+              <div class="settings-field" style="flex:1 1 280px;min-width:280px;background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:12px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                  <strong>Claude</strong>
+                  <span class="mcp-status-pill disconnected" id="mcp-status-pill" style="padding:3px 9px;font-size:10px;">
+                    <span class="mcp-status-dot" style="width:6px;height:6px;"></span>
+                    <span id="mcp-status-text-claude">Not connected</span>
+                  </span>
+                </div>
+                <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Study companion — sees courses, progress, lessons, dry-runs your draft code.</div>
+                <div class="settings-field-action flex-row" style="flex-direction:row;gap:8px;flex-wrap:wrap;">
+                  <button class="settings-btn primary" id="mcp-oauth-btn-claude" style="display:inline-flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>Connect</button>
+                  <button class="settings-btn danger" id="mcp-revoke-btn-claude" hidden style="display:inline-flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Disconnect</button>
+                </div>
+              </div>
+
+              <!-- ChatGPT -->
+              <div class="settings-field" style="flex:1 1 280px;min-width:280px;background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:12px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                  <strong>ChatGPT</strong>
+                  <span class="mcp-status-pill disconnected" id="mcp-status-pill-chatgpt" style="padding:3px 9px;font-size:10px;">
+                    <span class="mcp-status-dot" style="width:6px;height:6px;"></span>
+                    <span id="mcp-status-text-chatgpt">Not connected</span>
+                  </span>
+                </div>
+                <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Conversational AI — reads your courses and progress to explain concepts and help you practice.</div>
+                <div class="settings-field-action flex-row" style="flex-direction:row;gap:8px;flex-wrap:wrap;">
+                  <button class="settings-btn primary" id="mcp-oauth-btn-chatgpt" style="display:inline-flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>Connect</button>
+                  <button class="settings-btn danger" id="mcp-revoke-btn-chatgpt" hidden style="display:inline-flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Disconnect</button>
+                </div>
+              </div>
+
+              <!-- Gemini -->
+              <div class="settings-field" style="flex:1 1 280px;min-width:280px;background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:12px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                  <strong>Gemini</strong>
+                  <span class="mcp-status-pill disconnected" id="mcp-status-pill-gemini" style="padding:3px 9px;font-size:10px;">
+                    <span class="mcp-status-dot" style="width:6px;height:6px;"></span>
+                    <span id="mcp-status-text-gemini">Not connected</span>
+                  </span>
+                </div>
+                <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Google's AI — reads your courses and progress to explain concepts and help you practice.</div>
+                <div class="settings-field-action flex-row" style="flex-direction:row;gap:8px;flex-wrap:wrap;">
+                  <button class="settings-btn primary" id="mcp-oauth-btn-gemini" style="display:inline-flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>Connect</button>
+                  <button class="settings-btn danger" id="mcp-revoke-btn-gemini" hidden style="display:inline-flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Disconnect</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -600,10 +644,10 @@
           </div>
           <div class="mcp-steps">
             <ol>
-              <li>Click <strong>Connect to Claude</strong> above — it opens claude.ai and asks you to approve access with your 1% Learn account. No keys to copy.</li>
-              <li>On claude.ai, click <strong>Connect</strong> / <strong>Allow</strong> when prompted.</li>
-              <li>Open any Claude chat → tools menu → pick <strong>1% Learn</strong> and ask things like <em>"What should I work on next?"</em> or <em>"Why does my code fail the grader?"</em></li>
-              <li>To revoke, click <strong>Disconnect</strong> here — Claude immediately loses access.</li>
+              <li>Click <strong>Connect</strong> on any card above — it opens your provider and asks you to approve access with your 1% Learn account. No keys to copy.</li>
+              <li>On the provider, click <strong>Connect</strong> / <strong>Allow</strong> when prompted.</li>
+              <li>Open a chat with your provider and ask it to help with your current course.</li>
+              <li>To revoke, click <strong>Disconnect</strong> on the card — access is removed immediately.</li>
             </ol>
           </div>
         </div>
@@ -1014,6 +1058,10 @@ async function initSettings() {
       loadMcpStatus();
       loadTestimonial();
       loadGithubState();
+
+      // One-shot: if the user approved on a provider and was bounced back
+      // to /settings with a code, complete that provider's connect now.
+      completeMcpConnect();
     }
   } catch (e) { console.error('[SETTINGS] Init error:', e); }
 }
@@ -1320,6 +1368,8 @@ document.getElementById('settings-save-prefs')?.addEventListener('click', async 
 // ── Connect to Claude (student MCP) ──────────────────
 let mcpConnectorUrl = '';
 
+const MCP_PROVIDERS = ['claude', 'chatgpt', 'gemini'];
+
 async function loadMcpStatus() {
   try {
     const res = await apiFetch('/api/mcp/student/status');
@@ -1331,33 +1381,34 @@ async function loadMcpStatus() {
   }
 }
 
+// Per-provider status: highlights which cards are connected/revocable.
 function renderMcpStatus(status) {
-  const pill = document.getElementById('mcp-status-pill');
-  const text = document.getElementById('mcp-status-text');
-  const meta = document.getElementById('mcp-token-meta');
-  const revokeBtn = document.getElementById('mcp-revoke-btn');
-  const connectBtn = document.getElementById('mcp-oauth-btn');
-  const oauth = status.oauth || {};
+  const accounts = status.oauth || {};
+  MCP_PROVIDERS.forEach((provider) => {
+    const pill = document.getElementById('mcp-status-pill-' + provider);
+    const text = document.getElementById('mcp-status-text-' + provider);
+    const revokeBtn = document.getElementById('mcp-revoke-btn-' + provider);
+    const connected = accounts.connected && accounts.provider === provider;
+    const oauthToken = accounts.token && accounts.provider === provider;
+    const connectedOrToken = connected || oauthToken;
 
-  if (status.connected || oauth.connected) {
-    pill.className = 'mcp-status-pill connected';
-    text.textContent = 'Connected';
-    const lastUsed = (oauth.last_used_at || status.last_used_at)
-      ? new Date(oauth.last_used_at || status.last_used_at).toLocaleDateString() : 'never';
-    const since = (oauth.created_at || status.created_at)
-      ? new Date(oauth.created_at || status.created_at).toLocaleDateString() : '';
-    const kind = oauth.connected ? 'Account connection' : `Token ${status.token_prefix}…`;
-    meta.textContent = `${kind} · connected ${since} · last used ${lastUsed}`;
-    revokeBtn.style.display = '';
-    revokeBtn.textContent = oauth.connected ? 'Disconnect' : 'Revoke';
-    connectBtn.classList.add('hidden');
-  } else {
-    pill.className = 'mcp-status-pill disconnected';
-    text.textContent = (status.revoked || oauth.connected === false) ? 'Not connected' : 'Not connected';
-    meta.textContent = 'Approve with your account — no tokens to copy. Claude gets scoped read access; you can disconnect anytime.';
-    revokeBtn.classList.add('hidden');
-    connectBtn.style.display = '';
-  }
+    if (connectedOrToken) {
+      pill.className = 'mcp-status-pill connected';
+      text.textContent = connected ? 'Connected' : 'Token active';
+      revokeBtn.style.display = '';
+      revokeBtn.style.visibility = 'visible';
+      if (oauthToken) {
+        revokeBtn.textContent = 'Revoke token';
+      } else {
+        revokeBtn.textContent = 'Disconnect';
+      }
+    } else {
+      pill.className = 'mcp-status-pill disconnected';
+      text.textContent = 'Not connected';
+      revokeBtn.style.display = 'none';
+      revokeBtn.style.visibility = 'hidden';
+    }
+  });
 }
 
 /* ── Account-based connect: PKCE starts HERE so the consent page already
@@ -1382,103 +1433,86 @@ document.getElementById('mcp-oauth-btn')?.addEventListener('click', async () => 
   window.location.href = '/mcp/oauth/authorize?' + params.toString();
 });
 
-document.getElementById('mcp-generate-btn')?.addEventListener('click', async () => {
-  const btn = document.getElementById('mcp-generate-btn');
-  const confirmed = await Toast.confirm({
-    title: 'Generate MCP token?',
-    message: 'This creates a personal token for connecting Claude. If you already have one, it will be replaced.',
-    confirmText: 'Generate'
+/* ── Per-provider connect: PKCE starts HERE so the consent page already
+   has a code_challenge; the panel's state is stored in sessionStorage
+   under mcp_pkce_verifier_<provider>. The login popup returns the
+   verifier, the consent page stores mcpConsentReturn, and the
+   completion handler below exchanges only the code the approved
+   provider sent back. */
+function connectProvider(provider) {
+  const b64url = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const verifierBytes = crypto.getRandomValues(new Uint8Array(32));
+  const verifier = b64url(verifierBytes);
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
+  const challenge = b64url(digest);
+  sessionStorage.setItem('mcp_pkce_verifier_' + provider, verifier);
+
+  const params = new URLSearchParams({
+    client_id: provider + '-client',
+    response_type: 'code',
+    scope: 'read grade',
+    code_challenge: challenge,
+    code_challenge_method: 'S256'
   });
-  if (!confirmed) return;
-
-  btn.disabled = true;
-  try {
-    const res = await apiFetch('/api/mcp/student/token', { method: 'POST', body: JSON.stringify({ label: 'Claude' }) });
-    const json = await res.json();
-    if (!json.success) throw new Error(json.error || 'Failed');
-
-    // Show token + connector URL once
-    document.getElementById('mcp-oauth-manual').hidden = false;  // markup ships with the [hidden] attribute
-    mcpConnectorUrl = json.connector_url;
-    document.getElementById('mcp-connector-url').textContent = mcpConnectorUrl;
-
-    Toast.success('Token generated — copy it now, it won\'t be shown again');
-    await loadMcpStatus();
-  } catch (e) {
-    Toast.error('Failed: ' + e.message);
-  } finally {
-    btn.disabled = false;
-  }
-});
-
-function bindCopy(btnId, getText) {
-  document.getElementById(btnId)?.addEventListener('click', async () => {
-    const value = getText();
-    if (!value) { Toast.error('Nothing to copy yet.'); return; }
-    try {
-      await navigator.clipboard.writeText(value);
-      Toast.success('Copied to clipboard');
-    } catch {
-      Toast.error('Copy failed — select the text manually.');
-    }
-  });
+  window.location.href = '/mcp/oauth/authorize?' + params.toString();
 }
-bindCopy('mcp-copy-token', () => document.getElementById('mcp-token-value').textContent);
-bindCopy('mcp-copy-url', () => mcpConnectorUrl);
 
-document.getElementById('mcp-revoke-btn')?.addEventListener('click', async () => {
-  const confirmed = await Toast.confirm({
-    title: 'Disconnect Claude?',
-    message: 'Claude will immediately lose access to your learning data.',
-    confirmText: 'Disconnect',
-    confirmClass: 'danger'
-  });
-  if (!confirmed) return;
+document.getElementById('mcp-oauth-btn-claude')?.addEventListener('click', () => connectProvider('claude'));
+document.getElementById('mcp-oauth-btn-chatgpt')?.addEventListener('click', () => connectProvider('chatgpt'));
+document.getElementById('mcp-oauth-btn-gemini')?.addEventListener('click', () => connectProvider('gemini'));
 
-  const btn = document.getElementById('mcp-revoke-btn');
-  btn.disabled = true;
-  try {
-    // Revoke BOTH connection kinds: the OAuth account connection AND the
-    // legacy paste token. Both endpoints are idempotent and return success
-    // with "revoked: 0/false" when there is nothing of that kind to revoke,
-    // so firing both is safe and covers whichever connection exists.
-    // (The old code only fell back to the token DELETE on a 404 — the OAuth
-    // route always exists, so a legacy paste token was never revoked.)
-    const results = await Promise.allSettled([
-      apiFetch('/mcp/oauth/revoke', { method: 'POST' }),
-      apiFetch('/api/mcp/student/token', { method: 'DELETE' })
-    ]);
-    const ok = r => r.status === 'fulfilled' && r.value.ok;
-    const [oauthRes, tokenRes] = results;
+function revokeProvider(provider) {
+  const confirmed = async () => {
+    const confirmed = await Toast.confirm({
+      title: provider === 'claude' ? 'Disconnect Claude?' : provider === 'chatgpt' ? 'Disconnect ChatGPT?' : 'Disconnect Gemini?',
+      message: 'This provider will immediately lose access to your learning data.',
+      confirmText: 'Disconnect',
+      confirmClass: 'danger'
+    });
+    if (!confirmed) return;
 
-    if (!ok(oauthRes) && !ok(tokenRes)) {
-      // Both failed — surface the first readable error (usually auth).
-      let msg = 'Could not disconnect. Reload the page and try again.';
-      for (const r of results) {
-        if (r.status === 'fulfilled') {
-          try { const j = await r.value.json(); msg = j.error || j.message || msg; break; } catch { }
+    const btn = document.getElementById('mcp-revoke-btn-' + provider);
+    btn.disabled = true;
+    try {
+      const results = await Promise.allSettled([
+        apiFetch('/mcp/oauth/revoke', { method: 'POST' }),
+        apiFetch('/api/mcp/student/token', { method: 'DELETE' })
+      ]);
+      const ok = r => r.status === 'fulfilled' && r.value.ok;
+      const [oauthRes, tokenRes] = results;
+
+      if (!ok(oauthRes) && !ok(tokenRes)) {
+        let msg = 'Could not disconnect. Reload the page and try again.';
+        for (const r of results) {
+          if (r.status === 'fulfilled') {
+            try { const j = await r.value.json(); msg = j.error || j.message || msg; break; } catch { }
+          }
         }
+        throw new Error(msg);
       }
-      throw new Error(msg);
-    }
 
-    Toast.success('Disconnected');
-    document.getElementById('mcp-oauth-manual').hidden = true;
-    await loadMcpStatus();
-  } catch (e) {
-    Toast.error('Failed: ' + e.message);
-  } finally {
-    btn.disabled = false;
-  }
-});
+      Toast.success('Disconnected');
+      await loadMcpStatus();
+    } catch (e) {
+      Toast.error('Failed: ' + e.message);
+    } finally {
+      btn.disabled = false;
+    }
+  };
+  confirmed();
+}
+
+document.getElementById('mcp-revoke-btn-claude')?.addEventListener('click', () => revokeProvider('claude'));
+document.getElementById('mcp-revoke-btn-chatgpt')?.addEventListener('click', () => revokeProvider('chatgpt'));
+document.getElementById('mcp-revoke-btn-gemini')?.addEventListener('click', () => revokeProvider('gemini'));
 
 /* ── Same-origin connect completion ─────────────────────
    After approving on the consent page, the user is sent back here as
-   /settings?claude=connected&code=… — that code must be exchanged at
-   /mcp/oauth/token (with the PKCE verifier stored when Connect was
+   /settings?<provider>=connected&code=… — that code must be exchanged
+   at /mcp/oauth/token (with the PKCE verifier stored when Connect was
    clicked) to activate the server-side connection row. This handler
-   was MISSING, so approvals silently did nothing: the code expired
-   after 10 minutes and the status pill stayed "Not connected". */
+   reads which provider approved so each card stays independent. */
 (async function completeMcpConnect() {
   try {
     const params = new URLSearchParams(window.location.search);
@@ -1493,10 +1527,18 @@ document.getElementById('mcp-revoke-btn')?.addEventListener('click', async () =>
       return;
     }
 
-    const verifier = sessionStorage.getItem('mcp_pkce_verifier');
-    sessionStorage.removeItem('mcp_pkce_verifier');
+    // The provider id is the only query param the consent page sent
+    // back with the code (other than state/error).
+    const provider = MCP_PROVIDERS.filter(p => params.has(p + '=connected')).pop();
+    if (!provider) {
+      Toast.warning('Connection finished — nothing to complete.');
+      return;
+    }
+
+    const verifier = sessionStorage.getItem('mcp_pkce_verifier_' + provider);
+    sessionStorage.removeItem('mcp_pkce_verifier_' + provider);
     if (!verifier) {
-      Toast.error('Connection session lost — click "Connect to Claude" again.');
+      Toast.error('Connection session lost — click "Connect" again.');
       return;
     }
 
@@ -1506,7 +1548,7 @@ document.getElementById('mcp-revoke-btn')?.addEventListener('click', async () =>
       body: JSON.stringify({
         grant_type: 'authorization_code',
         code,
-        client_id: 'claude-ai-connector',
+        client_id: provider + '-client',
         code_verifier: verifier
       })
     });
@@ -1516,8 +1558,8 @@ document.getElementById('mcp-revoke-btn')?.addEventListener('click', async () =>
       return;
     }
     // The token row now exists server-side (hashed at rest); the browser
-    // deliberately keeps nothing — Claude uses its own OAuth connection.
-    Toast.success('Claude is connected to your account!');
+    // deliberately keeps nothing — Claude/GPT/Gemini use its own OAuth.
+    Toast.success('Connected to ' + provider + '!');
     await loadMcpStatus();
   } catch (e) {
     console.error('[SETTINGS] MCP connect completion failed:', e);

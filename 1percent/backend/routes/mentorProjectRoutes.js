@@ -27,8 +27,10 @@
 
 const { Router } = require('express');
 const { authenticate, requireRole } = require('../middlewares/auth');
+const logService = require('../services/logService');
 const projectService = require('../services/projectService');
 const { adminClient } = require('../config/database');
+const referralService = require('../services/referralService');
 
 const router = Router();
 router.use(authenticate, requireRole('mentor', 'admin'));
@@ -201,11 +203,15 @@ router.get('/students', async (req, res) => {
         .eq('assignee_id', s.id).eq('status', 'BLOCKED');
       const activity = await require('../services/projectService/activity')
         .getActivity14d(s.id).catch(() => []);
+      const referrals = await referralService.getReferralsByUser(s.id).catch(() => null);
       return {
         ...s,
         open_tasks: openTasks || 0,
         blocked_tasks: blocked || 0,
-        activity_14d_total: activity.reduce((sum, d) => sum + d.total, 0)
+        activity_14d_total: activity.reduce((sum, d) => sum + d.total, 0),
+        referral_source: s.referral_source || null,
+        referral_source_url: s.referral_source_url || null,
+        referral_links: referrals || []
       };
     }));
     res.json({ success: true, students });

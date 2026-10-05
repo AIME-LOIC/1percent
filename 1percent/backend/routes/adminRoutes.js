@@ -30,6 +30,8 @@ const adminController = require('../controllers/adminController');
 const analyticsController = require('../controllers/analyticsController');
 const { authenticate, requireAdmin } = require('../middlewares/auth');
 const { sanitizeStrings } = require('../middlewares/validate');
+const referralController = require('../controllers/referralController');
+const logService = require('../services/logService');
 
 const router = Router();
 
@@ -163,5 +165,13 @@ router.post('/email/broadcast', async (req, res) => {
     res.status(400).json({ error: err.message || 'Broadcast failed.' });
   }
 });
+
+// Referrals (admin: view where users heard about us)
+router.get('/referrals', async (req, res, next) => referralController.getAllReferrals(req, res, next));
+// AI connections (admin: view + register new provider client + revoke)
+router.get('/ai/connections', async (req, res) => { await adminController.aiConnectionsList(req, res); });
+router.post('/ai/connections/register', async (req, res) => { await adminController.aiConnectionsRegister(req, res); });
+router.delete('/ai/connections/:id', async (req, res) => { await adminController.aiConnectionsRevoke(req, res); });
+
 
 module.exports = router;

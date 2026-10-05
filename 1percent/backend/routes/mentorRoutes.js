@@ -19,7 +19,9 @@
 const { Router } = require('express');
 const { authenticate, requireRole, requireAdmin } = require('../middlewares/auth');
 const { sanitizeStrings } = require('../middlewares/validate');
-const mentorService = require('../services/mentorService');
+const emailService = require('../services/emailService');
+
+const referralService = require('../services/referralService');
 const logService = require('../services/logService');
 
 const router = Router();
@@ -136,6 +138,58 @@ router.post('/learners/:learnerId/nudge', sanitizeStrings(500), async (req, res)
   } catch (err) {
     console.error('[MENTOR] Nudge error:', err.message);
     res.status(400).json({ error: err.message || 'Failed to send nudge.' });
+  }
+});
+
+// ── Referral: where did they hear from? (mentor-facing) ──
+router.post('/referrals/record', authenticate, sanitizeStrings(1000), async (req, res) => {
+  try {
+    const { source, source_url } = req.body || {};
+    if (!source && !source_url) {
+      return res.status(422).json({ error: 'source or source_url is required.' });
+    }
+    const result = await referralService.recordReferral({
+      userId: req.user.id,
+      source,
+      sourceUrl: source_url
+    });
+    res.json({ success: true, ...result });
+  } catch (err) {
+    console.error('[MENTOR] Referral record error:', err.message);
+    res.status(500).json({ error: 'Failed to record referral.' });
+  }
+});
+
+router.get('/learners/:learnerId/referrals', authenticate, async (req, res) => {
+  try {
+    const { data, error } = await adminClient
+      .from('referral_links')
+      .select('id, source, source_url, clicked_at')
+      .eq('user_id', req.params.learnerId)
+      .order('clicked_at', { ascending: false });
+    if (error) throw error;
+    res.json({ success: true, referrals: data || [] });
+  } catch (err) {
+    console.error('[MENTOR] Referral list error:', err.message);
+    res.status(500).json({ error: 'Failed to load referrals.' });
+  }
+});
+
+/* ── MENTOR EMAIL ──────────────────────────────────────────── */
+router.post('/learners/:learnerId/email', authenticate, sanitizeStrings(3000), async (req, res) => {
+  try {
+    const { subject, body } = req.body || {};
+    if (!subject || !body) {
+      return res.status(422).json({ error: 'subject and body are required.' });
+    }
+    const result = await mentorService.sendLearnerEmail(req.user.id, req.params.learnerId, subject, body);
+    if (result.rateLimited) {
+      return res.status(429).json({ success: true, rateLimited: true });
+    }
+    res.json({ success: true, recipient: result.recipient, sent: result.sent });
+  } catch (err) {
+    console.error('[MENTOR] Email error:', err.message);
+    res.status(400).json({ error: err.message || 'Failed to send email.' });
   }
 });
 

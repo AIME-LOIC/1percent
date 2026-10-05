@@ -96,8 +96,8 @@ const Dashboard = {
       subEl.hidden = false;
       subEl.style.display = '';
     }
-    // Project-assigned students can jump to the Dev UI explicitly
-    if (this._hasProject) {
+    // Free users only reach the Dev UI once their coins hit 1,000.
+    if (this._canDev(this._hasProject, ws?.coins)) {
       const header = document.querySelector('.dash-header');
       if (header && !header.querySelector('#classic-dev-switch')) {
         const btn = document.createElement('button');
@@ -111,15 +111,30 @@ const Dashboard = {
     }
   },
 
+  /* Dev UI is unlocked for project-assigned students or for anyone whose
+     coin balance reaches OPEN_DEV_COINS. */
+  _canDev(hasProject, coins) {
+    return !!hasProject || (typeof coins === 'number' && coins >= Dashboard.OPEN_DEV_COINS);
+  }  /* Dev UI is unlocked for project-assigned students or for anyone whose
+     coin balance reaches OPEN_DEV_COINS. */
+  _canDev(hasProject, coins) {
+    return !!hasProject || (typeof coins === 'number' && coins >= Dashboard.OPEN_DEV_COINS);
+  }
+
   /* Persist a dashboard-mode choice and reload to re-render. */
   _switchMode(val) {
     try { localStorage.setItem('op_dash_choice', val); } catch {}
     location.reload();
   },
 
+  /* Threshold (coins) that frees the Dev dashboard for students who are
+     not otherwise assigned to a project. */
+  static OPEN_DEV_COINS = 1000;
+
   /* One-time "Learn or Dev" picker shown until a choice is stored.
-     Dev stays locked until the student is assigned to a project. */
-  _offerModeChoice(hasProject, mode) {
+     Dev is unlocked once a student is assigned to a project, or once
+     their coin balance reaches OPEN_DEV_COINS. */
+  _offerModeChoice(hasProject, mode, coins = 0) {
     let seen = null;
     try { seen = localStorage.getItem('op_dash_choice'); } catch {}
     if (seen || document.getElementById('op-mode-choice')) return;
@@ -136,11 +151,10 @@ const Dashboard = {
             <span class="mc-ic">🎓</span>
             <b>Learn</b>
             <span>Courses, challenges and certificates.</span>
-          </button>
-          <button type="button" class="mode-choice-card ${hasProject ? '' : 'locked'}" data-mode="dev" ${hasProject ? '' : 'disabled'}>
+          </button>            <button type="button" class="mode-choice-card ${this._canDev(hasProject, coins) ? '' : 'locked'}" data-mode="dev" ${this._canDev(hasProject, coins) ? '' : 'disabled'}>
             <span class="mc-ic">💻</span>
             <b>Dev</b>
-            <span>${hasProject ? 'Projects, tasks and code activity.' : 'Available once you are assigned to a project.'}</span>
+            <span>${this._canDev(hasProject, coins) ? 'Projects, tasks and code activity.' : 'Available once you are assigned to a project or reach 1,000 coins.'}</span>
           </button>
         </div>
         <button type="button" class="mode-choice-dismiss">Continue with ${escapeHTML(mode === 'dev' ? 'Dev' : 'Learn')} →</button>
@@ -370,7 +384,8 @@ const Dashboard = {
     const hasProject = !!ws?.states?.has_project;
     let choice = null;
     try { choice = localStorage.getItem('op_dash_choice'); } catch {}
-    const mode = (hasProject && choice !== 'learn') ? 'dev' : 'classic';
+    const canDev = this._canDev(hasProject, ws?.coins);
+    const mode = (canDev && choice !== 'learn') ? 'dev' : 'classic';
     this._mode = mode;
     this._hasProject = hasProject;
 
@@ -466,7 +481,7 @@ const Dashboard = {
     this._initRatingHandlers();
 
     // One-time Learn/Dev picker (shown until a choice is stored)
-    this._offerModeChoice(hasProject, mode);
+    this._offerModeChoice(hasProject, mode, coins);
   },
 
   /* Learning Progress card: donut = average course progress, rows = real

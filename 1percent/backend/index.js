@@ -50,6 +50,7 @@ const mcpOAuthRoutes = require('./routes/mcpOAuthRoutes');
 const testimonialRoutes = require('./routes/testimonialRoutes');
 const { adminTestimonialRoutes } = require('./routes/testimonialRoutes');
 const { mentorRoutes, adminMentorRoutes } = require('./routes/mentorRoutes');
+const { router: referralRouter, adminReferralRoutes } = require('./routes/referralRoutes');
 const { roboticsClubRouter, roboticsClubAdminRouter } = require('./controllers/roboticsClubController');
 
 // Project system (GitHub App + project engine + business portal)
@@ -345,9 +346,7 @@ app.get('/', (req, res) => {
 
 /* ============================================================
    API ROUTES
-   ============================================================ */
-
-// Health check — also echoes the caller's IP (as the server sees it) so a
+   ============================================================ */  // Health check — also echoes the caller's IP (as the server sees it) so a
 // blocked/locked-out admin can copy the exact address for whitelist/unblock.
 app.get('/api/health', (req, res) => {
   res.json({
@@ -362,8 +361,9 @@ app.get('/api/health', (req, res) => {
 // enumerate DB tables and row counts).
 const { adminClient: diagClient } = require('./config/database');
 const { authenticate, requireAdmin } = require('./middlewares/auth');
-app.get('/api/admin/diagnostics', authenticate, requireAdmin, async (req, res) => {
-  const tables = ['profiles', 'courses', 'lessons', 'enrollments', 'quizzes', 'challenges', 'notifications', 'ratings', 'parent_payments', 'premium_subscriptions', 'streaks', 'user_coins', 'error_logs', 'system_logs', 'admin_alerts'];
+const referralController = require('./controllers/referralController');
+const { listAiConnections, adminRegisterConnection, adminRevokeConnection, listAdminAiConnections } = require('./controllers/aiConnectionsController');
+app.get('/api/admin/diagnostics', authenticate, requireAdmin, async (req, res) => {      const tables = ['profiles', 'courses', 'lessons', 'enrollments', 'quizzes', 'challenges', 'notifications', 'ratings', 'parent_payments', 'premium_subscriptions', 'streaks', 'user_coins', 'error_logs', 'system_logs', 'admin_alerts', 'referral_links'];
   const results = {};
   for (const t of tables) {
     try {
@@ -441,10 +441,14 @@ app.use('/api/testimonials', testimonialRoutes);
 app.use('/api/admin/testimonials', adminTestimonialRoutes);
 app.use('/api/mentor', mentorRoutes);               // mentor: learner progress + weekly shares
 app.use('/api/admin/mentor', adminMentorRoutes);   // admin: roles, assignments, weekly share
+app.use('/api/referral', referralRouter);          // where-did-you-hear-from intake
+app.use('/api/admin/referral', adminReferralRoutes); // admin: view referral links per user
 app.use('/api/logs', logRoutes);
 app.use('/api/admin/logs', adminLogRoutes);
 app.use('/api/robotics-club', roboticsClubRouter);            // student: schools, join, me
 app.use('/api/robotics-club/admin', roboticsClubAdminRouter); // admin: members, notify
+app.use('/api/ai/connections', authenticate, listAiConnections);
+app.use('/api/admin/ai/connections', authenticate, requireAdmin, listAdminAiConnections);
 app.use('/api/docs', docsRoutes);
 app.use('/api/mcp', studentMcpTokenRoutes);
 
