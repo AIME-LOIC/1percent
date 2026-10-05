@@ -1022,36 +1022,39 @@
 
         <div class="settings-section" id="mcp-oauth-manual" hidden>
           <div class="settings-section-header">
-            <h2>Connect your AI</h2>
-            <p>Copy this MCP URL into the AI assistant you want to connect.</p>
+            <h2 id="mcp-connect-title">Connect your AI</h2>
+            <p id="mcp-connect-description">Connect your AI assistant to 1% Learn through a secure MCP connection. Your AI provider handles OAuth; 1% Learn only asks you to sign in and approve the access it requests.</p>
           </div>
           <div class="mcp-steps">
-            <ol>
-              <li>Copy the connector URL below.</li>
-              <li>Open your AI assistant and add a custom MCP connector/server.</li>
-              <li>Paste the URL. The AI will discover the OAuth endpoints and take you to 1% Learn to sign in and approve access.</li>
+            <ol id="mcp-connect-steps">
+              <li>Copy the 1% Learn MCP endpoint below.</li>
+              <li>In your AI assistant, create a custom MCP app/server and paste the endpoint.</li>
+              <li>The AI discovers the OAuth configuration automatically and opens 1% Learn for authentication.</li>
+              <li>Sign in to your 1% Learn account and review the requested permissions.</li>
+              <li>Approve the connection. The AI receives the authorization result and can then use the allowed learning tools.</li>
             </ol>
             <div class="mcp-token-box mcp-url mt-6" style="display:flex;align-items:center;gap:8px;">
               <code id="mcp-connector-url" style="flex:1;overflow-wrap:anywhere;">https://learn.1percent.rw/mcp/student</code>
               <button class="mcp-copy-btn" id="mcp-copy-url" type="button">Copy</button>
             </div>
             <p id="mcp-connector-help" style="font-size:12px;color:var(--text-muted);margin-top:10px;">
-              This URL does not contain your password or OAuth token. Your AI provider handles the OAuth redirect and consent flow.
+              The endpoint contains no password or access token. Never paste your 1% Learn password or OAuth token into an AI chat.
             </p>
           </div>
         </div>
 
-        <div class="settings-section">
+        <div class="settings-section" id="mcp-how-to-connect">
           <div class="settings-section-header">
-            <h2>How to connect</h2>
-            <p>Takes about a minute in claude.ai</p>
+            <h2>How the connection works</h2>
+            <p id="mcp-how-description">The exact setup depends on the AI provider, but the secure OAuth flow is the same.</p>
           </div>
           <div class="mcp-steps">
-            <ol>
-              <li>Click <strong>Connect</strong> on any card above — it opens your provider and asks you to approve access with your 1% Learn account. No keys to copy.</li>
-              <li>On the provider, click <strong>Connect</strong> / <strong>Allow</strong> when prompted.</li>
-              <li>Open a chat with your provider and ask it to help with your current course.</li>
-              <li>To revoke, click <strong>Disconnect</strong> on the card — access is removed immediately.</li>
+            <ol id="mcp-how-steps">
+              <li>Click <strong>Connect</strong> for the AI you want to use.</li>
+              <li>Copy the MCP endpoint shown above.</li>
+              <li>Add it as a custom MCP app/server in the AI provider.</li>
+              <li>Complete the 1% Learn OAuth sign-in and approval when the provider opens it.</li>
+              <li>Return to the AI and use its 1% Learn tools. You can revoke access from this page at any time.</li>
             </ol>
           </div>
         </div>
@@ -1847,14 +1850,52 @@ const STUDENT_MCP_CONNECTOR_URL = window.location.origin + '/mcp/student';
 function showAiConnector(provider) {
   const section = document.getElementById('mcp-oauth-manual');
   const urlEl = document.getElementById('mcp-connector-url');
+  const title = document.getElementById('mcp-connect-title');
+  const description = document.getElementById('mcp-connect-description');
   const help = document.getElementById('mcp-connector-help');
+  const howDescription = document.getElementById('mcp-how-description');
+  const steps = document.getElementById('mcp-how-steps');
   if (!section || !urlEl) return;
 
+  const names = {
+    claude: 'Claude',
+    chatgpt: 'ChatGPT',
+    gemini: 'Gemini'
+  };
+  const name = names[provider] || 'your AI assistant';
+
   urlEl.textContent = STUDENT_MCP_CONNECTOR_URL;
-  if (help) {
-    const name = provider === 'claude' ? 'Claude' : provider === 'chatgpt' ? 'ChatGPT' : provider === 'gemini' ? 'Gemini' : 'your AI assistant';
-    help.textContent = name + ' will open 1% Learn OAuth when it connects. Sign in, approve access, and return to the AI. No password or access token is pasted into the AI URL.';
+  if (title) title.textContent = 'Connect ' + name + ' to 1% Learn';
+  if (description) description.textContent = 'Use 1% Learn as a secure MCP connection for ' + name + '. You add the endpoint to ' + name + '; ' + name + ' handles OAuth and opens 1% Learn when you need to sign in and approve access.';
+  if (help) help.textContent = 'This endpoint contains no password or access token. ' + name + ' will start the OAuth flow after you add the MCP connection.';
+  if (howDescription) howDescription.textContent = 'Follow these steps to connect ' + name + ' without copying a password or OAuth token.';
+  if (steps) {
+    const providerSteps = {
+      claude: [
+        'Copy the 1% Learn MCP endpoint below.',
+        'In Claude, add a custom MCP connector/server and paste the endpoint.',
+        'Claude discovers the OAuth configuration and opens 1% Learn.',
+        'Sign in, review the requested learning permissions, and approve.',
+        'Return to Claude. The connection is now authorized; use the 1% Learn tools in your chat.'
+      ],
+      chatgpt: [
+        'Copy the 1% Learn MCP endpoint below.',
+        'In ChatGPT, open Developer Mode/custom apps and create an MCP app using this endpoint.',
+        'ChatGPT discovers the OAuth configuration and opens 1% Learn.',
+        'Sign in, review the requested learning permissions, and approve.',
+        'Return to ChatGPT and select the connected 1% Learn app when you want to use its learning tools.'
+      ],
+      gemini: [
+        'Copy the 1% Learn MCP endpoint below.',
+        'In Gemini, add the endpoint as a supported custom MCP connection.',
+        'Gemini discovers the OAuth configuration and opens 1% Learn.',
+        'Sign in, review the requested learning permissions, and approve.',
+        'Return to Gemini and use the connected 1% Learn tools.'
+      ]
+    };
+    steps.innerHTML = (providerSteps[provider] || providerSteps.chatgpt).map(step => '<li>' + step + '</li>').join('');
   }
+
   section.hidden = false;
   section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
