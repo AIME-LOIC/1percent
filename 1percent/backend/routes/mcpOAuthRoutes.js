@@ -127,7 +127,7 @@ function sendConsentPage(res, flow) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Connect <%= CLIENT_NAME %> — 1% Expert Programme</title>
+<title>Connect AI assistant — 1% Expert Programme</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
