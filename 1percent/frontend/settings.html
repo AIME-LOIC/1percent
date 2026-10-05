@@ -262,6 +262,354 @@
 .pg-settings-1m55v{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0 20px}
 .pg-settings-12h61{font-weight:400}
 .pg-settings-ccdpv{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap}
+
+/* ============================================================
+   Student Settings — clean UI refinement
+   Visual-only overrides: preserves existing IDs, JS and flows.
+   ============================================================ */
+:root{
+  --settings-shadow:0 1px 2px rgba(15,23,42,.03),0 8px 24px rgba(15,23,42,.035);
+  --settings-shadow-hover:0 8px 26px rgba(15,23,42,.07);
+}
+
+.settings-page{
+  max-width:1240px;
+  padding:32px 28px 96px;
+}
+
+.settings-page::before{
+  font-size:28px;
+  line-height:1.2;
+  margin-bottom:7px;
+  letter-spacing:-.035em;
+}
+
+.settings-page::after{
+  max-width:680px;
+  line-height:1.55;
+  margin-bottom:28px;
+}
+
+.settings-grid{
+  grid-template-columns:238px minmax(0,820px);
+  gap:30px;
+  justify-content:center;
+}
+
+.settings-sidebar{
+  top:78px;
+}
+
+.settings-profile-card{
+  padding:22px 18px;
+  border-radius:16px;
+  box-shadow:var(--settings-shadow);
+}
+
+.settings-avatar{
+  width:68px;
+  height:68px;
+  margin-bottom:13px;
+  box-shadow:0 5px 16px rgba(13,110,63,.16);
+}
+
+.settings-profile-name{
+  font-size:15px;
+  letter-spacing:-.01em;
+}
+
+.settings-profile-email{
+  font-size:11px;
+  line-height:1.45;
+}
+
+.settings-nav{
+  padding:5px;
+  border-radius:15px;
+  box-shadow:var(--settings-shadow);
+}
+
+.settings-nav-item{
+  min-height:40px;
+  padding:9px 11px;
+  margin:2px 0;
+  border:0;
+  border-radius:9px;
+  font-size:12px;
+  gap:9px;
+}
+
+.settings-nav-item:hover{
+  background:var(--surface);
+}
+
+.settings-nav-item.active{
+  background:rgba(13,110,63,.075);
+  color:var(--primary);
+  border:0;
+}
+
+.settings-nav-item svg{
+  width:15px;
+  height:15px;
+  opacity:.8;
+}
+
+.settings-main{
+  min-width:0;
+}
+
+.settings-section{
+  margin-bottom:18px;
+  border-radius:16px;
+  box-shadow:var(--settings-shadow);
+  background:var(--bg-card);
+}
+
+.settings-section-header{
+  padding:22px 24px 18px;
+  border-bottom:1px solid var(--border-light);
+}
+
+.settings-section-header h2{
+  font-size:17px;
+  line-height:1.35;
+  letter-spacing:-.02em;
+}
+
+.settings-section-header p{
+  margin-top:5px;
+  font-size:12px;
+  line-height:1.55;
+}
+
+.settings-field,
+.pref-row{
+  min-height:66px;
+  padding:15px 24px;
+  transition:background .15s ease;
+}
+
+.settings-field:hover,
+.pref-row:hover{
+  background:rgba(13,110,63,.018);
+}
+
+.settings-field-label,
+.pref-label{
+  font-size:12px;
+  font-weight:650;
+  line-height:1.4;
+}
+
+.settings-field-desc,
+.pref-desc{
+  max-width:570px;
+  margin-top:3px;
+  font-size:11px;
+  line-height:1.5;
+}
+
+.settings-input{
+  width:290px;
+  height:40px;
+  padding:0 12px;
+  border-radius:9px;
+  background:var(--bg-card);
+  font-size:12px;
+}
+
+.settings-input:hover:not(:disabled){
+  border-color:#cbd5e1;
+}
+
+.settings-btn{
+  min-height:38px;
+  padding:8px 14px;
+  border-radius:9px;
+  font-size:11px;
+  letter-spacing:.005em;
+  box-shadow:none;
+}
+
+.settings-btn.primary:hover{
+  transform:translateY(-1px);
+}
+
+.settings-btn.outline{
+  background:var(--bg-card);
+}
+
+.settings-rating-widget{
+  padding:20px 24px 22px;
+  gap:11px;
+}
+
+.rating-stars{
+  gap:5px;
+}
+
+.rating-star{
+  font-size:25px;
+  padding:2px;
+}
+
+.rating-feedback{
+  min-height:100px;
+  padding:11px 13px;
+  border-radius:9px;
+  font-size:12px;
+  line-height:1.5;
+}
+
+.legal-link{
+  min-height:68px;
+  padding:14px 24px;
+}
+
+.legal-icon{
+  width:34px;
+  height:34px;
+}
+
+.mfa-enroll-card,
+.mfa-active-card{
+  border-radius:12px;
+}
+
+.mcp-steps{
+  margin:0 24px 22px;
+  padding:18px;
+  border-radius:12px;
+  background:#f6fbf8;
+}
+
+.mcp-steps ol{
+  font-size:11px;
+  line-height:1.55;
+}
+
+.mcp-token-box{
+  min-height:42px;
+  padding:8px 10px 8px 12px;
+  border-radius:9px;
+  font-size:11px;
+}
+
+.mcp-token-box code{
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+
+.mcp-copy-btn{
+  min-height:28px;
+  padding:5px 10px;
+  border-radius:7px;
+  font-weight:600;
+}
+
+.mcp-status-pill{
+  padding:4px 10px;
+  font-size:10px;
+}
+
+.settings-danger-zone{
+  box-shadow:none;
+}
+
+@media(max-width:900px){
+  .settings-page{
+    padding:26px 18px 94px;
+  }
+
+  .settings-grid{
+    grid-template-columns:1fr;
+    gap:16px;
+  }
+
+  .settings-sidebar{
+    position:static;
+  }
+
+  .settings-profile-card{
+    padding:17px;
+  }
+
+  .settings-nav{
+    box-shadow:var(--settings-shadow);
+  }
+}
+
+@media(max-width:600px){
+  .settings-page{
+    padding:20px 12px 90px;
+  }
+
+  .settings-page::before{
+    font-size:23px;
+  }
+
+  .settings-page::after{
+    font-size:12px;
+    margin-bottom:20px;
+  }
+
+  .settings-section{
+    border-radius:13px;
+    margin-bottom:14px;
+  }
+
+  .settings-section-header,
+  .settings-field,
+  .pref-row,
+  .settings-rating-widget,
+  .legal-link{
+    padding-left:16px;
+    padding-right:16px;
+  }
+
+  .settings-section-header{
+    padding-top:18px;
+    padding-bottom:15px;
+  }
+
+  .settings-field{
+    min-height:auto;
+    padding-top:14px;
+    padding-bottom:14px;
+  }
+
+  .settings-field-action{
+    width:100%;
+  }
+
+  .settings-field-action .settings-btn{
+    width:auto;
+  }
+
+  .settings-input{
+    width:100%;
+  }
+
+  .settings-field-action .settings-input{
+    width:100%;
+  }
+
+  .mcp-steps{
+    margin-left:16px;
+    margin-right:16px;
+    padding:14px;
+  }
+
+  .mcp-token-box{
+    align-items:flex-start !important;
+  }
+
+  .mcp-copy-btn{
+    margin-top:1px;
+  }
+}
+
 </style>
 </head>
 <body>
