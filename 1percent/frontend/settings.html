@@ -610,6 +610,57 @@
   }
 }
 
+
+/* AI provider cards — prevent horizontal overflow */
+#tab-claude .settings-field-action.flex-row{
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+}
+
+#tab-claude .settings-field-action.flex-row > .settings-field{
+  flex:1 1 0 !important;
+  min-width:0 !important;
+  max-width:100%;
+  width:100%;
+  box-sizing:border-box;
+  overflow:hidden;
+}
+
+#tab-claude .settings-field-action.flex-row > .settings-field > div{
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+}
+
+#tab-claude .settings-field-action.flex-row > .settings-field > div:nth-child(2){
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+
+#tab-claude .settings-field-action.flex-row > .settings-field > div:first-child{
+  flex-shrink:1;
+}
+
+#tab-claude .settings-field-action.flex-row > .settings-field .settings-field-action{
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+
+@media(max-width:1050px){
+  #tab-claude .settings-field-action.flex-row > .settings-field{
+    flex-basis:calc(50% - 6px) !important;
+  }
+}
+
+@media(max-width:700px){
+  #tab-claude .settings-field-action.flex-row > .settings-field{
+    flex-basis:100% !important;
+  }
+}
+
 </style>
 </head>
 <body>
