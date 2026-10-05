@@ -1,5 +1,5 @@
 ============================================================================
- 1% DIGITAL SOLUTIONS — TECHNICAL PITCH
+ 1PERCENT RWANDA — TECHNICAL PITCH
  learn.1percent.rw · "Building Rwanda's Next Tech Experts"
 ----------------------------------------------------------------------------
  Scope: full system architecture, core algorithms, security engineering,

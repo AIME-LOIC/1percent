@@ -1444,18 +1444,19 @@ function connectProvider(provider) {
     .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   const verifierBytes = crypto.getRandomValues(new Uint8Array(32));
   const verifier = b64url(verifierBytes);
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
-  const challenge = b64url(digest);
-  sessionStorage.setItem('mcp_pkce_verifier_' + provider, verifier);
-
-  const params = new URLSearchParams({
-    client_id: provider + '-client',
-    response_type: 'code',
-    scope: 'read grade',
-    code_challenge: challenge,
-    code_challenge_method: 'S256'
-  });
-  window.location.href = '/mcp/oauth/authorize?' + params.toString();
+  crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))
+    .then(digest => b64url(new Uint8Array(digest)))
+    .then(challenge => {
+      sessionStorage.setItem('mcp_pkce_verifier_' + provider, verifier);
+      const params = new URLSearchParams({
+        client_id: provider + '-client',
+        response_type: 'code',
+        scope: 'read grade',
+        code_challenge: challenge,
+        code_challenge_method: 'S256'
+      });
+      window.location.href = '/mcp/oauth/authorize?' + params.toString();
+    });
 }
 
 document.getElementById('mcp-oauth-btn-claude')?.addEventListener('click', () => connectProvider('claude'));
@@ -1566,7 +1567,10 @@ document.getElementById('mcp-revoke-btn-gemini')?.addEventListener('click', () =
   }
 })();
 
-initSettings();
+(async function initSettingsDelayed() {
+  await new Promise(r => setTimeout(r, 100));
+  initSettings();
+})();
 </script>
 </body>
 </html>

@@ -45,6 +45,31 @@ class MentorService {
     if (aErr || !assignments) return mentors;
     const counts = {};
     assignments.forEach(a => { counts[a.mentor_id] = (counts[a.mentor_id] || 0) + 1; });
+
+    // Referral metadata per mentor's students (admin panel field display)
+    const learnerIds = mentors.map(m => m.id);
+    if (learnerIds.length) {
+      const { data: referralLinks, error: rErr } = await adminClient
+        .from('referral_links')
+        .select('user_id, source, source_url')
+        .in('user_id', learnerIds);
+      if (!rErr && referralLinks) {
+        const linkMap = {};
+        for (const l of referralLinks) {
+          (linkMap[l.user_id] = linkMap[l.user_id] || []).push({
+            source: l.source || '',
+            source_url: l.source_url || '',
+            id: l.id
+          });
+        }
+        for (const m of mentors) {
+          const links = linkMap[m.id] || [];
+          m.referral_source = links.map(l => l.source).filter(Boolean).join(', ') || '';
+          m.referral_source_url = links.map(l => l.source_url).filter(Boolean).join(', ') || '';
+          m.referral_links = links;
+        }
+      }
+    }
     return mentors.map(m => ({ ...m, learner_count: counts[m.id] || 0 }));
   }
 

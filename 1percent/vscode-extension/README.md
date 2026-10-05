@@ -72,4 +72,4 @@ Open Settings (`Ctrl+,`) and search for "1% Learn":
 
 ## License
 
-UNLICENSED — 1% Digital Solutions
+UNLICENSED — 1percent Rwanda

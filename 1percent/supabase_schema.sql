@@ -1,5 +1,5 @@
 -- ============================================================
--- 1% Digital Solutions — Complete Supabase Schema
+-- 1percent Rwanda — Complete Supabase Schema
 -- ============================================================
 -- Run this in the Supabase SQL Editor to bootstrap the DB.
 --

@@ -20,6 +20,7 @@ function _url(path) {
 
 const Dashboard = {
   supabase: null,
+  OPEN_DEV_COINS: 1000,
 
   async init() {
     Modal.init();
@@ -115,11 +116,7 @@ const Dashboard = {
      coin balance reaches OPEN_DEV_COINS. */
   _canDev(hasProject, coins) {
     return !!hasProject || (typeof coins === 'number' && coins >= Dashboard.OPEN_DEV_COINS);
-  }  /* Dev UI is unlocked for project-assigned students or for anyone whose
-     coin balance reaches OPEN_DEV_COINS. */
-  _canDev(hasProject, coins) {
-    return !!hasProject || (typeof coins === 'number' && coins >= Dashboard.OPEN_DEV_COINS);
-  }
+  },
 
   /* Persist a dashboard-mode choice and reload to re-render. */
   _switchMode(val) {
@@ -129,12 +126,12 @@ const Dashboard = {
 
   /* Threshold (coins) that frees the Dev dashboard for students who are
      not otherwise assigned to a project. */
-  static OPEN_DEV_COINS = 1000;
+  // OPEN_DEV_COINS defined at the top of this object literal.
 
   /* One-time "Learn or Dev" picker shown until a choice is stored.
      Dev is unlocked once a student is assigned to a project, or once
      their coin balance reaches OPEN_DEV_COINS. */
-  _offerModeChoice(hasProject, mode, coins = 0) {
+  async _offerModeChoice(hasProject, mode, coins = 0) {
     let seen = null;
     try { seen = localStorage.getItem('op_dash_choice'); } catch {}
     if (seen || document.getElementById('op-mode-choice')) return;

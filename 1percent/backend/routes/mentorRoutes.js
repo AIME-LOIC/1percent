@@ -21,8 +21,10 @@ const { authenticate, requireRole, requireAdmin } = require('../middlewares/auth
 const { sanitizeStrings } = require('../middlewares/validate');
 const emailService = require('../services/emailService');
 
+const mentorService = require('../services/mentorService');
 const referralService = require('../services/referralService');
 const logService = require('../services/logService');
+const { adminClient } = require('../config/database');
 
 const router = Router();
 const adminRouter = Router();

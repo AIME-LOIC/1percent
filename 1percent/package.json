@@ -1,7 +1,7 @@
 {
-  "name": "1percent-digital-solutions",
+  "name": "1percent-rwanda",
   "version": "1.0.0",
-  "description": "1% Digital Solutions — Building Rwanda's Next Tech Experts",
+  "description": "1percent Rwanda — Building Rwanda's Next Tech Experts",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -18,7 +18,7 @@
     "developer-training",
     "fullstack"
   ],
-  "author": "1% Digital Solutions",
+  "author": "1percent Rwanda",
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {

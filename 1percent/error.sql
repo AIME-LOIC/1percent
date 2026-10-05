@@ -1,5 +1,5 @@
 -- ============================================================
--- 1% Digital Solutions — Error Logging, System Logs & Admin Alerts
+-- 1percent Rwanda — Error Logging, System Logs & Admin Alerts
 -- ============================================================
 -- Run this in the Supabase SQL Editor (or `psql`) to bootstrap the
 -- error/observability tables used by the backend.
