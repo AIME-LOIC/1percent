@@ -623,17 +623,22 @@
 
         <div class="settings-section" id="mcp-oauth-manual" hidden>
           <div class="settings-section-header">
-            <h2>Manual setup (if the button didn't open claude.ai)</h2>
-            <p>Custom connector flow — still no secret keys needed</p>
+            <h2>Connect your AI</h2>
+            <p>Copy this MCP URL into the AI assistant you want to connect.</p>
           </div>
           <div class="mcp-steps">
             <ol>
-              <li>Go to <strong>claude.ai → Settings → Connectors → Add custom connector</strong>.</li>
-              <li>Name it <code>1% Learn</code> and paste this URL:
-                <div class="mcp-token-box mcp-url mt-6"><code id="mcp-connector-url">https://learn.1percent.rw/mcp/student</code><button class="mcp-copy-btn" id="mcp-copy-url" type="button">Copy</button></div>
-              </li>
-              <li>Click <strong>Add connector</strong> — Claude will send you here to sign in and approve access.</li>
+              <li>Copy the connector URL below.</li>
+              <li>Open your AI assistant and add a custom MCP connector/server.</li>
+              <li>Paste the URL. The AI will discover the OAuth endpoints and take you to 1% Learn to sign in and approve access.</li>
             </ol>
+            <div class="mcp-token-box mcp-url mt-6" style="display:flex;align-items:center;gap:8px;">
+              <code id="mcp-connector-url" style="flex:1;overflow-wrap:anywhere;">https://learn.1percent.rw/mcp/student</code>
+              <button class="mcp-copy-btn" id="mcp-copy-url" type="button">Copy</button>
+            </div>
+            <p id="mcp-connector-help" style="font-size:12px;color:var(--text-muted);margin-top:10px;">
+              This URL does not contain your password or OAuth token. Your AI provider handles the OAuth redirect and consent flow.
+            </p>
           </div>
         </div>
 
@@ -1433,35 +1438,31 @@ document.getElementById('mcp-oauth-btn')?.addEventListener('click', async () => 
   window.location.href = '/mcp/oauth/authorize?' + params.toString();
 });
 
-/* ── Per-provider connect: PKCE starts HERE so the consent page already
-   has a code_challenge; the panel's state is stored in sessionStorage
-   under mcp_pkce_verifier_<provider>. The login popup returns the
-   verifier, the consent page stores mcpConsentReturn, and the
-   completion handler below exchanges only the code the approved
-   provider sent back. */
-function connectProvider(provider) {
-  const b64url = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)))
-    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-  const verifierBytes = crypto.getRandomValues(new Uint8Array(32));
-  const verifier = b64url(verifierBytes);
-  crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))
-    .then(digest => b64url(new Uint8Array(digest)))
-    .then(challenge => {
-      sessionStorage.setItem('mcp_pkce_verifier_' + provider, verifier);
-      const params = new URLSearchParams({
-        client_id: provider + '-client',
-        response_type: 'code',
-        scope: 'read grade',
-        code_challenge: challenge,
-        code_challenge_method: 'S256'
-      });
-      window.location.href = '/mcp/oauth/authorize?' + params.toString();
-    });
+/* ── AI connector setup ─────────────────────────────────
+   External AI clients (Claude, ChatGPT, Gemini, etc.) should receive
+   the MCP endpoint and start OAuth themselves. Do not complete the
+   OAuth code in the Settings page: the AI client owns the callback.
+   Clicking Connect therefore reveals a copyable MCP URL. */
+const STUDENT_MCP_CONNECTOR_URL = window.location.origin + '/mcp/student';
+
+function showAiConnector(provider) {
+  const section = document.getElementById('mcp-oauth-manual');
+  const urlEl = document.getElementById('mcp-connector-url');
+  const help = document.getElementById('mcp-connector-help');
+  if (!section || !urlEl) return;
+
+  urlEl.textContent = STUDENT_MCP_CONNECTOR_URL;
+  if (help) {
+    const name = provider === 'claude' ? 'Claude' : provider === 'chatgpt' ? 'ChatGPT' : provider === 'gemini' ? 'Gemini' : 'your AI assistant';
+    help.textContent = name + ' will open 1% Learn OAuth when it connects. Sign in, approve access, and return to the AI. No password or access token is pasted into the AI URL.';
+  }
+  section.hidden = false;
+  section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-document.getElementById('mcp-oauth-btn-claude')?.addEventListener('click', () => connectProvider('claude'));
-document.getElementById('mcp-oauth-btn-chatgpt')?.addEventListener('click', () => connectProvider('chatgpt'));
-document.getElementById('mcp-oauth-btn-gemini')?.addEventListener('click', () => connectProvider('gemini'));
+document.getElementById('mcp-oauth-btn-claude')?.addEventListener('click', () => showAiConnector('claude'));
+document.getElementById('mcp-oauth-btn-chatgpt')?.addEventListener('click', () => showAiConnector('chatgpt'));
+document.getElementById('mcp-oauth-btn-gemini')?.addEventListener('click', () => showAiConnector('gemini'));
 
 function revokeProvider(provider) {
   const confirmed = async () => {
@@ -1508,38 +1509,26 @@ document.getElementById('mcp-revoke-btn-claude')?.addEventListener('click', () =
 document.getElementById('mcp-revoke-btn-chatgpt')?.addEventListener('click', () => revokeProvider('chatgpt'));
 document.getElementById('mcp-revoke-btn-gemini')?.addEventListener('click', () => revokeProvider('gemini'));
 
-/* ── Same-origin connect completion ─────────────────────
-   After approving on the consent page, the user is sent back here as
-   /settings?<provider>=connected&code=… — that code must be exchanged
-   at /mcp/oauth/token (with the PKCE verifier stored when Connect was
-   clicked) to activate the server-side connection row. This handler
-   reads which provider approved so each card stays independent. */
-(async function completeMcpConnect() {
+/* ── Legacy same-origin OAuth completion ─────────────────
+   Kept only for old Claude links already in a browser session.
+   New AI connections are completed by the external AI client. */
+(async function completeLegacyMcpConnect() {
   try {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
-    if (!code) return; // normal page load — nothing to complete
+    if (!code) return;
 
-    // Clean the URL FIRST so a refresh can never re-submit the code.
+    const provider = MCP_PROVIDERS.find(p => params.get(p) === 'connected');
+    if (!provider) return;
+
     window.history.replaceState({}, '', '/settings' + (window.location.hash || ''));
-
-    if (params.get('error')) {
-      Toast.warning('Connection cancelled — nothing was changed.');
-      return;
-    }
-
-    // The provider id is the only query param the consent page sent
-    // back with the code (other than state/error).
-    const provider = MCP_PROVIDERS.filter(p => params.has(p + '=connected')).pop();
-    if (!provider) {
-      Toast.warning('Connection finished — nothing to complete.');
-      return;
-    }
-
-    const verifier = sessionStorage.getItem('mcp_pkce_verifier_' + provider);
+    const verifier = sessionStorage.getItem('mcp_pkce_verifier_' + provider)
+      || sessionStorage.getItem('mcp_pkce_verifier');
     sessionStorage.removeItem('mcp_pkce_verifier_' + provider);
+    sessionStorage.removeItem('mcp_pkce_verifier');
+
     if (!verifier) {
-      Toast.error('Connection session lost — click "Connect" again.');
+      Toast.warning('OAuth approval was completed, but this browser has no pending connection session.');
       return;
     }
 
@@ -1549,21 +1538,19 @@ document.getElementById('mcp-revoke-btn-gemini')?.addEventListener('click', () =
       body: JSON.stringify({
         grant_type: 'authorization_code',
         code,
-        client_id: provider + '-client',
+        client_id: provider === 'claude' ? 'claude-ai-connector' : provider + '-client',
         code_verifier: verifier
       })
     });
-    if (!res.ok) {
+    if (res.ok) {
+      Toast.success('Connected to ' + provider + '.');
+      await loadMcpStatus();
+    } else {
       const j = await res.json().catch(() => ({}));
-      Toast.error(j.error_description || j.error || 'Could not finish connecting. Please try again.');
-      return;
+      Toast.error(j.error_description || j.error || 'Could not finish connecting.');
     }
-    // The token row now exists server-side (hashed at rest); the browser
-    // deliberately keeps nothing — Claude/GPT/Gemini use its own OAuth.
-    Toast.success('Connected to ' + provider + '!');
-    await loadMcpStatus();
   } catch (e) {
-    console.error('[SETTINGS] MCP connect completion failed:', e);
+    console.error('[SETTINGS] Legacy MCP connect completion failed:', e);
   }
 })();
 
