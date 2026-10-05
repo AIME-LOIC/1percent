@@ -100,7 +100,8 @@ router.get('/authorize', async (req, res, next) => {
       redirect_uri: redirectUri || '',
       scope: requestedScopes.filter(s => USER_REQUESTABLE_SCOPES.includes(s)).join(' ') || 'read',
       state,
-      code_challenge: codeChallenge
+      code_challenge: codeChallenge,
+      client_name: (await mcpOAuthService.findClient(clientId))?.client_name || null
     });
   } catch (err) {
     next(err);
@@ -126,7 +127,7 @@ function sendConsentPage(res, flow) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Connect Claude — 1% Expert Programme</title>
+<title>Connect <%= CLIENT_NAME %> — 1% Expert Programme</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -161,8 +162,8 @@ function sendConsentPage(res, flow) {
   <div class="consent-wrap">
     <div class="consent-card">
       <div class="consent-logo">1%</div>
-      <h1>Connect Claude to 1% Learn</h1>
-      <div class="sub">claude.ai is requesting read access to your learning data</div>
+      <h1>Connect <span id="client-name">AI assistant</span> to 1% Learn</h1>
+      <div class="sub"><span id="client-name-sub">Your AI assistant</span> is requesting access to your learning data</div>
 
       <div class="consent-user" id="consent-user" style="display:none;"></div>
       <div class="consent-err" id="consent-err"></div>
@@ -170,7 +171,7 @@ function sendConsentPage(res, flow) {
 
       <form id="consent-form" style="display:none;">
         <div class="consent-scope">
-          <div class="t">Claude will be able to:</div>
+          <div class="t"><span id="client-name-scope">Your AI assistant</span> will be able to:</div>
           <ul id="scope-list"></ul>
         </div>
         <div class="consent-actions">
@@ -178,7 +179,7 @@ function sendConsentPage(res, flow) {
           <button type="submit" class="consent-btn approve" id="consent-approve">Approve</button>
         </div>
         <div class="consent-note">You are approving on your own account — no keys or tokens to copy.
-        You can disconnect anytime from Settings → Connect to Claude.</div>
+        You can disconnect anytime from Settings → AI connections.</div>
       </form>
     </div>
   </div>
@@ -187,6 +188,13 @@ function sendConsentPage(res, flow) {
 const FLOW = JSON.parse(new TextDecoder().decode(
   Uint8Array.from(atob("${payload}"), c => c.charCodeAt(0))
 ));
+const CLIENT_NAME = FLOW.client_name || (FLOW.client_id === "claude-ai-connector" ? "Claude" : "AI assistant");
+const CLIENT_NAME_LOWER = CLIENT_NAME.toLowerCase();
+document.title = "Connect " + CLIENT_NAME + " — 1% Expert Programme";
+document.getElementById("client-name").textContent = CLIENT_NAME;
+document.getElementById("client-name-sub").textContent = CLIENT_NAME;
+document.getElementById("client-name-scope").textContent = CLIENT_NAME;
+
 const SCOPE_TEXT = {
   read:  'View your courses, progress, coins, streak, certificates, and lesson content (read-only).',
   grade: 'Dry-run your draft code against the practice grader — never submits work or earns coins.'
