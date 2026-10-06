@@ -18,34 +18,14 @@
 -- RE-RUNNABLE: deletes the course by slug first (including its
 -- challenges/lessons), then re-inserts everything fresh.
 --
--- NOTE: variables are prefixed v_ on purpose — a variable named
--- `course_id` collides with the challenges.course_id column inside
--- PL/pgSQL ("column reference is ambiguous").
+-- FORMAT NOTE: this file is 100% plain SQL — no DO blocks, no
+-- dollar-quoting, no PL/pgSQL, and no apostrophes in comments. The
+-- Supabase SQL Editor pre-processor can mis-split dollar-quoted blocks
+-- and expose content words as SQL identifiers, so the course uses a
+-- fixed UUID and plain statements only. The fixed course UUID is safe:
+-- the DELETE below removes any previous version before the INSERT
+-- re-uses it.
 
-DO $$
-DECLARE
-  v_course_id UUID := uuid_generate_v4();
-  v_l1  UUID := uuid_generate_v4();
-  v_l2  UUID := uuid_generate_v4();
-  v_l3  UUID := uuid_generate_v4();
-  v_l4  UUID := uuid_generate_v4();
-  v_l5  UUID := uuid_generate_v4();
-  v_l6  UUID := uuid_generate_v4();
-  v_l7  UUID := uuid_generate_v4();
-  v_l8  UUID := uuid_generate_v4();
-  v_l9  UUID := uuid_generate_v4();
-  v_l10 UUID := uuid_generate_v4();
-  v_l11 UUID := uuid_generate_v4();
-  v_l12 UUID := uuid_generate_v4();
-  v_l13 UUID := uuid_generate_v4();
-  v_l14 UUID := uuid_generate_v4();
-  v_l15 UUID := uuid_generate_v4();
-  v_l16 UUID := uuid_generate_v4();
-  v_l17 UUID := uuid_generate_v4();
-  v_l18 UUID := uuid_generate_v4();
-  v_l19 UUID := uuid_generate_v4();
-  v_l20 UUID := uuid_generate_v4();
-BEGIN
   -- Make re-runs safe: drop any previous version of this course.
   -- Challenges must be deleted explicitly: their FK is ON DELETE SET NULL,
   -- so deleting only the course would leave them orphaned.
@@ -61,7 +41,7 @@ BEGIN
     id, slug, title, description, icon, level, duration_weeks,
     is_published, sort_order
   ) VALUES (
-    v_course_id,
+    '00000000-0000-4000-8000-0000000000da',
     'dsa-leetcode-playbook',
     'Data Structures & Algorithms: The LeetCode Playbook',
     'Master the 20 core patterns behind almost every LeetCode problem — two pointers, sliding window, binary search, trees, heaps, backtracking, graphs and dynamic programming — by reading tight pattern notes and solving real auto-graded challenges in Python.',
@@ -77,58 +57,362 @@ BEGIN
   VALUES
   -- ── Lesson 1 ──────────────────────────────────────────────
   (
-    v_l1, v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Big-O: Measure Code Before It Runs',
     'Learn to read the cost of an algorithm: time, space, and the nested-loop trap.',
-    E'## What you''ll learn\n\nLeetCode gives every problem a hidden **time limit**. Big-O is how you know, before you press Submit, whether your idea can survive a 10⁵-element input.\n\n## Concepts\n\n- **Big-O** = how work grows as input `n` grows. Constants are ignored: `3n` is just `O(n)`.\n- **O(1)** constant — dict lookup, stack push, array index\n- **O(log n)** — binary search: each step halves the input\n- **O(n)** — one pass over the data\n- **O(n log n)** — good sorting (Python `sorted()`)\n- **O(n²)** — nested loops over the same data (10⁵ input ⇒ ~10¹⁰ steps ⇒ TLE)\n- **O(2ⁿ)** — naive subsets/recursion without memoization\n- **Space** counts too: a dict of n items is O(n) extra memory.\n\n## Worked example\n\n```python\n# O(n^2): for each element, rescan the array\nnums = [2, 7, 11, 15]\nfor i in range(len(nums)):\n    for j in range(i + 1, len(nums)):\n        if nums[i] + nums[j] == 9:\n            print(i, j)\n\n# O(n): remember what you have seen in a dict\nseen = {}\nfor i, x in enumerate(nums):\n    if 9 - x in seen:\n        print(seen[9 - x], i)\n    seen[x] = i\n```\n\nBoth print `0 1`, but on an input of 100,000 numbers the first version does ~5 billion comparisons; the second does 100,000 dict operations. Same answer, different planet.\n\n> **Ask:** how many steps does this take?\n>\n> ```python\n> for i in range(n):\n>     j = 1\n>     while j < n:\n>         j *= 2\n> ```\n>\n> The outer loop is O(n), the inner halves (doubles) — O(log n) per outer step. Total: **O(n log n)**. Multiply loops, do not add them.\n\n## Complexity table you will reuse forever\n\n| Structure | Lookup | Insert | Delete |\n|---|---|---|---|\n| list | O(n) | O(1) end | O(n) middle |\n| dict / set | O(1) | O(1) | O(1) |\n| sorted list + bisect | O(log n) | O(n) | O(n) |\n| heap (heapq) | O(1) peek | O(log n) | O(log n) pop-min |\n\n## LeetCode reps\n\n- LC 1 Two Sum (easy) — the O(n²) → O(n) upgrade this lesson taught\n- LC 509 Fibonacci Number (easy) — feel O(2ⁿ) vs O(n)\n\n## Modify-this exercise\n\nRewrite the O(n²) triple-loop version of 3Sum (check all pairs of `i, j` plus `k`) in your head and write down its Big-O. Then predict: is O(n²) acceptable on LeetCode when `n ≤ 3000`? (Yes — ~9 million steps. Acceptance depends on n, not on the letter.)',
+    '## What you''ll learn
+
+LeetCode gives every problem a hidden **time limit**. Big-O is how you know, before you press Submit, whether your idea can survive a 10⁵-element input.
+
+## Concepts
+
+- **Big-O** = how work grows as input `n` grows. Constants are ignored: `3n` is just `O(n)`.
+- **O(1)** constant — dict lookup, stack push, array index
+- **O(log n)** — binary search: each step halves the input
+- **O(n)** — one pass over the data
+- **O(n log n)** — good sorting (Python `sorted()`)
+- **O(n²)** — nested loops over the same data (10⁵ input ⇒ ~10¹⁰ steps ⇒ TLE)
+- **O(2ⁿ)** — naive subsets/recursion without memoization
+- **Space** counts too: a dict of n items is O(n) extra memory.
+
+## Worked example
+
+```python
+# O(n^2): for each element, rescan the array
+nums = [2, 7, 11, 15]
+for i in range(len(nums)):
+    for j in range(i + 1, len(nums)):
+        if nums[i] + nums[j] == 9:
+            print(i, j)
+
+# O(n): remember what you have seen in a dict
+seen = {}
+for i, x in enumerate(nums):
+    if 9 - x in seen:
+        print(seen[9 - x], i)
+    seen[x] = i
+```
+
+Both print `0 1`, but on an input of 100,000 numbers the first version does ~5 billion comparisons — the second does 100,000 dict operations. Same answer, different planet.
+
+> **Ask:** how many steps does this take?
+>
+> ```python
+> for i in range(n):
+>     j = 1
+>     while j < n:
+>         j *= 2
+> ```
+>
+> The outer loop is O(n), the inner halves (doubles) — O(log n) per outer step. Total: **O(n log n)**. Multiply loops, do not add them.
+
+## Complexity table you will reuse forever
+
+| Structure | Lookup | Insert | Delete |
+|---|---|---|---|
+| list | O(n) | O(1) end | O(n) middle |
+| dict / set | O(1) | O(1) | O(1) |
+| sorted list + bisect | O(log n) | O(n) | O(n) |
+| heap (heapq) | O(1) peek | O(log n) | O(log n) pop-min |
+
+## LeetCode reps
+
+- LC 1 Two Sum (easy) — the O(n²) → O(n) upgrade this lesson taught
+- LC 509 Fibonacci Number (easy) — feel O(2ⁿ) vs O(n)
+
+## Modify-this exercise
+
+Rewrite the O(n²) triple-loop version of 3Sum (check all pairs of `i, j` plus `k`) in your head and write down its Big-O. Then predict: is O(n²) acceptable on LeetCode when `n ≤ 3000`? (Yes — ~9 million steps. Acceptance depends on n, not on the letter.)',
     'reading', 35, 1, true
   ),
   -- ── Lesson 2 ──────────────────────────────────────────────
   (
-    v_l2, v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Arrays & Hashing: The 80/20 Pattern',
     'Trade memory for speed: the frequency-map pattern behind dozens of easy problems.',
-    E'## What you''ll learn\n\nThe single most useful trick on LeetCode: **when you find yourself rescanning the array, remember what you already saw in a dict.**\n\n## Concepts\n\n- `seen = {}` — map value → index (or value → count)\n- `collections.Counter(nums)` — frequency table in one line\n- `set(nums)` — O(1) membership tests, dedupe\n- The **complement question**: instead of searching for a pair, for each `x` ask "have I already seen `target - x`?"\n\n## Worked example\n\n```python\nfrom collections import Counter\n\nnums = [1, 1, 1, 2, 2, 3]\ncounts = Counter(nums)\nprint(counts[1])        # 3\nprint(counts.most_common(2))  # [(1, 3), (2, 2)]\n\n# Two Sum — the complement pattern\nnums = [2, 7, 11, 15]\ntarget = 9\nseen = {}\nfor i, x in enumerate(nums):\n    if target - x in seen:\n        print(seen[target - x], i)   # 0 1\n    seen[x] = i\n```\n\n## The pattern, in one sentence\n\n> **If brute force is "check every pair", store one side of the pair in a dict and look the other side up in O(1).**\n\nThis one move converts O(n²) into O(n) for: Two Sum, Contains Duplicate, Valid Anagram, Group Anagrams (key = sorted string or 26-count tuple), Top K Frequent, Two Sum on sorted arrays with a twist, Subarray Sum Equals K (with prefix sums — Lesson 5).\n\n> **Ask:** why store `seen[x] = i` *after* the lookup?\n>\n> So you never pair an element with itself. If you stored first, `target = 2x` would wrongly match index `i` with index `i`.\n\n## LeetCode reps\n\n- LC 1 Two Sum (easy) · LC 217 Contains Duplicate (easy)\n- LC 242 Valid Anagram (easy) · LC 49 Group Anagrams (medium)\n- LC 347 Top K Frequent Elements (medium)\n\n## Modify-this exercise\n\nGiven `s = "aacc"` and `t = "ccac"`, decide with pen and paper what `Counter(s) == Counter(t)` returns — then check in Python. Anagram means same **counts**, not same set.',
+    '## What you''ll learn
+
+The single most useful trick on LeetCode: **when you find yourself rescanning the array, remember what you already saw in a dict.**
+
+## Concepts
+
+- `seen = {}` — map value → index (or value → count)
+- `collections.Counter(nums)` — frequency table in one line
+- `set(nums)` — O(1) membership tests, dedupe
+- The **complement question**: instead of searching for a pair, for each `x` ask "have I already seen `target - x`?"
+
+## Worked example
+
+```python
+from collections import Counter
+
+nums = [1, 1, 1, 2, 2, 3]
+counts = Counter(nums)
+print(counts[1])        # 3
+print(counts.most_common(2))  # [(1, 3), (2, 2)]
+
+# Two Sum — the complement pattern
+nums = [2, 7, 11, 15]
+target = 9
+seen = {}
+for i, x in enumerate(nums):
+    if target - x in seen:
+        print(seen[target - x], i)   # 0 1
+    seen[x] = i
+```
+
+## The pattern, in one sentence
+
+> **If brute force is "check every pair", store one side of the pair in a dict and look the other side up in O(1).**
+
+This one move converts O(n²) into O(n) for: Two Sum, Contains Duplicate, Valid Anagram, Group Anagrams (key = sorted string or 26-count tuple), Top K Frequent, Two Sum on sorted arrays with a twist, Subarray Sum Equals K (with prefix sums — Lesson 5).
+
+> **Ask:** why store `seen[x] = i` *after* the lookup?
+>
+> So you never pair an element with itself. If you stored first, `target = 2x` would wrongly match index `i` with index `i`.
+
+## LeetCode reps
+
+- LC 1 Two Sum (easy) · LC 217 Contains Duplicate (easy)
+- LC 242 Valid Anagram (easy) · LC 49 Group Anagrams (medium)
+- LC 347 Top K Frequent Elements (medium)
+
+## Modify-this exercise
+
+Given `s = "aacc"` and `t = "ccac"`, decide with pen and paper what `Counter(s) == Counter(t)` returns — then check in Python. Anagram means same **counts**, not same set.',
     'reading', 30, 2, true
   ),
   -- ── Lesson 3 ──────────────────────────────────────────────
   (
-    v_l3, v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Two Pointers: Converging & Fast/Slow',
     'Squeeze an array from both ends, or walk it at two speeds — O(n) where loops met O(n²).',
-    E'## What you''ll learn\n\nTwo pointers turn many "scan all pairs" problems into a **single coordinated pass**. Two flavours:\n\n- **Converging** — one pointer at each end, move them toward each other\n- **Fast/slow** — both start at the head, one moves twice as fast (cycles, middles)\n\n## Concepts\n\n- Converging works on **sorted** (or symmetric) data — the sorted order tells you which pointer to move\n- `left, right = 0, len(a) - 1` then `while left < right:`\n- Fast/slow finds a cycle (Floyd) or the middle in one pass, no extra memory\n\n## Worked example\n\n```python\n# Pair with target sum in a SORTED array — O(n)\nnums = [2, 7, 11, 15]\ntarget = 9\nleft, right = 0, len(nums) - 1\nwhile left < right:\n    s = nums[left] + nums[right]\n    if s == target:\n        print(left, right)      # 0 3 -> wait, 2+15=17; real answer below\n        break\n    elif s < target:\n        left += 1               # sum too small: need a bigger left value\n    else:\n        right -= 1              # sum too big: shrink the right value\n\n# Palindrome check — the same skeleton, symmetric data\ntext = "racecar"\nleft, right = 0, len(text) - 1\nis_pal = True\nwhile left < right:\n    if text[left] != text[right]:\n        is_pal = False\n        break\n    left += 1\n    right -= 1\nprint(is_pal)   # True\n```\n\n> **Ask:** in the sorted-pair loop, why is it safe to move exactly one pointer per step?\n>\n> Because the array is sorted: if `nums[left] + nums[right]` is too small, no right value can fix it *for this left* — left must grow. Every step discards one impossible pair for good. That is the proof of O(n).\n\n## LeetCode reps\n\n- LC 167 Two Sum II (medium) · LC 125 Valid Palindrome (easy)\n- LC 11 Container With Most Water (medium) · LC 15 3Sum (medium)\n- LC 141 Linked List Cycle (easy) · LC 283 Move Zeroes (easy)\n\n## Modify-this exercise\n\n3Sum = fix `i`, then run the converging pair-search on `i+1..end`. Write down (no code yet) what the total complexity is: O(n) per fix × n fixes = **O(n²)** — the accepted solution.',
+    '## What you''ll learn
+
+Two pointers turn many "scan all pairs" problems into a **single coordinated pass**. Two flavours:
+
+- **Converging** — one pointer at each end, move them toward each other
+- **Fast/slow** — both start at the head, one moves twice as fast (cycles, middles)
+
+## Concepts
+
+- Converging works on **sorted** (or symmetric) data — the sorted order tells you which pointer to move
+- `left, right = 0, len(a) - 1` then `while left < right:`
+- Fast/slow finds a cycle (Floyd) or the middle in one pass, no extra memory
+
+## Worked example
+
+```python
+# Pair with target sum in a SORTED array — O(n)
+nums = [2, 7, 11, 15]
+target = 9
+left, right = 0, len(nums) - 1
+while left < right:
+    s = nums[left] + nums[right]
+    if s == target:
+        print(left, right)      # 0 3 -> wait, 2+15=17 — real answer below
+        break
+    elif s < target:
+        left += 1               # sum too small: need a bigger left value
+    else:
+        right -= 1              # sum too big: shrink the right value
+
+# Palindrome check — the same skeleton, symmetric data
+text = "racecar"
+left, right = 0, len(text) - 1
+is_pal = True
+while left < right:
+    if text[left] != text[right]:
+        is_pal = False
+        break
+    left += 1
+    right -= 1
+print(is_pal)   # True
+```
+
+> **Ask:** in the sorted-pair loop, why is it safe to move exactly one pointer per step?
+>
+> Because the array is sorted: if `nums[left] + nums[right]` is too small, no right value can fix it *for this left* — left must grow. Every step discards one impossible pair for good. That is the proof of O(n).
+
+## LeetCode reps
+
+- LC 167 Two Sum II (medium) · LC 125 Valid Palindrome (easy)
+- LC 11 Container With Most Water (medium) · LC 15 3Sum (medium)
+- LC 141 Linked List Cycle (easy) · LC 283 Move Zeroes (easy)
+
+## Modify-this exercise
+
+3Sum = fix `i`, then run the converging pair-search on `i+1..end`. Write down (no code yet) what the total complexity is: O(n) per fix × n fixes = **O(n²)** — the accepted solution.',
     'reading', 35, 3, true
   ),
   -- ── Lesson 4 ──────────────────────────────────────────────
   (
-    v_l4, v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Sliding Window: Grow and Shrink',
     'Turn "check every substring/subarray" into one O(n) sweep with a window that breathes.',
-    E'## What you''ll learn\n\nWhenever a problem says **contiguous** subarray/substring with some constraint (max sum, no repeats, at most K distinct…), think sliding window.\n\n## Concepts\n\n- **Fixed window** — size `k` known: slide one step at a time, add the new element, drop the old\n- **Variable window** — grow `right` always; shrink `left` while the window breaks the rule\n- Keep window state in a dict/Counter so every check is O(1)\n- Each index enters and leaves the window at most once ⇒ **O(n)** total, despite the nested while\n\n## Worked example\n\n```python\n# Fixed: max sum of any k consecutive elements\nnums, k = [1, 8, 3, 2, 9, 4], 3\nwindow = sum(nums[:k])\nbest = window\nfor right in range(k, len(nums)):\n    window += nums[right] - nums[right - k]   # slide one step\n    best = max(best, window)\nprint(best)   # 15 -> [3, 2, 9]... check: 2+9+4=15 too; [8,3,2]=13\n\n# Variable: longest substring without repeating characters\ns = "abcabcbb"\nlast_seen = {}\nleft = best = 0\nfor right, ch in enumerate(s):\n    if ch in last_seen and last_seen[ch] >= left:\n        left = last_seen[ch] + 1          # jump past the previous ch\n    last_seen[ch] = right\n    best = max(best, right - left + 1)\nprint(best)   # 3\n```\n\n> **Ask:** why does the shrinking while-loop not make it O(n²)?\n>\n> `left` only ever moves **forward**, at most n times total across the whole run. The while repeats are paid for by earlier forward movement — this is *amortized* O(n). Two indexes, one pass, never backwards.\n\n## LeetCode reps\n\n- LC 643 Maximum Average Subarray I (easy) · LC 3 Longest Substring Without Repeating (medium)\n- LC 76 Minimum Window Substring (hard) · LC 424 Longest Repeating Character Replacement (medium)\n- LC 904 Fruit Into Baskets (medium) — "at most 2 distinct", the template verbatim\n\n## Modify-this exercise\n\nChange the variable-window template to solve "longest subarray with at most K distinct" for `nums = [1,2,1,2,3]`, `K = 2`. (Answer: 4 — `[1,2,1,2]`.) The only edit: the window state becomes a Counter and you shrink while `len(counter) > K`.',
+    '## What you''ll learn
+
+Whenever a problem says **contiguous** subarray/substring with some constraint (max sum, no repeats, at most K distinct…), think sliding window.
+
+## Concepts
+
+- **Fixed window** — size `k` known: slide one step at a time, add the new element, drop the old
+- **Variable window** — grow `right` always — shrink `left` while the window breaks the rule
+- Keep window state in a dict/Counter so every check is O(1)
+- Each index enters and leaves the window at most once ⇒ **O(n)** total, despite the nested while
+
+## Worked example
+
+```python
+# Fixed: max sum of any k consecutive elements
+nums, k = [1, 8, 3, 2, 9, 4], 3
+window = sum(nums[:k])
+best = window
+for right in range(k, len(nums)):
+    window += nums[right] - nums[right - k]   # slide one step
+    best = max(best, window)
+print(best)   # 15 -> [3, 2, 9]... check: 2+9+4=15 too — [8,3,2]=13
+
+# Variable: longest substring without repeating characters
+s = "abcabcbb"
+last_seen = {}
+left = best = 0
+for right, ch in enumerate(s):
+    if ch in last_seen and last_seen[ch] >= left:
+        left = last_seen[ch] + 1          # jump past the previous ch
+    last_seen[ch] = right
+    best = max(best, right - left + 1)
+print(best)   # 3
+```
+
+> **Ask:** why does the shrinking while-loop not make it O(n²)?
+>
+> `left` only ever moves **forward**, at most n times total across the whole run. The while repeats are paid for by earlier forward movement — this is *amortized* O(n). Two indexes, one pass, never backwards.
+
+## LeetCode reps
+
+- LC 643 Maximum Average Subarray I (easy) · LC 3 Longest Substring Without Repeating (medium)
+- LC 76 Minimum Window Substring (hard) · LC 424 Longest Repeating Character Replacement (medium)
+- LC 904 Fruit Into Baskets (medium) — "at most 2 distinct", the template verbatim
+
+## Modify-this exercise
+
+Change the variable-window template to solve "longest subarray with at most K distinct" for `nums = [1,2,1,2,3]`, `K = 2`. (Answer: 4 — `[1,2,1,2]`.) The only edit: the window state becomes a Counter and you shrink while `len(counter) > K`.',
     'reading', 40, 4, true
   ),
   -- ── Lesson 5 ──────────────────────────────────────────────
   (
-    v_l5, v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Prefix Sums: Precompute, Then Ask in O(1)',
     'Running totals convert range questions and subarray-target problems into dict lookups.',
-    E'## What you''ll learn\n\nA **prefix sum** is a running total. It answers any range-sum question in O(1) — and paired with a dict, it counts subarrays that hit an exact target.\n\n## Concepts\n\n- `prefix[i] = nums[0] + … + nums[i-1]`; range sum `i..j` = `prefix[j+1] - prefix[i]`\n- **The key identity**: subarray `i+1..j` sums to `k` ⇔ `prefix[j] - prefix[i] == k` ⇔ `prefix[i] == prefix[j] - k`\n- So while scanning, store each running sum in a dict (sum → how many times seen) and look up `current - k`\n\n## Worked example\n\n```python\n# Range sums in O(1) after O(n) prep\nnums = [3, 1, 4, 1, 5]\nprefix = [0]\nfor x in nums:\n    prefix.append(prefix[-1] + x)\nprint(prefix[4] - prefix[1])   # sum of nums[1..3] = 1+4+1 = 6\n\n# Subarray Sum Equals K — LC 560\nnums, k = [1, 1, 1], 2\ncount = 0\nseen = {0: 1}          # empty prefix sums to 0, once\nrun = 0\nfor x in nums:\n    run += x\n    count += seen.get(run - k, 0)   # earlier prefixes that complete a k-subarray\n    seen[run] = seen.get(run, 0) + 1\nprint(count)   # 2\n```\n\n> **Ask:** why does `seen = {0: 1}` fix the "subarray starts at index 0" case?\n>\n> A subarray `0..j` sums to k when `prefix[j] == k` — i.e. when `run - k == 0`. Seeding the dict with `{0: 1}` makes that lookup succeed without special-casing the start.\n\n## LeetCode reps\n\n- LC 303 Range Sum Query (easy) · LC 560 Subarray Sum Equals K (medium)\n- LC 525 Contiguous Array (medium) · LC 974 Subarray Sums Divisible by K (medium)\n- LC 238 Product of Array Except Self (medium) — same prefix idea, multiplied\n\n## Modify-this exercise\n\nCompute the prefix array of `[2, -1, 3, 5]` on paper, then verify: what is `sum(nums[1..2])` via prefixes? (-1+3 = 2 = `prefix[3] - prefix[1]` = 4 - 2.)',
+    '## What you''ll learn
+
+A **prefix sum** is a running total. It answers any range-sum question in O(1) — and paired with a dict, it counts subarrays that hit an exact target.
+
+## Concepts
+
+- `prefix[i] = nums[0] + … + nums[i-1]` — range sum `i..j` = `prefix[j+1] - prefix[i]`
+- **The key identity**: subarray `i+1..j` sums to `k` ⇔ `prefix[j] - prefix[i] == k` ⇔ `prefix[i] == prefix[j] - k`
+- So while scanning, store each running sum in a dict (sum → how many times seen) and look up `current - k`
+
+## Worked example
+
+```python
+# Range sums in O(1) after O(n) prep
+nums = [3, 1, 4, 1, 5]
+prefix = [0]
+for x in nums:
+    prefix.append(prefix[-1] + x)
+print(prefix[4] - prefix[1])   # sum of nums[1..3] = 1+4+1 = 6
+
+# Subarray Sum Equals K — LC 560
+nums, k = [1, 1, 1], 2
+count = 0
+seen = {0: 1}          # empty prefix sums to 0, once
+run = 0
+for x in nums:
+    run += x
+    count += seen.get(run - k, 0)   # earlier prefixes that complete a k-subarray
+    seen[run] = seen.get(run, 0) + 1
+print(count)   # 2
+```
+
+> **Ask:** why does `seen = {0: 1}` fix the "subarray starts at index 0" case?
+>
+> A subarray `0..j` sums to k when `prefix[j] == k` — i.e. when `run - k == 0`. Seeding the dict with `{0: 1}` makes that lookup succeed without special-casing the start.
+
+## LeetCode reps
+
+- LC 303 Range Sum Query (easy) · LC 560 Subarray Sum Equals K (medium)
+- LC 525 Contiguous Array (medium) · LC 974 Subarray Sums Divisible by K (medium)
+- LC 238 Product of Array Except Self (medium) — same prefix idea, multiplied
+
+## Modify-this exercise
+
+Compute the prefix array of `[2, -1, 3, 5]` on paper, then verify: what is `sum(nums[1..2])` via prefixes? (-1+3 = 2 = `prefix[3] - prefix[1]` = 4 - 2.)',
     'reading', 30, 5, true
   ),
   -- ── Lesson 6 ──────────────────────────────────────────────
   (
-    v_l6, v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Stack I: Matching, Undo, Nesting',
     'Last-in-first-out is how code reads brackets, undoes moves, and remembers history.',
-    E'## What you''ll learn\n\nA **stack** (LIFO) is the structure for anything that must match the *most recent* open item: brackets, undo, backspacing, iterated paths.\n\n## Concepts\n\n- `stack = []`, push = `append`, pop = `pop()` — all O(1)\n- **Matching pattern**: push openers, pop-and-verify on closers\n- Valid ⇔ every closer matches the latest opener AND the stack ends empty\n\n## Worked example\n\n```python\ns = "([{}])"\npairs = {")": "(", "]": "[", "}": "{"}\nstack = []\nvalid = True\nfor ch in s:\n    if ch in pairs:                      # a closer\n        if not stack or stack.pop() != pairs[ch]:\n            valid = False\n            break\n    else:                                # an opener\n        stack.append(ch)\nif stack:                                # leftovers never closed\n    valid = False\nprint(valid)   # True\n```\n\n> **Ask:** what does the string `"(("` produce? And `"())"`?\n>\n> `"(("` leaves a non-empty stack → invalid. `"())"` pops `(`, then pops from an **empty** stack → invalid. Both failure modes are handled: empty-at-pop, and non-empty-at-end. Miss either and the solution is wrong.\n\n## Where else the stack appears\n\n- LC 71 Simplify Path — split by `/`, `..` pops\n- LC 844 Backspace String Compare — `#` pops\n- LC 20 Valid Parentheses, LC 1047 Remove All Adjacent Duplicates — matching verbatim\n- Nested iteration (iterators, DFS with an explicit stack — Lesson 16)\n\n## LeetCode reps\n\n- LC 20 Valid Parentheses (easy) · LC 1047 Remove All Adjacent Duplicates (easy)\n- LC 844 Backspace String Compare (easy) · LC 71 Simplify Path (medium)\n\n## Modify-this exercise\n\nExtend the matcher so `"*"` means "any single character is fine": make `"([*])"` and `"(*)"` both valid. (Hint: when popping, accept the match OR a `*`.)',
+    '## What you''ll learn
+
+A **stack** (LIFO) is the structure for anything that must match the *most recent* open item: brackets, undo, backspacing, iterated paths.
+
+## Concepts
+
+- `stack = []`, push = `append`, pop = `pop()` — all O(1)
+- **Matching pattern**: push openers, pop-and-verify on closers
+- Valid ⇔ every closer matches the latest opener AND the stack ends empty
+
+## Worked example
+
+```python
+s = "([{}])"
+pairs = {")": "(", "]": "[", "}": "{"}
+stack = []
+valid = True
+for ch in s:
+    if ch in pairs:                      # a closer
+        if not stack or stack.pop() != pairs[ch]:
+            valid = False
+            break
+    else:                                # an opener
+        stack.append(ch)
+if stack:                                # leftovers never closed
+    valid = False
+print(valid)   # True
+```
+
+> **Ask:** what does the string `"(("` produce? And `"())"`?
+>
+> `"(("` leaves a non-empty stack → invalid. `"())"` pops `(`, then pops from an **empty** stack → invalid. Both failure modes are handled: empty-at-pop, and non-empty-at-end. Miss either and the solution is wrong.
+
+## Where else the stack appears
+
+- LC 71 Simplify Path — split by `/`, `..` pops
+- LC 844 Backspace String Compare — `#` pops
+- LC 20 Valid Parentheses, LC 1047 Remove All Adjacent Duplicates — matching verbatim
+- Nested iteration (iterators, DFS with an explicit stack — Lesson 16)
+
+## LeetCode reps
+
+- LC 20 Valid Parentheses (easy) · LC 1047 Remove All Adjacent Duplicates (easy)
+- LC 844 Backspace String Compare (easy) · LC 71 Simplify Path (medium)
+
+## Modify-this exercise
+
+Extend the matcher so `"*"` means "any single character is fine": make `"([*])"` and `"(*)"` both valid. (Hint: when popping, accept the match OR a `*`.)',
     'reading', 30, 6, true
   ),
   -- ── Lesson 7 ──────────────────────────────────────────────
   (
-    v_l7, v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Stack II: The Monotonic Stack',
     'Keep a stack sorted, and the next-greater-element family solves itself.',
-    E'## What you''ll learn
+    '## What you''ll learn
 
 The **monotonic stack** answers, for every element, the nearest smaller-or-greater element around it — in O(n). It looks like magic until you see the invariant: the stack always holds elements **in sorted order**, and each element is pushed and popped exactly once.
 
@@ -144,7 +428,7 @@ The **monotonic stack** answers, for every element, the nearest smaller-or-great
 # Daily Temperatures (LC 739): days until a warmer temperature
 T = [73, 74, 75, 71, 69, 72, 76, 73]
 ans = [0] * len(T)
-stack = []            # indexes; temperatures strictly decreasing
+stack = []            # indexes — temperatures strictly decreasing
 for i, t in enumerate(T):
     while stack and T[stack[-1]] < t:
         j = stack.pop()   # i is the first warmer day for index j
@@ -170,17 +454,17 @@ Flip one comparison in the template to output, for each day, the days until a **
   ),
   -- ── Lesson 8 ──────────────────────────────────────────────
   (
-    v_l8, v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Linked Lists: Pointers Are the Structure',
     'Rewire nodes in place: reversal, merging, fast/slow middles and cycle detection.',
-    E'## What you''ll learn
+    '## What you''ll learn
 
 A linked list is just nodes and **arrows**. Every classic list problem is solved by carefully moving three arrows at a time — no arrays, no copying.
 
 ## Concepts
 
 - Node: `val` + `next`. You never "insert into" a list — you rewire `next` pointers
-- **In-place reversal**: walk the list, flipping each arrow backwards; keep `prev`, `curr`, `nxt` straight
+- **In-place reversal**: walk the list, flipping each arrow backwards — keep `prev`, `curr`, `nxt` straight
 - **Dummy head** `dummy = ListNode(0, head)`: a fake start node removes all edge cases (empty list, deleting the head)
 - Fast/slow pointers: middle of a list, cycle detection (Lesson 3)
 
@@ -225,15 +509,15 @@ print(" ".join(vals))   # 5 4 3 2 1
 
 ## Modify-this exercise
 
-Using the dummy-head trick, delete the node `val == 3` from `1->2->3->4` in one pass. (Walk with `prev` while `prev.next` exists; when `prev.next.val == 3`, do `prev.next = prev.next.next`.)',
+Using the dummy-head trick, delete the node `val == 3` from `1->2->3->4` in one pass. (Walk with `prev` while `prev.next` exists — when `prev.next.val == 3`, do `prev.next = prev.next.next`.)',
     'reading', 40, 8, true
   ),
   -- ── Lesson 9 ──────────────────────────────────────────────
   (
-    v_l9, v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Binary Search: Halve the World',
     'The O(log n) template, boundary variants, and searching the answer space itself.',
-    E'## What you''ll learn
+    '## What you''ll learn
 
 Binary search is not "search a sorted array" — it is a **decision principle**: if a yes/no question splits the remaining possibilities in half, you can find the boundary in O(log n). Master three variants: exact, leftmost/rightmost, and *binary search on the answer*.
 
@@ -289,10 +573,10 @@ Adjust the leftmost template to find the **rightmost** 5: flip the comparison so
   ),
   -- ── Lesson 10 ─────────────────────────────────────────────
   (
-    v_l10, v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Sorting & Intervals: Sweep the Timeline',
     'Sort by start, sweep by end: the interval family and custom keys.',
-    E'## What you''ll learn
+    '## What you''ll learn
 
 Interval problems look scary and reduce to one move: **sort by start time**, then walk through checking overlap with the previous interval.
 
@@ -300,7 +584,7 @@ Interval problems look scary and reduce to one move: **sort by start time**, the
 
 - Sort key: `intervals.sort(key=lambda iv: iv[0])` (or a tuple key for tie-breaks)
 - Two intervals `[a, b]` and `[c, d]` (sorted by start) **overlap** iff `c <= b`
-- Merging: extend the last merged interval while `c <= current_end`; otherwise start a new one
+- Merging: extend the last merged interval while `c <= current_end` — otherwise start a new one
 - Counting problems (meeting rooms, non-overlapping removals) use the same sweep with different bookkeeping
 
 ## Worked example
@@ -320,7 +604,7 @@ print(merged)   # [[1, 6], [8, 10], [15, 18]]
 
 > **Ask:** why must the merged endpoint use `max(...)` when extending?
 >
-> A later interval can be fully **contained** in the previous one: `[[1, 10], [2, 3]]`. Extending with plain `end` would *shrink* `[1, 10]` to `[1, 3]` — wrong. Sort order guarantees starts are ordered; it says nothing about ends.
+> A later interval can be fully **contained** in the previous one: `[[1, 10], [2, 3]]`. Extending with plain `end` would *shrink* `[1, 10]` to `[1, 3]` — wrong. Sort order guarantees starts are ordered — it says nothing about ends.
 
 ## LeetCode reps
 
@@ -330,15 +614,15 @@ print(merged)   # [[1, 6], [8, 10], [15, 18]]
 
 ## Modify-this exercise
 
-Adapt the sweep to count the **maximum number of overlapping** meetings from `[[0, 30], [5, 10], [15, 20]]`. (Hint: sort starts and ends separately; advance a pointer over whichever comes first. Answer: 2.)',
+Adapt the sweep to count the **maximum number of overlapping** meetings from `[[0, 30], [5, 10], [15, 20]]`. (Hint: sort starts and ends separately — advance a pointer over whichever comes first. Answer: 2.)',
     'reading', 35, 10, true
   ),
   -- ── Lesson 11 ─────────────────────────────────────────────
   (
-    v_l11, v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Recursion & Divide-and-Conquer',
     'Trust the base case: solving subproblems is how trees, backtracking and DP are born.',
-    E'## What you''ll learn
+    '## What you''ll learn
 
 Recursion is a contract: **if the function is correct for smaller inputs, it is correct for this one.** Every tree, backtracking and DP problem later in this course is recursion wearing different clothes.
 
@@ -366,12 +650,12 @@ print(my_pow(2.0, -2)) # 0.25 (negate: 1 / my_pow(x, -n))
 
 > **Ask:** why is `my_pow` O(log n) while a loop multiplying n times is O(n)?
 >
-> Each call halves the exponent: 10 → 5 → 2 → 1 → 0 — only 4 calls for n=10. And it computes `half` **once** and squares it. The naive recursive version `x * pow(x, n-1)` is O(n); the doubly-recursive `pow(n/2) + pow(n/2)` (recomputed twice) is O(n) disguised as divide-and-conquer. Squaring the *cached* half is the whole trick.
+> Each call halves the exponent: 10 → 5 → 2 → 1 → 0 — only 4 calls for n=10. And it computes `half` **once** and squares it. The naive recursive version `x * pow(x, n-1)` is O(n) — the doubly-recursive `pow(n/2) + pow(n/2)` (recomputed twice) is O(n) disguised as divide-and-conquer. Squaring the *cached* half is the whole trick.
 
 ## LeetCode reps
 
 - LC 50 Pow(x, n) (medium) · LC 169 Majority Element (easy — divide or counting)
-- LC 53 Maximum Subarray (medium — divide & conquer version exists; Kadane in Lesson 18)
+- LC 53 Maximum Subarray (medium — divide & conquer version exists — Kadane in Lesson 18)
 - LC 215 Kth Largest Element (medium — quickselect, partition-based)
 
 ## Modify-this exercise
@@ -381,12 +665,12 @@ Write the naive `pow` with `x * my_pow(x, n - 1)`, count calls for n=30 (30), th
   ),
   -- ── Lesson 12 ─────────────────────────────────────────────
   (
-    v_l12, v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Trees I: Traversal Is Everything',
     'DFS (three orders) and BFS (levels) — the two templates every tree problem is written in.',
-    E'## What you''ll learn
+    '## What you''ll learn
 
-90% of tree problems are one of two templates: **DFS** (recursion, three visit orders) or **BFS** (queue, level by level). Learn the templates once; recognise which one the problem wants.
+90% of tree problems are one of two templates: **DFS** (recursion, three visit orders) or **BFS** (queue, level by level). Learn the templates once — recognise which one the problem wants.
 
 ## Concepts
 
@@ -430,7 +714,7 @@ print(height(root))   # 3
 
 > **Ask:** why must the BFS inner loop use `range(len(q))` captured *before* popping?
 >
-> The queue is being modified inside the loop. Freezing `len(q)` makes the for-loop consume exactly the current level; whatever was appended during the round belongs to the next level. Without the freeze, levels bleed into each other.
+> The queue is being modified inside the loop. Freezing `len(q)` makes the for-loop consume exactly the current level — whatever was appended during the round belongs to the next level. Without the freeze, levels bleed into each other.
 
 ## LeetCode reps
 
@@ -445,10 +729,10 @@ Modify the BFS to print only the **last** value of each level (that is the right
   ),
   -- ── Lesson 13 ─────────────────────────────────────────────
   (
-    v_l13, v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Trees II: The Binary Search Tree Contract',
     'left < node < right — validate, search, insert, and find ancestors in O(h).',
-    E'## What you''ll learn
+    '## What you''ll learn
 
 A **BST** is a tree that promised: everything in the left subtree is smaller, everything in the right is larger. That promise turns O(n) scans into O(h) walks.
 
@@ -457,7 +741,7 @@ A **BST** is a tree that promised: everything in the left subtree is smaller, ev
 - Search/insert/delete: O(h), h = tree height (O(log n) if balanced, O(n) if degenerate)
 - **Inorder traversal of a BST is sorted** — the single most useful BST fact
 - **Validate**: pass down an allowed `(low, high)` range — do NOT just compare node with its children (that misses grandchildren violations)
-- LCA in a BST: walk from the root; the split point (first node strictly between p and q) is the answer
+- LCA in a BST: walk from the root — the split point (first node strictly between p and q) is the answer
 
 ## Worked example
 
@@ -468,7 +752,7 @@ def is_valid(node, low=float("-inf"), high=float("inf")):
         return True
     if not (low < node.val < high):
         return False
-    return is_valid(node.left, low, node.val) and \\
+    return is_valid(node.left, low, node.val) and \
            is_valid(node.right, node.val, high)
 
 # LCA in a BST — LC 235
@@ -500,10 +784,10 @@ Using an inorder generator (`yield`), print the first 3 values of a BST in sorte
   ),
   -- ── Lesson 14 ─────────────────────────────────────────────
   (
-    v_l14, v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Heaps & Priority Queues: Keep the Best on Top',
     'heapq solves every top-k, k-th largest and k-way-merge problem — if you remember it is a min-heap.',
-    E'## What you''ll learn
+    '## What you''ll learn
 
 A **heap** keeps the *minimum* on top in O(1) and push/pop in O(log n) — without fully sorting. When a problem says "top k", "k-th largest", "merge k" or "repeatedly take the two smallest", it is a heap problem.
 
@@ -554,10 +838,10 @@ Push `(-c, v)` tuples for LC 347. Predict: why does negating the count make the 
   ),
   -- ── Lesson 15 ─────────────────────────────────────────────
   (
-    v_l15, v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Backtracking: Choose, Explore, Unchoose',
     'Systematically enumerate all candidates — and prune the branches that cannot win.',
-    E'## What you''ll learn
+    '## What you''ll learn
 
 **Backtracking** = DFS over the tree of decisions: at each step choose an option, recurse, then **undo** the choice. It powers subsets, permutations, combinations, N-Queens, Sudoku — anything asking for *all* candidates or *any* valid arrangement.
 
@@ -565,7 +849,7 @@ Push `(-c, v)` tuples for LC 347. Predict: why does negating the count make the 
 
 - The shape is always: `choose → explore → unchoose`
 - Prune early: skip branches that already break the rules (sorted + break, or `continue`)
-- Avoid duplicate work: subsets skip *behind* candidates (`start` index); permutations skip *used* ones (used-set)
+- Avoid duplicate work: subsets skip *behind* candidates (`start` index) — permutations skip *used* ones (used-set)
 - Complexity is output-sized: subsets 2ⁿ, permutations n! — fine only when n is small (≤ ~20)
 
 ## Worked example
@@ -608,10 +892,10 @@ Change Combination Sum to Combination Sum II semantics: each candidate usable **
   ),
   -- ── Lesson 16 ─────────────────────────────────────────────
   (
-    v_l16, v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Graphs I: A Grid Is a Graph',
     'Flood fill, connected components, and BFS shortest steps — matrices are graphs in disguise.',
-    E'## What you''ll learn
+    '## What you''ll learn
 
 Every matrix problem where you move up/down/left/right is a **graph** problem: cells are nodes, adjacencies are edges. Learn flood fill (DFS or BFS) once and Number of Islands, Flood Fill, Max Area of Island and friends all collapse to the same template.
 
@@ -620,7 +904,7 @@ Every matrix problem where you move up/down/left/right is a **graph** problem: c
 - Represent graphs: adjacency list `graph[u].append(v)` for sparse, matrix for grids
 - **Flood fill**: visit a cell, mark it visited, recurse/queue into its 4 neighbours
 - Mark visited by *mutating the grid* (`"1" -> "0"`) to save memory
-- BFS gives **shortest path in steps** on unweighted graphs; DFS only gives connectivity
+- BFS gives **shortest path in steps** on unweighted graphs — DFS only gives connectivity
 - Direction vector: `for dr, dc in ((1,0),(-1,0),(0,1),(0,-1)):`
 
 ## Worked example
@@ -655,7 +939,7 @@ print(islands)   # 3
 
 > **Ask:** why mutate the grid instead of keeping a `visited` set?
 >
-> It is the same algorithm — marking is what stops infinite recursion. Mutating uses O(1) extra memory; a visited set uses O(rows×cols). On LeetCode, mutating input is usually fine; in production code, prefer the set (or restore afterwards).
+> It is the same algorithm — marking is what stops infinite recursion. Mutating uses O(1) extra memory — a visited set uses O(rows×cols). On LeetCode, mutating input is usually fine — in production code, prefer the set (or restore afterwards).
 
 ## LeetCode reps
 
@@ -670,10 +954,10 @@ Change the counter to compute the **largest island area**: make `sink` return th
   ),
   -- ── Lesson 17 ─────────────────────────────────────────────
   (
-    v_l17, v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Graphs II: Orders, Shortest Paths & Union-Find',
     'Topological sort for dependencies, Dijkstra for weights, and DSU for membership.',
-    E'## What you''ll learn
+    '## What you''ll learn
 
 Three advanced graph tools, each a fingerprint:
 
@@ -683,9 +967,9 @@ Three advanced graph tools, each a fingerprint:
 
 ## Concepts
 
-- Kahn: compute indegrees, seed the queue with 0-indegree nodes, pop → append to order → decrement neighbours; if the order is shorter than n, there is a **cycle**
-- Dijkstra: pop the closest unvisited node, relax its edges; no negative weights allowed
-- DSU: `find` (with path compression) + `union` (attach smaller root); count components by counting distinct roots
+- Kahn: compute indegrees, seed the queue with 0-indegree nodes, pop → append to order → decrement neighbours — if the order is shorter than n, there is a **cycle**
+- Dijkstra: pop the closest unvisited node, relax its edges — no negative weights allowed
+- DSU: `find` (with path compression) + `union` (attach smaller root) — count components by counting distinct roots
 
 ## Worked example
 
@@ -730,12 +1014,12 @@ Change Course Schedule to Course Schedule II: collect popped nodes into an `orde
   ),
   -- ── Lesson 18 ─────────────────────────────────────────────
   (
-    v_l18, v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Dynamic Programming I: One Dimension',
     'Define the state, write the recurrence, memoize — then feel Kadane and LIS click.',
-    E'## What you''ll learn
+    '## What you''ll learn
 
-DP is **recursion + memory**: solve each distinct subproblem once. The craft is choosing the **state** — what does `dp[i]` *mean*? Get the meaning right; the code is three lines.
+DP is **recursion + memory**: solve each distinct subproblem once. The craft is choosing the **state** — what does `dp[i]` *mean*? Get the meaning right — the code is three lines.
 
 ## Concepts
 
@@ -771,15 +1055,15 @@ print(dp[amount] if dp[amount] < INF else -1)   # 3 (5 + 5 + 1)
 
 ## Modify-this exercise
 
-Space-optimize House Robber: keep only two variables `prev2, prev1` and roll them. The table disappears; complexity drops from O(n) space to **O(1)**. Verify `[2, 7, 9, 3, 1]` still yields 12.',
+Space-optimize House Robber: keep only two variables `prev2, prev1` and roll them. The table disappears — complexity drops from O(n) space to **O(1)**. Verify `[2, 7, 9, 3, 1]` still yields 12.',
     'reading', 45, 18, true
   ),
   -- ── Lesson 19 ─────────────────────────────────────────────
   (
-    v_l19, v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Dynamic Programming II: Grids, Knapsacks & Strings',
     'Two-dimensional states: unique paths, coin change II, and the LCS family.',
-    E'## What you''ll learn
+    '## What you''ll learn
 
 When a state needs two coordinates — position **and** something else (capacity, second index) — the dp table goes 2-D. Three archetypes cover most of it: grid paths, knapsack counting, and string alignment.
 
@@ -830,10 +1114,10 @@ Add obstacles (LC 63): a cell with an obstacle has `dp = 0`. Verify on `[[0,0,0]
   ),
   -- ── Lesson 20 ─────────────────────────────────────────────
   (
-    v_l20, v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'The Playbook: From Problem Statement to Pattern',
     'The recognition table, the decision checklist, and the 4-week grind plan.',
-    E'## What you''ll learn
+    '## What you''ll learn
 
 Knowing 19 templates is useless if you cannot pick the right one in 90 seconds. This lesson is the **map** — the entire course compressed into recognition triggers and a study plan.
 
@@ -865,7 +1149,7 @@ Knowing 19 templates is useless if you cannot pick the right one in 90 seconds. 
 2. Size hints: n ≤ 20 → exponential/backtracking OK · n ≤ 10³ → O(n²) OK · n ≤ 10⁵–10⁶ → need O(n) or O(n log n) · n ≥ 10⁸ or "answer space" → binary search or O(log)
 3. Brute force first — write its complexity, then ask what work is **repeated**
 4. The repeated work is what your structure caches: dict, window state, prefix sum, heap, dp table
-5. Write the template skeleton BEFORE the details; edge cases last (empty, single, duplicates, extremes)
+5. Write the template skeleton BEFORE the details — edge cases last (empty, single, duplicates, extremes)
 6. Dry-run on the given example, then on one adversarial case you invent
 
 ## The 4-week grind plan
@@ -896,11 +1180,12 @@ Take any 5 challenges below and write their recognition table row (statement tri
     coins_reward, sort_order, starter_code, expected_output, is_active
   ) VALUES
   (
-    uuid_generate_v4(), v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Two Sum, the O(n) way',
-    E'LC 1 — Two Sum. The array nums and target are given. Print the two indices (smallest first), space-separated.\nYour solution must run in O(n) using a dict — a nested-loop rescan teaches you nothing here.',
+    'LC 1 — Two Sum. The array nums and target are given. Print the two indices (smallest first), space-separated.
+Your solution must run in O(n) using a dict — a nested-loop rescan teaches you nothing here.',
     'easy', 'python', 15, 1,
-    E'nums = [2, 7, 11, 15]
+    'nums = [2, 7, 11, 15]
 target = 9
 
 # Print the two indices that add up to target, space-separated: "0 1"
@@ -908,22 +1193,24 @@ target = 9
     '0 1', true
   ),
   (
-    uuid_generate_v4(), v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Valid parentheses',
-    E'LC 20 — Valid Parentheses. The string s contains only brackets. Print True if every opener is closed by the matching closer in the right order, else False.\nUse a stack: push openers, pop-and-verify on closers.',
+    'LC 20 — Valid Parentheses. The string s contains only brackets. Print True if every opener is closed by the matching closer in the right order, else False.
+Use a stack: push openers, pop-and-verify on closers.',
     'easy', 'python', 15, 2,
-    E's = "([{}])"
+    's = "([{}])"
 
 # Print True or False
 ',
     'True', true
   ),
   (
-    uuid_generate_v4(), v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Binary search: leftmost index',
-    E'LC 704/34 — Binary Search. nums is sorted ascending and target is given. Print the LEFTMOST index of target, or -1 if absent.\nYour loop must run in O(log n) — no linear scans, no .index().',
+    'LC 704/34 — Binary Search. nums is sorted ascending and target is given. Print the LEFTMOST index of target, or -1 if absent.
+Your loop must run in O(log n) — no linear scans, no .index().',
     'easy', 'python', 15, 3,
-    E'nums = [1, 3, 5, 5, 5, 7, 9]
+    'nums = [1, 3, 5, 5, 5, 7, 9]
 target = 5
 
 # Print the leftmost index of target (here: 2), or -1
@@ -931,11 +1218,12 @@ target = 5
     '2', true
   ),
   (
-    uuid_generate_v4(), v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Reverse a linked list',
-    E'LC 206 — Reverse Linked List. The list 1->2->3->4->5 is built for you with the ListNode class.\nReverse it IN PLACE (rewire next pointers, no list copying) and print the values of the reversed list, space-separated.',
+    'LC 206 — Reverse Linked List. The list 1->2->3->4->5 is built for you with the ListNode class.
+Reverse it IN PLACE (rewire next pointers, no list copying) and print the values of the reversed list, space-separated.',
     'easy', 'python', 15, 4,
-    E'class ListNode:
+    'class ListNode:
     def __init__(self, val=0, nxt=None):
         self.val = val
         self.next = nxt
@@ -947,58 +1235,65 @@ head = ListNode(1, ListNode(2, ListNode(3, ListNode(4, ListNode(5)))))
     '5 4 3 2 1', true
   ),
   (
-    uuid_generate_v4(), v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Maximum subarray (Kadane)',
-    E'LC 53 — Maximum Subarray. nums is given. Print the largest sum of any contiguous subarray.\nOne pass, running best: extend the current run or restart at this element.',
+    'LC 53 — Maximum Subarray. nums is given. Print the largest sum of any contiguous subarray.
+One pass, running best: extend the current run or restart at this element.',
     'medium', 'python', 20, 5,
-    E'nums = [-2, 1, -3, 4, -1, 2, 1, -5, 4]
+    'nums = [-2, 1, -3, 4, -1, 2, 1, -5, 4]
 
 # Print the maximum subarray sum (here: 6, from [4, -1, 2, 1])
 ',
     '6', true
   ),
   (
-    uuid_generate_v4(), v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Longest substring without repeats',
-    E'LC 3 — Longest Substring Without Repeating Characters. The string s is given.\nPrint the length of the longest substring with all-distinct characters. Sliding window with a last-seen dict — O(n).',
+    'LC 3 — Longest Substring Without Repeating Characters. The string s is given.
+Print the length of the longest substring with all-distinct characters. Sliding window with a last-seen dict — O(n).',
     'medium', 'python', 20, 6,
-    E's = "abcabcbb"
+    's = "abcabcbb"
 
 # Print the length (here: 3, from "abc")
 ',
     '3', true
   ),
   (
-    uuid_generate_v4(), v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Merge intervals',
-    E'LC 56 — Merge Intervals. intervals is a list of [start, end] pairs.\nSort by start, merge all overlapping intervals, then print each merged interval on its own line as "start end".',
+    'LC 56 — Merge Intervals. intervals is a list of [start, end] pairs.
+Sort by start, merge all overlapping intervals, then print each merged interval on its own line as "start end".',
     'medium', 'python', 20, 7,
-    E'intervals = [[1, 3], [2, 6], [8, 10], [15, 18]]
+    'intervals = [[1, 3], [2, 6], [8, 10], [15, 18]]
 
 # Print, one per line:
 # 1 6
 # 8 10
 # 15 18
 ',
-    E'1 6\n8 10\n15 18', true
+    '1 6
+8 10
+15 18', true
   ),
   (
-    uuid_generate_v4(), v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Product of array except self',
-    E'LC 238 — Product of Array Except Self. nums is given.\nPrint the answer array space-separated, where each entry is the product of every OTHER element. No division allowed — use prefix and suffix products.',
+    'LC 238 — Product of Array Except Self. nums is given.
+Print the answer array space-separated, where each entry is the product of every OTHER element. No division allowed — use prefix and suffix products.',
     'medium', 'python', 20, 8,
-    E'nums = [1, 2, 3, 4]
+    'nums = [1, 2, 3, 4]
 
 # Print: 24 12 8 6
 ',
     '24 12 8 6', true
   ),
   (
-    uuid_generate_v4(), v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Level order traversal',
-    E'LC 102 — Binary Tree Level Order Traversal. The tree is built for you.\nBFS it and print the level values as nested Python lists: print(levels).',
+    'LC 102 — Binary Tree Level Order Traversal. The tree is built for you.
+BFS it and print the level values as nested Python lists: print(levels).',
     'medium', 'python', 20, 9,
-    E'from collections import deque
+    'from collections import deque
 
 class TreeNode:
     def __init__(self, val=0, left=None, right=None):
@@ -1011,11 +1306,13 @@ root = TreeNode(3, TreeNode(9), TreeNode(20, TreeNode(15), TreeNode(7)))
     '[[3], [9, 20], [15, 7]]', true
   ),
   (
-    uuid_generate_v4(), v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Top K frequent elements',
-    E'LC 347 — Top K Frequent Elements. nums and k are given.\nPrint the k most frequent elements, space-separated, most frequent first.\nA heap of size k runs in O(n log k).',
+    'LC 347 — Top K Frequent Elements. nums and k are given.
+Print the k most frequent elements, space-separated, most frequent first.
+A heap of size k runs in O(n log k).',
     'medium', 'python', 20, 10,
-    E'from collections import Counter
+    'from collections import Counter
 import heapq
 
 nums = [1, 1, 1, 2, 2, 3]
@@ -1026,11 +1323,12 @@ k = 2
     '1 2', true
   ),
   (
-    uuid_generate_v4(), v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Number of islands',
-    E'LC 200 — Number of Islands. The grid maps 1=land, 0=water; land is connected horizontally or vertically.\nCount the islands with flood fill (DFS or BFS) and print the count.',
+    'LC 200 — Number of Islands. The grid maps 1=land, 0=water — land is connected horizontally or vertically.
+Count the islands with flood fill (DFS or BFS) and print the count.',
     'medium', 'python', 20, 11,
-    E'grid = [
+    'grid = [
     ["1", "1", "0", "0", "0"],
     ["1", "1", "0", "0", "0"],
     ["0", "0", "1", "0", "0"],
@@ -1042,11 +1340,13 @@ k = 2
     '3', true
   ),
   (
-    uuid_generate_v4(), v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Coin change (fewest coins)',
-    E'LC 322 — Coin Change. coins and amount are given.\nPrint the fewest number of coins needed to make amount, or -1 if impossible.\nBottom-up DP: dp[a] = fewest coins for amount a. (Greedy fails: for [1, 3, 4] and 6, greedy gives 3 coins, optimal is 2.)',
+    'LC 322 — Coin Change. coins and amount are given.
+Print the fewest number of coins needed to make amount, or -1 if impossible.
+Bottom-up DP: dp[a] = fewest coins for amount a. (Greedy fails: for [1, 3, 4] and 6, greedy gives 3 coins, optimal is 2.)',
     'medium', 'python', 20, 12,
-    E'coins = [1, 2, 5]
+    'coins = [1, 2, 5]
 amount = 11
 
 # Print the fewest coins (here: 3, from 5 + 5 + 1)
@@ -1054,22 +1354,25 @@ amount = 11
     '3', true
   ),
   (
-    uuid_generate_v4(), v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Climbing stairs',
-    E'LC 70 — Climbing Stairs. You can climb 1 or 2 steps at a time.\nPrint the number of distinct ways to reach step n. (Fibonacci in disguise — dp[i] = dp[i-1] + dp[i-2].)',
+    'LC 70 — Climbing Stairs. You can climb 1 or 2 steps at a time.
+Print the number of distinct ways to reach step n. (Fibonacci in disguise — dp[i] = dp[i-1] + dp[i-2].)',
     'easy', 'python', 15, 13,
-    E'n = 10
+    'n = 10
 
 # Print the number of ways to climb n stairs (here: 89)
 ',
     '89', true
   ),
   (
-    uuid_generate_v4(), v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Course schedule',
-    E'LC 207 — Course Schedule. num_courses and prereqs are given: [a, b] means you must take b before a.\nPrint True if all courses can be finished, else False.\nKahn''s algorithm: if the topological order is shorter than num_courses, there is a cycle.',
+    'LC 207 — Course Schedule. num_courses and prereqs are given: [a, b] means you must take b before a.
+Print True if all courses can be finished, else False.
+Kahn''s algorithm: if the topological order is shorter than num_courses, there is a cycle.',
     'medium', 'python', 20, 14,
-    E'from collections import deque
+    'from collections import deque
 
 num_courses = 4
 prereqs = [[1, 0], [2, 1], [3, 2]]
@@ -1079,22 +1382,26 @@ prereqs = [[1, 0], [2, 1], [3, 2]]
     'True', true
   ),
   (
-    uuid_generate_v4(), v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Longest increasing subsequence',
-    E'LC 300 — Longest Increasing Subsequence. nums is given.\nPrint the length of the longest strictly increasing subsequence (elements keep their order, need not be adjacent).\nO(n^2) dp is accepted here; the O(n log n) patience method with bisect is the mastery version.',
+    'LC 300 — Longest Increasing Subsequence. nums is given.
+Print the length of the longest strictly increasing subsequence (elements keep their order, need not be adjacent).
+O(n^2) dp is accepted here — the O(n log n) patience method with bisect is the mastery version.',
     'hard', 'python', 25, 15,
-    E'nums = [10, 9, 2, 5, 3, 7, 101, 18]
+    'nums = [10, 9, 2, 5, 3, 7, 101, 18]
 
 # Print the LIS length (here: 4, from [2, 3, 7, 101])
 ',
     '4', true
   ),
   (
-    uuid_generate_v4(), v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Longest common subsequence',
-    E'LC 1143 — Longest Common Subsequence. Two strings are given.\nPrint the length of their longest common subsequence.\n2-D DP: match extends the diagonal, mismatch takes the better of left/up.',
+    'LC 1143 — Longest Common Subsequence. Two strings are given.
+Print the length of their longest common subsequence.
+2-D DP: match extends the diagonal, mismatch takes the better of left/up.',
     'hard', 'python', 25, 16,
-    E'a = "abcde"
+    'a = "abcde"
 b = "ace"
 
 # Print the LCS length (here: 3, from "ace")
@@ -1102,11 +1409,13 @@ b = "ace"
     '3', true
   ),
   (
-    uuid_generate_v4(), v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Combination sum: count the ways',
-    E'LC 39 — Combination Sum. candidates (distinct) and target are given; each candidate may be reused any number of times.\nBacktrack (choose, explore, unchoose), then print how many unique combinations sum to target.\nHere: [2, 2, 3] and [7] — print 2.',
+    'LC 39 — Combination Sum. candidates (distinct) and target are given — each candidate may be reused any number of times.
+Backtrack (choose, explore, unchoose), then print how many unique combinations sum to target.
+Here: [2, 2, 3] and [7] — print 2.',
     'medium', 'python', 20, 17,
-    E'candidates = [2, 3, 6, 7]
+    'candidates = [2, 3, 6, 7]
 target = 7
 
 # Print the number of unique combinations that sum to target (here: 2)
@@ -1114,22 +1423,19 @@ target = 7
     '2', true
   ),
   (
-    uuid_generate_v4(), v_course_id,
+    uuid_generate_v4(), '00000000-0000-4000-8000-0000000000da',
     'Daily temperatures (monotonic stack)',
-    E'LC 739 — Daily Temperatures. T is a list of daily temperatures.\nFor each day print how many days until a warmer one (0 if never), space-separated.\nMonotonic stack of indexes: O(n).',
+    'LC 739 — Daily Temperatures. T is a list of daily temperatures.
+For each day print how many days until a warmer one (0 if never), space-separated.
+Monotonic stack of indexes: O(n).',
     'medium', 'python', 20, 18,
-    E'T = [73, 74, 75, 71, 69, 72, 76, 73]
+    'T = [73, 74, 75, 71, 69, 72, 76, 73]
 
 # Print: 1 1 4 2 1 1 0 0
 ',
     '1 1 4 2 1 1 0 0', true
   );
 
-  -- Sanity check: report what was created
-  RAISE NOTICE 'DSA course seeded: % lessons, % challenges',
-    (SELECT count(*) FROM public.lessons WHERE course_id = v_course_id),
-    (SELECT count(*) FROM public.challenges WHERE course_id = v_course_id);
-END $$;
 
 -- ============================================================
 -- 4. Quizzes — mid-course check + final pattern recognition.
@@ -1191,14 +1497,3 @@ CROSS JOIN (VALUES
 WHERE q.title = 'DSA — Final: Pattern Recognition Under Pressure'
   AND NOT EXISTS (SELECT 1 FROM public.quiz_questions qq WHERE qq.quiz_id = q.id);
 
--- Final summary — counts everything by slug (top-level, after all inserts).
-DO $$
-BEGIN
-  RAISE NOTICE 'DSA course final: % lessons, % challenges, % quizzes',
-    (SELECT count(*) FROM public.lessons
-      WHERE course_id IN (SELECT id FROM public.courses WHERE slug = 'dsa-leetcode-playbook')),
-    (SELECT count(*) FROM public.challenges
-      WHERE course_id IN (SELECT id FROM public.courses WHERE slug = 'dsa-leetcode-playbook')),
-    (SELECT count(*) FROM public.quizzes
-      WHERE course_id IN (SELECT id FROM public.courses WHERE slug = 'dsa-leetcode-playbook'));
-END $$;
