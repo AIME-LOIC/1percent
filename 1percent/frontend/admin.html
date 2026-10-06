@@ -2293,6 +2293,28 @@ async function connectAi(provider) {
   if (btn) btn.textContent = 'Connecting…';
   if (btn2) btn2.style.display = 'none';
 
+  // Claude connects through the MCP OAuth consent page (PKCE) — the same
+  // flow Settings → AI connections starts. PKCE begins HERE; after approval
+  // the consent page returns to /settings, which exchanges the code and
+  // confirms the connection.
+  if (provider === 'claude') {
+    const b64url = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const verifier = b64url(crypto.getRandomValues(new Uint8Array(32)));
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
+    const challenge = b64url(digest);
+    sessionStorage.setItem('mcp_pkce_verifier', verifier);
+    const params = new URLSearchParams({
+      client_id: 'claude-ai-connector',
+      response_type: 'code',
+      scope: 'read grade',
+      code_challenge: challenge,
+      code_challenge_method: 'S256'
+    });
+    window.location.href = '/mcp/oauth/authorize?' + params.toString();
+    return; // navigation takes over from here
+  }
+
   try {
     // apiFetch attaches the Bearer token — a raw fetch here 401s.
     const res = await apiFetch('/api/ai/connections', {

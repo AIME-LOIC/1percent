@@ -1,6 +1,7 @@
 const { adminClient } = require('../config/database');
 const crypto = require('crypto');
-const { parseStoredScopes } = require('../services/mcpOAuthService');
+const mcpOAuthService = require('../services/mcpOAuthService');
+const { parseStoredScopes } = mcpOAuthService;
 
 /* ═══════════════════════════════════════════════════════════════
    AI connections — the multi-AI bridge (ChatGPT + Gemini)
@@ -31,9 +32,9 @@ async function connectAi(req, res) {
   };
 
   // Same-origin connect (settings/admin button): redirect_uri is
-  // optional — we land back with ?chatgpt=connected or ?gemini=connected.
-  const sameOrigin = !flow.redirect_uri;
-  const base = sameOrigin ? `/${req.baseUrl.split('/').pop()}` : flow.redirect_uri;
+  // optional — we land back on Settings, which completes the exchange
+  // and shows the "connected" confirmation.
+  const base = flow.redirect_uri || '/settings';
   const redirectTo = sameOrigin
     ? `${base}?${provider}=connected&state=${encodeURIComponent(flow.state || '')}`
     : `${flow.redirect_uri}${flow.state ? '&state=' + encodeURIComponent(flow.state) : ''}`;
@@ -191,7 +192,13 @@ async function adminRevokeConnection(req, res) {
   }
 
   res.setHeader('Cache-Control', 'no-store');
-  return res.json({ success: true, revoked: true, provider });
+  const revokedOauth = provider === 'claude'
+    // Claude is a per-account MCP OAuth connector, not a registered
+    // provider client — killing the row alone would leave the admin's
+    // OAuth token alive. Revoke it too.
+    ? await mcpOAuthService.revokeAllForUser(userId).catch(() => ({ revoked: 0 }))
+    : null;
+  return res.json({ success: true, revoked: true, provider, oauth_tokens_revoked: revokedOauth ? revokedOauth.revoked : 0 });
 }
 
 /* ── GET /api/admin/ai/connections (admin: refresh shared admin connector) ── */
@@ -227,6 +234,24 @@ async function listAdminAiConnections(req, res) {
         }
       : { connected: false, provider: p, mcp_client_id: null, mcp_token_hash: null, created_at: null, updated_at: null, revoked_at: null };
   });
+
+  // Claude has no ai_connections row of its own — the connector lives in
+  // mcp_oauth_tokens. Reflect the requesting admin's active MCP OAuth token
+  // so the panel doesn't claim "Not connected" after a real approval.
+  if (!byProvider.claude.connected && req.user?.id) {
+    const status = await mcpOAuthService.getStatus(req.user.id).catch(() => null);
+    if (status && status.connected) {
+      byProvider.claude = {
+        connected: true,
+        provider: 'claude',
+        mcp_client_id: 'claude-ai-connector',
+        mcp_token_hash: null,
+        created_at: status.created_at,
+        updated_at: status.last_used_at,
+        revoked_at: null
+      };
+    }
+  }
 
   res.json({
     success: true,
