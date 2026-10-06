@@ -541,11 +541,14 @@ tr.log-fatal:hover td{background:#feeeee !important;}
       <a class="sidebar-item" data-panel="security" onclick="showPanel('security')">
         <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg></span>
         Security
-      </a>       <a class="sidebar-item" data-panel="email-users" onclick="showPanel('email-users')">
-       <a class="sidebar-item" data-panel="ai-connections" onclick="showPanel('ai-connections')">
-
+      </a>
+      <a class="sidebar-item" data-panel="email-users" onclick="showPanel('email-users')">
         <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
         Email Users
+      </a>
+      <a class="sidebar-item" data-panel="ai-connections" onclick="showPanel('ai-connections')">
+        <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+        AI Connect
       </a>
     </div>
     <div class="sidebar-section">
@@ -2212,7 +2215,7 @@ function showPanel(name){
   if(!panelEl)return;
   panelEl.classList.add('active');
   document.querySelectorAll('.sidebar-item').forEach(a=>{a.classList.toggle('active',a.dataset.panel===name);});
-  const titles={dashboard:'Dashboard',projects:'Projects & Requests',courses:'Courses',lessons:'Lessons',quizzes:'Quizzes',challenges:'Challenges',aiReviews:'AI Reviews',enrollments:'Enrollments',mentors:'Mentors',logs:'Logs & Errors',security:'Security',notifications:'Notifications',testimonials:'Testimonials','robotics-club':'Robotics Club',aiConnections:'AI Connections'};
+  const titles={dashboard:'Dashboard',projects:'Projects & Requests',courses:'Courses',lessons:'Lessons',quizzes:'Quizzes',challenges:'Challenges',aiReviews:'AI Reviews',enrollments:'Enrollments',mentors:'Mentors',logs:'Logs & Errors',security:'Security',notifications:'Notifications',testimonials:'Testimonials','robotics-club':'Robotics Club','email-users':'Email Users','ai-connections':'AI Connect'};
   document.getElementById('topbar-section-title').textContent=titles[name]||name;
   if(name==='dashboard')loadAnalytics();
   if(name==='quizzes')loadQuizzes();
