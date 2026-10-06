@@ -1133,8 +1133,8 @@ END $$;
 
 -- ============================================================
 -- 4. Quizzes — mid-course check + final pattern recognition.
---    Top-level statements: a DO $$ ... $$ body cannot contain another
---    $$ quote, so these must live OUTSIDE the block above.
+--    Top-level plain-SQL statements: they run outside the PL/pgSQL block
+--    above, so they need no variables and no dollar-quoting at all.
 --    Insert-if-missing: re-running the seed keeps existing attempts.
 -- ============================================================
 INSERT INTO public.quizzes (id, course_id, title, description, passing_score, is_published)
@@ -1145,45 +1145,25 @@ SELECT uuid_generate_v4(), c.id,
 FROM public.courses c WHERE c.slug = 'dsa-leetcode-playbook'
 AND NOT EXISTS (SELECT 1 FROM public.quizzes q WHERE q.title = 'DSA — Mid-Course Check: Complexity & Core Structures');
 
-  DO $$
-  DECLARE qid UUID;
-  BEGIN
-    SELECT id INTO qid FROM public.quizzes
-      WHERE title = 'DSA — Mid-Course Check: Complexity & Core Structures' LIMIT 1;
-    IF qid IS NULL THEN RETURN; END IF;
-
-    INSERT INTO public.quiz_questions (id, quiz_id, question, options, correct_answer, sort_order, points) VALUES
-    (uuid_generate_v4(), qid, 'An algorithm processes a sorted array of n elements by repeatedly halving the search range. Its time complexity is:',
-      '[{"id":"a","text":"O(n)"},{"id":"b","text":"O(log n)"},{"id":"c","text":"O(n log n)"},{"id":"d","text":"O(1)"}]',
-      'b', 1, 1),
-    (uuid_generate_v4(), qid, 'Two Sum can be solved in O(n) instead of O(n^2) by:',
-      '[{"id":"a","text":"Sorting the array and rescanning"},{"id":"b","text":"Storing seen values in a dict and looking up the complement"},{"id":"c","text":"Using a nested loop with early break"},{"id":"d","text":"Converting the array to a string"}]',
-      'b', 2, 1),
-    (uuid_generate_v4(), qid, 'A sliding-window solution never makes left or right move backwards. Its total cost is:',
-      '[{"id":"a","text":"O(n^2), because of the nested while"},{"id":"b","text":"O(n log n)"},{"id":"c","text":"O(n) amortized - each index enters and leaves once"},{"id":"d","text":"O(1)"}]',
-      'c', 3, 1),
-    (uuid_generate_v4(), qid, 'You need the maximum sum of every contiguous subarray of a fixed size k. The best approach is:',
-      '[{"id":"a","text":"A fresh sum for every window: O(n*k)"},{"id":"b","text":"Slide the window, adding the new element and subtracting the old: O(n)"},{"id":"c","text":"Sort the array first: O(n log n)"},{"id":"d","text":"Prefix sums of every pair: O(n^2)"}]',
-      'b', 4, 1),
-    (uuid_generate_v4(), qid, 'Which structure is the right fit for matching the MOST RECENT unclosed bracket?',
-      '[{"id":"a","text":"Queue"},{"id":"b","text":"Stack"},{"id":"c","text":"Heap"},{"id":"d","text":"Linked list"}]',
-      'b', 5, 1),
-    (uuid_generate_v4(), qid, 'A monotonic stack keeps its elements:',
-      '[{"id":"a","text":"In insertion order always"},{"id":"b","text":"In sorted order, popping anything that breaks it"},{"id":"c","text":"Randomized for speed"},{"id":"d","text":"Reversed every other push"}]',
-      'b', 6, 1),
-    (uuid_generate_v4(), qid, 'Reversing a singly linked list in place requires tracking at minimum:',
-      '[{"id":"a","text":"prev, curr and the saved next pointer"},{"id":"b","text":"The full list copied to an array"},{"id":"c","text":"A hash map of positions"},{"id":"d","text":"Only the head and tail"}]',
-      'a', 7, 1),
-    (uuid_generate_v4(), qid, 'For finding the leftmost occurrence of a target in a sorted array, on a successful match you should:',
-      '[{"id":"a","text":"Return immediately"},{"id":"b","text":"Continue searching the LEFT half (hi = mid)"},{"id":"c","text":"Restart the search from 0"},{"id":"d","text":"Switch to linear scan"}]',
-      'b', 8, 1),
-    (uuid_generate_v4(), qid, 'Two intervals [a, b] and [c, d], sorted by start, overlap when:',
-      '[{"id":"a","text":"c <= b"},{"id":"b","text":"a <= d"},{"id":"c","text":"c < a"},{"id":"d","text":"b <= d"}]',
-      'a', 9, 1),
-    (uuid_generate_v4(), qid, 'Merging a later interval into the previous one must extend with max(ends) because:',
-      '[{"id":"a","text":"The later interval may be fully contained in the previous one"},{"id":"b","text":"Sorting guarantees ends are ordered too"},{"id":"c","text":"max is faster than direct assignment"},{"id":"d","text":"It deduplicates the input"}]',
-      'a', 10, 1);
-  END $$;INSERT INTO public.quizzes (id, course_id, title, description, passing_score, is_published)
+-- Questions for this quiz: one plain INSERT (no variables, no dollar-quoted block),
+-- scoped to the quiz by title and skipped if its questions already exist.
+INSERT INTO public.quiz_questions (id, quiz_id, question, options, correct_answer, sort_order, points)
+SELECT uuid_generate_v4(), q.id, v.question, v.options::jsonb, v.correct_answer, v.sort_order, v.points
+FROM public.quizzes q
+CROSS JOIN (VALUES
+  ('An algorithm processes a sorted array of n elements by repeatedly halving the search range. Its time complexity is:', '[{"id":"a","text":"O(n)"},{"id":"b","text":"O(log n)"},{"id":"c","text":"O(n log n)"},{"id":"d","text":"O(1)"}]', 'b', 1, 1),
+  ('Two Sum can be solved in O(n) instead of O(n^2) by:', '[{"id":"a","text":"Sorting the array and rescanning"},{"id":"b","text":"Storing seen values in a dict and looking up the complement"},{"id":"c","text":"Using a nested loop with early break"},{"id":"d","text":"Converting the array to a string"}]', 'b', 2, 1),
+  ('A sliding-window solution never makes left or right move backwards. Its total cost is:', '[{"id":"a","text":"O(n^2), because of the nested while"},{"id":"b","text":"O(n log n)"},{"id":"c","text":"O(n) amortized - each index enters and leaves once"},{"id":"d","text":"O(1)"}]', 'c', 3, 1),
+  ('You need the maximum sum of every contiguous subarray of a fixed size k. The best approach is:', '[{"id":"a","text":"A fresh sum for every window: O(n*k)"},{"id":"b","text":"Slide the window, adding the new element and subtracting the old: O(n)"},{"id":"c","text":"Sort the array first: O(n log n)"},{"id":"d","text":"Prefix sums of every pair: O(n^2)"}]', 'b', 4, 1),
+  ('Which structure is the right fit for matching the MOST RECENT unclosed bracket?', '[{"id":"a","text":"Queue"},{"id":"b","text":"Stack"},{"id":"c","text":"Heap"},{"id":"d","text":"Linked list"}]', 'b', 5, 1),
+  ('A monotonic stack keeps its elements:', '[{"id":"a","text":"In insertion order always"},{"id":"b","text":"In sorted order, popping anything that breaks it"},{"id":"c","text":"Randomized for speed"},{"id":"d","text":"Reversed every other push"}]', 'b', 6, 1),
+  ('Reversing a singly linked list in place requires tracking at minimum:', '[{"id":"a","text":"prev, curr and the saved next pointer"},{"id":"b","text":"The full list copied to an array"},{"id":"c","text":"A hash map of positions"},{"id":"d","text":"Only the head and tail"}]', 'a', 7, 1),
+  ('For finding the leftmost occurrence of a target in a sorted array, on a successful match you should:', '[{"id":"a","text":"Return immediately"},{"id":"b","text":"Continue searching the LEFT half (hi = mid)"},{"id":"c","text":"Restart the search from 0"},{"id":"d","text":"Switch to linear scan"}]', 'b', 8, 1),
+  ('Two intervals [a, b] and [c, d], sorted by start, overlap when:', '[{"id":"a","text":"c <= b"},{"id":"b","text":"a <= d"},{"id":"c","text":"c < a"},{"id":"d","text":"b <= d"}]', 'a', 9, 1),
+  ('Merging a later interval into the previous one must extend with max(ends) because:', '[{"id":"a","text":"The later interval may be fully contained in the previous one"},{"id":"b","text":"Sorting guarantees ends are ordered too"},{"id":"c","text":"max is faster than direct assignment"},{"id":"d","text":"It deduplicates the input"}]', 'a', 10, 1)
+) AS v(question, options, correct_answer, sort_order, points)
+WHERE q.title = 'DSA — Mid-Course Check: Complexity & Core Structures'
+  AND NOT EXISTS (SELECT 1 FROM public.quiz_questions qq WHERE qq.quiz_id = q.id);INSERT INTO public.quizzes (id, course_id, title, description, passing_score, is_published)
 SELECT uuid_generate_v4(), c.id,
     'DSA — Final: Pattern Recognition Under Pressure',
     'Lessons 11-20: recursion, trees, heaps, backtracking, graphs, DP — and picking the right pattern fast.',
@@ -1191,45 +1171,25 @@ SELECT uuid_generate_v4(), c.id,
 FROM public.courses c WHERE c.slug = 'dsa-leetcode-playbook'
 AND NOT EXISTS (SELECT 1 FROM public.quizzes q WHERE q.title = 'DSA — Final: Pattern Recognition Under Pressure');
 
-  DO $$
-  DECLARE qid UUID;
-  BEGIN
-    SELECT id INTO qid FROM public.quizzes
-      WHERE title = 'DSA — Final: Pattern Recognition Under Pressure' LIMIT 1;
-    IF qid IS NULL THEN RETURN; END IF;
-
-    INSERT INTO public.quiz_questions (id, quiz_id, question, options, correct_answer, sort_order, points) VALUES
-    (uuid_generate_v4(), qid, 'A problem asks for ALL ways to partition a small set (n <= 20). The intended technique is:',
-      '[{"id":"a","text":"Dynamic programming"},{"id":"b","text":"Backtracking / enumeration"},{"id":"c","text":"Binary search"},{"id":"d","text":"Union-Find"}]',
-      'b', 1, 1),
-    (uuid_generate_v4(), qid, 'In Combination Sum, passing i (not i+1) to the recursive call means:',
-      '[{"id":"a","text":"Each candidate is used at most once"},{"id":"b","text":"The same candidate may be reused any number of times"},{"id":"c","text":"The recursion becomes iterative"},{"id":"d","text":"Duplicates in the input are skipped"}]',
-      'b', 2, 1),
-    (uuid_generate_v4(), qid, 'An inorder traversal of a valid BST visits the values:',
-      '[{"id":"a","text":"Level by level"},{"id":"b","text":"In sorted order"},{"id":"c","text":"In insertion order"},{"id":"d","text":"In reverse sorted order"}]',
-      'b', 3, 1),
-    (uuid_generate_v4(), qid, 'Validating a BST by comparing each node only with its immediate children fails because:',
-      '[{"id":"a","text":"It is O(n^2)"},{"id":"b","text":"A grandchild can violate an ancestor''s bound without breaking a parent-child pair"},{"id":"c","text":"Trees cannot be traversed recursively"},{"id":"d","text":"It only works on complete trees"}]',
-      'b', 4, 1),
-    (uuid_generate_v4(), qid, 'For "k-th largest element" in a large stream, the memory-optimal approach is:',
-      '[{"id":"a","text":"A max-heap of all elements"},{"id":"b","text":"A min-heap capped at size k"},{"id":"c","text":"Sorting the stream"},{"id":"d","text":"A dict of counts"}]',
-      'b', 5, 1),
-    (uuid_generate_v4(), qid, 'Kahn''s topological sort detects a cycle when:',
-      '[{"id":"a","text":"The queue grows too large"},{"id":"b","text":"The produced order is shorter than the number of nodes"},{"id":"c","text":"Any node has indegree 0"},{"id":"d","text":"An edge points backwards"}]',
-      'b', 6, 1),
-    (uuid_generate_v4(), qid, 'Flood fill on a grid (Number of Islands) marks visited cells so that:',
-      '[{"id":"a","text":"The output is sorted"},{"id":"b","text":"The same cell is never processed twice - preventing infinite recursion"},{"id":"c","text":"The grid becomes rectangular"},{"id":"d","text":"BFS becomes faster than DFS"}]',
-      'b', 7, 1),
-    (uuid_generate_v4(), qid, 'The DP state dp[i] in House Robber means:',
-      '[{"id":"a","text":"The best loot considering the first i houses"},{"id":"b","text":"The loot of house i"},{"id":"c","text":"The number of houses robbed so far"},{"id":"d","text":"The minimum loot possible"}]',
-      'a', 8, 1),
-    (uuid_generate_v4(), qid, 'In Coin Change II (count combinations), putting the coin loop OUTSIDE the amount loop ensures:',
-      '[{"id":"a","text":"Faster runtime"},{"id":"b","text":"Combinations are counted once each, not as reordered permutations"},{"id":"c","text":"Negative amounts are impossible"},{"id":"d","text":"The table needs one row only"}]',
-      'b', 9, 1),
-    (uuid_generate_v4(), qid, 'Input n can be up to 10^5. Which complexity family is REQUIRED (roughly)?',
-      '[{"id":"a","text":"O(n^2)"},{"id":"b","text":"O(2^n)"},{"id":"c","text":"O(n log n) or better"},{"id":"d","text":"O(n^3)"}]',
-      'c', 10, 1);
-  END $$;
+-- Questions for this quiz: one plain INSERT (no variables, no dollar-quoted block),
+-- scoped to the quiz by title and skipped if its questions already exist.
+INSERT INTO public.quiz_questions (id, quiz_id, question, options, correct_answer, sort_order, points)
+SELECT uuid_generate_v4(), q.id, v.question, v.options::jsonb, v.correct_answer, v.sort_order, v.points
+FROM public.quizzes q
+CROSS JOIN (VALUES
+  ('A problem asks for ALL ways to partition a small set (n <= 20). The intended technique is:', '[{"id":"a","text":"Dynamic programming"},{"id":"b","text":"Backtracking / enumeration"},{"id":"c","text":"Binary search"},{"id":"d","text":"Union-Find"}]', 'b', 1, 1),
+  ('In Combination Sum, passing i (not i+1) to the recursive call means:', '[{"id":"a","text":"Each candidate is used at most once"},{"id":"b","text":"The same candidate may be reused any number of times"},{"id":"c","text":"The recursion becomes iterative"},{"id":"d","text":"Duplicates in the input are skipped"}]', 'b', 2, 1),
+  ('An inorder traversal of a valid BST visits the values:', '[{"id":"a","text":"Level by level"},{"id":"b","text":"In sorted order"},{"id":"c","text":"In insertion order"},{"id":"d","text":"In reverse sorted order"}]', 'b', 3, 1),
+  ('Validating a BST by comparing each node only with its immediate children fails because:', '[{"id":"a","text":"It is O(n^2)"},{"id":"b","text":"A grandchild can violate an ancestor''s bound without breaking a parent-child pair"},{"id":"c","text":"Trees cannot be traversed recursively"},{"id":"d","text":"It only works on complete trees"}]', 'b', 4, 1),
+  ('For "k-th largest element" in a large stream, the memory-optimal approach is:', '[{"id":"a","text":"A max-heap of all elements"},{"id":"b","text":"A min-heap capped at size k"},{"id":"c","text":"Sorting the stream"},{"id":"d","text":"A dict of counts"}]', 'b', 5, 1),
+  ('Kahn''s topological sort detects a cycle when:', '[{"id":"a","text":"The queue grows too large"},{"id":"b","text":"The produced order is shorter than the number of nodes"},{"id":"c","text":"Any node has indegree 0"},{"id":"d","text":"An edge points backwards"}]', 'b', 6, 1),
+  ('Flood fill on a grid (Number of Islands) marks visited cells so that:', '[{"id":"a","text":"The output is sorted"},{"id":"b","text":"The same cell is never processed twice - preventing infinite recursion"},{"id":"c","text":"The grid becomes rectangular"},{"id":"d","text":"BFS becomes faster than DFS"}]', 'b', 7, 1),
+  ('The DP state dp[i] in House Robber means:', '[{"id":"a","text":"The best loot considering the first i houses"},{"id":"b","text":"The loot of house i"},{"id":"c","text":"The number of houses robbed so far"},{"id":"d","text":"The minimum loot possible"}]', 'a', 8, 1),
+  ('In Coin Change II (count combinations), putting the coin loop OUTSIDE the amount loop ensures:', '[{"id":"a","text":"Faster runtime"},{"id":"b","text":"Combinations are counted once each, not as reordered permutations"},{"id":"c","text":"Negative amounts are impossible"},{"id":"d","text":"The table needs one row only"}]', 'b', 9, 1),
+  ('Input n can be up to 10^5. Which complexity family is REQUIRED (roughly)?', '[{"id":"a","text":"O(n^2)"},{"id":"b","text":"O(2^n)"},{"id":"c","text":"O(n log n) or better"},{"id":"d","text":"O(n^3)"}]', 'c', 10, 1)
+) AS v(question, options, correct_answer, sort_order, points)
+WHERE q.title = 'DSA — Final: Pattern Recognition Under Pressure'
+  AND NOT EXISTS (SELECT 1 FROM public.quiz_questions qq WHERE qq.quiz_id = q.id);
 
 -- Final summary — counts everything by slug (top-level, after all inserts).
 DO $$
