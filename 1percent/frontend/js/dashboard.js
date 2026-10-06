@@ -98,7 +98,10 @@ const Dashboard = {
       subEl.style.display = '';
     }
     // Free users only reach the Dev UI once their coins hit 1,000.
-    if (this._canDev(this._hasProject, ws?.coins)) {
+    // (this._ws is stored by _renderDashboard — referencing `ws` here was a
+    // ReferenceError that threw init() into the guest template, wiping the
+    // logged-in dashboard.)
+    if (this._canDev(this._hasProject, this._ws?.coins)) {
       const header = document.querySelector('.dash-header');
       if (header && !header.querySelector('#classic-dev-switch')) {
         const btn = document.createElement('button');

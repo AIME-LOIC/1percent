@@ -362,7 +362,7 @@ app.get('/api/health', (req, res) => {
 const { adminClient: diagClient } = require('./config/database');
 const { authenticate, requireAdmin } = require('./middlewares/auth');
 const referralController = require('./controllers/referralController');
-const { listAiConnections, adminRegisterConnection, adminRevokeConnection, listAdminAiConnections } = require('./controllers/aiConnectionsController');
+const { connectAi, listAiConnections, adminRegisterConnection, adminRevokeConnection, listAdminAiConnections } = require('./controllers/aiConnectionsController');
 app.get('/api/admin/diagnostics', authenticate, requireAdmin, async (req, res) => {      const tables = ['profiles', 'courses', 'lessons', 'enrollments', 'quizzes', 'challenges', 'notifications', 'ratings', 'parent_payments', 'premium_subscriptions', 'streaks', 'user_coins', 'error_logs', 'system_logs', 'admin_alerts', 'referral_links'];
   const results = {};
   for (const t of tables) {
@@ -447,8 +447,18 @@ app.use('/api/logs', logRoutes);
 app.use('/api/admin/logs', adminLogRoutes);
 app.use('/api/robotics-club', roboticsClubRouter);            // student: schools, join, me
 app.use('/api/robotics-club/admin', roboticsClubAdminRouter); // admin: members, notify
-app.use('/api/ai/connections', authenticate, listAiConnections);
-app.use('/api/admin/ai/connections', authenticate, requireAdmin, listAdminAiConnections);
+// app.use would catch POST/DELETE too — use method-scoped routers so the
+// lister only serves GET and the user's own connect/revoke still work.
+const aiConnRouter = express.Router();
+aiConnRouter.post('/', authenticate, connectAi);
+aiConnRouter.get('/', authenticate, listAiConnections);
+app.use('/api/ai/connections', aiConnRouter);
+
+const adminAiConnRouter = express.Router();
+adminAiConnRouter.get('/', authenticate, requireAdmin, listAdminAiConnections);
+adminAiConnRouter.post('/register', authenticate, requireAdmin, adminRegisterConnection);
+adminAiConnRouter.delete('/:id', authenticate, requireAdmin, adminRevokeConnection);
+app.use('/api/admin/ai/connections', adminAiConnRouter);
 app.use('/api/docs', docsRoutes);
 app.use('/api/mcp', studentMcpTokenRoutes);
 

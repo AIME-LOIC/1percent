@@ -89,7 +89,7 @@ async function listAiConnections(req, res) {
     .from('ai_connections')
     .select('*')
     .eq('user_id', userId)
-    .ilike('provider', ['chatgpt', 'gemini']);
+    .in('provider', ['chatgpt', 'gemini']);
 
   if (error) {
     console.error('[AI CONNECT] list error:', error.message);
@@ -167,19 +167,23 @@ async function adminRegisterConnection(req, res) {
   });
 }
 
-/* ── DELETE /api/ai/connections/:id (admin: revoke a provider connection) ── */
+/* ── DELETE /api/admin/ai/connections/:provider (admin: revoke) ──
+   The admin panel passes the provider name (claude/chatgpt/gemini),
+   not a row uuid — revoke every active connection for that provider. */
 async function adminRevokeConnection(req, res) {
   const userId = req.user?.id;
   if (!userId) return res.status(401).json({ error: 'Authentication required' });
 
-  const id = req.params.id;
-  if (!id) return res.status(400).json({ error: 'Missing connection id.' });
+  const provider = String(req.params.id || '').toLowerCase();
+  if (!provider || !['claude', 'chatgpt', 'gemini'].includes(provider)) {
+    return res.status(400).json({ error: 'Invalid provider (expected claude, chatgpt or gemini).' });
+  }
 
   const { error } = await adminClient
     .from('ai_connections')
     .update({ revoked_at: new Date().toISOString() })
-    .eq('id', id)
-    .eq('user_id', userId);
+    .eq('provider', provider)
+    .is('revoked_at', null);
 
   if (error) {
     console.error('[AI CONNECT] revoke error:', error.message);
@@ -187,7 +191,7 @@ async function adminRevokeConnection(req, res) {
   }
 
   res.setHeader('Cache-Control', 'no-store');
-  return res.json({ success: true, revoked: true });
+  return res.json({ success: true, revoked: true, provider });
 }
 
 /* ── GET /api/admin/ai/connections (admin: refresh shared admin connector) ── */
@@ -195,6 +199,8 @@ async function listAdminAiConnections(req, res) {
   // Admin-level view: list every provider AI connection the platform
   // currently has (shared admin connector state).  This is the
   // admin-side "refresh" of the shared connector status.
+  // Claude is a per-account personal connector — the admin panel also
+  // shows it, so include it in the provider list.
   const { data, error } = await adminClient
     .from('ai_connections')
     .select('*');
@@ -207,7 +213,7 @@ async function listAdminAiConnections(req, res) {
   const rows = data || [];
   const active = rows.filter(r => !r.revoked_at);
   const byProvider = {};
-  ['chatgpt', 'gemini'].forEach(p => {
+  ['claude', 'chatgpt', 'gemini'].forEach(p => {
     const row = active.find(a => a.provider === p);
     byProvider[p] = row
       ? {

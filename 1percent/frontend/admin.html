@@ -56,6 +56,7 @@
 .text-success{color:#059669;}
 .text-danger{color:#dc2626;}
 .pill-green{padding:6px 12px;border-radius:100px;background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;font-size:12px;font-weight:600;}
+.pill-gray{padding:6px 12px;border-radius:100px;background:#f3f4f6;color:#4b5563;border:1px solid #d1d5db;font-size:12px;font-weight:600;}
 .code-chip{background:#f6f8fa;color:#24292f;}
 .min-h160{min-height:160px;}
 .mw-360{max-width:360px;}
@@ -1213,7 +1214,7 @@ tr.log-fatal:hover td{background:#feeeee !important;}
               </div>
             </div>
           </div>
-          <p class="adm-t12-muted" style="margin-top:8px">ChatGPT + Gemini are public clients (PKCE-only). The /mcp/oauth endpoints already know them — this panel just shows you which accounts are connected and lets you register a brand-new public provider.</p>
+          <p class="adm-t12-muted" style="margin-top:8px">ChatGPT + Gemini are public clients (PKCE-only); Claude is your personal account connector. The /mcp/oauth endpoints already know them — this panel just shows you which accounts are connected and lets you register a brand-new public provider.</p>
         </div>
       </div>
 
@@ -2280,7 +2281,7 @@ async function loadAiConnections() {
 
 async function connectAi(provider) {
   const confirmed = await Toast.confirm({
-    title: `${provider === 'claude' ? 'Disconnect Claude?' : provider === 'chatgpt' ? 'Disconnect ChatGPT?' : 'Disconnect Gemini?'}`,
+    title: 'Connect ' + (provider === 'claude' ? 'Claude' : provider === 'chatgpt' ? 'ChatGPT' : 'Gemini') + '?',
     message: 'Approve with your account — no tokens to copy. Claude/GPT/Gemini will be able to read your learning data. This cannot be undone without disconnecting again.',
     confirmText: 'Connect',
     confirmClass: 'primary'
@@ -2293,9 +2294,9 @@ async function connectAi(provider) {
   if (btn2) btn2.style.display = 'none';
 
   try {
-    const res = await fetch('/api/ai/connections', {
+    // apiFetch attaches the Bearer token — a raw fetch here 401s.
+    const res = await apiFetch('/api/ai/connections', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ provider, state: '' })
     });
     if (!res.ok) {
@@ -2326,7 +2327,7 @@ async function revokeAiConnection(provider) {
   if (btn2) btn2.style.display = 'none';
 
   try {
-    await fetch('/api/admin/ai/connections/' + encodeURIComponent(provider), { method: 'DELETE' });
+    await apiFetch('/api/admin/ai/connections/' + encodeURIComponent(provider), { method: 'DELETE' });
     Toast.success('Disconnected from ' + provider + '!');
     await loadAiConnections();
   } catch (e) {

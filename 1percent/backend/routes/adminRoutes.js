@@ -31,6 +31,7 @@ const analyticsController = require('../controllers/analyticsController');
 const { authenticate, requireAdmin } = require('../middlewares/auth');
 const { sanitizeStrings } = require('../middlewares/validate');
 const referralController = require('../controllers/referralController');
+const { listAdminAiConnections, adminRegisterConnection, adminRevokeConnection } = require('../controllers/aiConnectionsController');
 const logService = require('../services/logService');
 
 const router = Router();
@@ -169,9 +170,11 @@ router.post('/email/broadcast', async (req, res) => {
 // Referrals (admin: view where users heard about us)
 router.get('/referrals', async (req, res, next) => referralController.getAllReferrals(req, res, next));
 // AI connections (admin: view + register new provider client + revoke)
-router.get('/ai/connections', async (req, res) => { await adminController.aiConnectionsList(req, res); });
-router.post('/ai/connections/register', async (req, res) => { await adminController.aiConnectionsRegister(req, res); });
-router.delete('/ai/connections/:id', async (req, res) => { await adminController.aiConnectionsRevoke(req, res); });
+// Handlers live in aiConnectionsController — adminController never had them,
+// so every request here threw TypeError -> 500.
+router.get('/ai/connections', (req, res) => listAdminAiConnections(req, res));
+router.post('/ai/connections/register', (req, res) => adminRegisterConnection(req, res));
+router.delete('/ai/connections/:id', (req, res) => adminRevokeConnection(req, res));
 
 
 module.exports = router;
