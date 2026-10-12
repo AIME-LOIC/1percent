@@ -2,3 +2,14 @@ node_modules/
 dist/
 .vite/
 .DS_Store
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Binaries and build output
+*.zip
+*.deb
+.ipynb_checkpoints/
+1percent/vscode-extension/out/
