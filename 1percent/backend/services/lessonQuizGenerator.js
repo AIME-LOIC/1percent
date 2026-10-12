@@ -5,7 +5,7 @@
  *   Builds per-lesson quick quizzes from lesson content so fast learners can prove mastery and skip
  *   the study-time gate.
  *
- * EXPORTS: generateLessonQuiz, extractConcepts, tokenize, pickBySeed, shaLikeHash, dollarQuote, optionsToJson, STOPWORDS
+ * EXPORTS: generateLessonQuiz, extractFacts, buildCoursePool, isEligibleLesson, MIN_QUESTIONS, extractConcepts, tokenize, pickBySeed, shaLikeHash, dollarQuote, optionsToJson, STOPWORDS
  *
  * Data model: database_consolidated.sql · Architecture: technical_pitch.txt
  */
@@ -94,82 +94,248 @@ function extractConcepts(lesson) {
   return concepts;
 }
 
-/** Question 1 — concept identification (always available). */
-function qIdentify(concepts, lesson) {
-  const c = concepts[0] || lesson.title.split(/\s+/)[0];
-  return {
-    question: `Which concept is central to this lesson ("${lesson.title}")?`,
-    options: [
-      { id: 'a', text: c },
-      { id: 'b', text: concepts[1] || 'Advanced cryptographic hashing' },
-      { id: 'c', text: concepts[2] || 'Distributed consensus protocols' },
-      { id: 'd', text: concepts[3] || 'Legacy COBOL integration' }
-    ],
-    correct_answer: 'a'
+/* ── Fact-based quick-quiz generation ─────────────────────────
+ * Questions come from real sentences and definitions in the lesson:
+ *   • definition  — "**Term** is …" / "**Term** — …" / "`cmd` — …"
+ *   • cloze       — a sentence with one bold or `code` term blanked out
+ * Wrong options are real terms from the same lesson / course, so a
+ * student who has not read the lesson cannot pass by elimination.
+ * Lessons with too little material return [] (no quiz is better than
+ * a free skip). Deterministic: same lesson + pool → same questions.
+ * ─────────────────────────────────────────────────────────── */
+
+const MIN_QUESTIONS = 5;   // 5 per lesson: the quick quiz needs 80%, so 4/5 passes — one weak question cannot block a student
+const INELIGIBLE_TYPES = new Set(['project', 'lab', 'quiz']);
+
+/* Bold/code terms that are labels, not concepts */
+const TERM_STOPLIST = new Set([
+  'status', 'duration', 'lessons', 'type', 'example', 'examples', 'tip', 'pro tip', 'note', 'warning',
+  'bad', 'good', 'why', 'what', 'how', 'goal', 'output', 'input', 'result', 'answer', 'step', 'steps',
+  'important', 'remember', 'free', 'reading', 'project', 'lab', 'quiz', 'try it yourself', 'common mistake',
+  'before', 'after', 'wrong', 'right', 'rule', 'rules', 'key idea', 'summary', 'the 1% difference',
+  'title', 'body', 'data', 'pros', 'cons', 'visit', 'assess', 'about', 'subject', 'opening', 'closing', 'format', 'template',
+  'option', 'options', 'level', 'levels', 'topic', 'topics', 'part', 'parts', 'level 1', 'level 2', 'level 3'
+]);
+
+function isEligibleLesson(lesson) {
+  return !INELIGIBLE_TYPES.has(String(lesson && lesson.lesson_type || '').toLowerCase());
+}
+
+/** Seeded PRNG (mulberry32) — deterministic shuffles. */
+function rng(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
 
-/** Question 2 — topic association, seeded so it varies by lesson. */
-function qAssociate(concepts, lesson, seed) {
-  const c = pickBySeed(concepts.slice(1), seed) || concepts[0] || lesson.title;
-  const distractors = [
-    'Unrelated to this lesson’s topic',
-    'A deprecated practice not covered here',
-    'An unrelated operating-system detail'
-  ];
-  const pick = pickBySeed(distractors, seed + 1);
-  const options = [
-    { id: 'a', text: pick },
-    { id: 'b', text: c },
-    { id: 'c', text: pickBySeed(distractors, seed + 2) },
-    { id: 'd', text: 'None of the above' }
-  ];
-  // Deterministic shuffle of option order via seed
-  const rotated = seed % 2 === 0 ? options : [options[1], options[2], options[3], options[0]];
-  const ci = rotated.findIndex(o => o.text === c);
-  const idMap = ['a', 'b', 'c', 'd'];
-  return {
-    question: `In this lesson, "${lesson.title}", which item belongs to its core subject matter?`,
-    options: rotated,
-    correct_answer: idMap[ci]
-  };
+function seededShuffle(list, seed) {
+  const r = rng(seed);
+  const arr = list.slice();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(r() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
 }
 
-/** Question 3 — definition/completion, phrased around a key term. */
-function qComplete(concepts, lesson, seed) {
-  const c = pickBySeed(concepts, seed + 3) || lesson.title;
-  return {
-    question: `The lesson on "${lesson.title}" teaches that "${c}" is best understood as what?`,
-    options: [
-      { id: 'a', text: `A key topic of this lesson, central to understanding "${lesson.title}"` },
-      { id: 'b', text: 'A decorative term with no technical meaning' },
-      { id: 'c', text: 'A hardware specification' },
-      { id: 'd', text: 'A deprecated API removed years ago' }
-    ],
-    correct_answer: 'a'
-  };
+/** Remove boilerplate that would pollute questions. */
+function stripNoise(md) {
+  let s = String(md || '').replace(/\r/g, '');
+  s = s.replace(/\n#{1,4}[^\n]*Expert Layer[\s\S]*$/i, '\n');                    // repeated "Expert Layer" block
+  s = s.replace(/\n#{1,4}\s*Try It Yourself[\s\S]*?(?=\n#{1,4}\s|$)/gi, '\n');   // instructions, not facts
+  s = s.replace(/```[\s\S]*?```/g, '\n');                                        // code fences
+  s = s.replace(/^\s*\|.*\|\s*$/gm, '');                                         // tables
+  s = s.replace(/^\s*>\s?/gm, '');                                               // blockquote markers
+  s = s.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');                                 // links → text
+  return s;
+}
+
+function plain(s) {
+  return String(s || '').replace(/\*\*/g, '').replace(/`/g, '').replace(/\s+/g, ' ').trim();
+}
+
+const LABEL_START = /^(what|why|how|when|where|who|step|action|day|week|lesson|module|goal|time|cost|tip|rule|the problem|the solution|your|this|these|that|you|we|do not|don't|never|always)\b/i;
+const TRAILING_FUNCTION_WORD = /\b(with|of|to|for|and|or|in|on|at|by|the|a|an|from|as|is|are)$/i;
+const IMPERATIVE_START = /^(create|upload|write|open|go|add|use|do|check|make|take|set|run|try|click|copy|download|install|send|ask|pick|choose|buy|call|put|get|list|name|build|test|find|read|fill|save|print|type|enter|press|select|keep|turn|connect|plug|wire|note|remember|imagine|look|see|visit|follow|start|stop|avoid|never|always)\b/i;
+
+function cleanTerm(raw, kind) {
+  const t = plain(raw).replace(/[:.]+$/, '').trim();
+  if (t.length < 2 || t.length > 40) return null;
+  if (t.split(/\s+/).length > 5) return null;
+  if (/^[\d\s.,%=+\-*/×÷]+$/.test(t)) return null;      // pure numbers / maths
+  if (/[=<>{}]/.test(t)) return null;
+  if (TERM_STOPLIST.has(t.toLowerCase())) return null;
+  if (LABEL_START.test(t) || TRAILING_FUNCTION_WORD.test(t)) return null;
+  if (/[A-Z]{6,}/.test(t)) return null;                  // SHOUTING headings (short acronyms like DC/HTTP are fine)
+  if (kind !== 'code' && /[\d()]/.test(t)) return null;  // "S3 (right)", "120 packets…" are labels, not concepts
+  return t;
+}
+
+/** A description is usable if it reads like a definition, not an instruction. */
+const COMPARATIVE_START = /^(simpler|more|less|faster|slower|better|worse|cheaper|cheap|easier|harder|free|easy|hard|similar|same|different|also|but|and|or|so)\b/i;
+function goodDesc(desc) {
+  if (desc.length < 14 || desc.length > 130) return false;
+  if (desc.split(/\s+/).length < 3) return false;
+  if (IMPERATIVE_START.test(desc) || COMPARATIVE_START.test(desc) || /^\d/.test(desc)) return false;
+  if (/["“”\[\]→—:?!]/.test(desc)) return false;      // quoted examples, UI arrows, templates
+  return true;
+}
+
+function mentionsStem(text, term) {
+  const esc = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp('(^|[^\\p{L}\\p{N}])' + esc, 'iu').test(text);
+}
+
+function mentions(text, term) {
+  const esc = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp('(^|[^\\p{L}\\p{N}])' + esc + '($|[^\\p{L}\\p{N}])', 'iu').test(text);
 }
 
 /**
- * Generate 3 questions for one lesson. Deterministic.
- * Returns an array of { question, options, correct_answer, sort_order }.
+ * Extract quizzable facts from lesson markdown.
+ * Returns [{ type: 'def'|'cloze', term, kind: 'bold'|'code', text }]
  */
-function generateLessonQuiz(lesson) {
-  const title = String(lesson.title || 'Lesson');
-  const seed = shaLikeHash(String(lesson.id || title));
-  const concepts = extractConcepts(lesson);
+function extractFacts(contentMd) {
+  const facts = [];
+  const seen = new Set();
+  const add = f => {
+    const key = f.term.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    facts.push(f);
+  };
 
-  const base = [
-    qIdentify(concepts, { title }),
-    qAssociate(concepts, { title }, seed),
-    qComplete(concepts, { title }, seed)
-  ];
-  return base.map((q, i) => ({
-    question: q.question,
-    options: q.options,
-    correct_answer: q.correct_answer,
-    sort_order: i + 1
-  }));
+  const lines = stripNoise(contentMd).split('\n');
+  for (let raw of lines) {
+    let line = raw.trim();
+    if (!line || /^#{1,6}\s/.test(line) || /^---+$/.test(line)) continue;
+    line = line.replace(/^(?:[-*+]|\d+[.)])\s+/, '');
+
+    /* definition: "**Term** — desc" / "**Term:** desc" / "`cmd` — desc" */
+    let m = line.match(/^\*\*([^*\n]{2,40}?)(:?)\*\*(:?)\s*([—–-]+\s*)?(.+)$/);
+    if (m && (m[2] || m[3] || m[4])) {
+      const term = cleanTerm(m[1], 'bold');
+      const desc = plain(m[5]).replace(/[.!?]+$/, '');
+      if (term && goodDesc(desc) && !mentions(desc, term)) {
+        add({ type: 'def', term, kind: 'bold', text: desc });
+        continue;
+      }
+    }
+    m = line.match(/^`([^`\n]{2,40})`\s*[—–:-]+\s*(.+)$/);
+    if (m) {
+      const term = cleanTerm(m[1], 'code');
+      const desc = plain(m[2]).replace(/[.!?]+$/, '');
+      if (term && goodDesc(desc) && !mentions(desc, term)) {
+        add({ type: 'def', term, kind: 'code', text: desc });
+        continue;
+      }
+    }
+
+    for (const sentence of line.split(/(?<=[.!?])\s+(?=[A-Z0-9*`])/)) {
+      /* definition: "**Term** is/are/means …" */
+      const d = sentence.match(/^\*\*([^*\n]{2,40}?)\*\*\s+(?:is|are|means|refers to)\s+(.{12,200}?)[.!?]?$/i);
+      if (d) {
+        const term = cleanTerm(d[1], 'bold');
+        const desc = plain(d[2]);
+        if (term && goodDesc(desc) && !mentions(desc, term)) {
+          add({ type: 'def', term, kind: 'bold', text: desc });
+          continue;
+        }
+      }
+
+      /* cloze: blank one bold / code term inside a full sentence */
+      const flat = plain(sentence);
+      if (flat.length < 35 || flat.length > 200 || flat.split(' ').length < 6) continue;
+      if (/[→—:?!"“”\[]/.test(flat)) continue;   // UI paths, quotes, templates
+      const cands = [];
+      for (const c of sentence.matchAll(/`([^`\n]{2,30})`/g)) cands.push({ term: cleanTerm(c[1], 'code'), kind: 'code', idx: c.index });
+      for (const b of sentence.matchAll(/\*\*([^*\n]{2,30})\*\*/g)) cands.push({ term: cleanTerm(b[1], 'bold'), kind: 'bold', idx: b.index });
+      const pick = cands.filter(c => c.term && c.idx > 0 && !seen.has(c.term.toLowerCase()))[0];
+      if (!pick) continue;
+      if (pick.kind === 'bold' && IMPERATIVE_START.test(flat)) continue;   // "Go to **Tools** …" is an instruction; "Run `git add` to …" is a fact
+      const esc = pick.term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const blanked = flat.replace(new RegExp(esc, 'gi'), '_____');
+      if (!blanked.includes('_____')) continue;
+      add({ type: 'cloze', term: pick.term, kind: pick.kind, text: blanked });
+    }
+  }
+  return facts;
+}
+
+/** Course-wide pool of real terms, used for plausible wrong options. */
+function buildCoursePool(lessons) {
+  const pool = { bold: new Set(), code: new Set() };
+  for (const l of lessons || []) {
+    if (!isEligibleLesson(l)) continue;
+    for (const f of extractFacts(l.content_md)) pool[f.kind].add(f.term);
+  }
+  return { bold: [...pool.bold], code: [...pool.code] };
+}
+
+/** Lower = closer in look (same first-letter case, similar length, similar word count). */
+function styleGap(a, b) {
+  const caseMiss = (/^[A-Z]/.test(a) === /^[A-Z]/.test(b)) ? 0 : 20;
+  const words = Math.abs(a.split(/\s+/).length - b.split(/\s+/).length) * 6;
+  return caseMiss + words + Math.abs(a.length - b.length);
+}
+
+function pickDistractors(fact, questionText, localTerms, pool, seed) {
+  const correct = fact.term.toLowerCase();
+  const seen = new Set([correct]);
+  const ok = t => {
+    const k = t.toLowerCase();
+    if (seen.has(k)) return false;
+    if (mentionsStem(questionText, t)) return false;                   // never reveal via the stem (incl. plurals)
+    if (k.includes(correct) || correct.includes(k)) return false;     // "merge" vs "merge commit"
+    seen.add(k);
+    return true;
+  };
+  const same = [...(localTerms[fact.kind] || []), ...((pool && pool[fact.kind]) || [])];
+  const ordered = seededShuffle(same, seed)
+    .sort((a, b) => styleGap(a, fact.term) - styleGap(b, fact.term));
+  const out = [];
+  for (const t of ordered) { if (ok(t)) out.push(t); if (out.length === 3) break; }
+  return out;
+}
+
+/**
+ * Generate quick-quiz questions for one lesson. Deterministic.
+ * Returns [{ question, options:[{id,text}], correct_answer, sort_order }]
+ * or [] when the lesson lacks enough material (or is a project/lab).
+ * `pool` = buildCoursePool(lessons of the same course) — optional but recommended.
+ */
+function generateLessonQuiz(lesson, pool) {
+  if (!isEligibleLesson(lesson)) return [];
+  const facts = extractFacts(lesson.content_md);
+  if (facts.length < MIN_QUESTIONS) return [];
+
+  const seed = shaLikeHash(String(lesson.id || lesson.title || 'lesson'));
+  const local = { bold: [], code: [] };
+  for (const f of facts) local[f.kind].push(f.term);
+
+  const questions = [];
+  for (const fact of seededShuffle(facts, seed)) {
+    if (questions.length === MIN_QUESTIONS) break;
+    const stem = fact.type === 'def'
+      ? `Which term is described this way: "${fact.text}"?`
+      : `Fill in the blank: "${fact.text}"`;
+    const wrong = pickDistractors(fact, stem, local, pool, seed + questions.length);
+    if (wrong.length < 3) continue;
+    const order = seededShuffle([fact.term, ...wrong], seed * 31 + questions.length);
+    const ids = ['a', 'b', 'c', 'd'];
+    const options = order.map((text, i) => ({ id: ids[i], text }));
+    questions.push({
+      question: stem,
+      options,
+      correct_answer: ids[order.indexOf(fact.term)],
+      sort_order: questions.length + 1
+    });
+  }
+  return questions.length === MIN_QUESTIONS ? questions : [];
 }
 
 /* ── SQL emission helpers (deterministic escaping) ─────────── */
@@ -187,6 +353,10 @@ function optionsToJson(options) {
 
 module.exports = {
   generateLessonQuiz,
+  extractFacts,
+  buildCoursePool,
+  isEligibleLesson,
+  MIN_QUESTIONS,
   extractConcepts,
   tokenize,
   pickBySeed,
@@ -196,6 +366,10 @@ module.exports = {
   STOPWORDS
 };
 exports.generateLessonQuiz = generateLessonQuiz;
+exports.extractFacts = extractFacts;
+exports.buildCoursePool = buildCoursePool;
+exports.isEligibleLesson = isEligibleLesson;
+exports.MIN_QUESTIONS = MIN_QUESTIONS;
 exports.extractConcepts = extractConcepts;
 exports.tokenize = tokenize;
 exports.pickBySeed = pickBySeed;

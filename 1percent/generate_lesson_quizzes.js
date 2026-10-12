@@ -3,15 +3,18 @@
    generate_lesson_quizzes.js
    ============================================================
    Gives EVERY lesson a ⚡ Quick Quiz: fetches all published
-   lessons (id, title, content_md), generates 3 deterministic
-   questions from each lesson's own content, and emits re-runnable
+   lessons (id, title, content_md), generates 5 deterministic
+   questions from each lesson's own sentences and definitions, and emits re-runnable
    SQL that:
      1. ensures each course has a published course quiz,
      2. links every lesson to that quiz's questions via
         quiz_questions.lesson_id (the fast-track contract),
      3. inserts the questions.
+   Lessons without enough material (and project/lab lessons) get NO quiz —
+   the Quick Quiz button should be hidden for them, never a free skip.
 
    Modes:
+     node generate_lesson_quizzes.js --review   → writes migrations/quick_quiz_review.md (read it BEFORE applying)
      node generate_lesson_quizzes.js            → writes migrations/generate_lesson_quizzes.sql
      node generate_lesson_quizzes.js --apply    → writes directly to Supabase
      node generate_lesson_quizzes.js --dry-run  → prints a preview, no writes
@@ -30,6 +33,9 @@ const path = require('path');
 const crypto = require('crypto');
 const {
   generateLessonQuiz,
+  buildCoursePool,
+  isEligibleLesson,
+  MIN_QUESTIONS,
   dollarQuote,
   optionsToJson
 } = require('./backend/services/lessonQuizGenerator');
@@ -37,9 +43,9 @@ const {
 const APPLY = process.argv.includes('--apply');
 const DRY = process.argv.includes('--dry-run');
 const FORCE = process.argv.includes('--force');
+const REVIEW = process.argv.includes('--review');
 
-/* How many questions per lesson (matches QUICK.MIN_QUESTIONS in quizService) */
-const QUESTIONS_PER_LESSON = 3;
+/* Questions per lesson = MIN_QUESTIONS (5): quick quiz needs 80%, so 4/5 passes. */
 
 /* ── helpers ─────────────────────────────────────────────── */
 
@@ -66,15 +72,28 @@ function resolveQuizPerCourse(courses, quizzes) {
   });
 }
 
+/** Supabase returns at most 1000 rows per request — page through everything. */
+async function fetchPaged(build) {
+  const rows = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await build().range(from, from + 999);
+    if (error) throw error;
+    rows.push(...(data || []));
+    if (!data || data.length < 1000) break;
+  }
+  return rows;
+}
+
 async function fetchAll() {
   const { adminClient } = require('./backend/config/database');
-  const { data: lessons, error } = await adminClient
+
+  const lessons = await fetchPaged(() => adminClient
     .from('lessons')
-    .select('id, title, course_id, content_md, is_published')
+    .select('id, title, course_id, content_md, lesson_type, is_published, sort_order')
     .eq('is_published', true)
     .order('course_id')
-    .order('sort_order');
-  if (error) throw error;
+    .order('sort_order')
+    .order('id'));
 
   const { data: courses, error: cErr } = await adminClient
     .from('courses')
@@ -82,18 +101,31 @@ async function fetchAll() {
     .eq('is_published', true);
   if (cErr) throw cErr;
 
-  const { data: existing, error: eErr } = await adminClient
+  // paged: the old single request silently stopped at 1000 rows and re-generated duplicates
+  const existing = await fetchPaged(() => adminClient
     .from('quiz_questions')
-    .select('lesson_id');
-  if (eErr) throw eErr;
-  const lessonHasQuestions = new Set((existing || []).map(r => r.lesson_id).filter(Boolean));
+    .select('id, lesson_id')
+    .order('id'));
+  const lessonHasQuestions = new Set(existing.map(r => r.lesson_id).filter(Boolean));
 
   const { data: quizzes, error: qErr } = await adminClient
     .from('quizzes')
     .select('id, course_id, title');
   if (qErr) throw qErr;
 
-  return { lessons: lessons || [], courses: courses || [], lessonHasQuestions, quizzes: quizzes || [] };
+  return { lessons, courses: courses || [], lessonHasQuestions, quizzes: quizzes || [] };
+}
+
+/** Per-course term pools (real terms → plausible wrong options) + eligibility. */
+function buildPools(lessons) {
+  const byCourse = new Map();
+  for (const l of lessons) {
+    if (!byCourse.has(l.course_id)) byCourse.set(l.course_id, []);
+    byCourse.get(l.course_id).push(l);
+  }
+  const pools = new Map();
+  for (const [courseId, list] of byCourse) pools.set(courseId, buildCoursePool(list));
+  return pools;
 }
 
 /* ── SQL emission ────────────────────────────────────────── */
@@ -114,7 +146,8 @@ WHERE c.id = ${q(r.course_id)}
 
   /* Per-lesson question INSERTs, keyed to the course quiz. */
   const blocks = [];
-  let created = 0, skipped = 0;
+  let created = 0, skipped = 0, noQuiz = 0;
+  const pools = buildPools(lessons);
 
   for (const lesson of lessons) {
     if (lessonHasQuestions.has(lesson.id) && !FORCE) { skipped++; continue; }
@@ -123,7 +156,8 @@ WHERE c.id = ${q(r.course_id)}
       console.error(`! no course quiz resolved for lesson ${lesson.id} (${lesson.title}) — skipping`);
       continue;
     }
-    const qs = generateLessonQuiz(lesson);
+    const qs = generateLessonQuiz(lesson, pools.get(lesson.course_id));
+    if (!qs.length) { noQuiz++; continue; }   // not enough material / project / lab → no quiz
     const tag = 'q' + String(lesson.id).replace(/-/g, '');
     const values = qs.map((question, i) => {
       const vtag = `${tag}${i}`;
@@ -141,10 +175,10 @@ ${values};`);
 -- LESSON QUICK QUIZZES — auto-generated; do not edit by hand.
 -- Generated by: node generate_lesson_quizzes.js
 -- Generated at: ${now}
--- Lessons: ${created} generated, ${skipped} skipped (already have questions)
+-- Lessons: ${created} generated, ${skipped} skipped (already have questions), ${noQuiz} left without a quiz (too little material, or project/lab)
 --
--- Gives every published lesson 3 multiple-choice questions derived
--- from its own content, linked via quiz_questions.lesson_id so the
+-- Gives each suitable published lesson ${MIN_QUESTIONS} multiple-choice questions built
+-- from its own sentences and definitions, linked via quiz_questions.lesson_id so the
 -- ⚡ Quick Quiz (fast-track completion) works course-wide.
 -- PREREQUISITE: migrations/add_quiz_integrity.sql (adds the
 -- quiz_questions.lesson_id column) and migrations/add_lesson_quiz_passes.sql
@@ -166,14 +200,15 @@ SELECT
   (SELECT count(*) FROM public.lessons WHERE is_published)                          AS published_lessons;
 `;
 
-  return { sql, created, skipped };
+  return { sql, created, skipped, noQuiz };
 }
 
 /* ── direct-apply mode ───────────────────────────────────── */
 
 async function applyDirect({ lessons, courses, lessonHasQuestions, quizzes }) {
   const { adminClient } = require('./backend/config/database');
-  let done = 0;
+  let done = 0, noQuiz = 0;
+  const pools = buildPools(lessons);
   const resolved = resolveQuizPerCourse(courses, quizzes);
 
   // 1) Ensure course quizzes (explicit deterministic ids for missing ones)
@@ -195,7 +230,8 @@ async function applyDirect({ lessons, courses, lessonHasQuestions, quizzes }) {
     if (lessonHasQuestions.has(lesson.id) && !FORCE) continue;
     const quiz = resolved.find(qz => qz.course_id === lesson.course_id);
     if (!quiz) continue;
-    const qs = generateLessonQuiz(lesson);
+    const qs = generateLessonQuiz(lesson, pools.get(lesson.course_id));
+    if (!qs.length) { noQuiz++; continue; }
     const rows = qs.map(question => ({
       quiz_id: quiz.id,
       question: question.question,
@@ -210,35 +246,55 @@ async function applyDirect({ lessons, courses, lessonHasQuestions, quizzes }) {
     done++;
     if (done % 25 === 0) console.log(`  … ${done}/${lessons.length}`);
   }
-  console.log(`\n✅ Applied quick-quiz questions to ${done} lessons.`);
+  console.log(`\n✅ Applied quick-quiz questions to ${done} lessons; ${noQuiz} lessons left without a quiz (too little material, or project/lab).`);
 }
 
 /* ── main ────────────────────────────────────────────────── */
 
+function coverage(data) {
+  const pools = buildPools(data.lessons);
+  const rows = data.lessons.map(l => ({ lesson: l, qs: generateLessonQuiz(l, pools.get(l.course_id)) }));
+  return { rows, withQuiz: rows.filter(r => r.qs.length) };
+}
+
+function renderQuestions(qs) {
+  return qs.map((question, i) => {
+    const opts = question.options.map(o => `   - ${o.id}) ${o.text}${o.id === question.correct_answer ? '  ✅' : ''}`).join('\n');
+    return `${i + 1}. ${question.question}\n${opts}`;
+  }).join('\n');
+}
+
 async function main() {
   const data = await fetchAll();
-  console.log(`Fetched ${data.lessons.length} published lessons across ${data.courses.length} courses.`);
-  console.log(`${data.lessonHasQuestions.size} lessons already have questions.\n`);
+  const { rows, withQuiz } = coverage(data);
+  const eligible = data.lessons.filter(isEligibleLesson).length;
+  console.log(`Fetched ${data.lessons.length} published lessons across ${data.courses.length} courses (${eligible} eligible, not project/lab).`);
+  console.log(`${data.lessonHasQuestions.size} lessons already have questions.`);
+  console.log(`Generator can build a ${MIN_QUESTIONS}-question quiz for ${withQuiz.length} lessons; ${data.lessons.length - withQuiz.length} will have NO quiz (button should stay hidden).\n`);
+
+  if (REVIEW) {
+    const md = ['# Quick Quiz review', '', `Generated ${new Date().toISOString()} — ${withQuiz.length} lessons. ✅ marks the answer key.`,
+      'Read these. Delete or fix weak lessons by hand BEFORE running --apply.', ''];
+    for (const { lesson, qs } of withQuiz) md.push(`## ${lesson.title}`, `(lesson ${lesson.id})`, '', renderQuestions(qs), '');
+    const outPath = path.join(__dirname, 'migrations', 'quick_quiz_review.md');
+    fs.writeFileSync(outPath, md.join('\n'));
+    console.log(`Wrote ${outPath}. Nothing was written to the database.`);
+    return;
+  }
 
   if (DRY) {
-    const sample = data.lessons.slice(0, 3);
-    for (const l of sample) {
-      console.log(`— ${l.title}`);
-      for (const question of generateLessonQuiz(l)) {
-        console.log(`   Q: ${question.question}`);
-        for (const o of question.options) console.log(`      ${o.id}) ${o.text}${o.id === question.correct_answer ? '  ✓' : ''}`);
-      }
-      console.log('');
+    for (const { lesson, qs } of withQuiz.slice(0, 3)) {
+      console.log(`— ${lesson.title}\n${renderQuestions(qs)}\n`);
     }
     return;
   }
 
   if (APPLY) return applyDirect(data);
 
-  const { sql, created, skipped } = emitSql(data);
+  const { sql, created, skipped, noQuiz } = emitSql(data);
   const outPath = path.join(__dirname, 'migrations', 'generate_lesson_quizzes.sql');
   fs.writeFileSync(outPath, sql);
-  console.log(`Wrote ${outPath} (${(sql.length / 1024).toFixed(0)} KB) — ${created} lessons covered, ${skipped} skipped.`);
+  console.log(`Wrote ${outPath} (${(sql.length / 1024).toFixed(0)} KB) — ${created} lessons covered, ${skipped} skipped, ${noQuiz} without a quiz.`);
   console.log('Run it in the Supabase SQL Editor (or re-run with --apply).');
 }
 
