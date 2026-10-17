@@ -788,3 +788,52 @@
   .dr-course-card, .dr-challenge-card, .dr-hero-btn { transition: none; }
 }
 *:focus-visible { outline: 3px solid rgba(13, 110, 63, 0.35); outline-offset: 2px; }
+
+
+/* ── Learn dashboard layout fixes (learn branch) ── */
+/* The global site header is fixed on some page states. Keep the classic
+   learning dashboard below it, with a little breathing room. */
+.dr-page {
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+  padding-top: 96px;
+  padding-left: clamp(16px, 2.4vw, 36px);
+  padding-right: clamp(16px, 2.4vw, 36px);
+}
+
+/* Keep the Continue learning progress track distinct from the green hero.
+   A pale track and dark fill make progress readable instead of green-on-green. */
+.dr-course-pick .dr-progress-track {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+}
+.dr-course-pick .dr-progress-track > *,
+.dr-course-pick .dr-progress-track .dr-bar-fill {
+  background: #0d6e3f;
+}
+
+/* Avoid dashboard content being hidden under the fixed global navigation.
+   The v2 dashboard uses its own topbar and should not inherit extra offset. */
+body.dv2 #dashboard-app {
+  min-width: 0;
+}
+body.dv2 #dashboard-app > .dv2-app {
+  margin-top: 0;
+}
+
+/* Mobile header overlap and usable side gutters. */
+@media (max-width: 900px) {
+  .dr-page {
+    padding-top: 88px;
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+}
+@media (max-width: 620px) {
+  .dr-page {
+    padding-top: 82px;
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}
