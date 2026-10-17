@@ -149,55 +149,6 @@
 .dash-challenge-card .ch-status{font-size:10px;font-weight:700;color:#059669;display:flex;align-items:center;gap:3px;}
 .dash-challenge-card .ch-start{font-size:10px;font-weight:600;color:var(--primary);}
 
-/* ── Roadmap ─────────────────────────────────────────── */
-.dash-roadmap{margin-bottom:40px;}
-.roadmap-phase{
-  border:1px solid var(--border);border-radius:var(--radius-md);
-  margin-bottom:10px;overflow:hidden;background:var(--bg-card);
-}
-.roadmap-phase-header{
-  display:flex;align-items:center;gap:14px;padding:16px 20px;cursor:pointer;
-  transition:background .15s;
-}
-.roadmap-phase-header:hover{background:var(--bg-alt);}
-.roadmap-phase-num{
-  width:36px;height:36px;border-radius:50%;color:#fff;
-  display:flex;align-items:center;justify-content:center;
-  font-weight:700;font-size:14px;flex-shrink:0;
-}
-.roadmap-phase-info{flex:1;}
-.roadmap-phase-info h3{font-size:15px;font-weight:700;margin:0;display:flex;align-items:center;gap:6px;}
-.roadmap-phase-info p{font-size:12px;color:var(--text-muted);margin:2px 0 0;}
-.roadmap-phase-toggle{
-  font-size:12px;color:var(--text-muted);transition:transform .2s;
-}
-.roadmap-phase.open .roadmap-phase-toggle{transform:rotate(180deg);}
-.roadmap-phase-body{
-  display:none;padding:0 20px 16px;
-}
-.roadmap-phase.open .roadmap-phase-body{display:block;}
-.roadmap-module{
-  margin:6px 0;padding:10px 14px;background:var(--surface);
-  border-radius:var(--radius-sm);cursor:pointer;
-}
-.roadmap-module-header{
-  display:flex;align-items:center;justify-content:space-between;
-  font-size:13px;font-weight:600;
-}
-.roadmap-module-header span{font-size:11px;color:var(--text-muted);font-weight:400;}
-.roadmap-module-lessons{display:none;padding-top:8px;}
-.roadmap-module.open .roadmap-module-lessons{display:block;}
-.roadmap-lesson{
-  display:flex;align-items:center;gap:8px;padding:5px 0;
-  font-size:12px;border-bottom:1px solid var(--border-light);
-}
-.roadmap-lesson:last-child{border:none;}
-.roadmap-lesson .type{
-  font-family:var(--mono);font-size:9px;font-weight:600;text-transform:uppercase;
-  padding:2px 6px;border-radius:100px;flex-shrink:0;
-}
-.roadmap-lesson .dur{font-size:11px;color:var(--text-muted);white-space:nowrap;}
-
 /* ── Skeleton Loading ───────────────────────────────── */
 @keyframes shimmer{
   0%{background-position:-400px 0;}
@@ -212,7 +163,6 @@
 .skel-stat{height:76px;border-radius:var(--radius-lg);}
 .skel-enrolled{height:72px;border-radius:var(--radius-md);}
 .skel-course{height:190px;border-radius:var(--radius-md);}
-.skel-roadmap{height:56px;border-radius:var(--radius-md);margin-bottom:10px;}
 .skel-greeting{height:32px;width:280px;margin-bottom:8px;}
 .skel-subtitle{height:16px;width:340px;}
 

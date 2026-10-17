@@ -473,7 +473,6 @@ const Dashboard = {
     await this._loadCertificates();
     await this._loadAllCourses();
     await this._loadChallenges();
-    await this._loadRoadmap();
     this._initLeaderboard();
     
     // Initialize notification and rating handlers
@@ -956,75 +955,8 @@ const Dashboard = {
     }
   },
 
-  async _loadRoadmap() {
-    const container = document.getElementById('roadmap-container');
-    if (!container) return;
-
-    try {
-      const res = await fetch('/api/roadmap');
-      const json = await res.json();
-      if (!json.success || !json.roadmap?.phases) {
-        container.innerHTML = '<div class="dash-empty">No roadmap yet.</div>';
-        return;
-      }
-
-      const phaseIcons = { foundation: 'rocket', fullstack: 'zap', specialisation: 'target', certification: 'trophy' };
-
-      container.innerHTML = json.roadmap.phases.map((phase, i) => {
-        const icon = phaseIcons[phase.id] || 'book-open';
-        const modules = phase.modules || [];
-        const tracks = phase.tracks || [];
-        const totalLessons = modules.reduce((s, m) => s + (m.lessons?.length || 0), 0)
-          + tracks.reduce((s, t) => s + (t.modules || []).reduce((s2, m) => s2 + (m.lessons?.length || 0), 0), 0);
-
-        return `
-          <div class="roadmap-phase${i === 0 ? ' open' : ''}">
-            <div class="roadmap-phase-header" onclick="this.parentElement.classList.toggle('open')">
-              <div class="roadmap-phase-num" style="background:${phase.color || '#0d6e3f'}">${i + 1}</div>
-              <div class="roadmap-phase-info">
-                <h3>${Icons.get(icon, 18)} ${escapeHTML(phase.title)}</h3>
-                <p>${escapeHTML(phase.subtitle || '')} — ${phase.duration_weeks || 0} weeks · ${totalLessons} lessons</p>
-              </div>
-              <span class="roadmap-phase-toggle">▼</span>
-            </div>
-            <div class="roadmap-phase-body">
-              ${modules.map(m => this._renderModule(m)).join('')}
-              ${tracks.map(t => `
-                <div style="margin:8px 0;padding:10px 12px;background:var(--surface);border-radius:var(--radius-sm);">
-                  <div style="font-weight:600;font-size:13px;margin-bottom:6px;">${escapeHTML(t.title)}${t.mentor ? ' — ' + escapeHTML(t.mentor) : ''}</div>
-                  ${(t.modules || []).map(m => this._renderModule(m)).join('')}
-                </div>`).join('')}
-            </div>
-          </div>`;
-      }).join('');
-    } catch {
-      container.innerHTML = '<div class="dash-empty">No roadmap yet.</div>';
-    }
-  },
-
-  _renderModule(m) {
-    const lessons = m.lessons || [];
-    return `
-      <div class="roadmap-module" onclick="this.classList.toggle('open')">
-        <div class="roadmap-module-header">
-          ${escapeHTML(m.title)}
-          <span>${lessons.length} lessons</span>
-        </div>
-        <div class="roadmap-module-lessons">
-          ${lessons.map(l => `
-            <div class="roadmap-lesson">
-              <span class="type" style="background:${this._typeColor(l.type)};">${l.type || 'video'}</span>
-              <span style="flex:1;">${escapeHTML(l.title)}</span>
-              <span class="dur">${l.duration_min || 0}m</span>
-            </div>`).join('')}
-        </div>
-      </div>`;
-  },
-
-  _typeColor(type) {
-    const map = { video: '#dbeafe;color:#2563eb', lab: '#fef3c7;color:#d97706', project: '#fef3c7;color:#b45309', reading: '#e0e7ff;color:#4f46e5', quiz: '#fee2e2;color:#dc2626' };
-    return map[type] || map.reading;
-  },
+  /* Learning Roadmap was removed from the dashboard at product owner's
+     request — /api/roadmap data is still used by the course pages. */
 
   async _renderUpgradeButton() {
     try {
