@@ -182,7 +182,7 @@ class CertificateService {
   async getUserCertificates(userId) {
     const { data, error } = await adminClient
       .from('certificates')
-      .select('id, certificate_number, issued_at, learner_name, course_title, course_level, duration_weeks, courses(title, slug)')
+      .select('id, course_id, certificate_number, issued_at, learner_name, course_title, course_level, duration_weeks, courses(title, slug)')
       .eq('user_id', userId)
       .order('issued_at', { ascending: false });
 

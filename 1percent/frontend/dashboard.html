@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="/css/dashboard-v2.css">
 <link rel="stylesheet" href="/css/tier-theme.css">
 <link rel="stylesheet" href="/css/premium-theme.css">
+<link rel="stylesheet" href="/css/dashboard-redesign.css">
 <link rel="stylesheet" href="/css/notification-popup.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
 <script src="/socket.io/socket.io.js" defer></script>
@@ -370,117 +371,163 @@
 <!-- Backup/classic template — shown when the student has no project
      assigned (or chose "Learn" in the one-time dashboard picker) -->
 <template id="dashboard-classic-template">
-  <div class="dashboard-shell">
-    <div class="dash-layout">
-      <!-- Main column -->
-      <div class="dash-main">
-        <div class="dash-header">
-          <div>
-            <div class="skel-greeting skeleton" id="skel-greeting"></div>
-            <div class="skel-subtitle skeleton" id="skel-subtitle"></div>
-            <h1 class="dash-greeting" id="dash-greeting-text" hidden></h1>
-            <p class="dash-subtitle" id="dash-subtitle-text" hidden></p>
-          </div>
+  <!-- Redesigned student dashboard: main column + sticky right rail (dr-*) -->
+  <div class="dr-page" id="dr-app-main">
+
+    <!-- ── MAIN COLUMN ── -->
+    <div class="dr-main">
+
+      <!-- 1. Header: greeting + streak pill / Upgrade button (appended by js) -->
+      <div class="dr-header dash-header">
+        <div class="dr-header-copy">
+          <h1 class="dash-greeting" id="dash-greeting-text" hidden></h1>
+          <p class="dash-subtitle" id="dash-subtitle-text" hidden>Welcome back — here's where your training stands today.</p>
+        </div>
+        <div class="dr-header-tools" id="dr-header-tools">
           <span class="dash-streak" id="dash-streak" hidden>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
             <span class="dash-streak-count">0</span>-day streak
           </span>
         </div>
-
-        <div class="dash-stats" id="dash-stats">
-          <div class="dash-stat skel-stat skeleton"></div>
-          <div class="dash-stat skel-stat skeleton"></div>
-          <div class="dash-stat skel-stat skeleton"></div>
-        </div>
-
-        <div class="dash-section"><h2>Your Courses</h2><span class="count dash-enrolled-count">Loading...</span></div>
-        <div class="dash-enrolled" id="dash-enrolled">
-          <div class="skel-enrolled skeleton"></div>
-          <div class="skel-enrolled skeleton"></div>
-          <div class="skel-enrolled skeleton"></div>
-        </div>
-
-        <div class="dash-section">
-          <h2>Challenges</h2>
-          <a href="/playground" class="pg-dashboard-1qm4y">View All &rarr;</a>
-        </div>
-        <div class="dash-challenges" id="dash-challenges">
-          <div class="dash-challenge-filters" id="challenge-filters"></div>
-          <div class="dash-challenge-grid" id="challenge-grid">
-            <div class="skel-course skeleton"></div>
-            <div class="skel-course skeleton"></div>
-            <div class="skel-course skeleton"></div>
-          </div>
-        </div>
-
-        <div class="dash-section dash-courses-header">
-          <div>
-            <h2>Explore Courses</h2>
-            <p class="dash-section-subtitle">Find your next skill to build.</p>
-          </div>
-          <span class="count dash-courses-count">Loading...</span>
-        </div>
-        <div class="dash-course-toolbar">
-          <div class="dash-course-search">
-            <span class="dash-search-icon" aria-hidden="true">⌕</span>
-            <input type="search" id="dash-course-search" placeholder="Search courses..." aria-label="Search courses" autocomplete="off">
-          </div>
-        </div>
-        <div class="dash-courses" id="dash-all-courses">
-          <div class="skel-course skeleton"></div>
-          <div class="skel-course skeleton"></div>
-          <div class="skel-course skeleton"></div>
-          <div class="skel-course skeleton"></div>
-          <div class="skel-course skeleton"></div>
-          <div class="skel-course skeleton"></div>
-        </div>
-
-        <div class="dash-section"><h2>Certificates</h2><span class="count dash-certs-count">Loading...</span></div>
-        <div class="dash-certificates" id="dash-certificates">
-          <div class="dash-empty">No certificates yet — complete a course and pass the quiz.</div>
-        </div>
       </div>
 
-      <!-- Leaderboard sidebar (right column of the 1fr + 320px grid) -->
-      <div class="dash-lb">
-        <div class="dash-lb-head">
-          <h3><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-inline"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> Leaderboard</h3>
-          <div class="dash-lb-tabs">
-            <button class="dash-lb-tab active" data-type="coins">Coins</button>
-            <button class="dash-lb-tab" data-type="streak">Streak</button>
+      <!-- 2. Hero card: continue learning | next challenge -->
+      <section class="dr-hero" aria-label="Continue learning">
+        <div class="dr-hero-half">
+          <div class="dr-hero-eyebrow">Continue learning</div>
+          <div id="dr-hero-learn"></div>
+          <a class="dr-hero-btn" id="dr-hero-resume-link" href="#" hidden>Resume lesson</a>
+        </div>
+        <div class="dr-hero-half">
+          <div class="dr-hero-eyebrow">Next challenge</div>
+        <div id="dr-hero-next"></div>
+        <a class="dr-hero-btn dr-hero-btn--solid" id="dr-hero-start-link" href="#" hidden>Start challenge</a>
+      </div>
+      </section>
+
+      <!-- 3. Stats row -->
+      <div class="dr-stats-row" id="dr-stats" aria-label="Your statistics"></div>
+
+      <!-- 4. My Courses -->
+      <div class="dr-cards-head">
+        <h2>My Courses</h2>
+        <span class="count dash-enrolled-count" style="font-size:10.5px;font-weight:700;color:var(--text-muted);">Loading…</span>
+        <button type="button" class="dr-viewall" id="dr-courses-viewall">View all →</button>
+      </div>
+      <div class="dr-cards-row" id="dr-my-courses"><div class="dr-empty-row">Loading…</div></div>
+
+      <!-- 5. Challenges -->
+      <div class="dr-cards-head">
+        <h2>Challenges</h2>
+        <a class="dr-viewall" href="#" id="dr-challenges-viewall" data-nav="playground">View all →</a>
+      </div>
+      <div class="dr-chips" id="dr-challenges-filter" role="group" aria-label="Filter challenges by difficulty"></div>
+      <div class="dr-cards-row" id="dr-challenges-row"><div class="dr-empty-row">Loading…</div></div>
+
+      <!-- 6. Tabs: Explore Courses / Certificates / Roadmap -->
+      <div class="dr-card" style="padding:0 18px 18px;">
+        <div class="dr-tabs" role="tablist" aria-label="Explore learning content">
+          <button class="dr-tab" id="dr-tab-courses" role="tab" aria-selected="true" aria-controls="dr-panel-courses" tabindex="0">Explore Courses</button>
+          <button class="dr-tab" id="dr-tab-certificates" role="tab" aria-selected="false" aria-controls="dr-panel-certificates" tabindex="-1">Certificates</button>
+          <button class="dr-tab" id="dr-tab-roadmap" role="tab" aria-selected="false" aria-controls="dr-panel-roadmap" tabindex="-1">Roadmap</button>
+        </div>
+
+        <div class="dr-tabpanel" id="dr-panel-courses" role="tabpanel" aria-labelledby="dr-tab-courses">
+          <div class="dr-cards-head" style="margin-bottom:12px;">
+            <h2 style="font-size:15px;">Explore Courses</h2>
+            <span class="count dash-courses-count" style="font-size:10.5px;font-weight:700;color:var(--text-muted);">Loading…</span>
+          </div>
+          <div style="margin-bottom:14px;">
+            <div class="dash-course-toolbar" style="margin:0;max-width:360px;">
+              <div class="dash-course-search">
+                <span class="dash-search-icon" aria-hidden="true">⌕</span>
+                <input type="search" id="dash-course-search" placeholder="Search courses..." aria-label="Search courses" autocomplete="off">
+              </div>
+            </div>
+          </div>
+          <div class="dr-course-grid" id="dash-all-courses">
+            <div class="dr-empty-row">Loading courses…</div>
           </div>
         </div>
-        <div class="dash-lb-list" id="dash-lb-list">
+
+        <div class="dr-tabpanel" id="dr-panel-certificates" role="tabpanel" aria-labelledby="dr-tab-certificates" hidden>
+          <div class="dr-cards-head" style="margin-bottom:12px;">
+            <h2 style="font-size:15px;">Certificates</h2>
+            <span class="count dash-certs-count" style="font-size:10.5px;font-weight:700;color:var(--text-muted);">Loading…</span>
+          </div>
+          <div class="dr-course-grid" id="dash-certificates">
+            <div class="dr-empty-row">No certificates yet — complete a course and pass the quiz.</div>
+          </div>
+        </div>
+
+        <div class="dr-tabpanel" id="dr-panel-roadmap" role="tabpanel" aria-labelledby="dr-tab-roadmap" hidden>
+          <div id="dr-roadmap"><div class="dr-empty-row">Loading roadmap…</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RIGHT RAIL ── -->
+    <aside class="dr-rail" aria-label="Sidebar">
+
+      <!-- 1. Leaderboard -->
+      <section class="dr-card dr-rail-card" aria-label="Leaderboard">
+        <h2 style="justify-content:flex-start;">Leaderboard</h2>
+        <div class="dash-lb-tabs" style="display:flex;gap:6px;margin:-4px 0 10px;">
+          <button class="dash-lb-tab active" data-type="coins">Coins</button>
+          <button class="dash-lb-tab" data-type="streak">Streak</button>
+        </div>
+        <div class="dash-lb-list" id="dash-lb-list" data-max-rows="5">
           <div class="pg-dashboard-1nxv5">Loading...</div>
         </div>
+        <div class="dash-lb-footer" id="dash-lb-footer" style="margin-top:10px;font-size:11px;color:var(--text-muted);text-align:center;"></div>
+      </section>
 
-        <div class="dash-lb-section">
-          <div class="dash-lb-section-head">
-            <span>This Week's Goal</span>
-            <strong id="weekly-goal-progress">0/6</strong>
-          </div>
-          <div class="dash-weekdays" id="weekly-goal-days"></div>
-          <div class="dash-goal-bar"><span id="weekly-goal-fill"></span></div>
-          <div id="goal-encouragement" class="pg-dashboard-18jk1"></div>
+      <!-- 2. This week -->
+      <section class="dr-card dr-rail-card" aria-label="This week's activity">
+        <h2>This week</h2>
+        <div class="dr-week-chips" id="dr-week-chips"></div>
+        <span class="dr-week-count" id="dr-week-count">0/6 study days</span>
+        <div class="dr-bar dr-bar--lg"><div class="dr-bar-fill dr-bar-fill--green" id="dr-week-fill" style="width:0%;"></div></div>
+      </section>
+
+      <!-- 3. Certificates -->
+      <section class="dr-card dr-rail-card" aria-label="Certificates summary">
+        <h2>Certificates <span class="count" id="dr-certs-pill" style="font-size:10.5px;">0 earned</span></h2>
+        <div id="dr-certs-recent"></div>
+        <button type="button" class="dr-link-btn" id="dr-view-certificates">View certificates</button>
+      </section>
+
+      <!-- 4. Activity -->
+      <section class="dr-card dr-rail-card dr-activity" aria-label="Activity">
+        <h2 style="display:block;margin-bottom:2px;">Activity</h2>
+        <p class="dr-activity-caption">Lessons + challenges</p>
+        <div class="dr-activity-scroll">
+          <div class="dr-activity-grid" id="dr-activity-grid"></div>
         </div>
-
-        <div class="dash-lb-section" id="dash-club-promo" hidden>
-          <a href="/robotics-club" class="pg-dashboard-1n75i">
-            <div onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''" class="adm-tile-green">
-              <div class="success-orb">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
-              </div>
-              <div class="pg-dashboard-15f8p">Join the Robotics Club!</div>
-              <div class="pg-dashboard-qnbky">Build robots with students across Rwanda. Pick your school →</div>
-            </div>
-          </a>
+        <div class="dr-activity-footer">
+          <span>Last 20 weeks</span>
+          <span class="dr-activity-legend" aria-hidden="true">
+            Less
+            <i style="background:#eef0f2;border:1px solid var(--border-light);"></i>
+            <i style="background:#d1fae5;"></i>
+            <i style="background:#7fdcaf;"></i>
+            <i style="background:#16a34a;"></i>
+            <i style="background:#0d6e3f;"></i>
+            More
+          </span>
         </div>
-
-        <div class="dash-lb-footer" id="dash-lb-footer"></div>
-      </div>
-
-    </div>
+      </section>
+    </aside>
   </div>
+
+  <!-- ── Certificates popup (accessible native dialog) ── -->
+  <dialog class="dr-cert-dialog" id="dr-cert-dialog" aria-labelledby="dr-cert-dialog-title">
+    <div class="dr-cert-dialog-head">
+      <h3 id="dr-cert-dialog-title">Your certificates</h3>
+      <button type="button" class="dr-cert-close" id="dr-cert-dialog-close" aria-label="Close certificates">×</button>
+    </div>
+    <div id="dr-cert-body" style="padding:14px;"></div>
+  </dialog>
 </template>
 
 <div class="leaderboard-modal" id="leaderboard-modal" aria-hidden="true">

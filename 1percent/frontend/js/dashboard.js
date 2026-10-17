@@ -445,26 +445,8 @@ const Dashboard = {
     if (mode === 'dev') {
       this._renderLearningCard({ enrolled, avgProgress, completed, coins });
     } else {
-      const statsEl = document.getElementById('dash-stats');
-      if (statsEl) {
-        statsEl.innerHTML = `
-          <div class="dash-stat">
-            <div class="dash-stat-icon courses">${Icons.get('book-open', 20)}</div>
-            <div><b>${enrolled.length}</b><span>Enrolled</span></div>
-          </div>
-          <div class="dash-stat">
-            <div class="dash-stat-icon progress">${Icons.get('target', 20)}</div>
-            <div><b>${avgProgress}%</b><span>Avg Progress</span></div>
-          </div>
-          <div class="dash-stat">
-            <div class="dash-stat-icon completed">${Icons.get('award', 20)}</div>
-            <div><b>${completed}</b><span>Completed</span></div>
-          </div>
-          <div class="dash-stat">
-            <div class="dash-stat-icon coins">${Icons.get('award', 20)}</div>
-            <div><b>${coins}</b><span>Coins</span></div>
-          </div>`;
-      }
+      // Redesigned student dashboard (dr-* layout in css/dashboard-redesign.css)
+      this._renderRdStats({ enrolled, avgProgress, completed, coins });
     }
     app.querySelector('.dash-enrolled-count').textContent = `${enrolled.length} enrolled`;
 
@@ -474,13 +456,552 @@ const Dashboard = {
     await this._loadAllCourses();
     await this._loadChallenges();
     this._initLeaderboard();
-    
+
     // Initialize notification and rating handlers
     this._initNotificationHandlers();
     this._initRatingHandlers();
 
     // One-time Learn/Dev picker (shown until a choice is stored)
     this._offerModeChoice(hasProject, mode, coins);
+
+    if (mode === 'classic') {
+      // Hero, cards, tabs, right rail and the certificates popup for the
+      // redesigned learn dashboard. Challenges are fetched lazily by the
+      // hero/card renderers (_getChallengeData).
+      await this._initRdDashboard(user, { enrolled, avgProgress, completed, coins });
+    }
+  },
+
+  /* ════════════════════════════════════════════════════════════
+     REDESIGNED STUDENT DASHBOARD (classic layout, dr-* CSS)
+     Hero → stats → My Courses → Challenges → tabs, plus the sticky
+     right rail (leaderboard / this week / certificates / activity)
+     and the accessible certificates popup dialog.
+     All data comes from the SAME endpoints the old dashboard used —
+     no auth, route or business-logic changes.
+     ════════════════════════════════════════════════════════════ */
+
+  async _initRdDashboard(user, data) {
+    const { enrolled, avgProgress, completed, coins } = data;
+    this._rdUser = user;
+
+    const ch = await this._getChallengeData();
+    this._renderRdHero(enrolled, ch);
+    this._renderRdMyCourses(enrolled);
+    this._renderRdChallenges(ch);
+    this._initRdTabs();
+    this._initRdViewAllLinks();
+    this._renderRdCertRail();
+    this._initRdCertPopup();
+
+    const act = await this._fetchRdActivity(user.id);
+    this._renderRdActivityChart(act);
+    this._renderRdWeekCard(act);
+  },
+
+  /* Challenges: one cached fetch shared by the hero + the card row. */
+  async _getChallengeData() {
+    if (this._rdChallenges) return this._rdChallenges;
+    const set = { all: [], passed: new Set() };
+    try {
+      const token = (await this.supabase.auth.getSession()).data.session?.access_token;
+      if (token) {
+        const res = await fetch('/api/coins/challenges/all', { headers: { Authorization: `Bearer ${token}` } });
+        const json = await res.json();
+        if (json.success) {
+          set.all = json.challenges || [];
+          set.passed = new Set(json.passed || []);
+        }
+      }
+    } catch { /* challenges are optional */ }
+    this._rdChallenges = set;
+    return set;
+  },
+
+  /* Hero card: continue learning | next challenge.
+     Next-challenge rule (per product decision): the FIRST UNFINISHED
+     challenge in the hero's course. "All challenges done" when none. */
+  _renderRdHero(enrolled, ch) {
+    const learn = document.getElementById('dr-hero-learn');
+    const nextBox = document.getElementById('dr-hero-next');
+    const resumeLink = document.getElementById('dr-hero-resume-link');
+    const startLink = document.getElementById('dr-hero-start-link');
+    if (!learn || !nextBox) return;
+
+    const courseBox = document.createElement('div');
+    courseBox.className = 'dr-course-pick';
+
+    // In-progress course: the one closest to completion; otherwise the
+    // first enrolled course. Completed courses fall back to the first one.
+    const unfinished = enrolled.filter(c => c.progress < 100).sort((a, b) => b.progress - a.progress);
+    const course = unfinished[0] || enrolled[0] || null;
+
+    if (!course) {
+      courseBox.innerHTML = `<p class="dr-hero-meta">You haven't enrolled in a course yet — pick your first track from the courses below.</p>`;
+      learn.appendChild(courseBox);
+      if (resumeLink) {
+        resumeLink.hidden = false;
+        resumeLink.textContent = 'Explore Courses';
+        resumeLink.href = '#';
+        resumeLink.addEventListener('click', (e) => { e.preventDefault(); this._activateRdTab('courses'); });
+      }
+      nextBox.innerHTML = `<p class="dr-hero-meta">Enroll in a course to unlock its challenges.</p>`;
+      if (startLink) startLink.hidden = true;
+      return;
+    }
+
+    courseBox.innerHTML = `
+      <div class="dr-hero-title" title="${escapeHTML(course.title)}">${escapeHTML(course.title)}</div>
+      <p class="dr-hero-meta">${course.progress}% complete · ${escapeHTML(course.level || 'course')}</p>
+      <div class="dr-bar"><div class="dr-bar-fill dr-bar-fill--green" style="width:${Math.min(100, Math.max(0, course.progress))}%"></div></div>`;
+    learn.appendChild(courseBox);
+
+    if (resumeLink) {
+      resumeLink.hidden = false;
+      resumeLink.textContent = 'Resume lesson';
+      resumeLink.href = _url('/course/' + escapeHTML(course.slug));
+    }
+
+    // First unfinished challenge inside the hero's course
+    const next = course
+      ? ch.all.filter(c => c.course_id === course.id && !ch.passed.has(c.id))[0]
+      : null;
+
+    if (next) {
+      nextBox.innerHTML = `
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+          <span class="dr-tag dr-tag--diff-${escapeHTML(next.difficulty)}">${escapeHTML(next.difficulty)}</span>
+          <span class="dr-tag dr-tag--coins">+${next.coins_reward} coins</span>
+        </div>
+        <div class="dr-hero-title" title="${escapeHTML(next.title)}">${escapeHTML(next.title)}</div>
+        <p class="dr-hero-meta">${escapeHTML((next.description || '').slice(0, 90))}${(next.description || '').length > 90 ? '…' : ''}</p>`;
+      if (startLink) {
+        startLink.hidden = false;
+        startLink.textContent = 'Start challenge';
+        startLink.href = _url('/playground?id=' + next.id);
+      }
+    } else {
+      nextBox.innerHTML = `<p class="dr-hero-meta">All challenges done 🎉 — check the Explore tab for new content.</p>`;
+      if (startLink) {
+        startLink.hidden = false;
+        startLink.textContent = 'All challenges done';
+        startLink.setAttribute('aria-disabled', 'true');
+        startLink.removeAttribute('href');
+      }
+    }
+  },
+
+  _renderRdStats({ enrolled, avgProgress, completed, coins }) {
+    const el = document.getElementById('dr-stats');
+    if (!el) return;
+    el.innerHTML = `
+      <div class="dr-stat"><div class="dr-stat-icon courses">${Icons.get('book-open', 20)}</div><div class="dr-stat-body"><b>${enrolled.length}</b><span>Enrolled</span></div></div>
+      <div class="dr-stat"><div class="dr-stat-icon progress">${Icons.get('target', 20)}</div><div class="dr-stat-body"><b>${avgProgress}%</b><span>Avg progress</span></div></div>
+      <div class="dr-stat"><div class="dr-stat-icon completed">${Icons.get('award', 20)}</div><div class="dr-stat-body"><b>${completed}</b><span>Completed</span></div></div>
+      <div class="dr-stat"><div class="dr-stat-icon coins">${Icons.get('coin', 20) || Icons.get('zap', 20)}</div><div class="dr-stat-body"><b>${coins}</b><span>Coins</span></div></div>`;
+  },
+
+  /* My Courses: in-progress first, then not-started, completed last. */
+  _renderRdMyCourses(enrolled) {
+    const grid = document.getElementById('dr-my-courses');
+    if (!grid) return;
+    if (!enrolled.length) {
+      grid.innerHTML = '<div class="dr-empty-row">No courses yet — explore below to enroll.</div>';
+      return;
+    }
+    const inProgress = enrolled.filter(c => c.progress > 0 && c.progress < 100).sort((a, b) => b.progress - a.progress);
+    const notStarted = enrolled.filter(c => !c.progress);
+    const done = enrolled.filter(c => c.progress >= 100);
+    const rows = [...inProgress, ...notStarted, ...done].slice(0, 3);
+
+    grid.innerHTML = rows.map(c => `
+      <a href="${_url('/course/' + escapeHTML(c.slug))}" class="dr-course-card">
+        <div class="dr-course-thumb" style="background:linear-gradient(135deg,${escapeHTML(c.color || '#d1fae5,#a7f3d0')});">
+          ${Icons.get(c.icon || 'book-open', 34)}
+        </div>
+        <div class="dr-course-name" title="${escapeHTML(c.title)}">${escapeHTML(c.title)}</div>
+        <div class="dr-course-progress">
+          <div class="dr-bar" style="flex:1"><div class="dr-bar-fill dr-bar-fill--green" style="width:${Math.min(100, Math.max(0, c.progress))}%"></div></div>
+          <span class="pct">${c.progress}%</span>
+        </div>
+      </a>`).join('');
+  },
+
+  /* Challenges row: filter chips + one row of 3 cards.
+     Unfinished first; done cards keep a green border and a Done badge. */
+  _renderRdChallenges(ch) {
+    const row = document.getElementById('dr-challenges-row');
+    const chipsEl = document.getElementById('dr-challenges-filter');
+    if (!row) return;
+
+    if (!ch.all.length) {
+      row.innerHTML = '<div class="dr-empty-row">No challenges yet.</div>';
+      if (chipsEl) chipsEl.innerHTML = '';
+      return;
+    }
+
+    const counts = { all: ch.all.length };
+    ch.all.forEach(c => { counts[c.difficulty] = (counts[c.difficulty] || 0) + 1; });
+    const diffs = ['all', ...Object.keys(counts).filter(d => d !== 'all')];
+
+    if (chipsEl) {
+      chipsEl.innerHTML = diffs.map(d =>
+        `<button type="button" class="dr-chip${d === 'all' ? ' active' : ''}" data-diff="${d}" aria-pressed="${d === 'all'}">${d === 'all' ? 'All' : escapeHTML(d)} (${counts[d]})</button>`
+      ).join('');
+
+      chipsEl.addEventListener('click', (e) => {
+        const chip = e.target.closest('.dr-chip');
+        if (!chip) return;
+        chipsEl.querySelectorAll('.dr-chip').forEach(c => { c.classList.remove('active'); c.setAttribute('aria-pressed', 'false'); });
+        chip.classList.add('active');
+        chip.setAttribute('aria-pressed', 'true');
+        current = chip.dataset.diff;
+        render();
+      });
+    }
+
+    const card = (c) => {
+      const done = ch.passed.has(c.id);
+      return `<a href="${_url('/playground?id=' + c.id)}" class="dr-challenge-card${done ? ' done' : ''}" aria-label="${done ? 'Completed' : escapeHTML(c.difficulty)} challenge ${escapeHTML(c.title)}, reward ${c.coins_reward} coins">
+        <div class="dr-ch-card-top">
+          <span class="dr-ch-diff ${escapeHTML(c.difficulty)}">${escapeHTML(c.difficulty)}</span>
+          <span class="dr-ch-coins">+${c.coins_reward}</span>
+        </div>
+        <h4 class="dr-ch-title" title="${escapeHTML(c.title)}">${escapeHTML(c.title)}</h4>
+        <div class="dr-ch-card-bottom">
+          <span class="dr-ch-coins">+${c.coins_reward} coins</span>
+          ${done ? '<span class="dr-ch-cta">Done ✓</span>' : '<span class="dr-ch-cta">Start →</span>'}
+        </div>
+      </a>`;
+    };
+
+    let current = 'all';
+    const render = () => {
+      const list = (current === 'all' ? ch.all : ch.all.filter(c => c.difficulty === current));
+      const un = list.filter(c => !ch.passed.has(c.id));
+      const dn = list.filter(c => ch.passed.has(c.id));
+      const show = [...un, ...dn].slice(0, 3);
+      row.innerHTML = show.length ? show.map(card).join('') : `<div class="dr-empty-row">No challenges in this difficulty yet.</div>`;
+    };
+    render();
+  },
+
+  /* Tabs: Explore Courses / Certificates / Roadmap — ARIA tablist with
+     roving tabindex and arrow-key navigation. */
+  _initRdTabs() {
+    const tabs = [...document.querySelectorAll('.dr-tab')];
+    if (!tabs.length) return;
+    const panels = tabs.map(t => document.getElementById(t.getAttribute('aria-controls')));
+
+    this._activateRdTab = (name, focus = false) => {
+      const i = Math.max(0, tabs.findIndex(t => t.id === 'dr-tab-' + name));
+      tabs.forEach((t, j) => {
+        const on = i === j;
+        t.setAttribute('aria-selected', String(on));
+        t.tabIndex = on ? 0 : -1;
+        if (panels[j]) panels[j].hidden = !on;
+      });
+      if (focus) tabs[i].focus();
+      if (tabs[i].id === 'dr-tab-roadmap') this._loadRdRoadmap();
+      if (tabs[0]) this._rdTabCount = tabs.length; // parity guard for tests
+    };
+
+    tabs.forEach((t, i) => {
+      t.addEventListener('click', () => this._activateRdTab(t.id.replace('dr-tab-', '')));
+      t.addEventListener('keydown', (e) => {
+        let n = null;
+        if (e.key === 'ArrowRight') n = (i + 1) % tabs.length;
+        else if (e.key === 'ArrowLeft') n = (i - 1 + tabs.length) % tabs.length;
+        else if (e.key === 'Home') n = 0;
+        else if (e.key === 'End') n = tabs.length - 1;
+        if (n !== null) { e.preventDefault(); this._activateRdTab(tabs[n].id.replace('dr-tab-', ''), true); }
+      });
+    });
+  },
+
+  _initRdViewAllLinks() {
+    // "View all" on My Courses opens the Explore Courses tab
+    document.getElementById('dr-courses-viewall')?.addEventListener('click', () => {
+      this._activateRdTab('courses');
+      document.querySelector('.dr-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    // Challenges "View all" → the playground (all challenges live there)
+    const chLink = document.getElementById('dr-challenges-viewall');
+    if (chLink) chLink.href = _url('/playground');
+  },
+
+  /* Right rail: 3 most recent certificates + "N earned" pill */
+  _renderRdCertRail() {
+    const certs = this._certs || [];
+    const pill = document.getElementById('dr-certs-pill');
+    const rail = document.getElementById('dr-certs-recent');
+    if (pill) pill.textContent = `${certs.length} earned`;
+    if (!rail) return;
+    if (!certs.length) {
+      rail.innerHTML = '<div class="dr-empty-row" style="margin:0;">No certificates yet — finish a course to earn your first one.</div>';
+      return;
+    }
+    const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    rail.innerHTML = certs.slice(0, 3).map(c => `
+      <div class="dr-cert-mini">
+        <span class="icon">${Icons.get('award', 18)}</span>
+        <span class="ct"><b title="${escapeHTML(c.course_title || 'Course')}">${escapeHTML(c.course_title || 'Course')}</b><span>${fmt.format(new Date(c.issued_at || Date.now()))}</span></span>
+      </div>`).join('');
+  },
+
+  /* Certificates popup — accessible native <dialog>:
+     Esc closes, focus is trapped while open, and on close the focus
+     returns to the "View certificates" trigger. */
+  _initRdCertPopup() {
+    const btn = document.getElementById('dr-view-certificates');
+    const dialog = document.getElementById('dr-cert-dialog');
+    if (!btn || !dialog) return;
+    btn.addEventListener('click', () => this._openCertPopup());
+    dialog.querySelector('#dr-cert-dialog-close')?.addEventListener('click', () => dialog.close());
+    dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
+    dialog.addEventListener('close', () => { try { btn.focus(); } catch { } });
+  },
+
+  _openCertPopup() {
+    const dialog = document.getElementById('dr-cert-dialog');
+    const body = document.getElementById('dr-cert-body');
+    if (!dialog || !body) return;
+    const certs = this._certs || [];
+
+    if (!certs.length) {
+      body.innerHTML = '<div class="dr-cert-empty">No certificates yet — complete a course and pass the quiz.</div>';
+      dialog.showModal();
+      return;
+    }
+
+    this._rdCertIndex = 0;
+    body.innerHTML = `
+      <div class="dr-cert-panes">
+        <div class="dr-cert-list-pane" role="listbox" aria-label="All certificates" id="dr-cert-list">
+          ${certs.map((c, i) => `
+            <button type="button" role="option" class="dr-cert-item${i === 0 ? ' selected' : ''}" data-idx="${i}" aria-selected="${i === 0}">
+              <b title="${escapeHTML(c.course_title || 'Course')}">${escapeHTML(c.course_title || 'Course')}</b>
+              <span>${escapeHTML(c.certificate_number)} · ${new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(c.issued_at || Date.now()))}</span>
+            </button>`).join('')}
+        </div>
+        <div class="dr-cert-preview-pane" id="dr-cert-preview" aria-live="polite"></div>
+      </div>`;
+
+    this._renderCertPreview(0);
+    body.querySelector('#dr-cert-list').addEventListener('click', (e) => {
+      const item = e.target.closest('.dr-cert-item');
+      if (item) this._renderCertPreview(parseInt(item.dataset.idx, 10));
+    });
+
+    dialog.showModal();
+  },
+
+  _renderCertPreview(idx) {
+    const certs = this._certs || [];
+    const pane = document.getElementById('dr-cert-preview');
+    const listEl = document.getElementById('dr-cert-list');
+    if (!pane || !certs[idx]) return;
+    this._rdCertIndex = idx;
+    const c = certs[idx];
+    if (listEl) {
+      listEl.querySelectorAll('.dr-cert-item').forEach((el, i) => {
+        el.classList.toggle('selected', i === idx);
+        el.setAttribute('aria-selected', String(i === idx));
+      });
+      listEl.querySelector(`.dr-cert-item[data-idx="${idx}"]`)?.scrollIntoView({ block: 'nearest' });
+    }
+
+    const learner = c.learner_name
+      || this._rdUser?.user_metadata?.full_name
+      || 'Student';
+    const dateTxt = c.issued_at ? new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(c.issued_at)) : '';
+
+    pane.innerHTML = `
+      <div class="dr-cert-sheet">
+        <div class="ribbon">${Icons.get('award', 24)}</div>
+        <h4>${escapeHTML(c.course_title || 'Course certificate')}</h4>
+        <p class="cert-line">Certificate of completion</p>
+        <p class="cert-line"><b>${escapeHTML(learner)}</b></p>
+        <p class="cert-line">Course: ${escapeHTML(c.course_title || 'Course')} · Level: ${escapeHTML(c.course_level || '—')}</p>
+        <p class="cert-id">ID: ${escapeHTML(c.certificate_number)} · Issued: ${escapeHTML(dateTxt)}</p>
+      </div>
+      <div class="dr-cert-actions">
+        <a class="dr-link-btn" href="${_url('/certificate?number=' + escapeHTML(c.certificate_number))}">View full certificate</a>
+        ${c.course_id ? '<button type="button" class="dr-link-btn dr-link-btn--ghost" id="dr-cert-download">Download</button>' : ''}
+      </div>
+      <p id="dr-cert-status" style="font-size:11.5px;color:var(--text-muted);margin:8px 0 0;min-height:14px;"></p>`;
+
+    const dlBtn = pane.querySelector('#dr-cert-download');
+    if (dlBtn) dlBtn.addEventListener('click', () => this._downloadCert(c));
+  },
+
+  /* Download reuses the EXISTING premium PDF endpoint
+     (/api/pdf/certificate/:courseId) — same flow as certificate-view. */
+  async _downloadCert(cert) {
+    const status = document.getElementById('dr-cert-status');
+    try {
+      if (status) status.textContent = 'Generating PDF…';
+      const token = (await this.supabase.auth.getSession()).data.session?.access_token;
+      const res = await fetch(`/api/pdf/certificate/${cert.course_id}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      if (!res.ok) throw new Error('Download failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${cert.certificate_number}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      if (status) status.textContent = '✓ Downloaded';
+    } catch (e) {
+      if (status) status.textContent = 'Could not generate the PDF right now.';
+    }
+  },
+
+  /* ── Activity graph (GitHub contribution style) ──
+     Grid: 7 rows (Mon–Sun) × 20 weekly columns, 10px cells, 3px gaps.
+     Value per day = lessons completed + challenges PASSED that day.
+     Data: two bulk queries over the student's own rows (RLS-scoped
+     via the logged-in client) — one per source, never one per day.
+     Day boundaries use the student's LOCAL timezone. */
+  async _fetchRdActivity(userId) {
+    const map = new Map(); // 'YYYY-MM-DD' (local) -> completions
+    try {
+      const WEEKS = 20;
+      const today = new Date();
+      const todayLocal = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const dow = (todayLocal.getDay() + 6) % 7; // 0 = Monday
+      const monday = new Date(todayLocal); monday.setDate(todayLocal.getDate() - dow);
+      const start = new Date(monday); start.setDate(monday.getDate() - (WEEKS - 1) * 7);
+      const startIso = start.toISOString();
+
+      if (this.supabase) {
+        const [lp, cs] = await Promise.all([
+          this.supabase.from('lesson_progress').select('completed_at')
+            .eq('user_id', userId).eq('completed', true).gte('completed_at', startIso).limit(2000),
+          this.supabase.from('challenge_submissions').select('submitted_at')
+            .eq('user_id', userId).eq('passed', true).gte('submitted_at', startIso).limit(2000)
+        ]);
+        const add = (ts) => {
+          if (!ts) return;
+          const d = new Date(ts);
+          if (d < start) return;
+          const key = this._rdLocalDate(d);
+          map.set(key, (map.get(key) || 0) + 1);
+        };
+        (lp.data || []).forEach(r => add(r.completed_at));
+        (cs.data || []).forEach(r => add(r.submitted_at));
+      }
+    } catch { /* activity graph is optional */ }
+    return map;
+  },
+
+  _rdLocalDate(d) {
+    const p = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  },
+
+  _renderRdActivityChart(act) {
+    const grid = document.getElementById('dr-activity-grid');
+    if (!grid) return;
+    const WEEKS = 20;
+    const today = new Date();
+    const todayLocal = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const dow = (todayLocal.getDay() + 6) % 7;
+    const monday = new Date(todayLocal); monday.setDate(todayLocal.getDate() - dow);
+    const start = new Date(monday); start.setDate(monday.getDate() - (WEEKS - 1) * 7);
+
+    const fmtShort = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' });
+    const fmtFull = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    const levelOf = (v) => !v ? '' : v === 1 ? 'l1' : v <= 3 ? 'l2' : v <= 5 ? 'l3' : 'l4';
+
+    let cells = '';
+    for (let w = 0; w < WEEKS; w++) {
+      for (let r = 0; r < 7; r++) {
+        const d = new Date(start); d.setDate(start.getDate() + w * 7 + r);
+        if (d > todayLocal) {
+          cells += '<span class="dr-activity-cell" style="visibility:hidden;" aria-hidden="true"></span>';
+          continue;
+        }
+        const v = act.get(this._rdLocalDate(d)) || 0;
+        const full = fmtFull.format(d);
+        cells += `<span class="dr-activity-cell ${levelOf(v)}" role="img" aria-label="${v} ${v === 1 ? 'activity' : 'activities'} on ${full}" title="${v} activities — ${fmtShort.format(d)}" data-tip="${v} ${v === 1 ? 'activity' : 'activities'} · ${fmtShort.format(d)}"></span>`;
+      }
+    }
+    grid.innerHTML = cells;
+  },
+
+  /* "This week": Mon–Sat chips, N/6 + progress bar, from the SAME
+     activity dataset (student's local timezone). */
+  _renderRdWeekCard(act) {
+    const chipsEl = document.getElementById('dr-week-chips');
+    const countEl = document.getElementById('dr-week-count');
+    const fill = document.getElementById('dr-week-fill');
+    const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const today = new Date();
+    const todayLocal = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const dow = (todayLocal.getDay() + 6) % 7; // 0 = Monday
+    const monday = new Date(todayLocal); monday.setDate(todayLocal.getDate() - dow);
+
+    let doneCount = 0;
+    const chips = labels.map((label, i) => {
+      const d = new Date(monday); d.setDate(monday.getDate() + i);
+      const active = (act.get(this._rdLocalDate(d)) || 0) > 0;
+      if (active) doneCount++;
+      const isToday = dow === i;
+      return `<span class="dr-week-chip${active ? ' done' : ''}${isToday && !active ? ' today' : ''}">${label}</span>`;
+    }).join('');
+
+    if (chipsEl) chipsEl.innerHTML = chips;
+    if (countEl) countEl.textContent = `${doneCount}/6 study days`;
+    if (fill) fill.style.width = `${(doneCount / 6) * 100}%`;
+  },
+
+  /* Roadmap tab — compact accordion over /api/roadmap. Rendered once,
+     the first time the tab is opened. */
+  async _loadRdRoadmap() {
+    const el = document.getElementById('dr-roadmap');
+    if (!el || this._rdRoadmapLoading) return;
+    this._rdRoadmapLoading = true;
+    try {
+      const res = await fetch('/api/roadmap');
+      const json = await res.json();
+      const phases = json.roadmap?.phases || [];
+      if (!phases.length) { el.innerHTML = '<div class="dr-empty-row">No roadmap available yet.</div>'; return; }
+
+      el.innerHTML = phases.map((p, i) => {
+        const modules = p.modules || [];
+        const totalLessons = modules.reduce((s, m) => s + (m.lessons?.length || 0), 0);
+        return `<div class="dr-roadmap-phase${i === 0 ? ' open' : ''}">
+          <div class="dr-roadmap-phase-header" role="button" tabindex="0" aria-expanded="${i === 0}">
+            <div class="dr-roadmap-num" style="background:${p.color || 'var(--primary)'}">${i + 1}</div>
+            <div class="dr-roadmap-info">
+              <h3>${escapeHTML(p.title)}</h3>
+              <p>${escapeHTML(p.subtitle || '')} · ${p.duration_weeks || 0} weeks · ${totalLessons} lessons · ${modules.length} modules</p>
+            </div>
+            <span class="dr-roadmap-toggle">▼</span>
+          </div>
+          <div class="dr-roadmap-phase-body">
+            ${modules.map(m => `<div class="dr-roadmap-module"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHTML(m.title)}</span><span>${(m.lessons?.length || 0)} lessons</span></div>`).join('') || '<div class="dr-roadmap-module"><span style="flex:1;">No modules yet</span><span></span></div>'}
+          </div>
+        </div>`;
+      }).join('');
+
+      el.querySelectorAll('.dr-roadmap-phase-header').forEach((header) => {
+        const toggle = () => {
+          const phase = header.parentElement;
+          const open = phase.classList.toggle('open');
+          header.setAttribute('aria-expanded', String(open));
+        };
+        header.addEventListener('click', toggle);
+        header.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+        });
+      });
+    } catch {
+      el.innerHTML = '<div class="dr-empty-row">Roadmap unavailable right now.</div>';
+    }
   },
 
   /* Learning Progress card: donut = average course progress, rows = real
@@ -525,8 +1046,11 @@ const Dashboard = {
          dashboard load, so the theme persists across visits and after a
          payment refreshes the subscription row. */
       const theme = await TierTheme.init(token);
+      const isNewRd = !!document.getElementById('dr-app-main');
       const greet = document.getElementById('dv2-greeting') || document.querySelector('.dash-header');
-      if (greet && !greet.querySelector('.dash-tier-row')) {
+      // The redesigned learn dashboard carries no plan badge — the tier
+      // row/badge is skipped there (theming itself still applies).
+      if (greet && !isNewRd && !greet.querySelector('.dash-tier-row')) {
         const row = document.createElement('div');
         row.className = 'dash-tier-row';
         // Paid tiers get a crown inside the badge — the single premium indicator
@@ -538,7 +1062,6 @@ const Dashboard = {
       this._loadTestimonialBadge();
     } catch (e) { console.warn('[DASHBOARD] Tier theme failed:', e.message); }
   },
-
   async _loadTestimonialBadge() {
     try {
       const token = (await this.supabase.auth.getSession()).data.session?.access_token;
@@ -757,14 +1280,16 @@ const Dashboard = {
     if (!grid) return;
     try {
       const token = (await this.supabase.auth.getSession()).data.session?.access_token;
-      if (!token) { grid.innerHTML = '<div class="dash-empty">Log in to view certificates.</div>'; return; }
+      if (!token) { this._certs = []; grid.innerHTML = '<div class="dash-empty">Log in to view certificates.</div>'; return; }
       const res = await fetch('/api/certificates/mine', { headers: { Authorization: `Bearer ${token}` } });
       const json = await res.json();
       if (!json.success || !json.certificates?.length) {
+        this._certs = [];
         grid.innerHTML = '<div class="dash-empty">No certificates yet — complete a course and pass the quiz.</div>';
         document.querySelector('.dash-certs-count').textContent = '0 earned';
         return;
       }
+      this._certs = json.certificates;
       document.querySelector('.dash-certs-count').textContent = `${json.certificates.length} earned`;
       const certsCell = document.getElementById('dv2-lp-certs');
       if (certsCell) certsCell.textContent = String(json.certificates.length);
@@ -780,6 +1305,7 @@ const Dashboard = {
         </div>`;
       }).join('');
     } catch {
+      this._certs = this._certs || [];
       grid.innerHTML = '<div class="dash-empty">No certificates yet.</div>';
     }
   },
@@ -983,7 +1509,11 @@ const Dashboard = {
         tierSlug = json.tier && json.tier.slug ? json.tier.slug : 'free';
         isPro = tierSlug === 'pro' || tierSlug === 'unlimited';
       }
-      const greet = document.getElementById('dv2-greeting') || document.querySelector('.dash-header');
+      /* The redesigned learn dashboard places the Upgrade CTA in its
+         header tools row; the dev UI keeps its own greeting target. */
+      const greet = document.getElementById('dv2-greeting')
+        || document.getElementById('dr-header-tools')
+        || document.querySelector('.dash-header');
       if (!greet) return;
       /* Consolidated premium indicator: paid users get NO second button —
          their single gold crown badge already sits by the greeting
@@ -1088,6 +1618,9 @@ const Dashboard = {
 
     const renderList = (target, leaderboard, currentUserRank) => {
       if (!target) return;
+      // Rail cards can cap the visible rows (data-max-rows attribute).
+      const maxRows = parseInt(target.dataset?.maxRows || '0', 10);
+      if (maxRows > 0) leaderboard = leaderboard.slice(0, maxRows);
       if (!leaderboard || !leaderboard.length) {
         target.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px;">No data yet</div>';
         return;
@@ -1158,6 +1691,7 @@ const Dashboard = {
       return (enrollJson.enrollments || []).map(e => {
         const course = e.courses || {};
         return {
+          id: e.course_id,
           title: course.title || 'Course',
           slug: course.slug || '',
           icon: course.icon || 'book-open',
