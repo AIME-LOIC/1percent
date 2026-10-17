@@ -873,3 +873,20 @@ body.dv2 #dashboard-app > .dv2-app {
     max-height: calc(100dvh - 24px);
   }
 }
+
+
+/* ── Activity section breathing room ── */
+/* Give the heatmap room above and below so hover labels and the final row
+   don't sit against or get clipped by the activity panel edges. */
+.dr-activity {
+  padding-top: 18px;
+  padding-bottom: 24px;
+}
+.dr-activity-scroll {
+  padding-top: 18px;
+  padding-bottom: 18px;
+}
+.dr-activity-grid {
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
