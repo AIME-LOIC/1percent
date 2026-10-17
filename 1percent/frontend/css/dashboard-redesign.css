@@ -890,3 +890,21 @@ body.dv2 #dashboard-app > .dv2-app {
   margin-top: 2px;
   margin-bottom: 2px;
 }
+
+
+/* Prevent first-row activity tooltips from creating a vertical scrollbar.
+   The grid fills each column top-to-bottom, so every seventh cell starts a row. */
+.dr-activity-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.dr-activity-grid > .dr-activity-cell:nth-child(7n + 1)[data-tip]:hover::after {
+  top: calc(100% + 6px);
+  bottom: auto;
+}
+.dr-activity-grid > .dr-activity-cell:nth-child(7n + 1)[data-tip]:hover::before {
+  top: calc(100% + 2px);
+  bottom: auto;
+  border-top-color: transparent;
+  border-bottom-color: var(--text);
+}
