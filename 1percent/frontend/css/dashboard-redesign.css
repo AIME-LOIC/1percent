@@ -837,3 +837,39 @@ body.dv2 #dashboard-app > .dv2-app {
     padding-right: 14px;
   }
 }
+
+
+/* ── Activity hover stability + centered certificates dialog ── */
+/* Tiny heatmap cells should not flash tooltips as the pointer passes across them. */
+.dr-activity-cell[data-tip]::before,
+.dr-activity-cell[data-tip]::after {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0s linear 220ms, visibility 0s linear 220ms;
+}
+.dr-activity-cell[data-tip]:hover::before,
+.dr-activity-cell[data-tip]:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 220ms;
+}
+
+/* Keep the certificate picker centered in the viewport on desktop and mobile. */
+.dr-cert-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+}
+.dr-cert-dialog[open] {
+  display: block;
+}
+@media (max-width: 620px) {
+  .dr-cert-dialog {
+    width: calc(100vw - 24px);
+    max-width: calc(100vw - 24px);
+    max-height: calc(100dvh - 24px);
+  }
+}
