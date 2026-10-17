@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign in — 1percent Rwanda</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="description" content="Log in to 1percent Rwanda's Expert Programme. Continue your hands-on developer training with expert mentors.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link rel="stylesheet" href="/css/main.css">
+<link rel="stylesheet" href="/css/auth.css">
+<script src="/js/session.js" defer></script>
+<script src="/js/auth-helpers.js" defer></script>
+<script src="/js/auth-layout.js" defer></script>
+<script src="/js/auth-pages.js" defer></script>
+<script defer>
+  document.addEventListener('DOMContentLoaded', () => {
+    AuthLayout.render({
+      formSide: 'right', // hero left, form right
+      heading: 'Welcome back',
+      subtext: 'Log in to continue your training and pick up where you left off.',
+      crossLink: { href: '/signup', html: "Don't have an account? <a class=\"auth-link\" href=\"/signup\">Sign up</a>" }
+    });
+    AuthPages.init('login');
+  });
+</script>
+</head>
+<body>
+
+<!-- Shared two-column layout shell is built by AuthLayout (js/auth-layout.js).
+     The template below is the page's own form markup. -->
+<div id="auth-root"></div>
+
+<template id="auth-form-template">
+  <div id="login-view">
+    <form id="login-form">
+      <div class="auth-field">
+        <label class="auth-label" for="login-email">Email<span class="req" aria-hidden="true">*</span><span class="sr-only">required</span></label>
+        <input class="auth-input" type="email" id="login-email" name="email" placeholder="you@example.com" autocomplete="email" required>
+      </div>
+      <div class="auth-field">
+        <label class="auth-label" for="login-password">Password<span class="req" aria-hidden="true">*</span><span class="sr-only">required</span></label>
+        <div class="auth-password-wrap">
+          <input class="auth-input" type="password" id="login-password" name="password" placeholder="Min 6 characters" autocomplete="current-password" required>
+          <button type="button" class="auth-eye" aria-label="Show password" aria-pressed="false">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="auth-row">
+        <span class="auth-checkbox">
+          <input type="checkbox" id="remember-me" name="remember-me">
+          <label for="remember-me">Remember me</label>
+        </span>
+        <a href="#" id="forgot-password-link" class="auth-link">Forgot password?</a>
+      </div>
+      <button type="submit" class="auth-btn"><span class="auth-spinner" aria-hidden="true"></span><span>Log In</span></button>
+      <p class="auth-magic-row">
+        <button type="button" id="magic-link-open">✨ Log in with a magic link</button> (no password)
+      </p>
+    </form>
+  </div>
+
+  <form id="magic-form" style="display:none;">
+    <p style="font-size:14px;color:var(--text-secondary);line-height:1.6;margin-bottom:20px;">Enter your email and we'll send you a one-tap login link — no password needed.</p>
+    <div class="auth-field">
+      <label class="auth-label" for="magic-email">Email<span class="req" aria-hidden="true">*</span><span class="sr-only">required</span></label>
+      <input class="auth-input" type="email" id="magic-email" name="email" placeholder="you@example.com" autocomplete="email" required>
+    </div>
+    <button type="submit" class="auth-btn"><span class="auth-spinner" aria-hidden="true"></span><span>Send Magic Link</span></button>
+    <p class="auth-magic-row">
+      <button type="button" id="magic-back">← Back to password login</button>
+    </p>
+  </form>
+</template>
+
+</body>
+</html>

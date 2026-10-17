@@ -163,7 +163,7 @@ const App = {
           <p>${c.desc}</p>
           <div class="course-meta">
             <span>${c.weeks} weeks</span>
-            <a href="#" class="btn btn-primary btn-sm" onclick="Auth.isLoggedIn() ? null : (Modal.open('auth-modal'), false); return false;">Enroll</a>
+            <a href="/signin" class="btn btn-primary btn-sm" onclick="if (!Auth.isLoggedIn()) { window.location.href = '/signin?next=' + encodeURIComponent(location.pathname); } return false;">Enroll</a>
           </div>
         </div>
       </div>

@@ -161,15 +161,10 @@ const Nav = {
       this._renderUserMenu(nav);
     } else {
       const loginBtn = document.createElement('a');
-      loginBtn.href = '#';
+      loginBtn.href = this._url('/signin');
       loginBtn.id = 'open-auth';
       loginBtn.className = 'btn btn-primary btn-sm nav-cta';
       loginBtn.textContent = 'Student Login';
-      loginBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (typeof Modal !== 'undefined') Modal.open('auth-modal');
-        else window.location.href = '/';
-      });
       nav.appendChild(loginBtn);
     }
   },

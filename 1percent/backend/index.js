@@ -539,6 +539,12 @@ app.use('/api', courseRoutes);  // /api/roadmap, /api/courses (has /:slug)
    SPA ROUTES — serve specific HTML files for app pages
    ============================================================ */
 const htmlRoutes = {
+  // Auth pages — /signin and /signup are dedicated full pages
+// (formerly the Student Login / Sign Up modal on the homepage)
+  '/signin': 'signin.html',
+  '/signup': 'signup.html',
+  '/learn/signin': 'signin.html',
+  '/learn/signup': 'signup.html',
   '/hack': 'hack.html',
   '/hack.html': 'hack.html',
   '/learn': 'learn/index.html',
@@ -582,7 +588,10 @@ const htmlRoutes = {
 };
 
 // Learn subdomain routes — same pages, no /learn prefix
+// Auth pages — same as the main-site map (no /learn prefix)
 const learnSubdomainRoutes = {
+  '/signin': 'signin.html',
+  '/signup': 'signup.html',
   '/': 'learn/index.html',
   '/hack': 'hack.html',
   '/hack.html': 'hack.html',
@@ -657,6 +666,13 @@ app.get('*', (req, res) => {
   }
 
   // Legacy redirects — old paths redirect to new /learn/* paths (main site only)
+  // Legacy auth-page aliases (/login, /sigin, /login.html) -> /signin.
+  // Keeps old links working after the login modal became full pages.
+  if (['/login', '/login.html', '/sigin', '/signin.html',
+       '/learn/login', '/learn/login.html', '/learn/sigin'].includes(req.path)) {
+    return res.redirect(301, req.isLearnSubdomain ? '/signin' : '/learn/signin');
+  }
+
   if (!req.isLearnSubdomain) {
     if (req.path === '/dashboard') return res.redirect(301, '/learn/dashboard');
     if (req.path === '/playground') return res.redirect(301, '/learn/playground');

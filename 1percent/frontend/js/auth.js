@@ -178,7 +178,8 @@ const Auth = {
    * Bind form and button events
    */
   _bindEvents() {
-    // Login button in header — if already logged in, redirect to dashboard
+    // Login button in header — if already logged in, redirect to dashboard.
+    // Logged-out visitors go straight to the dedicated /signin page.
     const openAuthBtn = document.getElementById('open-auth');
     if (openAuthBtn) {
       openAuthBtn.addEventListener('click', (e) => {
@@ -188,16 +189,10 @@ const Auth = {
           window.location.href = _isLearn ? '/dashboard' : '/learn/dashboard';
           return;
         }
-        Modal.open('auth-modal');
+        const _isLearn = location.hostname === 'learn.1percent.rw';
+        window.location.href = _isLearn ? '/signin' : '/learn/signin';
       });
     }
-
-    // Auth tab switching
-    document.querySelectorAll('.auth-tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        this._switchTab(tab.dataset.tab);
-      });
-    });
 
     // Login form
     const loginForm = document.getElementById('login-form');
@@ -254,22 +249,8 @@ const Auth = {
    * Switch between login/signup tabs
    */
   _switchTab(tab) {
-    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-    document.querySelector(`.auth-tab[data-tab="${tab}"]`)?.classList.add('active');
-
-    const loginForm = document.getElementById('login-form');
-    const signupForm = document.getElementById('signup-form');
-    const title = document.getElementById('auth-modal-title');
-
-    if (tab === 'login') {
-      loginForm.style.display = 'block';
-      signupForm.style.display = 'none';
-      title.textContent = 'Student Login';
-    } else {
-      loginForm.style.display = 'none';
-      signupForm.style.display = 'block';
-      title.textContent = 'Create Account';
-    }
+    // Tab switching no longer exists — login and signup are separate
+    // pages now (/signin, /signup). Kept as a no-op for any callers.
   },
 
   /**
@@ -293,7 +274,6 @@ const Auth = {
       status.className = 'form-status success';
       status.textContent = 'Welcome back! Redirecting...';
       setTimeout(() => {
-        Modal.close('auth-modal');
         const _isLearn = location.hostname === 'learn.1percent.rw' || location.hostname === 'www.learn.1percent.rw';
         const user = this.currentUser || {};
         const isAdmin = user.role === 'admin';
