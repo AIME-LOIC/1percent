@@ -19,17 +19,16 @@
 
   let loggedIn = null; // null = unknown, true/false = resolved
 
-  /** Redirect to the sign-in page, carrying the current page as ?next=. */
+  /**
+   * Redirect to the sign-in page, carrying the current page as ?next=.
+   * Route maps exist for both hosts; plain /signin works everywhere.
+   */
   function show() {
-    const authRoutes = () => {
-      // Route maps exist for both hosts; plain /signin works everywhere.
-      return '/signin';
-    };
     const next = location.pathname + location.search;
     if (next && next !== '/') {
-      window.location.href = authRoutes() + '?next=' + encodeURIComponent(next);
+      window.location.href = '/signin?next=' + encodeURIComponent(next);
     } else {
-      window.location.href = authRoutes();
+      window.location.href = '/signin';
     }
   }
 

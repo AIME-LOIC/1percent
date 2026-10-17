@@ -54,13 +54,10 @@ const AuthPages = {
     }
 
     // Back link — on the main site, the homepage lives at /learn.
+    // Cross-links need no rewriting: /signin and /signup are served on
+    // both hosts (server route map).
     const back = document.querySelector('.auth-back');
     if (back && typeof AuthHelpers !== 'undefined') back.href = AuthHelpers.isLearn() ? '/' : '/learn';
-    const cross = document.querySelector('.auth-alt-link-row a');
-    if (cross && typeof AuthHelpers !== 'undefined' && !AuthHelpers.isLearn()) {
-      // /signup and /signin exist on the main site too (server route map)
-      // — no rewriting needed; left for clarity on both hosts.
-    }
 
     this._bindEvents(mode);
     AuthLayout.enhanceForm(document.querySelector('#auth-form-slot form'));
