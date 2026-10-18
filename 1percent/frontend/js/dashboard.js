@@ -617,7 +617,7 @@ const Dashboard = {
     grid.innerHTML = rows.map(c => `
       <a href="${_url('/course/' + escapeHTML(c.slug))}" class="dr-course-card">
         <div class="dr-course-thumb" style="background:linear-gradient(135deg,${escapeHTML(c.color || '#d1fae5,#a7f3d0')});">
-          ${Icons.get(c.icon || 'book-open', 34)}
+          ${Icons.forCourse(c, 34)}
         </div>
         <div class="dr-course-name" title="${escapeHTML(c.title)}">${escapeHTML(c.title)}</div>
         <div class="dr-course-progress">
@@ -1327,7 +1327,7 @@ const Dashboard = {
     grid.innerHTML = enrolled.map(c => `
       <a href="${_url('/course/' + escapeHTML(c.slug))}" class="dash-enrolled-card">
         <div class="dash-enrolled-icon" style="background:${escapeHTML(c.color || '#d1fae5,#a7f3d0')};">
-          ${Icons.get(c.icon || 'rocket', 22)}
+          ${Icons.forCourse(c, 22)}
         </div>
         <div class="dash-enrolled-info">
           <h4>${escapeHTML(c.title)}</h4>
@@ -1373,7 +1373,7 @@ const Dashboard = {
         grid.innerHTML = items.map(c =>
           '<a href="' + _url('/course/' + escapeHTML(c.slug)) + '" class="dash-course-card">' +
             '<div class="dash-course-thumb" style="background:' + (colorMap[c.level] || colorMap.beginner) + ';">' +
-              Icons.get(c.icon || 'book-open', 36) +
+              Icons.forCourse(c, 36) +
               '<span class="level-tag" style="color:' + (levelColor[c.level] || levelColor.beginner) + ';">' + escapeHTML(c.level || '') + '</span>' +
             '</div>' +
             '<div class="dash-course-body">' +
