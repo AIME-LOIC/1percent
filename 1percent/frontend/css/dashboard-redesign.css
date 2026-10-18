@@ -913,8 +913,13 @@ body.dv2 #dashboard-app > .dv2-app {
 .dr-robotics-promo { position:relative; overflow:hidden; }
 .dr-robotics-promo[hidden] { display:none !important; }
 .dr-robotics-icon {
-  width:42px;height:42px;display:flex;align-items:center;justify-content:center;
+  width:42px;height:42px;min-width:42px;flex:0 0 42px;box-sizing:border-box;
+  display:flex;align-items:center;justify-content:center;
   border-radius:12px;background:#e8f7ee;color:#0d6e3f;margin-bottom:12px;
+}
+.dr-robotics-icon .dr-robotics-svg {
+  display:block;width:24px;height:24px;min-width:24px;flex:0 0 24px;
+  overflow:visible;visibility:visible;opacity:1;
 }
 .dr-robotics-promo h2 { margin:0 0 7px;font-size:15px;font-weight:800;color:var(--text,#172b21); }
 .dr-robotics-copy { margin:0 0 14px;font-size:12px;line-height:1.6;color:var(--text-muted,#64748b); }
