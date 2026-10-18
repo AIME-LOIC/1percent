@@ -75,9 +75,13 @@ const Icons = {
    * @returns {string} SVG HTML string
    */
   get(name, size = 20) {
-    const svg = this.icons[name];
-    if (!svg) return '';
-    return svg.replace(/width="24"/, `width="${size}"`).replace(/height="24"/, `height="${size}"`);
+    // Course icons can come from database records, so tolerate empty,
+    // mixed-case, or unknown names instead of rendering an empty space.
+    const key = String(name || '').trim().toLowerCase();
+    const svg = this.icons[key] || this.icons['book-open'];
+    return svg
+      .replace(/width="24"/, `width="${size}"`)
+      .replace(/height="24"/, `height="${size}"`);
   },
 
   /**
