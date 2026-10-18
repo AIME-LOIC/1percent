@@ -155,7 +155,7 @@ const App = {
     grid.innerHTML = courses.map(c => `
       <div class="course-card">
         <div class="course-thumb" style="background:linear-gradient(135deg,${c.color});">
-          ${Icons.get(c.icon, 48)}
+          ${Icons.forCourse(c, 48)}
           <span class="course-level">${c.level}</span>
         </div>
         <div class="course-body">
