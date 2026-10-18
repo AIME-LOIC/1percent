@@ -565,6 +565,80 @@
   }
 </style>
 
+
+<style id="centered-nav-right-cta">
+  /* Three-column header: brand left, navigation centered, CTA right. */
+  #header > .container {
+    display: grid !important;
+    grid-template-columns: minmax(180px, 1fr) auto minmax(180px, 1fr) !important;
+    align-items: center !important;
+    gap: 24px !important;
+    flex-wrap: nowrap !important;
+  }
+  #header .logo { grid-column: 1; justify-self: start; min-width: 0; }
+  #header #main-nav {
+    grid-column: 2;
+    justify-self: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(14px, 1.7vw, 25px);
+    white-space: nowrap;
+  }
+  #header #main-nav .nav-cta {
+    position: absolute;
+    right: max(24px, calc((100vw - 1200px) / 2));
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 0;
+  }
+  #header .mobile-toggle { display: none; }
+  @media (max-width: 1100px) {
+    #header > .container {
+      grid-template-columns: minmax(150px, 1fr) auto !important;
+      gap: 16px !important;
+    }
+    #header .mobile-toggle {
+      display: inline-flex;
+      grid-column: 2;
+      justify-self: end;
+    }
+    #header #main-nav {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 16px;
+      right: 16px;
+      grid-column: 1 / -1;
+      justify-self: stretch;
+      align-items: stretch;
+      flex-direction: column;
+      gap: 8px;
+      padding: 18px;
+      border: 1px solid var(--learn-line);
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: 0 18px 44px rgba(14,43,29,.12);
+      white-space: normal;
+      z-index: 100;
+    }
+    #header #main-nav.open,
+    #header #main-nav.active,
+    #header #main-nav.show { display: flex; }
+    #header #main-nav .nav-cta {
+      position: static;
+      transform: none;
+      align-self: stretch;
+      justify-content: center;
+      margin-top: 4px;
+    }
+  }
+  @media (min-width: 1101px) {
+    #header #main-nav { padding-right: 180px; }
+    #header #main-nav .nav-cta { right: max(24px, calc((100vw - 1200px) / 2)); }
+  }
+</style>
+
 </head>
 <body>
 
