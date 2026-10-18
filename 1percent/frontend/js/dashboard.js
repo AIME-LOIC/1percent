@@ -1181,6 +1181,11 @@ const Dashboard = {
   async _loadClubPromo() {
     const promo = document.getElementById('dash-club-promo');
     if (!promo) return;
+
+    // Default to visible; only hide the card after the API confirms membership.
+    promo.hidden = false;
+    promo.style.display = '';
+
     try {
       const token = (await this.supabase.auth.getSession()).data.session?.access_token;
       if (!token) return;
