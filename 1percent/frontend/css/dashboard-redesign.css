@@ -908,3 +908,25 @@ body.dv2 #dashboard-app > .dv2-app {
   border-top-color: transparent;
   border-bottom-color: var(--text);
 }
+
+/* Robotics Club invitation — matches the student dashboard's green/white cards. */
+.dr-robotics-promo { position:relative; overflow:hidden; }
+.dr-robotics-promo[hidden] { display:none !important; }
+.dr-robotics-icon {
+  width:42px;height:42px;display:flex;align-items:center;justify-content:center;
+  border-radius:12px;background:#e8f7ee;color:#0d6e3f;margin-bottom:12px;
+}
+.dr-robotics-promo h2 { margin:0 0 7px;font-size:15px;font-weight:800;color:var(--text,#172b21); }
+.dr-robotics-copy { margin:0 0 14px;font-size:12px;line-height:1.6;color:var(--text-muted,#64748b); }
+.dr-robotics-join {
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;
+  background:#0d6e3f;color:#fff;text-decoration:none;font-size:12px;font-weight:750;
+  transition:background .15s ease,transform .15s ease;
+}
+.dr-robotics-join:hover { background:#0a5c34;transform:translateY(-1px); }
+.dr-robotics-join:focus-visible { outline:3px solid #7fdcaf;outline-offset:3px; }
+@media (max-width:620px) {
+  .dr-robotics-promo { padding:16px; }
+}
+
