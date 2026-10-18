@@ -45,6 +45,14 @@ const Icons = {
     'flame': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>',
     'cookie': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5v.01"/><path d="M16 15.5v.01"/><path d="M12 12v.01"/><path d="M11 17v.01"/><path d="M7 14.5v.01"/></svg>',
 
+    // Course and business domains
+    'database': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>',
+    'bot': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 8V4"/><path d="M10 4h4"/><path d="M8 13h.01M16 13h.01"/><path d="M9 17h6"/><path d="M3 13H1m22 0h-2"/></svg>',
+    'server': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6.5h.01M7 17.5h.01M11 6.5h6M11 17.5h6"/></svg>',
+    'panels-top-left': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>',
+    'building-2': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V3h12v19M3 22h18"/><path d="M9 7h1m4 0h1M9 11h1m4 0h1M9 15h1m4 0h1M10 22v-3h4v3"/></svg>',
+    'briefcase-business': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V4h8v3M3 12h18M10 12v2h4v-2"/></svg>',
+
     // Course types
     'play-circle': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>',
     'flask': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16.5h10"/></svg>',
@@ -82,6 +90,24 @@ const Icons = {
     return svg
       .replace(/width="24"/, `width="${size}"`)
       .replace(/height="24"/, `height="${size}"`);
+  },
+
+  forCourse(course, size = 20) {
+    const identity = `${course?.slug || ''} ${course?.title || ''} ${course?.category || ''}`.toLowerCase().replace(/[_-]+/g, ' ');
+    const domainIcons = [
+      [/\b(db|database|databases|sql|postgres|mongodb|mysql|data modeling)\b/, 'database'],
+      [/\b(robotics|robot|arduino|raspberry pi|embedded systems)\b/, 'bot'],
+      [/\b(backend|back end|api development|server side)\b/, 'server'],
+      [/\b(frontend|front end|ui development|web design|react)\b/, 'panels-top-left'],
+      [/\b(office|offices|office productivity|microsoft office|excel|word|powerpoint)\b/, 'building-2'],
+      [/\b(tech in business|technology in business|business technology|digital business|office technology)\b/, 'briefcase-business'],
+      [/\b(cybersecurity|cyber security|security)\b/, 'shield'],
+      [/\b(ai|artificial intelligence|machine learning|automation)\b/, 'brain'],
+      [/\b(cloud|devops|deployment|infrastructure)\b/, 'cloud'],
+      [/\b(programming|coding|software development|javascript|python|c programming)\b/, 'code']
+    ];
+    const match = domainIcons.find(([pattern]) => pattern.test(identity));
+    return this.get(match ? match[1] : (course?.icon || 'book-open'), size);
   },
 
   /**
