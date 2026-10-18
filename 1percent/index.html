@@ -567,10 +567,11 @@
 
 
 <style id="centered-nav-right-cta">
-  /* Three-column header: brand left, navigation centered, CTA right. */
+  /* Keep the brand at the far left, links centered, and CTA at the far right. */
   #header > .container {
+    position: relative !important;
     display: grid !important;
-    grid-template-columns: minmax(180px, 1fr) auto minmax(180px, 1fr) !important;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) !important;
     align-items: center !important;
     gap: 24px !important;
     flex-wrap: nowrap !important;
@@ -584,18 +585,31 @@
     justify-content: center;
     gap: clamp(14px, 1.7vw, 25px);
     white-space: nowrap;
+    padding-right: 0;
   }
   #header #main-nav .nav-cta {
     position: absolute;
-    right: max(24px, calc((100vw - 1200px) / 2));
+    right: 0;
     top: 50%;
     transform: translateY(-50%);
     margin-left: 0;
   }
   #header .mobile-toggle { display: none; }
+
+  /* Use restrained corners instead of oversized pill-shaped controls and cards. */
+  .btn, button { border-radius: 8px; }
+  .biz-hero-badge, .service-features span { border-radius: 6px; }
+  .biz-hero-card, .service-card, .portfolio-card, .team-card,
+  .process-step, .contact-form, .contact-info { border-radius: 14px; }
+  .biz-hero-code { border-radius: 8px; }
+  .biz-hero-float { border-radius: 8px; }
+  .biz-cta { border-radius: 16px; }
+  .contact-form input, .contact-form textarea, .contact-form select { border-radius: 8px; }
+  .footer-social .social-icon { border-radius: 8px; }
+
   @media (max-width: 1100px) {
     #header > .container {
-      grid-template-columns: minmax(150px, 1fr) auto !important;
+      grid-template-columns: minmax(0, 1fr) auto !important;
       gap: 16px !important;
     }
     #header .mobile-toggle {
@@ -616,7 +630,7 @@
       gap: 8px;
       padding: 18px;
       border: 1px solid var(--learn-line);
-      border-radius: 18px;
+      border-radius: 10px;
       background: #fff;
       box-shadow: 0 18px 44px rgba(14,43,29,.12);
       white-space: normal;
@@ -632,10 +646,6 @@
       justify-content: center;
       margin-top: 4px;
     }
-  }
-  @media (min-width: 1101px) {
-    #header #main-nav { padding-right: 180px; }
-    #header #main-nav .nav-cta { right: max(24px, calc((100vw - 1200px) / 2)); }
   }
 </style>
 
