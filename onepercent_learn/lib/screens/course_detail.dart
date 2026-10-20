@@ -97,7 +97,7 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
           label: 'Back',
           button: true,
           child: IconButton(
-              onPressed: () => context.pop(),
+              onPressed: () {\n                if (context.canPop()) {\n                  context.pop();\n                } else {\n                  context.go('/learn');\n                }\n              },
               icon: const Icon(Icons.arrow_back)),
         ),
         title: Text(course?.title ?? 'Course'),
@@ -223,7 +223,7 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
                   .read(offlineRepoProvider)
                   .downloadCourse(course, onlyLessons: [course.lessons[i]]),
               onOpen: () => context
-                  .go('/lesson/${course.lessons[i].id}?course=${course.slug}'),
+                  .push('/lesson/${course.lessons[i].id}?course=${course.slug}'),
             ),
           const SizedBox(height: 32),
         ],
