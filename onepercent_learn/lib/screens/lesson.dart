@@ -18,6 +18,18 @@ class LessonArgs {
   LessonArgs({required this.lessonId, required this.courseSlug});
   final String lessonId;
   final String courseSlug;
+
+  // Riverpod family arguments must have value equality. The screen creates
+  // LessonArgs during each build; identity equality would recreate providers
+  // repeatedly and can leave lesson content stuck loading.
+  @override
+  bool operator ==(Object other) =>
+      other is LessonArgs &&
+      other.lessonId == lessonId &&
+      other.courseSlug == courseSlug;
+
+  @override
+  int get hashCode => Object.hash(lessonId, courseSlug);
 }
 
 class LessonScreenState {
