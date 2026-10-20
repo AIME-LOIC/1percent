@@ -168,7 +168,14 @@ class _LessonScreenStateState extends ConsumerState<LessonScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          onPressed: () => context.pop(),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              // Deep links and restored lesson routes may have no back stack.
+              context.go('/learn');
+            }
+          },
           icon: const Icon(Icons.arrow_back),
         ),
         titleSpacing: 16,
