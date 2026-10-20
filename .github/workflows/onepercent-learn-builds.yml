@@ -1,0 +1,159 @@
+name: 1percent Learn - Build for all platforms
+
+on:
+  push:
+    branches:
+      - mobile
+    tags:
+      - 'learn-v*'
+    paths:
+      - 'onepercent_learn/**'
+      - '.github/workflows/onepercent-learn-builds.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.label }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: android
+            label: Android APK
+            os: ubuntu-latest
+            command: apk
+            artifact_path: onepercent_learn/build/app/outputs/flutter-apk/app-release.apk
+            artifact_name: 1percent-Learn-Android-APK
+          - target: web
+            label: Web
+            os: ubuntu-latest
+            command: web
+            artifact_path: onepercent_learn/build/web
+            artifact_name: 1percent-Learn-Web
+          - target: linux
+            label: Linux
+            os: ubuntu-latest
+            command: linux
+            artifact_path: onepercent_learn/build/linux/x64/release/bundle
+            artifact_name: 1percent-Learn-Linux-x64
+          - target: windows
+            label: Windows
+            os: windows-latest
+            command: windows
+            artifact_path: onepercent_learn/build/windows/x64/runner/Release
+            artifact_name: 1percent-Learn-Windows-x64
+          - target: macos
+            label: macOS
+            os: macos-latest
+            command: macos
+            artifact_path: onepercent_learn/build/macos/Build/Products/Release/onepercent_learn.app
+            artifact_name: 1percent-Learn-macOS
+          - target: ios
+            label: iOS (unsigned)
+            os: macos-latest
+            command: ios
+            artifact_path: onepercent_learn/build/ios/iphoneos/Runner.app
+            artifact_name: 1percent-Learn-iOS-Unsigned
+
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: onepercent_learn
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install Linux desktop dependencies
+        if: matrix.target == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libstdc++-12-dev
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Enable desktop target
+        if: matrix.target == 'linux' || matrix.target == 'windows' || matrix.target == 'macos'
+        run: flutter config --enable-${{ matrix.target }}-desktop
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build Android APK
+        if: matrix.target == 'android'
+        run: flutter build apk --release
+
+      - name: Build web
+        if: matrix.target == 'web'
+        run: flutter build web --release
+
+      - name: Build Linux
+        if: matrix.target == 'linux'
+        run: flutter build linux --release
+
+      - name: Build Windows
+        if: matrix.target == 'windows'
+        run: flutter build windows --release
+
+      - name: Build macOS
+        if: matrix.target == 'macos'
+        run: flutter build macos --release
+
+      - name: Build iOS app (unsigned)
+        if: matrix.target == 'ios'
+        run: flutter build ios --release --no-codesign
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_path }}
+          if-no-files-found: error
+          retention-days: 30
+
+  publish-release:
+    name: Publish downloadable release
+    if: startsWith(github.ref, 'refs/tags/learn-v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all platform artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-files
+
+      - name: Package artifacts
+        run: |
+          set -euo pipefail
+          cd release-files
+          for item in */; do
+            name="${item%/}"
+            if [ -d "$item" ]; then
+              if [ "$name" = "1percent-Learn-Android-APK" ]; then
+                cp "$item/app-release.apk" "../$name.apk"
+              elif [ "$name" = "1percent-Learn-iOS-Unsigned" ]; then
+                (cd "$item" && zip -qr "../../$name.zip" .)
+              else
+                zip -qr "../$name.zip" "$name"
+              fi
+            else
+              cp "$item" "../$name"
+            fi
+          done
+          cd ..
+          ls -lh 1percent-Learn-*
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: 1percent Learn ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            1percent-Learn-*
