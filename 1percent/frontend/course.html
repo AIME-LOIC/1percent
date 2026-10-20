@@ -1107,31 +1107,43 @@ async function doOpenLesson(lessonId){
     } else {
       body.innerHTML='<p class="pg-course-t0xth">Loading content…</p>';
     }
-    fetch(`/api/courses/lessons/${lessonId}/content`,{headers:currentUser&&supabaseClient?{Authorization:`Bearer ${(OPSession?await OPSession.getToken():'')||''}`}:{}})
-      .then(async r=>{
-        if(r.status===403){
-          // Server-side tier check refused — show the upgrade wall.
+    (async()=>{
+      try {
+        const token=currentUser&&supabaseClient&&typeof OPSession!=='undefined' ? await OPSession.getToken() : null;
+        const response=await fetch(`/api/courses/lessons/${encodeURIComponent(lessonId)}/content`,{
+          headers:token?{Authorization:`Bearer ${token}`}:{},
+          cache:'no-store'
+        });
+        if(response.status===403){
           const b=document.getElementById('lesson-content-body');
           if(b)b.innerHTML=`<div class="empty-pad">
             <h3 class="pg-course-t7b5q">Premium lesson</h3>
             <p class="pg-course-140fq">Upgrade your plan to unlock this lesson and the rest of the course.</p>
             <a href="/payment" class="footer-btn primary">View Plans</a>
           </div>`;
-          return null;
+          return;
         }
-        return r.json();
-      })
-      .then(j=>{
-        if(!j)return;
-        lesson.content_md=j.content_md||'';
-        DataCache.set(contentKey,j.content_md||'');
+        if(!response.ok) throw new Error(`Lesson content request failed (${response.status})`);
+        const result=await response.json();
+        if(result.success===false) throw new Error(result.error||'Lesson content unavailable');
+        lesson.content_md=result.content_md||'';
+        DataCache.set(contentKey,lesson.content_md);
         const b=document.getElementById('lesson-content-body');
-        if(b&&(!cachedContent||b.dataset.revalidated!=='1')){b.dataset.revalidated='1';b.innerHTML=lesson.content_md?renderMarkdown(lesson.content_md):'<p class="pg-course-t0xu8">Content will be available soon.</p>';}
-        startStudyTimer(lessonId,isCompleted);
-      })
-      .catch(()=>{
-        if(!cachedContent){const b=document.getElementById('lesson-content-body');if(b)b.innerHTML='<p class="pg-course-1662q">Failed to load content.</p>';}
-      });
+        // A student may switch lessons while this request is in flight. Never
+        // let an older response overwrite the currently selected lesson.
+        if(b&&String(document.querySelector('.content-header h1')?.textContent||'')===String(lesson.title||'')){
+          b.dataset.revalidated='1';
+          b.innerHTML=lesson.content_md?renderMarkdown(lesson.content_md):'<p class="pg-course-t0xu8">Content will be available soon.</p>';
+          startStudyTimer(lessonId,isCompleted);
+        }
+      } catch(error) {
+        console.error('[COURSE] Lesson content load failed:',error);
+        if(!cachedContent){
+          const b=document.getElementById('lesson-content-body');
+          if(b)b.innerHTML='<p class="pg-course-1662q">Could not load this lesson. Check your connection and select the lesson again.</p>';
+        }
+      }
+    })();
   }
 
   document.getElementById('main-area').scrollTop=0;
