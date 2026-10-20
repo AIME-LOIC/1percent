@@ -112,7 +112,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  MonoLabel('1% DIGITAL SOLUTIONS'),
+                  MonoLabel('1PERCENT RWANDA'),
                   MonoLabel('RWANDA'),
                 ],
               ),
