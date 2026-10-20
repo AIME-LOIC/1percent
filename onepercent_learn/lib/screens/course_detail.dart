@@ -97,7 +97,13 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
           label: 'Back',
           button: true,
           child: IconButton(
-              onPressed: () {\n                if (context.canPop()) {\n                  context.pop();\n                } else {\n                  context.go('/learn');\n                }\n              },
+              onPressed: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('/learn');
+                }
+              },
               icon: const Icon(Icons.arrow_back)),
         ),
         title: Text(course?.title ?? 'Course'),
