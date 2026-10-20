@@ -25,19 +25,38 @@ class AuthScaffold extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                        color: T.primaryBtn, borderRadius: BorderRadius.circular(12)),
-                    alignment: Alignment.center,
-                    child: Text('1%', style: GoogleFonts.spaceGrotesk(
-                        fontWeight: FontWeight.w800, fontSize: 18, color: T.ink)),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+                  decoration: BoxDecoration(
+                    color: T.surface,
+                    borderRadius: BorderRadius.circular(T.cardRadius),
+                    border: Border.all(color: T.border),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Learn with 1percent',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: T.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '1percent Rwanda',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: T.strong,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
                 Text(title, style: Theme.of(context)
                     .textTheme
                     .headlineSmall
