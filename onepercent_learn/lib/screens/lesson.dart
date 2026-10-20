@@ -139,7 +139,7 @@ class _LessonScreenStateState extends ConsumerState<LessonScreen> {
   void _goNext(LessonScreenState s) {
     if (s.index >= s.total) return;
     final next = s.course.lessons[s.index];
-    context.go('/lesson/${next.id}?course=${s.course.slug}');
+    context.pushReplacement('/lesson/${next.id}?course=${s.course.slug}');
   }
 
   @override
