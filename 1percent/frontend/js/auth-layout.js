@@ -68,9 +68,9 @@
       '<main class="auth-form-col">' +
       '<a class="auth-back" href="/">' + ARROW_SVG + ' Back</a>' +
       '<div class="auth-form-wrap">' +
-      '<div class="auth-brand">' +
-      '<span class="auth-brand-mark">1%</span>' +
-      '<span class="auth-brand-name"><b>1percent Rwanda</b><span>Learn. Build. Ship.</span></span>' +
+      '<div class="auth-brand auth-brand-centered">' +
+      '<span class="auth-brand-mark" aria-hidden="true">1%</span>' +
+      '<span class="auth-brand-name"><b>Learn with 1percent</b><span>1percent Rwanda</span></span>' +
       '</div>' +
       '<h1 class="auth-heading">' + title + '</h1>' +
       '<p class="auth-subtext">' + (opts.subtext || '') + '</p>' +
