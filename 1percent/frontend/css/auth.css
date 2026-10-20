@@ -373,12 +373,21 @@
   border-radius: 14px;
   background: #f4fbf7;
 }
-.auth-brand-centered .auth-brand-mark {
-  background: #0d6e3f;
-  color: #fff;
-  border-radius: 10px;
-  flex-shrink: 0;
-}
 .auth-brand-centered .auth-brand-name { align-items: center; }
 .auth-brand-centered .auth-brand-name b { color: #0d6e3f; }
 .auth-brand-centered .auth-brand-name span { color: #66756b; }
+
+/* Keep both authentication screens in the white + light-green Learn theme. */
+.auth-hero {
+  background: linear-gradient(145deg, #f4fbf7 0%, #e8f6ed 100%);
+  color: #153b29;
+}
+.auth-hero h1,
+.auth-hero h1 em { color: #153b29; }
+.auth-hero h1 em { color: #0d6e3f; }
+.auth-hero-lead { color: #52685b; }
+.auth-hero-check { color: #254b35; }
+.auth-hero-check i { background: #d5f1df; color: #0d6e3f; }
+.auth-hero-footer { color: #718477; }
+.auth-brand-centered .auth-brand-name b { font-size: 20px; }
+.auth-brand-centered .auth-brand-name span { font-size: 12px; margin-top: 5px; }
