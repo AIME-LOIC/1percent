@@ -359,3 +359,26 @@
   .auth-btn .auth-spinner { animation: none; }
   * { transition: none; }
 }
+
+
+/* Auth brand: centered Learn with 1percent identity */
+.auth-brand-centered {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  padding: 18px 20px;
+  margin: 0 auto 28px;
+  border: 1px solid #d7f0e1;
+  border-radius: 14px;
+  background: #f4fbf7;
+}
+.auth-brand-centered .auth-brand-mark {
+  background: #0d6e3f;
+  color: #fff;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.auth-brand-centered .auth-brand-name { align-items: center; }
+.auth-brand-centered .auth-brand-name b { color: #0d6e3f; }
+.auth-brand-centered .auth-brand-name span { color: #66756b; }
