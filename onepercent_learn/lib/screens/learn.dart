@@ -182,7 +182,7 @@ class CourseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CardX(
-      onTap: () => context.go('/course/${course.slug}'),
+      onTap: () => context.push('/course/${course.slug}'),
       child: Row(children: [
         Container(
           width: 60, height: 60,
@@ -198,9 +198,7 @@ class CourseCard extends StatelessWidget {
             ],
           ),
           alignment: Alignment.center,
-          child: Text(course.title.isEmpty ? '' : course.title[0].toUpperCase(),
-              style: GoogleFonts.spaceGrotesk(
-                  fontWeight: FontWeight.w800, fontSize: 22, color: Colors.white)),
+          child: Icon(_courseIcon(course.icon, course.title), size: 30, color: Colors.white),
         ),
         const SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -244,4 +242,26 @@ List<Color> _levelColors(String level) {
     default:
       return [const Color(0xFFD9EFCE), const Color(0xFF2E7D32)];
   }
+}
+
+
+/// Convert the course icon identifier returned by the API into a Material icon.
+/// Unknown identifiers fall back to a stable book icon instead of a missing glyph.
+IconData _courseIcon(String rawIcon, String title) {
+  final key = rawIcon.trim().toLowerCase().replaceAll('_', '-');
+  final text = '$key ${title.toLowerCase()}';
+  if (text.contains('python')) return Icons.code;
+  if (text.contains('javascript') || text.contains('typescript') || text.contains('web')) return Icons.web;
+  if (text.contains('html') || text.contains('css')) return Icons.language;
+  if (text.contains('database') || text.contains('sql')) return Icons.storage;
+  if (text.contains('data-structure') || text.contains('algorithm') || text.contains('dsa')) return Icons.account_tree;
+  if (text.contains('machine-learning') || text.contains('artificial-intelligence') || text.contains('ai')) return Icons.psychology;
+  if (text.contains('cyber') || text.contains('security') || text.contains('hacking')) return Icons.shield_outlined;
+  if (text.contains('design') || text.contains('figma') || text.contains('ui')) return Icons.draw_outlined;
+  if (text.contains('mobile') || text.contains('flutter') || text.contains('android') || text.contains('ios')) return Icons.phone_iphone;
+  if (text.contains('cloud') || text.contains('devops')) return Icons.cloud_outlined;
+  if (text.contains('git') || text.contains('version-control')) return Icons.account_tree_outlined;
+  if (text.contains('terminal') || text.contains('linux') || text.contains('command')) return Icons.terminal;
+  if (text.contains('book') || text.contains('lesson') || text.contains('course')) return Icons.menu_book;
+  return Icons.menu_book;
 }
