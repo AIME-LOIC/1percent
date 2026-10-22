@@ -38,7 +38,17 @@ class CourseService {
   /* ----------------------------------------------------------
      COURSES (from Supabase database)
      ---------------------------------------------------------- */
+
+  /* Cold starts on the host cost the catalog list multiple seconds with no
+     request load behind them; a short in-memory cache keeps the public list
+     instant while edits to courses remain fresh within a minute. */
+  static COURSES_CACHE_TTL_MS = 60_000;
+
   async getCourses() {
+    const now = Date.now();
+    if (this._coursesCache && now - (this._coursesCacheAt || 0) < CourseService.COURSES_CACHE_TTL_MS) {
+      return this._coursesCache;
+    }
     const { data, error } = await adminClient
       .from('courses')
       .select('*')
@@ -46,7 +56,9 @@ class CourseService {
       .order('sort_order', { ascending: true });
 
     if (error) throw error;
-    return data;
+    this._coursesCache = data || [];
+    this._coursesCacheAt = now;
+    return this._coursesCache;
   }
 
   async getCourseBySlug(slug) {

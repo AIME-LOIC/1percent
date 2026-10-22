@@ -263,7 +263,38 @@ function extractFacts(contentMd) {
       add({ type: 'cloze', term: pick.term, kind: pick.kind, text: blanked });
     }
   }
+  /* Heading-pair facts: a "## while Loop" heading whose next paragraph is a
+     one-line explanation ("Use when the number of iterations is unknown").
+     The heading IS the term, the paragraph IS the definition — common shape
+     in the reference-style lessons. The imperative wording is allowed here
+     because a heading-scoped usage note is the definition, not an instruction
+     to the reader. */
+  let headingTerm = null;
+  for (const rawLine of lines) {
+    let line = rawLine.trim();
+    if (/^#{1,6}\s/.test(line)) {
+      headingTerm = cleanTerm(line.replace(/^#{1,6}\s+/, ''), 'bold');
+      continue;
+    }
+    if (!line || /^---+$/.test(line) || /^```/.test(line)) continue;
+    if (headingTerm) {
+      const desc = plain(line).replace(/[.!?]+$/, '');
+      const okLen = desc.length >= 14 && desc.length <= 130 && desc.split(/\s+/).length >= 3;
+      if (headingTerm && okLen && goodDescPair(desc) && !mentions(desc, headingTerm)) {
+        add({ type: 'def', term: headingTerm, kind: 'bold', text: desc });
+      }
+      headingTerm = null;    // only the text right under the heading counts
+    }
+  }
+
   return facts;
+}
+
+/** Like goodDesc, but heading-scoped definitions may read "Use when …". */
+function goodDescPair(desc) {
+  if (COMPARATIVE_START.test(desc) || /^\d/.test(desc)) return false;
+  if (/["“”\[\]→—:?!]/.test(desc)) return false;
+  return true;
 }
 
 /** Course-wide pool of real terms, used for plausible wrong options. */
@@ -272,6 +303,7 @@ function buildCoursePool(lessons) {
   for (const l of lessons || []) {
     if (!isEligibleLesson(l)) continue;
     for (const f of extractFacts(l.content_md)) pool[f.kind].add(f.term);
+    for (const f of understandFacts(l.content_md, l.title)) pool[f.kind].add(f.term);
   }
   return { bold: [...pool.bold], code: [...pool.code] };
 }
@@ -310,15 +342,27 @@ function pickDistractors(fact, questionText, localTerms, pool, seed) {
  */
 function generateLessonQuiz(lesson, pool) {
   if (!isEligibleLesson(lesson)) return [];
-  const facts = extractFacts(lesson.content_md);
-  if (facts.length < MIN_QUESTIONS) return [];
+  let facts = extractFacts(lesson.content_md);
+  let terms = facts;
+  if (facts.length < MIN_QUESTIONS) {
+    // Understanding pass: the lesson has fewer marked-up facts than a quiz
+    // needs, so rank the concepts the lesson actually TEACHES (frequency +
+    // title emphasis) and cloze the sentences that explain them. Terms must
+    // re-appear in the body (the "read it, understand it" signal).
+    const extra = understandFacts(lesson.content_md, lesson.title)
+      .filter(f => !facts.some(x => x.term.toLowerCase() === f.term.toLowerCase()));
+    terms = facts.concat(extra);
+  }
+  if (terms.length < MIN_QUESTIONS) return [];
 
+  const factList = terms;
   const seed = shaLikeHash(String(lesson.id || lesson.title || 'lesson'));
   const local = { bold: [], code: [] };
-  for (const f of facts) local[f.kind].push(f.term);
+  for (const f of factList) local[f.kind].push(f.term);
 
   const questions = [];
-  for (const fact of seededShuffle(facts, seed)) {
+  const shuffled = seededShuffle(factList, seed);
+  for (const fact of shuffled) {
     if (questions.length === MIN_QUESTIONS) break;
     const stem = fact.type === 'def'
       ? `Which term is described this way: "${fact.text}"?`
@@ -338,6 +382,69 @@ function generateLessonQuiz(lesson, pool) {
   return questions.length === MIN_QUESTIONS ? questions : [];
 }
 
+/**
+ * Understanding-based fact pass (best-effort completion of the strict facts).
+ *
+ * For each concept the lesson emphasizes (existing extractConcepts ranking:
+ * proper nouns, repeated / title words), find the sentence that explains it
+ * and blank the term — a cloze that tests comprehension of what the lesson
+ * actually spends its words on. A term only qualifies when it genuinely
+ * recurs in the lesson body, so questions stay grounded in the content.
+ * Deterministic: same lesson → same facts in the same order.
+ */
+function understandFacts(contentMd, lessonTitle) {
+  const concepts = extractConcepts({ title: lessonTitle || '', content_md: contentMd })
+    .map(c => cleanTerm(c, 'bold'))
+    .filter(Boolean);
+  if (!concepts.length) return [];
+
+  const text = stripNoise(contentMd);
+
+  /* Sentences that could carry a blank. */
+  const sentences = [];
+  for (const raw of text.split('\n')) {
+    let line = raw.trim();
+    if (!line || /^#{1,6}\s/.test(line) || /^---+$/.test(line)) continue;
+    line = line.replace(/^(?:[-*+]|\d+[.)])\s+/, '');
+    for (const sentence of line.split(/(?<=[.!?])\s+(?=[A-Z0-9*`])/)) {
+      const flat = plain(sentence);
+      if (flat.length < 35 || flat.length > 210 || flat.split(' ').length < 6) continue;
+      if (/[→—?!"“”\[]/.test(flat)) continue;      // quotes/UI shapes/templates
+      sentences.push(flat);
+    }
+  }
+  if (!sentences.length) return [];
+
+  const out = [];
+  const seen = new Set();
+  for (const term of concepts) {
+    if (out.length >= MIN_QUESTIONS * 2) break;
+    const key = term.toLowerCase();
+    if (seen.has(key)) continue;
+
+    const esc = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const whole = new RegExp('(^|[^\\p{L}\\p{N}])' + esc + '($|[^\\p{L}\\p{N}])', 'giu');
+    if ((text.match(whole) || []).length < 2) continue;   // must recur: understanding signal
+
+    for (const sentence of sentences) {
+      if (IMPERATIVE_START.test(sentence)) continue;      // instructions are not definitions
+      const first = new RegExp('(^|[^\\p{L}\\p{N}])' + esc + '($|[^\\p{L}\\p{N}])', 'iu');
+      const occur = sentence.match(new RegExp('(^|[^\\p{L}\\p{N}])' + esc + '($|[^\\p{L}\\p{N}])', 'giu')) || [];
+      if (occur.length !== 1) continue;                  // exactly once: the blank stays unguessable
+      const m = sentence.match(first);
+      if (!m || m.index === undefined) continue;
+      const blanked =
+        sentence.slice(0, m.index) + m[1] + '_____' +
+        sentence.slice(m.index + m[0].length - m[2].length);
+      if (!blanked.includes('_____')) continue;
+      seen.add(key);
+      out.push({ type: 'cloze', term, kind: 'bold', text: blanked });
+      break;
+    }
+  }
+  return out;
+}
+
 /* ── SQL emission helpers (deterministic escaping) ─────────── */
 
 /** Escape a string for a SQL dollar-quoted literal with a unique tag. */
@@ -354,6 +461,7 @@ function optionsToJson(options) {
 module.exports = {
   generateLessonQuiz,
   extractFacts,
+  understandFacts,
   buildCoursePool,
   isEligibleLesson,
   MIN_QUESTIONS,
@@ -367,6 +475,7 @@ module.exports = {
 };
 exports.generateLessonQuiz = generateLessonQuiz;
 exports.extractFacts = extractFacts;
+exports.understandFacts = understandFacts;
 exports.buildCoursePool = buildCoursePool;
 exports.isEligibleLesson = isEligibleLesson;
 exports.MIN_QUESTIONS = MIN_QUESTIONS;
