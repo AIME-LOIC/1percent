@@ -432,23 +432,31 @@ body{padding-top:60px;}
 .pg-course-1sn3m{font-size:11px;font-weight:800;color:var(--c-muted)}
 </style>
 <style>
-/* Lesson text tools: touch-friendly selection menu and persistent highlights */
-.lesson-text-tools{position:fixed;z-index:2000;display:none;gap:6px;padding:7px;background:#111827;color:#fff;border:1px solid #374151;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.22);max-width:calc(100vw - 20px)}
-.lesson-text-tools button{border:0;border-radius:8px;padding:9px 12px;background:#374151;color:#fff;font:600 13px Inter,sans-serif;cursor:pointer;white-space:nowrap}
+/* Lesson text tools: selection actions, highlight management and researched explanations */
+.lesson-highlight-controls{display:flex;justify-content:flex-end;padding:8px 0;gap:8px}
+.lesson-highlight-controls button{border:1px solid #d1d5db;background:#fff;color:#4b5563;border-radius:8px;padding:7px 10px;font:600 12px Inter,sans-serif;cursor:pointer}
+.lesson-highlight-controls button:hover{border-color:#059669;color:#047857}
+.lesson-text-tools{position:fixed;z-index:2000;display:none;gap:5px;padding:7px;background:#111827;color:#fff;border:1px solid #374151;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.22);max-width:calc(100vw - 16px);flex-wrap:wrap}
+.lesson-text-tools button{border:0;border-radius:8px;padding:9px 11px;background:#374151;color:#fff;font:600 12px Inter,sans-serif;cursor:pointer;white-space:nowrap}
 .lesson-text-tools button:hover,.lesson-text-tools button:focus{background:#059669}
 .lesson-text-tools button.tool-highlight{background:#fef08a;color:#713f12}
+.lesson-text-tools button.tool-unhighlight{background:#fee2e2;color:#991b1b}
 .lesson-highlight{background:#fef08a;color:#422006;border-radius:2px;padding:0 1px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
-.lesson-explain-overlay{position:fixed;inset:0;z-index:2100;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:16px}
-.lesson-explain-card{width:min(560px,100%);max-height:min(80vh,700px);overflow:auto;background:#fff;color:#111827;border-radius:16px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.lesson-explain-overlay{position:fixed;inset:0;z-index:2100;background:rgba(15,23,42,.58);display:flex;align-items:center;justify-content:center;padding:16px}
+.lesson-explain-card{width:min(680px,100%);max-height:min(86vh,800px);overflow:auto;background:#fff;color:#111827;border-radius:16px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
 .lesson-explain-card h3{font-size:19px;margin:0 32px 8px 0}
-.lesson-explain-card p{font-size:13px;color:#4b5563;line-height:1.6}
-.lesson-explain-selection{margin:12px 0;padding:12px;background:#f3f4f6;border-left:3px solid #059669;border-radius:7px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px}
-.lesson-explain-card textarea{width:100%;min-height:96px;margin:8px 0 12px;padding:11px;border:1px solid #d1d5db;border-radius:9px;font:14px Inter,sans-serif;resize:vertical}
-.lesson-explain-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.lesson-explain-card p{font-size:13px;color:#4b5563;line-height:1.6;margin:8px 0}
+.lesson-explain-selection{margin:12px 0;padding:12px;background:#f3f4f6;border-left:3px solid #059669;border-radius:7px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;max-height:140px;overflow:auto}
+.lesson-explain-card textarea{width:100%;min-height:80px;margin:8px 0 12px;padding:11px;border:1px solid #d1d5db;border-radius:9px;font:14px Inter,sans-serif;resize:vertical}
+.lesson-explain-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
 .lesson-explain-actions button{border:1px solid #d1d5db;background:#fff;color:#111827;border-radius:8px;padding:10px 13px;font-weight:600;cursor:pointer}
 .lesson-explain-actions button.primary{background:#059669;color:#fff;border-color:#059669}
 .lesson-explain-close{float:right;border:0;background:transparent;font-size:24px;cursor:pointer;color:#6b7280}
-@media(max-width:600px){.lesson-text-tools{gap:4px;padding:6px;border-radius:10px}.lesson-text-tools button{padding:10px 9px;font-size:12px}.lesson-explain-card{padding:18px}.lesson-explain-actions button{flex:1}}
+.lesson-explain-result{margin-top:16px;padding:14px;border:1px solid #d1fae5;background:#f0fdf4;border-radius:10px;line-height:1.65;font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.lesson-explain-sources{margin:12px 0 0;padding-left:20px;font-size:13px;line-height:1.6}
+.lesson-explain-sources a{color:#047857;text-decoration:underline;overflow-wrap:anywhere}
+.lesson-explain-loading{padding:18px;text-align:center;color:#4b5563}
+@media(max-width:600px){.lesson-text-tools{gap:4px;padding:6px;border-radius:10px}.lesson-text-tools button{padding:10px 8px;font-size:11px}.lesson-explain-card{padding:18px}.lesson-explain-actions button{flex:1}}
 </style>
 </head>
 <body>
@@ -2000,18 +2008,35 @@ function connectCourseSocket(){
 }
 connectCourseSocket();
 
-/* Select-to-highlight / explanation-prompt tools for lesson text. */
+/* Lesson text tools: highlight management, copy/search and source-backed explanations. */
 (function initLessonTextTools(){
-  let selectedText='', selectedRange=null, menu=null, restoring=false;
+  let selectedText='',selectedRange=null,menu=null,restoring=false,observer=null;
   const storageKey=()=> '1p:lesson-highlights:'+String(activeLessonId||'');
   function currentBody(){return document.getElementById('lesson-content-body');}
   function safeHighlights(){try{return JSON.parse(localStorage.getItem(storageKey())||'[]').filter(x=>x&&typeof x.text==='string'&&x.text.length<5000);}catch{return [];}}
-  function saveHighlights(items){try{localStorage.setItem(storageKey(),JSON.stringify(items));}catch{}}
+  function saveHighlights(items){try{localStorage.setItem(storageKey(),JSON.stringify(items));}catch{}syncHighlightControls();}
+  function syncHighlightControls(){
+    const body=currentBody();if(!body?.parentNode)return;
+    let bar=body.parentNode.querySelector(':scope > .lesson-highlight-controls');
+    if(!bar){bar=document.createElement('div');bar.className='lesson-highlight-controls';body.parentNode.insertBefore(bar,body);}
+    const count=safeHighlights().length;bar.innerHTML='';
+    if(!count){bar.style.display='none';return;}
+    bar.style.display='flex';const label=document.createElement('span');label.style.cssText='margin-right:auto;color:#6b7280;font-size:12px;align-self:center';label.textContent=count+' saved highlight'+(count===1?'':'s');
+    const clear=document.createElement('button');clear.type='button';clear.textContent='Clear all highlights';clear.addEventListener('click',clearAllHighlights);bar.append(label,clear);
+  }
+  function unwrapMark(mark){if(!mark?.parentNode)return;const parent=mark.parentNode;while(mark.firstChild)parent.insertBefore(mark.firstChild,mark);mark.remove();parent.normalize();}
+  function clearOneHighlight(text){
+    saveHighlights(safeHighlights().filter(x=>x.text!==text));
+    currentBody()?.querySelectorAll('mark.lesson-highlight').forEach(mark=>{if(mark.dataset.highlightText===text)unwrapMark(mark);});
+  }
+  function clearAllHighlights(){
+    saveHighlights([]);currentBody()?.querySelectorAll('mark.lesson-highlight').forEach(unwrapMark);hideMenu();
+    if(typeof Toast!=='undefined')Toast.success('Highlights cleared for this lesson.');
+  }
   function restoreHighlights(){
     const body=currentBody();if(!body||restoring)return;
-    const marks=safeHighlights();if(!marks.length)return;
-    restoring=true;
-    if(observer)observer.disconnect();
+    const marks=safeHighlights();syncHighlightControls();if(!marks.length)return;
+    restoring=true;if(observer)observer.disconnect();
     marks.forEach(mark=>{
       const walker=document.createTreeWalker(body,NodeFilter.SHOW_TEXT,{acceptNode(node){
         const p=node.parentElement;
@@ -2021,68 +2046,94 @@ connectCourseSocket();
       const node=walker.nextNode();if(!node)return;
       const start=node.nodeValue.indexOf(mark.text);if(start<0)return;
       const range=document.createRange();range.setStart(node,start);range.setEnd(node,start+mark.text.length);
-      const markEl=document.createElement('mark');markEl.className='lesson-highlight';markEl.dataset.highlightText=mark.text;
-      try{range.surroundContents(markEl);}catch{}
+      const el=document.createElement('mark');el.className='lesson-highlight';el.dataset.highlightText=mark.text;
+      try{range.surroundContents(el);}catch{}
     });
-    restoring=false;
-    if(observer)observer.observe(body,{childList:true,subtree:true});
+    restoring=false;if(observer&&body.isConnected)observer.observe(body,{childList:true,subtree:true});
   }
   function ensureMenu(){
     if(menu)return menu;
     menu=document.createElement('div');menu.className='lesson-text-tools';menu.setAttribute('role','toolbar');menu.setAttribute('aria-label','Selected text actions');
-    menu.innerHTML='<button type="button" class="tool-highlight">Highlight</button><button type="button" class="tool-explain">Ask for explanation</button>';
+    menu.innerHTML='<button type="button" class="tool-highlight">Highlight</button><button type="button" class="tool-unhighlight">Remove highlight</button><button type="button" class="tool-explain">Explain</button><button type="button" class="tool-search">Search web</button><button type="button" class="tool-copy">Copy</button>';
     menu.querySelector('.tool-highlight').addEventListener('click',highlightSelection);
+    menu.querySelector('.tool-unhighlight').addEventListener('click',unhighlightSelection);
     menu.querySelector('.tool-explain').addEventListener('click',openExplanation);
+    menu.querySelector('.tool-search').addEventListener('click',searchSelection);
+    menu.querySelector('.tool-copy').addEventListener('click',copySelection);
     document.body.appendChild(menu);return menu;
   }
   function showMenu(range){
     const m=ensureMenu(),rect=range.getBoundingClientRect();m.style.display='flex';m.style.left='8px';m.style.top='8px';
-    const width=m.offsetWidth,height=m.offsetHeight;
-    const left=Math.max(8,Math.min(window.innerWidth-width-8,rect.left+(rect.width-width)/2));
+    const width=m.offsetWidth,height=m.offsetHeight,left=Math.max(8,Math.min(window.innerWidth-width-8,rect.left+(rect.width-width)/2));
     let top=rect.top-height-9;if(top<8)top=Math.min(window.innerHeight-height-8,rect.bottom+9);
     m.style.left=left+'px';m.style.top=Math.max(8,top)+'px';
+    const node=range.commonAncestorContainer,mark=node.nodeType===1?node.closest?.('mark.lesson-highlight'):node.parentElement?.closest('mark.lesson-highlight');
+    m.querySelector('.tool-unhighlight').style.display=mark?'inline-flex':'none';
   }
   function hideMenu(){if(menu)menu.style.display='none';}
-  function getSelection(){
+  function getSelectionInfo(){
     const sel=window.getSelection();if(!sel||sel.isCollapsed||!sel.rangeCount)return null;
-    const range=sel.getRangeAt(0),body=currentBody();
-    if(!body||!body.contains(range.commonAncestorContainer))return null;
-    const text=sel.toString().trim();if(!text||text.length>5000)return null;
-    return {text,range:range.cloneRange()};
+    const range=sel.getRangeAt(0),body=currentBody();if(!body||!body.contains(range.commonAncestorContainer))return null;
+    const text=sel.toString().trim();if(!text||text.length>5000)return null;return {text,range:range.cloneRange()};
   }
   function highlightSelection(){
-    const info=getSelection(),text=info?.text||selectedText;if(!text)return;
+    const info=getSelectionInfo(),text=info?.text||selectedText;if(!text)return;
     const marks=safeHighlights();if(!marks.some(x=>x.text===text))marks.push({text,createdAt:Date.now()});saveHighlights(marks);
     const range=info?.range||selectedRange;
-    if(range){const el=document.createElement('mark');el.className='lesson-highlight';el.dataset.highlightText=text;try{range.surroundContents(el);}catch{}}
+    if(range){const el=document.createElement('mark');el.className='lesson-highlight';el.dataset.highlightText=text;try{range.surroundContents(el);}catch{restoreHighlights();}}
     hideMenu();window.getSelection()?.removeAllRanges();
   }
+  function unhighlightSelection(){
+    const info=getSelectionInfo(),range=info?.range||selectedRange;let mark=null;
+    if(range){const node=range.commonAncestorContainer;mark=node.nodeType===1?node.closest?.('mark.lesson-highlight'):node.parentElement?.closest('mark.lesson-highlight');}
+    const text=mark?.dataset.highlightText||info?.text||selectedText;if(!text)return;
+    clearOneHighlight(text);hideMenu();window.getSelection()?.removeAllRanges();
+    if(typeof Toast!=='undefined')Toast.success('Highlight removed.');
+  }
+  async function copySelection(){
+    const text=getSelectionInfo()?.text||selectedText;if(!text)return;
+    try{await navigator.clipboard.writeText(text);if(typeof Toast!=='undefined')Toast.success('Selected text copied.');}
+    catch{const t=document.createElement('textarea');t.value=text;t.style.cssText='position:fixed;opacity:0';document.body.appendChild(t);t.select();const ok=document.execCommand('copy');t.remove();if(ok&&typeof Toast!=='undefined')Toast.success('Selected text copied.');}
+    hideMenu();
+  }
+  function searchSelection(){const text=getSelectionInfo()?.text||selectedText;if(!text)return;hideMenu();window.open('https://www.google.com/search?q='+encodeURIComponent(text),'_blank','noopener,noreferrer');}
   function openExplanation(){
-    const info=getSelection();selectedText=info?.text||selectedText;selectedRange=info?.range||selectedRange;
-    if(!selectedText)return;hideMenu();document.getElementById('lesson-explain-overlay')?.remove();
+    const info=getSelectionInfo();selectedText=info?.text||selectedText;selectedRange=info?.range||selectedRange;if(!selectedText)return;
+    hideMenu();document.getElementById('lesson-explain-overlay')?.remove();
+    const lessonTitle=document.querySelector('.lesson-header h1')?.textContent||document.querySelector('.content-header h1')?.textContent||document.getElementById('topbar-course')?.textContent||'Current lesson';
     const overlay=document.createElement('div');overlay.className='lesson-explain-overlay';overlay.id='lesson-explain-overlay';
-    overlay.innerHTML='<section class="lesson-explain-card" role="dialog" aria-modal="true" aria-labelledby="lesson-explain-title"><button class="lesson-explain-close" type="button" aria-label="Close">&times;</button><h3 id="lesson-explain-title">Ask for an explanation</h3><p>Selected text from your lesson</p><div class="lesson-explain-selection"></div><label for="lesson-explain-question"><strong>What would you like explained?</strong></label><textarea id="lesson-explain-question" placeholder="For example: Explain this in simple terms and give a practical example."></textarea><p>Copy the prompt and paste it into your preferred AI assistant to get an explanation tailored to this passage.</p><div class="lesson-explain-actions"><button type="button" class="cancel">Cancel</button><button type="button" class="primary copy-prompt">Copy explanation prompt</button></div></section>';
+    overlay.innerHTML='<section class="lesson-explain-card" role="dialog" aria-modal="true" aria-labelledby="lesson-explain-title"><button class="lesson-explain-close" type="button" aria-label="Close">&times;</button><h3 id="lesson-explain-title">Explain this passage</h3><p>We search Google for supporting sources and show the source links alongside a summary. Search snippets can be incomplete, so verify important details in the linked pages.</p><div class="lesson-explain-selection"></div><label for="lesson-explain-question"><strong>What should the explanation focus on?</strong></label><textarea id="lesson-explain-question" placeholder="E.g. explain simply, define terms, and give a practical example."></textarea><div class="lesson-explain-actions"><button type="button" class="cancel">Cancel</button><button type="button" class="primary get-explanation">Get explanation</button></div><div class="lesson-explain-output" aria-live="polite"></div></section>';
     overlay.querySelector('.lesson-explain-selection').textContent=selectedText;
     const close=()=>overlay.remove();overlay.querySelector('.lesson-explain-close').addEventListener('click',close);overlay.querySelector('.cancel').addEventListener('click',close);
     overlay.addEventListener('click',e=>{if(e.target===overlay)close();});
-    overlay.querySelector('.copy-prompt').addEventListener('click',async()=>{
-      const question=overlay.querySelector('#lesson-explain-question').value.trim()||'Explain this in simple terms, define important terms, and give a practical example.';
-      const prompt='I am studying a lesson. Explain the following selected passage clearly and accurately, using simple language and a practical example.\n\nSelected passage:\n'+selectedText+'\n\nMy question: '+question;
-      try{await navigator.clipboard.writeText(prompt);if(typeof Toast!=='undefined')Toast.success('Explanation prompt copied. Paste it into your AI assistant.');close();}
-      catch{const field=document.createElement('textarea');field.value=prompt;field.style.cssText='position:fixed;opacity:0;';document.body.appendChild(field);field.select();const ok=document.execCommand('copy');field.remove();if(ok){if(typeof Toast!=='undefined')Toast.success('Explanation prompt copied.');close();}else if(typeof Toast!=='undefined')Toast.error('Copy failed. Please try again.');}
+    overlay.querySelector('.get-explanation').addEventListener('click',async()=>{
+      const button=overlay.querySelector('.get-explanation'),output=overlay.querySelector('.lesson-explain-output');
+      const question=overlay.querySelector('#lesson-explain-question').value.trim()||'Explain in simple terms, define important terms, and give a practical example.';
+      const body=currentBody();button.disabled=true;button.textContent='Researching…';output.innerHTML='<div class="lesson-explain-loading">Searching Google and checking relevant web sources…</div>';
+      try{
+        const response=await apiFetch('/api/courses/lessons/explain',{method:'POST',body:JSON.stringify({selectedText,question,lessonTitle,lessonContext:(body?.innerText||'').slice(0,7000)})});
+        const data=await response.json();if(!response.ok||!data.success)throw new Error(data.error||'Could not research this passage.');
+        const result=document.createElement('div');result.className='lesson-explain-result';result.textContent=data.explanation||'No explanation could be assembled from the available sources.';output.replaceChildren(result);
+        if(data.sources?.length){const heading=document.createElement('p');heading.innerHTML='<strong>Sources to verify</strong>';output.appendChild(heading);const list=document.createElement('ol');list.className='lesson-explain-sources';
+          data.sources.forEach(source=>{const li=document.createElement('li'),a=document.createElement('a');a.href=source.url;a.target='_blank';a.rel='noopener noreferrer';a.textContent=source.title||source.url;li.appendChild(a);if(source.snippet){const p=document.createElement('p');p.textContent=source.snippet;li.appendChild(p);}list.appendChild(li);});output.appendChild(list);}
+        const actions=document.createElement('div');actions.className='lesson-explain-actions';const copy=document.createElement('button');copy.type='button';copy.className='primary';copy.textContent='Copy explanation';
+        copy.addEventListener('click',async()=>{const text=data.explanation+'\n\nSources:\n'+(data.sources||[]).map(s=>s.title+' — '+s.url).join('\n');try{await navigator.clipboard.writeText(text);if(typeof Toast!=='undefined')Toast.success('Explanation copied.');}catch{if(typeof Toast!=='undefined')Toast.error('Copy failed.');}});
+        actions.appendChild(copy);output.appendChild(actions);
+      }catch(error){output.replaceChildren();const p=document.createElement('p');p.className='lesson-explain-result';p.textContent=error.message+' You can still search the selected passage on Google.';output.appendChild(p);}
+      finally{button.disabled=false;button.textContent='Get explanation';}
     });
     document.body.appendChild(overlay);overlay.querySelector('#lesson-explain-question').focus();
   }
-  function onSelectionChange(){const info=getSelection();if(!info)return;selectedText=info.text;selectedRange=info.range;showMenu(info.range);}
+  function onSelectionChange(){const info=getSelectionInfo();if(!info)return;selectedText=info.text;selectedRange=info.range;showMenu(info.range);}
   document.addEventListener('mouseup',e=>{if(e.target.closest('.lesson-text-tools,.lesson-explain-overlay'))return;setTimeout(onSelectionChange,0);});
   document.addEventListener('touchend',e=>{if(e.target.closest('.lesson-text-tools,.lesson-explain-overlay'))return;setTimeout(onSelectionChange,350);},{passive:true});
-  document.addEventListener('pointerdown',e=>{if(menu&&!menu.contains(e.target)&&!getSelection())hideMenu();});
+  document.addEventListener('pointerdown',e=>{if(menu&&!menu.contains(e.target)&&!getSelectionInfo())hideMenu();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){hideMenu();document.getElementById('lesson-explain-overlay')?.remove();}});
-  const observer=new MutationObserver(()=>{if(!restoring)restoreHighlights();});
-  document.addEventListener('DOMContentLoaded',()=>{const b=currentBody();if(b)observer.observe(b,{childList:true,subtree:true});});
-  const waitForBody=setInterval(()=>{const b=currentBody();if(b){observer.observe(b,{childList:true,subtree:true});clearInterval(waitForBody);restoreHighlights();}},250);
+  observer=new MutationObserver(()=>{if(!restoring)restoreHighlights();});
+  document.addEventListener('DOMContentLoaded',()=>{const body=currentBody();if(body)observer.observe(body,{childList:true,subtree:true});});
+  const waitForBody=setInterval(()=>{const body=currentBody();if(body){observer.observe(body,{childList:true,subtree:true});clearInterval(waitForBody);restoreHighlights();}},250);
+  window.clearLessonHighlights=clearAllHighlights;
 })();
-
 </script>
 </body>
 </html>
