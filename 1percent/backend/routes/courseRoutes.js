@@ -79,13 +79,13 @@ function googleResultsFromHtml(html) {
 function extractRelevantPassages(html, selectedText) {
   const words = new Set(String(selectedText).toLowerCase().match(/[a-z0-9]{4,}/g) || []);
   const text = String(html)
-    .replace(/<(script|style|noscript|svg|nav|footer|header)[^>]*>[\\s\\S]*?<\\/\\1>/gi, ' ')
+    .replace(/<(script|style|noscript|svg|nav|footer|header)[^>]*>[\s\S]*?<\/\1>/gi, ' ')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;|&#x27;/g, "'")
     .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ')
-    .replace(/&#(\\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
-    .replace(/\\s+/g, ' ');
-  const paragraphs = (String(html).match(/<p\\b[^>]*>[\\s\\S]*?<\\/p>/gi) || [])
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+    .replace(/\s+/g, ' ');
+  const paragraphs = (String(html).match(/<p\b[^>]*>[\s\S]*?<\/p>/gi) || [])
     .map(p => decodeSearchHtml(p))
     .filter(p => p.length >= 70 && p.length <= 1100);
   const score = paragraph => {
