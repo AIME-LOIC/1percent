@@ -76,35 +76,96 @@ function googleResultsFromHtml(html) {
     if(!title||results.some(r=>r.url===url))continue;results.push({title:title.slice(0,180),url,snippet:snippet.slice(0,500)});if(results.length>=6)break;
   }return results;
 }
-router.post('/courses/lessons/explain',rateLimit,optionalAuth,async(req,res)=>{
-  const selectedText=typeof req.body?.selectedText==='string'?req.body.selectedText.trim().slice(0,1800):'';
-  const question=typeof req.body?.question==='string'?req.body.question.trim().slice(0,500):'Explain simply and give a practical example.';
-  const lessonTitle=typeof req.body?.lessonTitle==='string'?req.body.lessonTitle.trim().slice(0,180):'';
-  const lessonContext=typeof req.body?.lessonContext==='string'?req.body.lessonContext.trim().slice(0,3500):'';
-  if(!selectedText)return res.status(400).json({success:false,error:'Select a passage first.'});
-  const query=[selectedText,lessonTitle,question,'explained examples'].filter(Boolean).join(' ').slice(0,500);
-  try{
-    const googleUrl='https://www.google.com/search?hl=en&num=8&q='+encodeURIComponent(query);
-    const response=await fetch(googleUrl,{headers:{'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36','Accept':'text/html,application/xhtml+xml'},signal:AbortSignal.timeout(9000)});
-    if(!response.ok)throw new Error('Google search returned HTTP '+response.status);
-    const page=await response.text();let sources=googleResultsFromHtml(page);
-    if(!sources.length){
-      // Google may return a consent/CAPTCHA page; use DuckDuckGo HTML as a secondary search source.
-      const fallback=await fetch('https://html.duckduckgo.com/html/?q='+encodeURIComponent(query),{headers:{'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36'},signal:AbortSignal.timeout(7000)});
-      if(fallback.ok){
-        const markup=await fallback.text(),blocks=markup.split(/class="result results_links[^"]*"/i).slice(1);
-        sources=blocks.slice(0,6).map(block=>{
-          const title=block.match(/class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i),snippet=block.match(/class="result__snippet"[^>]*>([\s\S]*?)<\/a>/i);
-          let url=title?.[1]||'';try{const parsed=new URL(url);url=parsed.searchParams.get('uddg')||url;}catch{}
+function extractRelevantPassages(html, selectedText) {
+  const words = new Set(String(selectedText).toLowerCase().match(/[a-z0-9]{4,}/g) || []);
+  const text = String(html)
+    .replace(/<(script|style|noscript|svg|nav|footer|header)[^>]*>[\\s\\S]*?<\\/\\1>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;|&#x27;/g, "'")
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ')
+    .replace(/&#(\\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+    .replace(/\\s+/g, ' ');
+  const paragraphs = (String(html).match(/<p\\b[^>]*>[\\s\\S]*?<\\/p>/gi) || [])
+    .map(p => decodeSearchHtml(p))
+    .filter(p => p.length >= 70 && p.length <= 1100);
+  const score = paragraph => {
+    const tokens = paragraph.toLowerCase().match(/[a-z0-9]{4,}/g) || [];
+    return tokens.reduce((sum, token) => sum + (words.has(token) ? 2 : 0), 0) / Math.max(1, Math.sqrt(tokens.length));
+  };
+  const ranked = paragraphs.map(text => ({text, score:score(text)})).sort((a,b)=>b.score-a.score);
+  if (ranked.some(p => p.score > 0)) return ranked.filter(p=>p.score>0).slice(0,2).map(p=>p.text);
+  return text.length > 180 ? [text.slice(0,650)] : [];
+}
+async function fetchSourceExcerpt(source, selectedText) {
+  try {
+    const response = await fetch(source.url, {
+      headers: {'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36','Accept':'text/html,application/xhtml+xml'},
+      signal: AbortSignal.timeout(5000), redirect:'follow'
+    });
+    if (!response.ok) return source;
+    const type = response.headers.get('content-type') || '';
+    if (!type.includes('text/html') && !type.includes('text/plain')) return source;
+    const html = (await response.text()).slice(0, 900000);
+    const passages = extractRelevantPassages(html, selectedText);
+    if (passages.length) source.snippet = passages.join(' ');
+  } catch {}
+  return source;
+}
+router.post('/courses/lessons/explain', rateLimit, optionalAuth, async (req, res) => {
+  const selectedText = typeof req.body?.selectedText === 'string' ? req.body.selectedText.trim().slice(0,1800) : '';
+  const question = typeof req.body?.question === 'string' ? req.body.question.trim().slice(0,500) : 'Explain simply and give a practical example.';
+  const lessonTitle = typeof req.body?.lessonTitle === 'string' ? req.body.lessonTitle.trim().slice(0,180) : '';
+  const lessonContext = typeof req.body?.lessonContext === 'string' ? req.body.lessonContext.trim().slice(0,3500) : '';
+  if (!selectedText) return res.status(400).json({success:false,error:'Select a passage first.'});
+  const query = [selectedText, lessonTitle, question, 'explained examples'].filter(Boolean).join(' ').slice(0,500);
+  try {
+    const googleUrl = 'https://www.google.com/search?hl=en&num=8&q=' + encodeURIComponent(query);
+    const response = await fetch(googleUrl, {
+      headers: {'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36','Accept':'text/html,application/xhtml+xml'},
+      signal: AbortSignal.timeout(9000)
+    });
+    if (!response.ok) throw new Error('Google search returned HTTP ' + response.status);
+    let sources = googleResultsFromHtml(await response.text());
+    let provider = 'Google Search';
+    if (!sources.length) {
+      // Google sometimes returns consent/CAPTCHA HTML; try a secondary public search page.
+      const fallback = await fetch('https://html.duckduckgo.com/html/?q=' + encodeURIComponent(query), {
+        headers: {'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36'},
+        signal: AbortSignal.timeout(7000)
+      });
+      if (fallback.ok) {
+        const markup = await fallback.text(), blocks = markup.split(/class="result results_links[^"]*"/i).slice(1);
+        sources = blocks.slice(0,6).map(block => {
+          const title = block.match(/class="result__a"[^>]*href="([^"]+)"[^>]*>([\\s\\S]*?)<\\/a>/i);
+          const snippet = block.match(/class="result__snippet"[^>]*>([\\s\\S]*?)<\\/a>/i);
+          let url = title?.[1] || '';
+          try { const parsed = new URL(url); url = parsed.searchParams.get('uddg') || url; } catch {}
           return {title:decodeSearchHtml(title?.[2]||''),url,snippet:decodeSearchHtml(snippet?.[1]||'')};
-        }).filter(s=>s.title&&/^https?:\/\//i.test(s.url));
+        }).filter(s=>s.title && /^https?:\\/\\//i.test(s.url));
+        provider = 'Web search fallback';
       }
     }
-    if(!sources.length)return res.status(502).json({success:false,error:'The search provider did not return readable results. Try Search web or retry shortly.'});
-    const useful=sources.filter(s=>s.snippet);
-    const explanation=['Selected passage: '+selectedText,lessonTitle?'Lesson context: '+lessonTitle+'.':'','','Explanation based on available search-result snippets:',...((useful.length?useful:sources).slice(0,4).map((s,i)=>(i+1)+'. '+s.title+(s.snippet?' — '+s.snippet:''))),'','Focus requested: '+question,lessonContext?'Compare these findings with your lesson notes: '+lessonContext.slice(0,850)+'…':'','','Accuracy note: this is a source-backed summary of search-result snippets, not a full reading of every linked page. Open the sources below to confirm details and resolve disagreements.'].filter(Boolean).join('\n');
-    res.json({success:true,query,explanation,sources:sources.slice(0,6),provider:useful.length?'Google Search':'Web search fallback'});
-  }catch(error){console.error('[lesson-explain] Search failed:',error.message);res.status(502).json({success:false,error:'Web research is temporarily unavailable. Use Search web to open Google results directly.'});}
+    if (!sources.length) return res.status(502).json({success:false,error:'Search did not return readable results. Try Search web or retry shortly.'});
+    // Read a small number of result pages as well as their search snippets; pages may block automated requests.
+    sources = await Promise.all(sources.slice(0,4).map(source => fetchSourceExcerpt(source, selectedText)));
+    const passages = sources.filter(s=>s.snippet).slice(0,4);
+    const explanation = [
+      'Passage selected from your lesson: ' + selectedText,
+      lessonTitle ? 'Lesson: ' + lessonTitle : '',
+      '',
+      passages.length ? 'What the researched sources say:' : 'Search-result overview (the linked pages did not expose readable text):',
+      ...passages.map((s,i)=>(i+1)+'. ' + s.title + ': ' + s.snippet),
+      '',
+      'To apply this to your question: ' + question,
+      lessonContext ? 'Your lesson context for comparison: ' + lessonContext.slice(0,700) + (lessonContext.length>700?'…':'') : '',
+      '',
+      'Reliability note: this explanation is assembled from Google results and publicly readable page excerpts. It is not a substitute for checking the cited sources; search ranking and page content can be incomplete or outdated.'
+    ].filter(Boolean).join('\\n');
+    res.json({success:true,query,explanation,sources:sources.slice(0,6),provider});
+  } catch (error) {
+    console.error('[lesson-explain] Search failed:', error.message);
+    res.status(502).json({success:false,error:'Web research is temporarily unavailable. Use Search web to open Google results directly.'});
+  }
 });
 
 // Public — course detail by slug (AFTER all named routes)
